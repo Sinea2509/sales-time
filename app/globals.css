@@ -18,6 +18,16 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-app-shell-surface: var(--app-shell-surface);
+  --color-app-shell-sidebar-bg: var(--app-shell-sidebar-bg);
+  --color-app-shell-sidebar-text: var(--app-shell-sidebar-text);
+  --color-app-shell-sidebar-muted: var(--app-shell-sidebar-muted);
+  --color-app-shell-sidebar-border: var(--app-shell-sidebar-border);
+  --color-app-shell-sidebar-hover-bg: var(--app-shell-sidebar-hover-bg);
+  --color-app-shell-sidebar-active-bg: var(--app-shell-sidebar-active-bg);
+  --color-app-shell-sidebar-active-text: var(--app-shell-sidebar-active-text);
+  --color-app-shell-sidebar-accent: var(--app-shell-sidebar-accent);
+  --color-app-shell-sidebar-card-bg: var(--app-shell-sidebar-card-bg);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -81,6 +91,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --app-shell-surface: oklch(0.99 0 0);
+  --app-shell-sidebar-bg: oklch(0.98 0 0);
+  --app-shell-sidebar-text: oklch(0.205 0 0);
+  --app-shell-sidebar-muted: oklch(0.46 0 0);
+  --app-shell-sidebar-border: oklch(0.91 0 0);
+  --app-shell-sidebar-hover-bg: oklch(0.94 0 0);
+  --app-shell-sidebar-active-bg: oklch(0.94 0.03 292);
+  --app-shell-sidebar-active-text: oklch(0.29 0.07 291);
+  --app-shell-sidebar-accent: oklch(0.58 0.23 292);
+  --app-shell-sidebar-card-bg: oklch(0.965 0 0);
 }
 
 .dark {
@@ -115,6 +135,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --app-shell-surface: oklch(0.17 0 0);
+  --app-shell-sidebar-bg: oklch(0.2 0 0);
+  --app-shell-sidebar-text: oklch(0.96 0 0);
+  --app-shell-sidebar-muted: oklch(0.75 0 0);
+  --app-shell-sidebar-border: oklch(1 0 0 / 10%);
+  --app-shell-sidebar-hover-bg: oklch(0.27 0 0);
+  --app-shell-sidebar-active-bg: oklch(0.36 0.09 290);
+  --app-shell-sidebar-active-text: oklch(0.98 0 0);
+  --app-shell-sidebar-accent: oklch(0.62 0.22 292);
+  --app-shell-sidebar-card-bg: oklch(0.24 0 0);
 }
 
 @layer base {

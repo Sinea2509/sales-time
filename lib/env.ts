@@ -6,6 +6,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
   CLERK_SECRET_KEY: z.string().min(1).optional(),
   CLERK_WEBHOOK_SECRET: z.string().min(1).optional(),
+  AI_GATEWAY_API_KEY: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -18,6 +19,7 @@ function parseEnv(): Env {
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
+    AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
   });
 }
 
@@ -61,4 +63,13 @@ export function requireServerEnv(): {
     databaseUrl: requireDatabaseUrl(),
     ...requireClerkKeys(),
   };
+}
+
+/** Required when calling Vercel AI Gateway (meeting analysis). */
+export function requireAiGatewayApiKey(): string {
+  const e = getEnv();
+  if (!e.AI_GATEWAY_API_KEY) {
+    throw new Error("AI_GATEWAY_API_KEY is required for AI analysis");
+  }
+  return e.AI_GATEWAY_API_KEY;
 }

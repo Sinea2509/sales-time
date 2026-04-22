@@ -1,0 +1,63 @@
+import { describe, expect, it, vi } from "vitest";
+import { GLOBAL_PROMPT_AUDIT_ORG_ID } from "@/src/core/domain/global-audit-ids";
+import { publishGlobalPromptVersion } from "./publish-global-prompt-version";
+
+describe("publishGlobalPromptVersion", () => {
+  it("rejects non–super admin", async () => {
+    const prompts = { publishNewVersion: vi.fn() };
+    const audit = { logSuperAdminAction: vi.fn() };
+
+    const result = await publishGlobalPromptVersion(
+      { prompts, audit },
+      {
+        actorInternalUserId: "u1",
+        isSuperAdmin: false,
+        kind: "SONCAS",
+        markdown: "# x",
+        auditAction: "PUBLISH_PROMPT",
+      },
+    );
+
+    expect(result).toEqual({ ok: false, error: "NOT_SUPER_ADMIN" });
+    expect(prompts.publishNewVersion).not.toHaveBeenCalled();
+  });
+
+  it("publishes version and audits", async () => {
+    const prompts = {
+      publishNewVersion: vi.fn().mockResolvedValue({
+        id: "v2",
+        templateId: "t1",
+        kind: "SONCAS" as const,
+        version: 2,
+        markdown: "# body",
+        authorUserId: "u1",
+        createdAt: new Date(),
+      }),
+    };
+    const audit = { logSuperAdminAction: vi.fn().mockResolvedValue(undefined) };
+
+    const result = await publishGlobalPromptVersion(
+      { prompts, audit },
+      {
+        actorInternalUserId: "u1",
+        isSuperAdmin: true,
+        kind: "SONCAS",
+        markdown: "# body",
+        auditAction: "RESTORE_PROMPT",
+      },
+    );
+
+    expect(result).toEqual({ ok: true, version: 2 });
+    expect(prompts.publishNewVersion).toHaveBeenCalledWith({
+      kind: "SONCAS",
+      markdown: "# body",
+      authorUserId: "u1",
+    });
+    expect(audit.logSuperAdminAction).toHaveBeenCalledWith({
+      actorInternalUserId: "u1",
+      clerkOrgId: GLOBAL_PROMPT_AUDIT_ORG_ID,
+      action: "RESTORE_PROMPT",
+      reason: "SONCAS prompt v2",
+    });
+  });
+});

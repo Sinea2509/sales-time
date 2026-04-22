@@ -7,7 +7,7 @@ export class PrismaAuditRepository implements AuditRepositoryPort {
   async logSuperAdminAction(input: {
     actorInternalUserId: string;
     clerkOrgId: string;
-    action: "ENTER_ORG" | "EXIT_ORG";
+    action: string;
     reason?: string | null;
   }): Promise<void> {
     await this.db.superAdminAuditLog.create({

@@ -13,9 +13,14 @@ Next.js (App Router) app with **Clerk** authentication and organizations, **Pris
 ## Quick start
 
 1. Copy [`.env.example`](.env.example) to `.env` and set **valid** Clerk keys (Next.js validates the publishable key at build time) plus `DATABASE_URL`.
-2. Install dependencies: `npm install` (runs `prisma generate` via `postinstall`).
-3. Apply migrations: `npm run db:migrate:dev` (local) or `npm run db:migrate` (deploy).
-4. Run the app: `npm run dev`.
+2. For **SONCAS / DISC** meeting analysis via [Vercel AI Gateway](https://vercel.com/docs/ai-gateway), set `AI_GATEWAY_API_KEY` in `.env`.
+3. Install dependencies: `npm install` (runs `prisma generate` via `postinstall`).
+4. Apply migrations: `npm run db:migrate:dev` (local) or `npm run db:migrate` (deploy).
+5. Run the app: `npm run dev`.
+
+## Organization app (rendez-vous & analyse)
+
+With an active Clerk organization, the dashboard includes **Tableau de bord**, **Mes rendez-vous** (manual transcript + notes), and **Analyse** (SONCAS + DISC via AI Gateway). **Super admin** can edit global analysis prompts at `/dashboard/super-admin/prompts` (versioned markdown).
 
 ## Clerk dashboard
 
@@ -25,14 +30,29 @@ Next.js (App Router) app with **Clerk** authentication and organizations, **Pris
 
 ## Super admin
 
-1. Ensure the user exists in the app DB (webhook or by visiting `/dashboard`, which **upserts** the user from Clerk).
-2. Grant the role:
+Super admin is an **app database** role (`SystemRole.SUPER_ADMIN`). **Clerk** still owns the password: you choose it at sign-up, or set / reset it in the [Clerk Dashboard](https://dashboard.clerk.com) (Users → user → Security). This repo never stores or generates sign-in passwords.
+
+### Vercel + Neon
+
+1. In Vercel, connect the [Neon](https://neon.tech) integration (or paste `DATABASE_URL` from the Neon console) into project **Environment Variables** for Production / Preview / Development as needed.
+2. Locally, copy the same `DATABASE_URL` into `.env` (or run `vercel env pull` if you use the Vercel CLI).
+3. Apply migrations: `npm run db:migrate` (deploy) or `npm run db:migrate:dev` (local).
+
+### Grant the first super admin (e.g. `stephane@mytradeshow.ai`)
+
+1. **Create the user in Clerk** first: sign up at your app’s `/sign-up` with that email, or create the user in Clerk Dashboard. Set or reset the password there if you need a known password.
+2. **Sync into the app DB** (pick one): configure the Clerk **webhook** for `user.*`, or once signed in open `/dashboard` so the app **upserts** the `User` row.
+3. **Grant `SUPER_ADMIN`** (from project root, with `.env` containing `DATABASE_URL` and `CLERK_SECRET_KEY`):
 
 ```bash
-DATABASE_URL="postgresql://..." CLERK_USER_ID="user_..." npx prisma db seed
+# Option A — if you know the Clerk user id (Dashboard → Users → … → User ID)
+DATABASE_URL="postgresql://..." CLERK_USER_ID="user_xxxxxxxx" npx prisma db seed
+
+# Option B — by email (uses Clerk API; same CLERK_SECRET_KEY as the app)
+DATABASE_URL="postgresql://..." CLERK_EMAIL="stephane@mytradeshow.ai" npx prisma db seed
 ```
 
-3. Sign in and open **Super admin** in the header to list organizations and **operate in** one. Every enter/exit writes a row to `SuperAdminAuditLog`. An **httpOnly** cookie `st_super_admin_org` stores the elevated Clerk org id.
+4. Sign in and open **Super admin** in the header to list organizations and **operate in** one. Every enter/exit writes a row to `SuperAdminAuditLog`. An **httpOnly** cookie `st_super_admin_org` stores the elevated Clerk org id.
 
 ## Scripts
 

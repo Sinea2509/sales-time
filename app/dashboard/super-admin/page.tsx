@@ -1,4 +1,7 @@
+import Link from "next/link";
 import { SuperAdminOrgList } from "@/components/organisms/super-admin-org-list";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { makeApplicationDeps } from "@/src/adapters/composition";
 import { listOrganizationsForSuperAdmin } from "@/src/core/application/list-organizations-for-super-admin";
 
@@ -18,5 +21,17 @@ export default async function SuperAdminPage() {
     );
   }
 
-  return <SuperAdminOrgList organizations={result.organizations} />;
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Link
+          href="/dashboard/super-admin/prompts"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+        >
+          Prompts SONCAS / DISC
+        </Link>
+      </div>
+      <SuperAdminOrgList organizations={result.organizations} />
+    </div>
+  );
 }
