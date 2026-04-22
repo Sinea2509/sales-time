@@ -23,6 +23,13 @@ export type MeetingAnalysisRow = {
   createdAt: Date;
 };
 
+/** Recent meeting row for dashboard (tri par date d’ajout). */
+export type RecentMeetingListRow = MeetingRow & {
+  sellerEmail: string | null;
+  hasSoncas: boolean;
+  hasDisc: boolean;
+};
+
 export interface MeetingRepositoryPort {
   createMeeting(input: {
     clerkOrgId: string;
@@ -75,4 +82,13 @@ export interface MeetingRepositoryPort {
     meetingAtSince: Date;
     kinds: Array<"SONCAS" | "DISC">;
   }): Promise<MeetingAnalysisRow[]>;
+
+  countMeetingsForOrg(input: { clerkOrgId: string }): Promise<number>;
+
+  listRecentMeetingsForDashboard(input: {
+    clerkOrgId: string;
+    limit: number;
+    /** Si défini : RDV dont la date de rendez-vous est >= ce jour (fenêtre KPI). */
+    meetingAtSince?: Date;
+  }): Promise<RecentMeetingListRow[]>;
 }

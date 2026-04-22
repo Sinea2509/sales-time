@@ -4,6 +4,7 @@ import type {
   MeetingAnalysisRow,
   MeetingRepositoryPort,
   MeetingRow,
+  RecentMeetingListRow,
 } from "@/src/core/ports/meeting-repository-port";
 
 function mapMeeting(row: {
@@ -184,5 +185,43 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       },
     });
     return rows.map(mapAnalysis);
+  }
+
+  async countMeetingsForOrg(input: { clerkOrgId: string }): Promise<number> {
+    return this.db.meeting.count({
+      where: { clerkOrgId: input.clerkOrgId },
+    });
+  }
+
+  async listRecentMeetingsForDashboard(input: {
+    clerkOrgId: string;
+    limit: number;
+    meetingAtSince?: Date;
+  }): Promise<RecentMeetingListRow[]> {
+    const rows = await this.db.meeting.findMany({
+      where: {
+        clerkOrgId: input.clerkOrgId,
+        ...(input.meetingAtSince != null
+          ? { meetingAt: { gte: input.meetingAtSince } }
+          : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take: input.limit,
+      include: {
+        seller: { select: { email: true } },
+        analyses: { select: { kind: true } },
+      },
+    });
+
+    return rows.map((row) => {
+      const kinds = new Set(row.analyses.map((a) => a.kind));
+      const base = mapMeeting(row);
+      return {
+        ...base,
+        sellerEmail: row.seller.email,
+        hasSoncas: kinds.has("SONCAS"),
+        hasDisc: kinds.has("DISC"),
+      };
+    });
   }
 }

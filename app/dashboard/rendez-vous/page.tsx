@@ -39,7 +39,7 @@ export default async function RendezVousPage() {
         </p>
       </div>
 
-      <Card>
+      <Card id="preparer-rdv">
         <CardHeader>
           <CardTitle className="text-base">Nouveau rendez-vous</CardTitle>
           <CardDescription>
