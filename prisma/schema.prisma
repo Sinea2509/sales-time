@@ -1,0 +1,48 @@
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SystemRoleType {
+  SUPER_ADMIN
+}
+
+model User {
+  id          String   @id @default(cuid())
+  clerkUserId String   @unique
+  email       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  systemRoles      SystemRole[]
+  auditLogsAsActor SuperAdminAuditLog[] @relation("AuditActor")
+}
+
+model SystemRole {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      SystemRoleType
+  createdAt DateTime       @default(now())
+
+  @@unique([userId, role])
+}
+
+model SuperAdminAuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  actor       User     @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: Cascade)
+  clerkOrgId  String
+  action      String
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorUserId])
+  @@index([clerkOrgId])
+}
