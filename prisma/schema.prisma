@@ -20,8 +20,42 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  systemRoles      SystemRole[]
-  auditLogsAsActor SuperAdminAuditLog[] @relation("AuditActor")
+  systemRoles         SystemRole[]
+  auditLogsAsActor    SuperAdminAuditLog[] @relation("AuditActor")
+  onboardingProfile   OnboardingProfile?
+}
+
+/// Admin onboarding wizard (design: Onboarding admin.pdf) — post–Clerk sign-up.
+model OnboardingProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Étape 1 — Contexte
+  companyName           String?
+  industrySector        String?
+  commercialTeamSize    String?
+  averageSalesCycle     String?
+  averageDealSize       String?
+
+  // Étape 2 — Coach IA
+  companyPitch         String? @db.Text
+  objections           Json?
+  keyArguments         Json?
+  industryVocabulary   String? @db.Text
+
+  // Étape 3 — Process
+  meetingTypes    Json?
+  pipelineStages  Json?
+
+  // Étape 4 — Invitations
+  inviteEmails   Json?
+  inviteMessage  String? @db.Text
+
+  currentStep Int       @default(1)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model SystemRole {

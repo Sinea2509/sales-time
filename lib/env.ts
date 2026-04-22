@@ -30,25 +30,35 @@ export function getEnv(): Env {
   return cached;
 }
 
-/** Throws if required server env vars are missing (use in server-only code paths). */
-export function requireServerEnv(): Required<
-  Pick<
-    Env,
-    | "DATABASE_URL"
-    | "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
-    | "CLERK_SECRET_KEY"
-  >
-> {
+export function requireClerkKeys(): {
+  publishableKey: string;
+  secretKey: string;
+} {
   const e = getEnv();
-  if (!e.DATABASE_URL) throw new Error("DATABASE_URL is required");
   if (!e.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
     throw new Error("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required");
   }
   if (!e.CLERK_SECRET_KEY) throw new Error("CLERK_SECRET_KEY is required");
-  return e as Required<
-    Pick<
-      Env,
-      "DATABASE_URL" | "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" | "CLERK_SECRET_KEY"
-    >
-  >;
+  return {
+    publishableKey: e.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    secretKey: e.CLERK_SECRET_KEY,
+  };
+}
+
+export function requireDatabaseUrl(): string {
+  const e = getEnv();
+  if (!e.DATABASE_URL) throw new Error("DATABASE_URL is required");
+  return e.DATABASE_URL;
+}
+
+/** Throws if DB + Clerk keys are required together. */
+export function requireServerEnv(): {
+  databaseUrl: string;
+  publishableKey: string;
+  secretKey: string;
+} {
+  return {
+    databaseUrl: requireDatabaseUrl(),
+    ...requireClerkKeys(),
+  };
 }
