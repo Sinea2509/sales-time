@@ -16,21 +16,31 @@ const LABELS: Record<StatsWindowDays, string> = {
 
 export function DashboardStatsPeriodSelect(props: {
   value: StatsWindowDays;
+  /** Style pour fond sombre (tableau de bord). */
+  theme?: "default" | "dark";
 }) {
+  const dark = props.theme === "dark";
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
 
   return (
-    <label className="text-muted-foreground flex items-center gap-2 text-sm whitespace-nowrap">
+    <label
+      className={cn(
+        "flex items-center gap-2 text-sm whitespace-nowrap",
+        dark ? "text-zinc-400" : "text-muted-foreground",
+      )}
+    >
       <span className="sr-only">Période des statistiques</span>
       <select
         aria-label="Période des statistiques (jours glissants)"
         className={cn(
-          "border-input bg-background text-foreground h-9 min-w-[9.5rem] rounded-md border px-2.5 py-1 text-sm shadow-xs outline-none",
-          "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-          "disabled:opacity-60",
+          "h-9 min-w-[9.5rem] rounded-md border px-2.5 py-1 text-sm shadow-xs outline-none",
+          "focus-visible:ring-[3px] disabled:opacity-60",
+          dark
+            ? "border-zinc-700 bg-zinc-900 text-zinc-100 focus-visible:border-violet-500 focus-visible:ring-violet-500/30"
+            : "border-input bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50",
         )}
         value={String(props.value)}
         disabled={pending}

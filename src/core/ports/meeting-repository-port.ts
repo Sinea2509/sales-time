@@ -28,6 +28,8 @@ export type RecentMeetingListRow = MeetingRow & {
   sellerEmail: string | null;
   hasSoncas: boolean;
   hasDisc: boolean;
+  /** Moyenne des scores SONCAS (6 leviers), si analyse présente. */
+  salesScore: number | null;
 };
 
 export interface MeetingRepositoryPort {
@@ -85,10 +87,25 @@ export interface MeetingRepositoryPort {
 
   countMeetingsForOrg(input: { clerkOrgId: string }): Promise<number>;
 
+  countMeetingsWithMeetingAtBetween(input: {
+    clerkOrgId: string;
+    meetingAtGte: Date;
+    meetingAtLt: Date;
+  }): Promise<number>;
+
+  /** Moyenne de `durationMin` (non null) sur la fenêtre [gte, lt) ou [gte, +∞). */
+  averageDurationMinForMeetingsInWindow(input: {
+    clerkOrgId: string;
+    meetingAtGte: Date;
+    meetingAtLt?: Date;
+  }): Promise<number | null>;
+
   listRecentMeetingsForDashboard(input: {
     clerkOrgId: string;
     limit: number;
     /** Si défini : RDV dont la date de rendez-vous est >= ce jour (fenêtre KPI). */
     meetingAtSince?: Date;
+    /** Borne haute exclusive sur `meetingAt` (fenêtre précédente). */
+    meetingAtBefore?: Date;
   }): Promise<RecentMeetingListRow[]>;
 }

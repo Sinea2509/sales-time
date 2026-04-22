@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
 import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
+import { salesScoreFromSoncasResult } from "@/lib/dashboard-sales-score";
 import type {
   MeetingAnalysisRow,
   MeetingRepositoryPort,
@@ -193,34 +194,85 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     });
   }
 
+  async countMeetingsWithMeetingAtBetween(input: {
+    clerkOrgId: string;
+    meetingAtGte: Date;
+    meetingAtLt: Date;
+  }): Promise<number> {
+    return this.db.meeting.count({
+      where: {
+        clerkOrgId: input.clerkOrgId,
+        meetingAt: { gte: input.meetingAtGte, lt: input.meetingAtLt },
+      },
+    });
+  }
+
+  async averageDurationMinForMeetingsInWindow(input: {
+    clerkOrgId: string;
+    meetingAtGte: Date;
+    meetingAtLt?: Date;
+  }): Promise<number | null> {
+    const row = await this.db.meeting.aggregate({
+      where: {
+        clerkOrgId: input.clerkOrgId,
+        meetingAt: {
+          gte: input.meetingAtGte,
+          ...(input.meetingAtLt != null ? { lt: input.meetingAtLt } : {}),
+        },
+        durationMin: { not: null },
+      },
+      _avg: { durationMin: true },
+    });
+    if (row._avg.durationMin == null) return null;
+    return Math.round(Number(row._avg.durationMin));
+  }
+
   async listRecentMeetingsForDashboard(input: {
     clerkOrgId: string;
     limit: number;
     meetingAtSince?: Date;
+    meetingAtBefore?: Date;
   }): Promise<RecentMeetingListRow[]> {
     const rows = await this.db.meeting.findMany({
       where: {
         clerkOrgId: input.clerkOrgId,
-        ...(input.meetingAtSince != null
-          ? { meetingAt: { gte: input.meetingAtSince } }
+        ...(input.meetingAtSince != null || input.meetingAtBefore != null
+          ? {
+              meetingAt: {
+                ...(input.meetingAtSince != null
+                  ? { gte: input.meetingAtSince }
+                  : {}),
+                ...(input.meetingAtBefore != null
+                  ? { lt: input.meetingAtBefore }
+                  : {}),
+              },
+            }
           : {}),
       },
       orderBy: { createdAt: "desc" },
       take: input.limit,
       include: {
         seller: { select: { email: true } },
-        analyses: { select: { kind: true } },
+        analyses: {
+          select: { kind: true, result: true, createdAt: true },
+          orderBy: { createdAt: "desc" },
+          take: 24,
+        },
       },
     });
 
     return rows.map((row) => {
       const kinds = new Set(row.analyses.map((a) => a.kind));
+      const soncas = row.analyses.find((a) => a.kind === "SONCAS");
       const base = mapMeeting(row);
       return {
         ...base,
         sellerEmail: row.seller.email,
         hasSoncas: kinds.has("SONCAS"),
         hasDisc: kinds.has("DISC"),
+        salesScore: soncas
+          ? salesScoreFromSoncasResult(soncas.result)
+          : null,
       };
     });
   }
