@@ -117,20 +117,17 @@ export function DashboardHomeShell({ home }: { home: OrgDashboardHome }) {
     : "up-good";
 
   return (
-    <div className="space-y-8 rounded-2xl bg-zinc-950 px-4 py-6 shadow-inner sm:px-6 sm:py-8">
+    <div className="space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-medium tracking-tight text-zinc-400">
+        <h2 className="text-foreground text-lg font-medium tracking-tight">
           Mes statistiques
         </h2>
         <Suspense
           fallback={
-            <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md bg-zinc-800 sm:self-auto" />
+            <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
           }
         >
-          <DashboardStatsPeriodSelect
-            value={home.statsWindowDays}
-            theme="dark"
-          />
+          <DashboardStatsPeriodSelect value={home.statsWindowDays} />
         </Suspense>
       </div>
 
@@ -211,8 +208,8 @@ export function DashboardHomeShell({ home }: { home: OrgDashboardHome }) {
         <Link
           href="/dashboard/rendez-vous/nouveau"
           className={cn(
-            buttonVariants({ size: "sm" }),
-            "h-10 rounded-lg border border-violet-800/60 bg-violet-950 px-4 text-violet-100 hover:bg-violet-900",
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "h-10 rounded-lg border-[#6C4DFF]/25 bg-[#6C4DFF]/10 px-4 text-[#5a3fd9] hover:bg-[#6C4DFF]/15 dark:text-[#c4b5fd]",
           )}
         >
           Préparer un RDV
@@ -230,7 +227,7 @@ export function DashboardHomeShell({ home }: { home: OrgDashboardHome }) {
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-medium tracking-tight text-zinc-400">
+        <h2 className="text-foreground text-lg font-medium tracking-tight">
           Mes rendez-vous
         </h2>
 

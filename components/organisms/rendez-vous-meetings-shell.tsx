@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  ChevronLeft,
   ChevronRight,
   Download,
   Plus,
   Search,
 } from "lucide-react";
+import { RendezVousMeetingRowActions } from "@/components/molecules/rendez-vous-meeting-row-actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { meetingOutcomeBadgeClass } from "@/lib/meeting-outcome-badge-styles";
@@ -68,18 +70,55 @@ const dateFmt = new Intl.DateTimeFormat("fr-FR", {
   timeStyle: "short",
 });
 
+const PAGE_SIZE = 10;
+const MAX_PAGE_BUTTONS = 4;
+
+function paginationWindow(
+  currentPage: number,
+  totalPages: number,
+): number[] {
+  if (totalPages <= MAX_PAGE_BUTTONS) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  let start = Math.max(1, currentPage - 1);
+  let end = start + MAX_PAGE_BUTTONS - 1;
+  if (end > totalPages) {
+    end = totalPages;
+    start = end - MAX_PAGE_BUTTONS + 1;
+  }
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+}
+
 export function RendezVousMeetingsShell({
   meetings,
 }: {
   meetings: RendezVousMeetingRow[];
 }) {
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return meetings;
     return meetings.filter((m) => m.prospectName.toLowerCase().includes(q));
   }, [meetings, query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const pageRows = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+  const rangeStart = filtered.length === 0 ? 0 : startIndex + 1;
+  const rangeEnd = Math.min(startIndex + PAGE_SIZE, filtered.length);
+  const pageNumbers = paginationWindow(currentPage, totalPages);
 
   return (
     <div className="space-y-4">
@@ -136,8 +175,8 @@ export function RendezVousMeetingsShell({
                 <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase lg:table-cell">
                   Date
                 </th>
-                <th className="text-muted-foreground w-12 px-4 py-3.5">
-                  <span className="sr-only">Actions</span>
+                <th className="text-muted-foreground w-20 px-4 py-3.5 text-right text-[11px] font-semibold tracking-wider uppercase">
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -154,7 +193,7 @@ export function RendezVousMeetingsShell({
                   </td>
                 </tr>
               ) : (
-                filtered.map((m) => (
+                pageRows.map((m) => (
                   <tr
                     key={m.id}
                     className="hover:bg-neutral-50/80 dark:hover:bg-neutral-900/40"
@@ -196,26 +235,69 @@ export function RendezVousMeetingsShell({
                     <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums lg:table-cell">
                       {dateFmt.format(new Date(m.meetingAt))}
                     </td>
-                    <td className="px-4 py-3.5 align-middle">
-                      <Link
-                        href={`/dashboard/rendez-vous/${m.id}`}
-                        className={cn(
-                          buttonVariants({
-                            variant: "ghost",
-                            size: "icon-sm",
-                          }),
-                          "text-muted-foreground hover:text-foreground",
-                        )}
-                        aria-label={`Ouvrir ${m.prospectName}`}
-                      >
-                        <ChevronRight className="size-4" />
-                      </Link>
+                    <td className="px-4 py-3.5 text-right align-middle">
+                      <RendezVousMeetingRowActions
+                        meetingId={m.id}
+                        prospectName={m.prospectName}
+                      />
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="flex flex-col gap-3 border-t border-neutral-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-neutral-800">
+          <p className="text-muted-foreground text-sm">
+            Affichage de <span className="text-foreground font-medium">{rangeStart}</span>{" "}
+            à <span className="text-foreground font-medium">{rangeEnd}</span> sur{" "}
+            <span className="text-foreground font-medium">{filtered.length}</span>{" "}
+            entrée{filtered.length > 1 ? "s" : ""}
+          </p>
+          <nav
+            aria-label="Pagination"
+            className="flex items-center gap-1"
+          >
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              aria-label="Page précédente"
+              className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md border border-neutral-200 bg-white transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900 dark:disabled:hover:bg-neutral-950"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            {pageNumbers.map((n) => {
+              const isActive = n === currentPage;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setPage(n)}
+                  aria-label={`Page ${n}`}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "inline-flex size-8 items-center justify-center rounded-md border text-sm font-medium tabular-nums transition-colors",
+                    isActive
+                      ? "border-[#6C4DFF] bg-[#6C4DFF] text-white hover:bg-[#5a3fd9]"
+                      : "text-muted-foreground hover:text-foreground border-neutral-200 bg-white hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900",
+                  )}
+                >
+                  {n}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              aria-label="Page suivante"
+              className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md border border-neutral-200 bg-white transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900 dark:disabled:hover:bg-neutral-950"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </nav>
         </div>
       </div>
     </div>

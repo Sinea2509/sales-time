@@ -82,3 +82,31 @@ export async function createMeetingAction(formData: FormData) {
   revalidatePath("/dashboard");
   return { ok: true as const, meetingId: result.meetingId };
 }
+
+export async function deleteMeetingAction(meetingId: string) {
+  const { userId } = await auth();
+  if (!userId) return { ok: false as const, error: "UNAUTHENTICATED" };
+
+  await ensureClerkUserSynced(userId);
+
+  const superAdminOrg = await readSuperAdminOrgCookie();
+  const ctx = await getCurrentActorContext(makeApplicationDeps(), {
+    superAdminActiveClerkOrgId: superAdminOrg,
+  });
+  if (ctx.kind !== "authenticated" || !ctx.activeTenantClerkOrgId) {
+    return { ok: false as const, error: "NO_ORG" };
+  }
+
+  const existing = await prisma.meeting.findFirst({
+    where: { id: meetingId, clerkOrgId: ctx.activeTenantClerkOrgId },
+    select: { id: true },
+  });
+  if (!existing) return { ok: false as const, error: "NOT_FOUND" };
+
+  await prisma.meeting.delete({ where: { id: existing.id } });
+
+  revalidatePath("/dashboard/rendez-vous");
+  revalidatePath("/dashboard/analyse");
+  revalidatePath("/dashboard");
+  return { ok: true as const };
+}

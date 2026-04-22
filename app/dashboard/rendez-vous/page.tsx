@@ -35,10 +35,6 @@ export default async function RendezVousPage() {
         <h1 className="text-neutral-950 text-2xl font-semibold tracking-tight dark:text-neutral-50">
           Mes rendez-vous
         </h1>
-        <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
-          Suivez vos entretiens, exportez la liste et enregistrez un transcript
-          pour lancer l’analyse SONCAS / DISC.
-        </p>
       </div>
 
       <RendezVousMeetingsShell meetings={rows} />
