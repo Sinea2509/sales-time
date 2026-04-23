@@ -1,10 +1,5 @@
 import Link from "next/link";
-import {
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-} from "@clerk/nextjs";
+import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Building2, Clock3, ShieldCheck } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,7 +13,6 @@ import { LandingSiteFooter } from "@/components/organisms/landing-site-footer";
 import { LandingSiteHeader } from "@/components/organisms/landing-site-header";
 
 const signInRedirect = "/dashboard";
-const signUpRedirect = "/onboarding";
 
 const features = [
   {
@@ -69,18 +63,21 @@ export function SalesTimeLanding() {
               <span className="text-primary">show up on time</span>
             </h1>
             <p className="text-muted-foreground mx-auto mt-5 max-w-xl text-lg text-pretty sm:text-xl">
-              Sign in or create an account in seconds. Use the modal for a fast
-              flow, or the full page when you prefer more room for SSO and
-              security options.
+              Create your account on the sign-up page, then continue with
+              onboarding. Prefer a quick return visit? Use the modal to sign in.
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               <SignedOut>
-                <SignUpButton mode="modal" forceRedirectUrl={signUpRedirect}>
-                  <Button size="lg" className="min-w-[200px] px-8 shadow-md">
-                    Create free account
-                  </Button>
-                </SignUpButton>
+                <Link
+                  href="/sign-up"
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "inline-flex min-w-[200px] justify-center px-8 shadow-md",
+                  )}
+                >
+                  Create free account
+                </Link>
                 <SignInButton mode="modal" forceRedirectUrl={signInRedirect}>
                   <Button
                     size="lg"
@@ -177,9 +174,9 @@ export function SalesTimeLanding() {
                   <div>
                     <p className="font-medium">Choose how you authenticate</p>
                     <p className="text-muted-foreground mt-1">
-                      Use the modal from this page for a quick email or social
-                      sign-in, or open the full-page flow for password reset and
-                      advanced options.
+                      New accounts use the full sign-up page (SSO and security
+                      options). Returning users can use the modal or the
+                      full-page sign-in for password reset.
                     </p>
                   </div>
                 </li>
@@ -218,11 +215,15 @@ export function SalesTimeLanding() {
               </p>
               <div className="mt-8 flex flex-col gap-3">
                 <SignedOut>
-                  <SignUpButton mode="modal" forceRedirectUrl={signUpRedirect}>
-                    <Button size="lg" className="w-full">
-                      Create account
-                    </Button>
-                  </SignUpButton>
+                  <Link
+                    href="/sign-up"
+                    className={cn(
+                      buttonVariants({ size: "lg" }),
+                      "inline-flex w-full justify-center",
+                    )}
+                  >
+                    Create account
+                  </Link>
                   <SignInButton mode="modal" forceRedirectUrl={signInRedirect}>
                     <Button size="lg" variant="secondary" className="w-full">
                       Sign in to Sales Time

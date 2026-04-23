@@ -1,15 +1,9 @@
 import Link from "next/link";
-import {
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-} from "@clerk/nextjs";
+import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const signInRedirect = "/dashboard";
-const signUpRedirect = "/onboarding";
 
 export function LandingSiteHeader() {
   return (
@@ -35,9 +29,12 @@ export function LandingSiteHeader() {
                 Sign in
               </Button>
             </SignInButton>
-            <SignUpButton mode="modal" forceRedirectUrl={signUpRedirect}>
-              <Button size="sm">Get started</Button>
-            </SignUpButton>
+            <Link
+              href="/sign-up"
+              className={cn(buttonVariants({ size: "sm" }), "shadow-sm")}
+            >
+              Get started
+            </Link>
             <Link
               href="/sign-in"
               className={cn(
