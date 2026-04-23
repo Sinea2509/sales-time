@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import {
@@ -9,9 +10,9 @@ import {
 import { cn } from "@/lib/utils";
 
 const LABELS: Record<StatsWindowDays, string> = {
-  7: "7 jours",
-  30: "30 jours",
-  90: "90 jours",
+  7: "7j",
+  30: "30j",
+  90: "90j",
 };
 
 export function DashboardStatsPeriodSelect(props: {
@@ -26,9 +27,9 @@ export function DashboardStatsPeriodSelect(props: {
   const [pending, startTransition] = useTransition();
 
   return (
-    <label
+    <div
       className={cn(
-        "flex items-center gap-2 text-sm whitespace-nowrap",
+        "relative inline-flex items-center text-sm whitespace-nowrap",
         dark ? "text-zinc-400" : "text-muted-foreground",
       )}
     >
@@ -36,11 +37,11 @@ export function DashboardStatsPeriodSelect(props: {
       <select
         aria-label="Période des statistiques (jours glissants)"
         className={cn(
-          "h-9 min-w-[9.5rem] rounded-md border px-2.5 py-1 text-sm shadow-xs outline-none",
-          "focus-visible:ring-[3px] disabled:opacity-60",
+          "h-8 appearance-none bg-transparent pr-5 pl-1 text-sm font-medium outline-none",
+          "focus-visible:ring-[0] disabled:opacity-60",
           dark
-            ? "border-zinc-700 bg-zinc-900 text-zinc-100 focus-visible:border-violet-500 focus-visible:ring-violet-500/30"
-            : "border-input bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50",
+            ? "text-zinc-200"
+            : "text-foreground",
         )}
         value={String(props.value)}
         disabled={pending}
@@ -59,6 +60,12 @@ export function DashboardStatsPeriodSelect(props: {
           </option>
         ))}
       </select>
-    </label>
+      <ChevronDown
+        className={cn(
+          "pointer-events-none absolute right-0 size-4",
+          dark ? "text-zinc-400" : "text-muted-foreground",
+        )}
+      />
+    </div>
   );
 }

@@ -28,7 +28,7 @@ export function DashboardHomeShell({ home }: { home: OrgDashboardHome }) {
     <div className="space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-foreground text-lg font-medium tracking-tight">
-          Mes statistiques
+          Mes KPI opérationnels
         </h2>
         <Suspense
           fallback={
@@ -39,7 +39,7 @@ export function DashboardHomeShell({ home }: { home: OrgDashboardHome }) {
         </Suspense>
       </div>
 
-      <DashboardKpiCards home={home} />
+      <DashboardKpiCards home={home} showGlobalNote={false} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <Link

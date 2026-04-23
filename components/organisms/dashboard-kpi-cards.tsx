@@ -4,7 +4,7 @@ import {
   Banknote,
   Box,
   Clock,
-  Star,
+  Sparkles,
   Wallet,
 } from "lucide-react";
 import { ESTIMATED_TAM_EUR_PER_RDV } from "@/lib/dashboard-estimates";
@@ -88,7 +88,13 @@ function TucDeltaPill({ points }: { points: number | null }) {
   );
 }
 
-export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
+export function DashboardKpiCards({
+  home,
+  showGlobalNote = true,
+}: {
+  home: OrgDashboardHome;
+  showGlobalNote?: boolean;
+}) {
   const heroIsDuration = home.avgDurationMin != null;
   const heroTrend = heroIsDuration
     ? home.avgDurationTrendPercent
@@ -97,87 +103,65 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
     ? "down-good"
     : "up-good";
 
+  const HeroIcon = heroIsDuration ? Clock : Banknote;
+  const heroLabel = heroIsDuration ? "Temps moyen RDV" : "TAM cumulé";
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <div className="relative overflow-hidden rounded-2xl border border-violet-900/40 bg-gradient-to-br from-violet-950 via-zinc-950 to-zinc-950 p-5 text-white shadow-lg">
-        <div className="absolute end-3 top-3">
-          <TrendPercentPill percent={heroTrend} mode={heroTrendMode} />
-        </div>
-        <div className="flex items-start gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-500/25 ring-1 ring-violet-400/30">
-            {heroIsDuration ? (
-              <Clock className="size-5 text-violet-200" />
-            ) : (
-              <Banknote className="size-5 text-violet-200" />
-            )}
-          </div>
-          <div className="min-w-0 pt-0.5">
-            <p className="text-sm font-medium text-violet-200/90">
-              {heroIsDuration ? "Temps moyen RDV" : "TAM cumulé"}
-            </p>
-            <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">
-              {heroIsDuration
-                ? formatDurationHoursMinutes(home.avgDurationMin!)
-                : eurFormatter.format(home.tamCumuleEur)}
-            </p>
-            {heroIsDuration ? (
-              <p className="text-violet-300/80 mt-1 text-xs">
-                TAM estimé :{" "}
-                <span className="font-medium text-white">
-                  {eurFormatter.format(home.tamCumuleEur)}
-                </span>
-              </p>
-            ) : (
-              <p className="text-violet-300/80 mt-1 text-xs">
-                {eurFormatter.format(ESTIMATED_TAM_EUR_PER_RDV)} / RDV ·{" "}
-                {home.statsWindowDays} jours
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+    <div
+      className={cn(
+        "grid gap-4 sm:grid-cols-2",
+        showGlobalNote ? "xl:grid-cols-4" : "xl:grid-cols-3",
+      )}
+    >
+      <KpiCard
+        icon={HeroIcon}
+        label={heroLabel}
+        trend={<TrendPercentPill percent={heroTrend} mode={heroTrendMode} />}
+        footer={
+          heroIsDuration ? (
+            <>
+              TAM estimé :{" "}
+              <span className="text-foreground font-medium">
+                {eurFormatter.format(home.tamCumuleEur)}
+              </span>
+            </>
+          ) : (
+            <>
+              {eurFormatter.format(ESTIMATED_TAM_EUR_PER_RDV)} / RDV ·{" "}
+              {home.statsWindowDays} jours
+            </>
+          )
+        }
+      >
+        {heroIsDuration
+          ? formatDurationHoursMinutes(home.avgDurationMin!)
+          : eurFormatter.format(home.tamCumuleEur)}
+      </KpiCard>
 
-      <div className="rounded-2xl border border-zinc-200/10 bg-white p-5 text-zinc-900 shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-500/20">
-            <Box className="size-5 text-violet-600 dark:text-violet-300" />
-          </div>
+      <KpiCard
+        icon={Box}
+        label="Nb de rdvs"
+        trend={
           <TrendPercentPill percent={home.nbRdvsTrendPercent} mode="up-good" />
-        </div>
-        <p className="text-muted-foreground mt-4 text-sm font-medium dark:text-zinc-400">
-          Nb de rdvs
-        </p>
-        <p className="mt-1 text-3xl font-semibold tabular-nums">{home.nbRdvs}</p>
-      </div>
+        }
+      >
+        {home.nbRdvs}
+      </KpiCard>
 
-      <div className="rounded-2xl border border-zinc-200/10 bg-white p-5 text-zinc-900 shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-500/20">
-            <Wallet className="size-5 text-violet-600 dark:text-violet-300" />
-          </div>
-          <TucDeltaPill points={home.tucTrendPoints} />
-        </div>
-        <p className="text-muted-foreground mt-4 text-sm font-medium dark:text-zinc-400">
-          TUC optimisé
-        </p>
-        <p className="mt-1 text-3xl font-semibold tabular-nums">
-          {home.tucOptimisePercent === null
-            ? "—"
-            : `${home.tucOptimisePercent}%`}
-        </p>
-      </div>
+      <KpiCard
+        icon={Wallet}
+        label="TUC optimisé"
+        trend={<TucDeltaPill points={home.tucTrendPoints} />}
+      >
+        {home.tucOptimisePercent === null ? "—" : `${home.tucOptimisePercent}%`}
+      </KpiCard>
 
-      <div className="rounded-2xl border border-zinc-200/10 bg-white p-5 text-zinc-900 shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20">
-            <Star className="size-5 text-amber-600 dark:text-amber-300" />
-          </div>
-          <TucDeltaPill points={home.noteGlobaleTrendPoints} />
-        </div>
-        <p className="text-muted-foreground mt-4 text-sm font-medium dark:text-zinc-400">
-          Note globale
-        </p>
-        <p className="mt-1 text-3xl font-semibold tabular-nums">
+      {showGlobalNote ? (
+        <KpiCard
+          icon={Sparkles}
+          label="Note globale"
+          trend={<TucDeltaPill points={home.noteGlobaleTrendPoints} />}
+        >
           {home.noteGlobaleOn5 === null ? (
             "—"
           ) : (
@@ -188,8 +172,44 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
               </span>
             </>
           )}
-        </p>
+        </KpiCard>
+      ) : null}
+    </div>
+  );
+}
+
+function KpiCard({
+  icon: Icon,
+  label,
+  trend,
+  children,
+  footer,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  trend?: React.ReactNode;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-zinc-200/10 bg-white p-5 text-zinc-900 shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#6C4DFF]/10 dark:bg-[#6C4DFF]/20">
+            <Icon className="size-4 text-[#6C4DFF] dark:text-[#c4b5fd]" />
+          </div>
+          <p className="text-muted-foreground truncate text-sm font-medium dark:text-zinc-400">
+            {label}
+          </p>
+        </div>
+        {trend}
       </div>
+      <p className="mt-4 text-3xl font-semibold tabular-nums">{children}</p>
+      {footer ? (
+        <p className="text-muted-foreground mt-1 text-xs dark:text-zinc-400">
+          {footer}
+        </p>
+      ) : null}
     </div>
   );
 }

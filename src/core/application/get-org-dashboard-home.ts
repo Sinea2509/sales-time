@@ -63,8 +63,9 @@ export async function getOrgDashboardHome(
     nbRdvsPrev,
     avgDurationMin,
     avgDurationPrev,
+    kpiMeetingsCurrent,
+    kpiMeetingsPrev,
     recentMeetings,
-    recentMeetingsPrev,
   ] = await Promise.all([
     deps.meetings.countMeetingsWithMeetingAtSince({
       clerkOrgId: input.clerkOrgId,
@@ -86,25 +87,28 @@ export async function getOrgDashboardHome(
     }),
     deps.meetings.listRecentMeetingsForDashboard({
       clerkOrgId: input.clerkOrgId,
-      limit: RECENT_LIMIT,
       meetingAtSince: sinceCurrent,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
       clerkOrgId: input.clerkOrgId,
-      limit: RECENT_LIMIT,
       meetingAtSince: sincePrev,
       meetingAtBefore: sinceCurrent,
+    }),
+    deps.meetings.listRecentMeetingsForDashboard({
+      clerkOrgId: input.clerkOrgId,
+      limit: RECENT_LIMIT,
+      meetingAtSince: sinceCurrent,
     }),
   ]);
 
   const tamCumuleEur = nbRdvs * ESTIMATED_TAM_EUR_PER_RDV;
   const tamPrevEur = nbRdvsPrev * ESTIMATED_TAM_EUR_PER_RDV;
 
-  const tucOptimisePercent = tucPercentForMeetings(recentMeetings);
-  const tucPrevPercent = tucPercentForMeetings(recentMeetingsPrev);
+  const tucOptimisePercent = tucPercentForMeetings(kpiMeetingsCurrent);
+  const tucPrevPercent = tucPercentForMeetings(kpiMeetingsPrev);
 
-  const noteGlobaleOn5 = noteGlobaleOn5ForMeetings(recentMeetings);
-  const noteGlobalePrevOn5 = noteGlobaleOn5ForMeetings(recentMeetingsPrev);
+  const noteGlobaleOn5 = noteGlobaleOn5ForMeetings(kpiMeetingsCurrent);
+  const noteGlobalePrevOn5 = noteGlobaleOn5ForMeetings(kpiMeetingsPrev);
 
   const nbRdvsTrendPercent = percentChangeVsPrevious(nbRdvs, nbRdvsPrev);
   const tamTrendPercent = percentChangeVsPrevious(tamCumuleEur, tamPrevEur);

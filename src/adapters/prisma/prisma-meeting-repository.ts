@@ -229,7 +229,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
 
   async listRecentMeetingsForDashboard(input: {
     clerkOrgId: string;
-    limit: number;
+    limit?: number;
     meetingAtSince?: Date;
     meetingAtBefore?: Date;
   }): Promise<RecentMeetingListRow[]> {
@@ -250,7 +250,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
           : {}),
       },
       orderBy: { createdAt: "desc" },
-      take: input.limit,
+      ...(input.limit != null ? { take: input.limit } : {}),
       include: {
         seller: { select: { email: true } },
         analyses: {

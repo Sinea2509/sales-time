@@ -102,7 +102,7 @@ export interface MeetingRepositoryPort {
 
   listRecentMeetingsForDashboard(input: {
     clerkOrgId: string;
-    limit: number;
+    limit?: number;
     /** Si défini : RDV dont la date de rendez-vous est >= ce jour (fenêtre KPI). */
     meetingAtSince?: Date;
     /** Borne haute exclusive sur `meetingAt` (fenêtre précédente). */
