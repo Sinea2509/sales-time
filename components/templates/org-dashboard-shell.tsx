@@ -3,12 +3,14 @@
 import { OrganizationSwitcher } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   BarChart3,
   CalendarDays,
   LayoutDashboard,
+  Settings2,
+  X,
   Shield,
-  UserCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,6 +31,7 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { DashboardHeader } from "@/components/organisms/dashboard-header";
 import { cn } from "@/lib/utils";
+import type { DashboardRoleMode } from "@/src/core/domain/authorization-policy";
 
 type NavItem = {
   href: string;
@@ -37,30 +40,46 @@ type NavItem = {
   match?: "exact" | "prefix";
 };
 
-const mainNav: NavItem[] = [
-  {
-    href: "/dashboard",
-    label: "Tableau de bord",
-    icon: LayoutDashboard,
-    match: "exact",
-  },
-];
+function mainNavItems(): NavItem[] {
+  return [
+    {
+      href: "/dashboard",
+      label: "Tableau de bord",
+      icon: LayoutDashboard,
+      match: "exact",
+    },
+  ];
+}
 
-const orgProductNav: NavItem[] = [
-  {
-    href: "/dashboard/rendez-vous",
-    label: "Mes rendez-vous",
-    icon: CalendarDays,
-  },
-  {
-    href: "/dashboard/analyse",
-    label: "Analyse",
-    icon: BarChart3,
-  },
-];
+function orgProductNavItems(role: DashboardRoleMode | null): NavItem[] {
+  const isAdmin = role === "admin";
+  return [
+    {
+      href: "/dashboard/rendez-vous",
+      label: isAdmin ? "Rendez-vous (équipe)" : "Mes rendez-vous",
+      icon: CalendarDays,
+    },
+    {
+      href: "/dashboard/analyse",
+      label: isAdmin ? "Analyse (équipe)" : "Mon analyse",
+      icon: BarChart3,
+    },
+  ];
+}
+
+function orgAdminNavItems(role: DashboardRoleMode | null): NavItem[] {
+  if (role !== "admin") return [];
+  return [
+    {
+      href: "/dashboard/settings",
+      label: "Paramètres org.",
+      icon: Settings2,
+      match: "prefix",
+    },
+  ];
+}
 
 const footerNav: NavItem[] = [
-  { href: "/dashboard/account", label: "Compte", icon: UserCircle },
   {
     href: "/dashboard/super-admin",
     label: "Super admin",
@@ -74,6 +93,8 @@ type OrgDashboardShellProps = {
   isElevatedSuperAdmin: boolean;
   elevatedClerkOrgId: string | null;
   activeTenantClerkOrgId: string | null;
+  dashboardRoleMode: DashboardRoleMode | null;
+  analysesUsed: number;
 };
 
 function navActive(pathname: string, item: NavItem) {
@@ -89,8 +110,32 @@ export function OrgDashboardShell({
   isElevatedSuperAdmin,
   elevatedClerkOrgId,
   activeTenantClerkOrgId,
+  dashboardRoleMode,
+  analysesUsed,
 }: OrgDashboardShellProps) {
   const pathname = usePathname();
+  const mainNav = mainNavItems();
+  const orgProductNav = orgProductNavItems(dashboardRoleMode);
+  const orgAdminNav = orgAdminNavItems(dashboardRoleMode);
+  const [showQuotaPopup, setShowQuotaPopup] = useState(false);
+  const freeAnalysesLimit = 5;
+  const quotaReached = analysesUsed >= freeAnalysesLimit;
+  const progressPercent = Math.min(
+    100,
+    Math.max(0, (analysesUsed / freeAnalysesLimit) * 100),
+  );
+
+  useEffect(() => {
+    if (!quotaReached) {
+      setShowQuotaPopup(false);
+      return;
+    }
+    const alreadySeen = sessionStorage.getItem("quota-popup-seen") === "1";
+    if (!alreadySeen) {
+      setShowQuotaPopup(true);
+      sessionStorage.setItem("quota-popup-seen", "1");
+    }
+  }, [quotaReached]);
 
   return (
     <SidebarProvider defaultOpen>
@@ -174,12 +219,40 @@ export function OrgDashboardShell({
             </SidebarGroupContent>
           </SidebarGroup>
 
+          {orgAdminNav.length > 0 ? (
+            <>
+              <SidebarSeparator />
+              <SidebarGroup>
+                <SidebarGroupLabel>Organisation</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {orgAdminNav.map((item) => {
+                      const Icon = item.icon;
+                      const active = navActive(pathname, item);
+                      return (
+                        <SidebarMenuItem key={item.href}>
+                          <SidebarMenuButton
+                            isActive={active}
+                            render={<Link href={item.href} />}
+                          >
+                            <Icon />
+                            <span>{item.label}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </>
+          ) : null}
+
           {!activeTenantClerkOrgId ? (
             <>
               <SidebarSeparator />
               <p className="text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden px-4 pb-2 text-xs leading-snug">
-                Choisissez une organisation pour accéder à Mes rendez-vous et
-                Analyse.
+                Choisissez une organisation pour accéder aux rendez-vous et à
+                l’analyse.
               </p>
             </>
           ) : null}
@@ -194,21 +267,17 @@ export function OrgDashboardShell({
               <p className="mt-1 text-xs leading-snug text-[#404040]">
                 Plus que 5 analyses — passez au plan pour continuer
               </p>
-              <div className="mt-3 space-y-1.5">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#404040]/20">
+              <div className="mt-3">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#171717]/20">
                   <div
                     className="h-full rounded-full bg-[#6C4DFF]"
-                    style={{ width: "100%" }}
+                    style={{ width: `${progressPercent}%` }}
                     aria-hidden
                   />
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-[#404040]">
-                  <span>0</span>
-                  <span>5</span>
-                </div>
               </div>
               <Link
-                href="/dashboard/account"
+                href="/plan"
                 className={cn(
                   buttonVariants({ size: "sm" }),
                   "mt-3 h-8 w-full rounded-md bg-[#6C4DFF] px-3 text-xs text-white hover:bg-[#5a3fd9]",
@@ -249,6 +318,54 @@ export function OrgDashboardShell({
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
+
+      {showQuotaPopup ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-5 shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-[#171717] dark:text-neutral-100">
+                  Quota d&apos;analyses atteint
+                </h3>
+                <p className="mt-1 text-sm text-[#404040] dark:text-neutral-300">
+                  Vos 5 analyses gratuites sont utilisees. Book a meeting with
+                  Cedric pour debloquer la suite.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowQuotaPopup(false)}
+                className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                aria-label="Fermer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "h-8 rounded-md",
+                )}
+                onClick={() => setShowQuotaPopup(false)}
+              >
+                Fermer
+              </button>
+              <Link
+                href="/plan"
+                className={cn(
+                  buttonVariants({ size: "sm" }),
+                  "h-8 rounded-md bg-[#6C4DFF] text-white hover:bg-[#5a3fd9]",
+                )}
+                onClick={() => setShowQuotaPopup(false)}
+              >
+                Book a meeting with Cedric
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <SidebarInset className="bg-[var(--app-shell-surface)] min-h-svh">
         <DashboardHeader

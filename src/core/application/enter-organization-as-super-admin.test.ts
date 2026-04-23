@@ -3,7 +3,11 @@ import { enterOrganizationAsSuperAdmin } from "./enter-organization-as-super-adm
 
 describe("enterOrganizationAsSuperAdmin", () => {
   it("returns NOT_SUPER_ADMIN when user lacks system role", async () => {
-    const auth = { getClerkUserId: vi.fn().mockResolvedValue("user_1") };
+    const auth = {
+      getClerkUserId: vi.fn().mockResolvedValue("user_1"),
+      getClerkOrganizationId: vi.fn().mockResolvedValue(null),
+      getClerkOrganizationRole: vi.fn().mockResolvedValue(null),
+    };
     const users = {
       findByClerkUserId: vi.fn().mockResolvedValue({
         id: "int_1",
@@ -23,7 +27,11 @@ describe("enterOrganizationAsSuperAdmin", () => {
   });
 
   it("writes audit log when super admin enters org", async () => {
-    const auth = { getClerkUserId: vi.fn().mockResolvedValue("user_1") };
+    const auth = {
+      getClerkUserId: vi.fn().mockResolvedValue("user_1"),
+      getClerkOrganizationId: vi.fn().mockResolvedValue(null),
+      getClerkOrganizationRole: vi.fn().mockResolvedValue(null),
+    };
     const users = {
       findByClerkUserId: vi.fn().mockResolvedValue({
         id: "int_1",

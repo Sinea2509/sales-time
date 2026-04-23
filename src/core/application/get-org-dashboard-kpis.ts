@@ -6,7 +6,8 @@ import type { MeetingAnalysisRow } from "@/src/core/ports/meeting-repository-por
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 
 export type OrgDashboardKpis = {
-  meetingsLast30d: number;
+  /** Nombre de RDV dans la fenêtre [`meetingAtSince`, maintenant). */
+  meetingsInWindow: number;
   winRatePercent: number | null;
   soncasDominantCounts: Record<
     | "securite"
@@ -36,21 +37,30 @@ function latestPerMeeting(
 
 export async function getOrgDashboardKpis(
   deps: { meetings: MeetingRepositoryPort },
-  input: { clerkOrgId: string | null },
+  input: {
+    clerkOrgId: string | null;
+    meetingAtSince: Date;
+    sellerUserId?: string | null;
+  },
 ): Promise<OrgDashboardKpis | null> {
   if (!input.clerkOrgId) return null;
 
-  const since = new Date();
-  since.setDate(since.getDate() - 30);
+  const since = input.meetingAtSince;
+  const seller =
+    input.sellerUserId != null && input.sellerUserId !== ""
+      ? input.sellerUserId
+      : undefined;
 
   const total = await deps.meetings.countMeetingsWithMeetingAtSince({
     clerkOrgId: input.clerkOrgId,
     since,
+    sellerUserId: seller,
   });
   const won = await deps.meetings.countMeetingsWithMeetingAtSinceAndOutcome({
     clerkOrgId: input.clerkOrgId,
     since,
     outcome: "WON",
+    sellerUserId: seller,
   });
 
   const winRatePercent =
@@ -60,6 +70,7 @@ export async function getOrgDashboardKpis(
     clerkOrgId: input.clerkOrgId,
     meetingAtSince: since,
     kinds: ["SONCAS", "DISC"],
+    sellerUserId: seller,
   });
 
   const soncasLatest = latestPerMeeting(analyses, "SONCAS");
@@ -96,7 +107,7 @@ export async function getOrgDashboardKpis(
   }
 
   return {
-    meetingsLast30d: total,
+    meetingsInWindow: total,
     winRatePercent,
     soncasDominantCounts,
     discDominantCounts,

@@ -40,10 +40,18 @@ export default async function DashboardLayout({
     superAdminActiveClerkOrgId: superAdminOrgCookie,
   });
 
+  const analysesUsed =
+    actor.kind === "authenticated" && actor.activeTenantClerkOrgId
+      ? await prisma.meetingAnalysis.count({
+          where: { meeting: { clerkOrgId: actor.activeTenantClerkOrgId } },
+        })
+      : 0;
+
   return (
     <AuthenticatedAppShell
       actor={actor}
       superAdminOrgCookie={superAdminOrgCookie}
+      analysesUsed={analysesUsed}
     >
       {children}
     </AuthenticatedAppShell>

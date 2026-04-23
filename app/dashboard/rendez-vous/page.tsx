@@ -13,9 +13,20 @@ export default async function RendezVousPage() {
   }
 
   const deps = makeApplicationDeps();
+  const isAdmin = actor.dashboardRoleMode === "admin";
+  const sellerScope =
+    actor.dashboardRoleMode === "member"
+      ? (actor.internalUserId ?? undefined)
+      : undefined;
+
+  if (actor.dashboardRoleMode === "member" && !actor.internalUserId) {
+    redirect("/dashboard");
+  }
+
   const meetings = await deps.meetings.listRecentMeetingsForDashboard({
     clerkOrgId: actor.activeTenantClerkOrgId,
     limit: 200,
+    sellerUserId: sellerScope,
   });
 
   const rows = meetings.map((m) => ({
@@ -33,11 +44,11 @@ export default async function RendezVousPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-neutral-950 text-2xl font-semibold tracking-tight dark:text-neutral-50">
-          Mes rendez-vous
+          {isAdmin ? "Rendez-vous (équipe)" : "Mes rendez-vous"}
         </h1>
       </div>
 
-      <RendezVousMeetingsShell meetings={rows} />
+      <RendezVousMeetingsShell meetings={rows} showSellerColumn={isAdmin} />
     </div>
   );
 }

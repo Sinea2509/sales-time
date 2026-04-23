@@ -4,6 +4,7 @@ export type MeetingRow = {
   id: string;
   clerkOrgId: string;
   sellerUserId: string;
+  personId: string;
   prospectName: string;
   meetingAt: Date;
   durationMin: number | null;
@@ -30,6 +31,19 @@ export type RecentMeetingListRow = MeetingRow & {
   hasDisc: boolean;
   /** Moyenne des scores SONCAS (6 leviers), si analyse présente. */
   salesScore: number | null;
+  /** Dernier résultat SONCAS brut (agrégations admin / radar équipe). */
+  latestSoncasResult?: unknown | null;
+};
+
+/** Per-person rollup for outreach / Person360 lists. */
+export type PersonOutreachSummaryRow = {
+  personId: string;
+  displayName: string;
+  meetingCount: number;
+  lastMeetingAt: Date;
+  lastOutcome: MeetingOutcome;
+  avgDurationMin: number | null;
+  outreachPriorityScore: number;
 };
 
 export interface MeetingRepositoryPort {
@@ -71,18 +85,21 @@ export interface MeetingRepositoryPort {
   countMeetingsWithMeetingAtSince(input: {
     clerkOrgId: string;
     since: Date;
+    sellerUserId?: string;
   }): Promise<number>;
 
   countMeetingsWithMeetingAtSinceAndOutcome(input: {
     clerkOrgId: string;
     since: Date;
     outcome: MeetingOutcome;
+    sellerUserId?: string;
   }): Promise<number>;
 
   listAnalysesForOrgMeetingsSince(input: {
     clerkOrgId: string;
     meetingAtSince: Date;
     kinds: Array<"SONCAS" | "DISC">;
+    sellerUserId?: string;
   }): Promise<MeetingAnalysisRow[]>;
 
   countMeetingsForOrg(input: { clerkOrgId: string }): Promise<number>;
@@ -91,6 +108,7 @@ export interface MeetingRepositoryPort {
     clerkOrgId: string;
     meetingAtGte: Date;
     meetingAtLt: Date;
+    sellerUserId?: string;
   }): Promise<number>;
 
   /** Moyenne de `durationMin` (non null) sur la fenêtre [gte, lt) ou [gte, +∞). */
@@ -98,6 +116,7 @@ export interface MeetingRepositoryPort {
     clerkOrgId: string;
     meetingAtGte: Date;
     meetingAtLt?: Date;
+    sellerUserId?: string;
   }): Promise<number | null>;
 
   listRecentMeetingsForDashboard(input: {
@@ -107,5 +126,15 @@ export interface MeetingRepositoryPort {
     meetingAtSince?: Date;
     /** Borne haute exclusive sur `meetingAt` (fenêtre précédente). */
     meetingAtBefore?: Date;
+    /** Inclut `latestSoncasResult` pour agrégations (radar SONCAS équipe). */
+    includeLatestSoncasResult?: boolean;
+    /** Scope to one seller (member role). */
+    sellerUserId?: string;
   }): Promise<RecentMeetingListRow[]>;
+
+  listPersonOutreachSummaries(input: {
+    clerkOrgId: string;
+    sellerUserId?: string;
+    limit?: number;
+  }): Promise<PersonOutreachSummaryRow[]>;
 }

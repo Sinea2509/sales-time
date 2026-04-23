@@ -5,12 +5,14 @@ import { OrgDashboardShell } from "@/components/templates/org-dashboard-shell";
 type Props = {
   actor: ActorContext;
   superAdminOrgCookie: string | null;
+  analysesUsed: number;
   children: React.ReactNode;
 };
 
 export function AuthenticatedAppShell({
   actor,
   superAdminOrgCookie,
+  analysesUsed,
   children,
 }: Props) {
   const showSuperAdminNav =
@@ -27,6 +29,8 @@ export function AuthenticatedAppShell({
         isElevatedSuperAdmin={isElevatedSuperAdmin}
         elevatedClerkOrgId={superAdminOrgCookie}
         activeTenantClerkOrgId={actor.activeTenantClerkOrgId}
+        dashboardRoleMode={actor.dashboardRoleMode}
+        analysesUsed={analysesUsed}
       >
         {children}
       </OrgDashboardShell>

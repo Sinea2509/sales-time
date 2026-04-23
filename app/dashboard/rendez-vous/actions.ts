@@ -100,6 +100,11 @@ export async function deleteMeetingAction(meetingId: string) {
 
   await ensureClerkUserSynced(userId);
 
+  const userRow = await prisma.user.findUnique({
+    where: { clerkUserId: userId },
+  });
+  if (!userRow) return { ok: false as const, error: "NO_USER" };
+
   const superAdminOrg = await readSuperAdminOrgCookie();
   const ctx = await getCurrentActorContext(makeApplicationDeps(), {
     superAdminActiveClerkOrgId: superAdminOrg,
@@ -110,9 +115,15 @@ export async function deleteMeetingAction(meetingId: string) {
 
   const existing = await prisma.meeting.findFirst({
     where: { id: parsedId.data, clerkOrgId: ctx.activeTenantClerkOrgId },
-    select: { id: true },
+    select: { id: true, sellerUserId: true },
   });
   if (!existing) return { ok: false as const, error: "NOT_FOUND" };
+
+  if (!ctx.canManageOrganization) {
+    if (existing.sellerUserId !== userRow.id) {
+      return { ok: false as const, error: "FORBIDDEN" };
+    }
+  }
 
   await prisma.meeting.delete({ where: { id: existing.id } });
 

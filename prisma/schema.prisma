@@ -26,6 +26,11 @@ enum AnalysisKind {
   DISC
 }
 
+enum OnboardingSharedPhraseKind {
+  OBJECTION
+  ARGUMENT
+}
+
 model User {
   id          String   @id @default(cuid())
   clerkUserId String   @unique
@@ -38,9 +43,51 @@ model User {
   onboardingProfile        OnboardingProfile?
   meetingsAsSeller         Meeting[]                 @relation("MeetingSeller")
   promptTemplateVersions   PromptTemplateVersion[]
+  onboardingPhrasesCreated OnboardingSharedPhrase[] @relation("OnboardingPhraseAuthor")
+}
+
+/// Phrases d’objections / arguments partagées entre tous les utilisateurs (onboarding Coach IA).
+model OnboardingSharedPhrase {
+  id              String                     @id @default(cuid())
+  kind            OnboardingSharedPhraseKind
+  text            String                     @db.VarChar(500)
+  normalizedText  String                     @db.VarChar(500)
+  createdByUserId String?
+  createdBy       User?                      @relation("OnboardingPhraseAuthor", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime                   @default(now())
+
+  @@unique([kind, normalizedText])
+  @@index([kind, createdAt])
 }
 
 /// Admin onboarding wizard (design: Onboarding admin.pdf) — post–Clerk sign-up.
+/// Configuration partagée au niveau de l’organisation (Clerk org id).
+/// Éditable par les org admins depuis /dashboard/settings.
+model OrganizationSettings {
+  id         String @id @default(cuid())
+  clerkOrgId String @unique
+
+  // Contexte (aligné sur l’onboarding admin)
+  companyName           String?
+  industrySector        String?
+  commercialTeamSize    String?
+  averageSalesCycle     String?
+  averageDealSize       String?
+
+  // Coach IA
+  companyPitch       String? @db.Text
+  objections         Json?
+  keyArguments       Json?
+  industryVocabulary String? @db.Text
+
+  // Process
+  meetingTypes   Json?
+  pipelineStages Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model OnboardingProfile {
   id     String @id @default(cuid())
   userId String @unique
@@ -96,11 +143,27 @@ model SuperAdminAuditLog {
   @@index([clerkOrgId])
 }
 
+/// Canonical contact per organization (deduped by normalized display key).
+model Person {
+  id            String    @id @default(cuid())
+  clerkOrgId    String
+  displayName   String
+  normalizedKey String
+  meetings      Meeting[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([clerkOrgId, normalizedKey])
+  @@index([clerkOrgId])
+}
+
 model Meeting {
   id           String         @id @default(cuid())
   clerkOrgId   String
   sellerUserId String
   seller       User           @relation("MeetingSeller", fields: [sellerUserId], references: [id], onDelete: Cascade)
+  personId     String
+  person       Person         @relation(fields: [personId], references: [id], onDelete: Restrict)
   prospectName String
   meetingAt    DateTime
   durationMin  Int?
@@ -113,6 +176,8 @@ model Meeting {
 
   @@index([clerkOrgId])
   @@index([sellerUserId])
+  @@index([clerkOrgId, sellerUserId])
+  @@index([personId])
 }
 
 model MeetingAnalysis {

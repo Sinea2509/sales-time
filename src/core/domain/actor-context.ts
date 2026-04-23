@@ -1,3 +1,4 @@
+import type { DashboardRoleMode } from "./authorization-policy";
 import type { SystemRoleType } from "./system-role-type";
 
 /** Clerk organization role slug (defaults: org:admin | org:member). */
@@ -18,4 +19,9 @@ export type ActorContext =
       superAdminActiveClerkOrgId: string | null;
       canManageOrganization: boolean;
       isElevatedSuperAdmin: boolean;
+      /**
+       * Admin = org-wide aggregates / management UI; member = seller-scoped.
+       * Null when no tenant org is active.
+       */
+      dashboardRoleMode: DashboardRoleMode | null;
     };

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveActorAuthorization } from "./authorization-policy";
+import {
+  resolveActorAuthorization,
+  resolveDashboardRoleMode,
+} from "./authorization-policy";
 
 describe("resolveActorAuthorization", () => {
   it("grants org admin when session role is org:admin for session org", () => {
@@ -46,5 +49,34 @@ describe("resolveActorAuthorization", () => {
     expect(r.activeTenantClerkOrgId).toBe("org_1");
     expect(r.isElevatedSuperAdmin).toBe(false);
     expect(r.canManageOrganization).toBe(false);
+  });
+});
+
+describe("resolveDashboardRoleMode", () => {
+  it("returns null when no tenant org", () => {
+    expect(
+      resolveDashboardRoleMode({
+        activeTenantClerkOrgId: null,
+        canManageOrganization: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("returns admin when tenant active and can manage", () => {
+    expect(
+      resolveDashboardRoleMode({
+        activeTenantClerkOrgId: "org_1",
+        canManageOrganization: true,
+      }),
+    ).toBe("admin");
+  });
+
+  it("returns member when tenant active but cannot manage", () => {
+    expect(
+      resolveDashboardRoleMode({
+        activeTenantClerkOrgId: "org_1",
+        canManageOrganization: false,
+      }),
+    ).toBe("member");
   });
 });

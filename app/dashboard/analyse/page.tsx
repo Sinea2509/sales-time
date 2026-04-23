@@ -13,6 +13,7 @@ import {
   type AnalyseTopMeetingRow,
 } from "@/components/organisms/analyse-top-meetings-table";
 import { MeetingMatrixScatter } from "@/components/organisms/meeting-matrix-scatter";
+import { OrgSoncasRadar } from "@/components/organisms/org-soncas-radar";
 import { SalesProfileRadar } from "@/components/organisms/sales-profile-radar";
 import {
   Card,
@@ -24,8 +25,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ESTIMATED_TAM_EUR_PER_RDV } from "@/lib/dashboard-estimates";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
-import { parseStatsWindowDays } from "@/lib/dashboard-stats-window";
+import {
+  meetingAtSinceForStatsWindow,
+  parseStatsWindowDays,
+} from "@/lib/dashboard-stats-window";
+import { averageSoncasDriverScores } from "@/lib/org-soncas-team-aggregate";
 import { makeApplicationDeps } from "@/src/adapters/composition";
+import {
+  buildOrgAdminImprovementBullets,
+  buildOrgAdminProgressBullets,
+  ORG_ADMIN_DASHBOARD_MEETING_CAP,
+} from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 
 export const dynamic = "force-dynamic";
@@ -40,18 +50,46 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     redirect("/dashboard");
   }
 
+  if (actor.dashboardRoleMode === "member" && !actor.internalUserId) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold tracking-tight">Analyse</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Compte</CardTitle>
+            <CardDescription>
+              Profil utilisateur non synchronisé — impossible de charger votre
+              analyse personnelle.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
   const sp = searchParams != null ? await searchParams : {};
   const statsWindowDays = parseStatsWindowDays(sp.jours);
 
   const deps = makeApplicationDeps();
+  const isOrgAdmin = actor.dashboardRoleMode === "admin";
+  const sinceWindow = meetingAtSinceForStatsWindow(statsWindowDays);
+  const sellerScope =
+    actor.dashboardRoleMode === "member"
+      ? (actor.internalUserId ?? undefined)
+      : undefined;
+
   const [home, meetings] = await Promise.all([
     getOrgDashboardHome(deps, {
       clerkOrgId: actor.activeTenantClerkOrgId,
       statsWindowDays,
+      sellerUserId: sellerScope,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
       clerkOrgId: actor.activeTenantClerkOrgId,
-      limit: 200,
+      limit: isOrgAdmin ? ORG_ADMIN_DASHBOARD_MEETING_CAP : 200,
+      meetingAtSince: sinceWindow,
+      includeLatestSoncasResult: isOrgAdmin,
+      sellerUserId: sellerScope,
     }),
   ]);
 
@@ -73,13 +111,25 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
 
   const totalMeetings = meetings.length;
 
-  const matrixPoints = meetings.map((m) => ({
+  const matrixSource = isOrgAdmin ? meetings.slice(0, 200) : meetings;
+  const matrixPoints = matrixSource.map((m) => ({
     id: m.id,
     prospectName: m.prospectName,
     salesScore: m.salesScore,
     potentialEur: ESTIMATED_TAM_EUR_PER_RDV,
     outcome: m.outcome,
   }));
+
+  const soncasForRadar = meetings
+    .map((m) => m.latestSoncasResult)
+    .filter((r): r is NonNullable<typeof r> => r != null);
+  const orgSoncasAverages = averageSoncasDriverScores(soncasForRadar);
+  const adminProgressBullets = isOrgAdmin
+    ? buildOrgAdminProgressBullets(home)
+    : null;
+  const adminImprovementBullets = isOrgAdmin
+    ? buildOrgAdminImprovementBullets(orgSoncasAverages)
+    : null;
 
   const top10: AnalyseTopMeetingRow[] = [...meetings]
     .filter((m) => m.salesScore != null)
@@ -97,7 +147,9 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Analyse</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {isOrgAdmin ? "Analyse (équipe)" : "Mon analyse"}
+        </h1>
         <Suspense
           fallback={
             <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
@@ -111,7 +163,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
 
       <section className="space-y-4">
         <h2 className="text-foreground text-lg font-medium tracking-tight">
-          Statistiques globales
+          {isOrgAdmin ? "Statistiques globales (équipe)" : "Statistiques globales"}
         </h2>
 
         <div className="grid gap-4 lg:grid-cols-2">
@@ -121,7 +173,9 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
                 Matrice des rendez-vous
               </CardTitle>
               <CardDescription>
-                sur {totalMeetings} rendez-vous
+                {isOrgAdmin
+                  ? `Échantillon sur la période (${matrixPoints.length} RDV affichés)`
+                  : `Sur vos ${totalMeetings} rendez-vous (période sélectionnée)`}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -145,7 +199,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
 
       <section className="space-y-4">
         <h2 className="text-foreground text-lg font-medium tracking-tight">
-          Mes recommandations
+          {isOrgAdmin ? "Recommandations équipe" : "Mes recommandations"}
         </h2>
 
         <div className="grid gap-4 lg:grid-cols-2">
@@ -156,24 +210,32 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
                   <Sparkles className="size-4 text-violet-600 dark:text-violet-300" />
                 </div>
                 <div className="min-w-0">
-                  <CardTitle className="text-base">Mon profil de vente</CardTitle>
+                  <CardTitle className="text-base">
+                    {isOrgAdmin ? "Profil SONCAS équipe" : "Mon profil de vente"}
+                  </CardTitle>
                   <CardDescription>
-                    Synthèse DISC / SONCAS récurrente
+                    {isOrgAdmin
+                      ? "Moyenne des leviers sur les analyses de la période"
+                      : "Synthèse DISC / SONCAS récurrente"}
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <SalesProfileRadar
-                scores={{
-                  assertivite: 68,
-                  ecouteActive: 86,
-                  capitalSympathie: 90,
-                  argumentation: 72,
-                  objections: 58,
-                  nextSteps: 81,
-                }}
-              />
+              {isOrgAdmin ? (
+                <OrgSoncasRadar averages={orgSoncasAverages} seriesLabel="Équipe" />
+              ) : (
+                <SalesProfileRadar
+                  scores={{
+                    assertivite: 68,
+                    ecouteActive: 86,
+                    capitalSympathie: 90,
+                    argumentation: 72,
+                    objections: 58,
+                    nextSteps: 81,
+                  }}
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -185,45 +247,35 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
                     <TrendingUp className="size-4 text-emerald-600 dark:text-emerald-300" />
                   </div>
                   <div className="min-w-0">
-                    <CardTitle className="text-base">Mes progrès</CardTitle>
+                    <CardTitle className="text-base">
+                      {isOrgAdmin ? "Tendances positives" : "Mes progrès"}
+                    </CardTitle>
                     <CardDescription>
-                      Évolution sur les derniers rendez-vous
+                      {isOrgAdmin
+                        ? "Basé sur les KPI agrégés de l’organisation"
+                        : "Évolution sur les derniers rendez-vous"}
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <span
-                      className="mt-1.5 inline-block size-1.5 shrink-0 rounded-full bg-emerald-500"
-                      aria-hidden
-                    />
-                    <span>
-                      Découverte client plus approfondie : +18% de besoins
-                      qualifiés en entretien.
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span
-                      className="mt-1.5 inline-block size-1.5 shrink-0 rounded-full bg-emerald-500"
-                      aria-hidden
-                    />
-                    <span>
-                      Reformulation des objections désormais systématique avant
-                      de répondre.
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span
-                      className="mt-1.5 inline-block size-1.5 shrink-0 rounded-full bg-emerald-500"
-                      aria-hidden
-                    />
-                    <span>
-                      Closing plus net : proposition d’une prochaine étape dans
-                      92% des RDV récents.
-                    </span>
-                  </li>
+                  {(isOrgAdmin && adminProgressBullets
+                    ? adminProgressBullets
+                    : [
+                        "Découverte client plus approfondie : +18% de besoins qualifiés en entretien.",
+                        "Reformulation des objections désormais systématique avant de répondre.",
+                        "Closing plus net : proposition d’une prochaine étape dans 92% des RDV récents.",
+                      ]
+                  ).map((line) => (
+                    <li key={line} className="flex items-start gap-2">
+                      <span
+                        className="mt-1.5 inline-block size-1.5 shrink-0 rounded-full bg-emerald-500"
+                        aria-hidden
+                      />
+                      <span>{line}</span>
+                    </li>
+                  ))}
                 </ul>
               </CardContent>
             </Card>
@@ -236,37 +288,31 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
                   </div>
                   <div className="min-w-0">
                     <CardTitle className="text-base">
-                      Mes axes d’amélioration
+                      {isOrgAdmin ? "Axes d’amélioration" : "Mes axes d’amélioration"}
                     </CardTitle>
                     <CardDescription>
-                      Pistes concrètes à travailler
+                      {isOrgAdmin
+                        ? "À partir des moyennes SONCAS de l’équipe"
+                        : "Pistes concrètes à travailler"}
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" />
-                    <span>
-                      Mieux ancrer le levier « Argent » : chiffrer le ROI dès la
-                      découverte.
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" />
-                    <span>
-                      Réduire le temps de présentation de 25% au profit du
-                      questionnement.
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" />
-                    <span>
-                      Anticiper les signaux « Sécurité » sur les prospects
-                      profil C.
-                    </span>
-                  </li>
+                  {(isOrgAdmin && adminImprovementBullets
+                    ? adminImprovementBullets
+                    : [
+                        "Mieux ancrer le levier « Argent » : chiffrer le ROI dès la découverte.",
+                        "Réduire le temps de présentation de 25% au profit du questionnement.",
+                        "Anticiper les signaux « Sécurité » sur les prospects profil C.",
+                      ]
+                  ).map((line) => (
+                    <li key={line} className="flex items-start gap-2">
+                      <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
                 </ul>
               </CardContent>
             </Card>

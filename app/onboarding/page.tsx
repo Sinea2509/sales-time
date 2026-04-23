@@ -7,6 +7,10 @@ import {
   DEFAULT_MEETING_TYPES,
   DEFAULT_PIPELINE_STAGES,
 } from "@/lib/onboarding-defaults";
+import {
+  initialInviteRowsFromStored,
+  parseStoredInviteRows,
+} from "@/lib/onboarding-invites";
 import { ensureClerkUserSynced } from "@/src/adapters/prisma/sync-clerk-user";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +62,7 @@ export default async function OnboardingPage() {
       asStringArray(p?.pipelineStages).length > 0
         ? asStringArray(p?.pipelineStages)
         : [...DEFAULT_PIPELINE_STAGES],
-    inviteEmails: asStringArray(p?.inviteEmails),
+    invites: initialInviteRowsFromStored(parseStoredInviteRows(p?.inviteEmails)),
     inviteMessage: p?.inviteMessage ?? DEFAULT_INVITE_MESSAGE,
   };
 

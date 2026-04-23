@@ -151,8 +151,11 @@ function paginationWindow(
 
 export function RendezVousMeetingsShell({
   meetings,
+  showSellerColumn = false,
 }: {
   meetings: RendezVousMeetingRow[];
+  /** When true (org admin), show which seller owns the meeting. */
+  showSellerColumn?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [etapeFilter, setEtapeFilter] = useState<MeetingOutcome | "ALL">(
@@ -311,6 +314,11 @@ export function RendezVousMeetingsShell({
                 <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase">
                   Prospect
                 </th>
+                {showSellerColumn ? (
+                  <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase md:table-cell">
+                    Commercial
+                  </th>
+                ) : null}
                 <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase sm:table-cell">
                   Potentiel
                 </th>
@@ -329,10 +337,10 @@ export function RendezVousMeetingsShell({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-              {filtered.length === 0 ? (
+                {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={showSellerColumn ? 8 : 7}
                     className="text-muted-foreground px-4 py-12 text-center"
                   >
                     {meetings.length === 0
@@ -375,6 +383,11 @@ export function RendezVousMeetingsShell({
                           </div>
                         </div>
                       </td>
+                      {showSellerColumn ? (
+                        <td className="text-muted-foreground hidden max-w-[140px] truncate px-4 py-3.5 align-middle text-xs md:table-cell">
+                          {m.sellerEmail ?? "—"}
+                        </td>
+                      ) : null}
                       <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell">
                         {eurCompact.format(ESTIMATED_TAM_EUR_PER_RDV)}
                       </td>

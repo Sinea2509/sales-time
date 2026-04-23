@@ -4,7 +4,11 @@ import { publishGlobalPromptVersion } from "./publish-global-prompt-version";
 
 describe("publishGlobalPromptVersion", () => {
   it("rejects non–super admin", async () => {
-    const prompts = { publishNewVersion: vi.fn() };
+    const prompts = {
+      getCurrentVersion: vi.fn(),
+      listVersions: vi.fn(),
+      publishNewVersion: vi.fn(),
+    };
     const audit = { logSuperAdminAction: vi.fn() };
 
     const result = await publishGlobalPromptVersion(
@@ -24,6 +28,8 @@ describe("publishGlobalPromptVersion", () => {
 
   it("publishes version and audits", async () => {
     const prompts = {
+      getCurrentVersion: vi.fn(),
+      listVersions: vi.fn(),
       publishNewVersion: vi.fn().mockResolvedValue({
         id: "v2",
         templateId: "t1",

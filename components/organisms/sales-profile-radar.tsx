@@ -22,9 +22,11 @@ const METRICS = [
 
 export function SalesProfileRadar({
   scores,
+  seriesLabel = "Mon profil",
   height = 280,
 }: {
   scores: SalesProfileScores;
+  seriesLabel?: string;
   height?: number;
 }) {
   const data = [
@@ -42,7 +44,7 @@ export function SalesProfileRadar({
         height={height}
         series={[
           {
-            label: "Mon profil",
+            label: seriesLabel,
             data,
             fillArea: true,
             color: "#6C4DFF",

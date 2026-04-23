@@ -51,12 +51,18 @@ export async function getOrgDashboardHome(
   input: {
     clerkOrgId: string | null;
     statsWindowDays: StatsWindowDays;
+    /** When set, KPIs and recent meetings are scoped to this seller (member role). */
+    sellerUserId?: string | null;
   },
 ): Promise<OrgDashboardHome | null> {
   if (!input.clerkOrgId) return null;
 
   const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
   const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays);
+  const seller =
+    input.sellerUserId != null && input.sellerUserId !== ""
+      ? input.sellerUserId
+      : undefined;
 
   const [
     nbRdvs,
@@ -70,34 +76,41 @@ export async function getOrgDashboardHome(
     deps.meetings.countMeetingsWithMeetingAtSince({
       clerkOrgId: input.clerkOrgId,
       since: sinceCurrent,
+      sellerUserId: seller,
     }),
     deps.meetings.countMeetingsWithMeetingAtBetween({
       clerkOrgId: input.clerkOrgId,
       meetingAtGte: sincePrev,
       meetingAtLt: sinceCurrent,
+      sellerUserId: seller,
     }),
     deps.meetings.averageDurationMinForMeetingsInWindow({
       clerkOrgId: input.clerkOrgId,
       meetingAtGte: sinceCurrent,
+      sellerUserId: seller,
     }),
     deps.meetings.averageDurationMinForMeetingsInWindow({
       clerkOrgId: input.clerkOrgId,
       meetingAtGte: sincePrev,
       meetingAtLt: sinceCurrent,
+      sellerUserId: seller,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
       clerkOrgId: input.clerkOrgId,
       meetingAtSince: sinceCurrent,
+      sellerUserId: seller,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
       clerkOrgId: input.clerkOrgId,
       meetingAtSince: sincePrev,
       meetingAtBefore: sinceCurrent,
+      sellerUserId: seller,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
       clerkOrgId: input.clerkOrgId,
       limit: RECENT_LIMIT,
       meetingAtSince: sinceCurrent,
+      sellerUserId: seller,
     }),
   ]);
 

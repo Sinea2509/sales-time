@@ -7,6 +7,17 @@ export type ResolvedAuthorization = {
   isElevatedSuperAdmin: boolean;
 };
 
+/** Product UI / data scope for the active tenant (null when no org selected). */
+export type DashboardRoleMode = "admin" | "member";
+
+export function resolveDashboardRoleMode(input: {
+  activeTenantClerkOrgId: string | null;
+  canManageOrganization: boolean;
+}): DashboardRoleMode | null {
+  if (!input.activeTenantClerkOrgId) return null;
+  return input.canManageOrganization ? "admin" : "member";
+}
+
 /**
  * Resolves which Clerk org is the active tenant and whether the actor may
  * administer it. Super admins with an elevation cookie operate as org admin

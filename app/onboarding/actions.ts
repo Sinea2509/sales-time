@@ -48,8 +48,15 @@ const step3Schema = z.object({
 });
 
 const step4Schema = z.object({
-  inviteEmails: z.array(z.string().email()).max(50),
-  inviteMessage: z.string().max(500).optional().nullable(),
+  invites: z
+    .array(
+      z.object({
+        email: z.string().email(),
+        role: z.enum(["org:admin", "org:member"]),
+      }),
+    )
+    .max(50),
+  inviteMessage: z.string().max(2000).optional().nullable(),
 });
 
 export type ActionResult<T = void> =
@@ -161,7 +168,7 @@ export async function submitOnboardingStep4(
   await prisma.onboardingProfile.update({
     where: { id: profile.id },
     data: {
-      inviteEmails: parsed.data.inviteEmails,
+      inviteEmails: parsed.data.invites,
       inviteMessage: parsed.data.inviteMessage ?? null,
       currentStep: 4,
       completedAt: new Date(),

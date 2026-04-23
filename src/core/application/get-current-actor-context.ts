@@ -1,5 +1,8 @@
 import type { ActorContext } from "../domain/actor-context";
-import { resolveActorAuthorization } from "../domain/authorization-policy";
+import {
+  resolveActorAuthorization,
+  resolveDashboardRoleMode,
+} from "../domain/authorization-policy";
 import type { AuthSessionPort } from "../ports/auth-session-port";
 import type { UserRepositoryPort } from "../ports/user-repository-port";
 
@@ -32,6 +35,11 @@ export async function getCurrentActorContext(
     superAdminActiveClerkOrgId: params.superAdminActiveClerkOrgId,
   });
 
+  const dashboardRoleMode = resolveDashboardRoleMode({
+    activeTenantClerkOrgId,
+    canManageOrganization,
+  });
+
   return {
     kind: "authenticated",
     clerkUserId,
@@ -43,5 +51,6 @@ export async function getCurrentActorContext(
     superAdminActiveClerkOrgId: params.superAdminActiveClerkOrgId,
     canManageOrganization,
     isElevatedSuperAdmin,
+    dashboardRoleMode,
   };
 }
