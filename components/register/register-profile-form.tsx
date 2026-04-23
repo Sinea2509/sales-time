@@ -10,7 +10,7 @@ import { orgSettingsSelectClassName } from "@/components/org-settings/org-settin
 import {
   completeRegisterProfile,
   type CompleteRegisterProfileResult,
-} from "@/app/register/profile/actions";
+} from "@/app/[locale]/register/profile/actions";
 
 function SubmitButton() {
   const { pending } = useFormStatus();

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { switchOrganizationAction } from "@/app/company/switch-organization-action";
+import { switchOrganizationAction } from "@/app/[locale]/company/switch-organization-action";
 
 export type OrgSwitcherMembership = {
   organizationId: string;

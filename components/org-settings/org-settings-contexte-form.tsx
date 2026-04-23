@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updateOrganizationContext } from "@/app/company/settings/actions";
+import { updateOrganizationContext } from "@/app/[locale]/company/settings/actions";
 import {
   ONBOARDING_DEAL_SIZE_OPTIONS,
   ONBOARDING_INDUSTRY_OPTIONS,

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ElevatedModeIndicator } from "@/components/molecules/elevated-mode-indicator";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { exitSuperAdminOrganizationAction } from "@/app/company/super-admin-actions";
+import { exitSuperAdminOrganizationAction } from "@/app/[locale]/company/super-admin-actions";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 

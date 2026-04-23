@@ -90,18 +90,18 @@ vi.mock("@/src/adapters/composition", () => ({
   }),
 }));
 
-import { signUpAction } from "@/app/sign-up/actions";
-import { signInAction } from "@/app/sign-in/actions";
-import { forgotPasswordAction } from "@/app/forgot-password/actions";
-import { resetPasswordAction } from "@/app/reset-password/actions";
-import { acceptOrganizationInvitationAction } from "@/app/invitations/[token]/actions";
-import { completeRegisterProfile } from "@/app/register/profile/actions";
+import { signUpAction } from "@/app/[locale]/sign-up/actions";
+import { signInAction } from "@/app/[locale]/sign-in/actions";
+import { forgotPasswordAction } from "@/app/[locale]/forgot-password/actions";
+import { resetPasswordAction } from "@/app/[locale]/reset-password/actions";
+import { acceptOrganizationInvitationAction } from "@/app/[locale]/invitations/[token]/actions";
+import { completeRegisterProfile } from "@/app/[locale]/register/profile/actions";
 import {
   submitOnboardingStep1,
   submitOnboardingStep2,
   submitOnboardingStep3,
   submitOnboardingStep4,
-} from "@/app/onboarding/actions";
+} from "@/app/[locale]/onboarding/actions";
 import { hashToken } from "@/lib/auth/tokens";
 
 function form(entries: Record<string, string>): FormData {

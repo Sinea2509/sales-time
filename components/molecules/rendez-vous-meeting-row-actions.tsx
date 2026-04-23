@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Eye, MoreHorizontal, Sparkles, Trash2 } from "lucide-react";
-import { deleteMeetingAction } from "@/app/company/rendez-vous/actions";
+import { deleteMeetingAction } from "@/app/[locale]/company/rendez-vous/actions";
 import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,

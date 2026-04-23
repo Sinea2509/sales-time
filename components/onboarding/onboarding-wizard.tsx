@@ -22,7 +22,7 @@ import {
   submitOnboardingStep2,
   submitOnboardingStep3,
   submitOnboardingStep4,
-} from "@/app/onboarding/actions";
+} from "@/app/[locale]/onboarding/actions";
 import {
   ONBOARDING_DEAL_SIZE_OPTIONS,
   ONBOARDING_INDUSTRY_OPTIONS,

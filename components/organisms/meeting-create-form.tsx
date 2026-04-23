@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { createMeetingAction } from "@/app/company/rendez-vous/actions";
+import { createMeetingAction } from "@/app/[locale]/company/rendez-vous/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

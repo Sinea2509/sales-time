@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { enterSuperAdminOrganizationAction } from "@/app/company/super-admin-actions";
+import { enterSuperAdminOrganizationAction } from "@/app/[locale]/company/super-admin-actions";
 import type { OrganizationSummary } from "@/src/core/ports/organization-directory-port";
 import { Button } from "@/components/ui/button";
 import {

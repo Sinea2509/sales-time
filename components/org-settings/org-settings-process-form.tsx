@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { updateOrganizationProcess } from "@/app/company/settings/actions";
+import { updateOrganizationProcess } from "@/app/[locale]/company/settings/actions";
 import { cn } from "@/lib/utils";
 
 function linesToTypes(s: string, max: number, maxLen: number): string[] {

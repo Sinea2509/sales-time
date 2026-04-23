@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { acceptOrganizationInvitationAction } from "@/app/invitations/[token]/actions";
+import { acceptOrganizationInvitationAction } from "@/app/[locale]/invitations/[token]/actions";
 import { Button } from "@/components/ui/button";
 
 type Props = { token: string };

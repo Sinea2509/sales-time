@@ -16,7 +16,7 @@ import {
   createOnboardingSharedPhrase,
   listOnboardingSharedPhrases,
   type SharedPhraseRow,
-} from "@/app/onboarding/shared-phrases-actions";
+} from "@/app/[locale]/onboarding/shared-phrases-actions";
 import { normalizePhraseKey } from "@/lib/onboarding-shared-default-phrases";
 import { cn } from "@/lib/utils";
 
