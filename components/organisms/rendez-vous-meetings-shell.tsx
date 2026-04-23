@@ -12,7 +12,11 @@ import {
 import { RendezVousMeetingRowActions } from "@/components/molecules/rendez-vous-meeting-row-actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { meetingOutcomeBadgeClass } from "@/lib/meeting-outcome-badge-styles";
+import { ESTIMATED_TAM_EUR_PER_RDV } from "@/lib/dashboard-estimates";
+import {
+  meetingEtapeLabel,
+  meetingEtapePillClass,
+} from "@/lib/meeting-etape-pill";
 import { meetingOutcomeLabel } from "@/lib/meeting-outcome-labels";
 import { prospectInitials } from "@/lib/prospect-initials";
 import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
@@ -25,7 +29,64 @@ export type RendezVousMeetingRow = {
   outcome: MeetingOutcome;
   durationMin: number | null;
   sellerEmail: string | null;
+  salesScore: number | null;
+  potentialEur: number;
 };
+
+const ETAPE_FILTER_OPTIONS: ReadonlyArray<{
+  value: MeetingOutcome | "ALL";
+  label: string;
+}> = [
+  { value: "ALL", label: "Toutes les étapes" },
+  { value: "OTHER", label: "Qualification" },
+  { value: "FOLLOW_UP", label: "Découverte" },
+  { value: "WON", label: "Proposition" },
+  { value: "LOST", label: "Négociation" },
+  { value: "NO_SHOW", label: "Absent" },
+];
+
+type PotentialBucket = "ALL" | "LT_10K" | "10K_50K" | "50K_100K" | "GT_100K";
+
+const POTENTIAL_FILTER_OPTIONS: ReadonlyArray<{
+  value: PotentialBucket;
+  label: string;
+}> = [
+  { value: "ALL", label: "Tous les potentiels" },
+  { value: "LT_10K", label: "< 10 000 €" },
+  { value: "10K_50K", label: "10 000 – 50 000 €" },
+  { value: "50K_100K", label: "50 000 – 100 000 €" },
+  { value: "GT_100K", label: "> 100 000 €" },
+];
+
+function matchesPotentialBucket(
+  amountEur: number,
+  bucket: PotentialBucket,
+): boolean {
+  switch (bucket) {
+    case "ALL":
+      return true;
+    case "LT_10K":
+      return amountEur < 10_000;
+    case "10K_50K":
+      return amountEur >= 10_000 && amountEur < 50_000;
+    case "50K_100K":
+      return amountEur >= 50_000 && amountEur < 100_000;
+    case "GT_100K":
+      return amountEur >= 100_000;
+  }
+}
+
+const eurCompact = new Intl.NumberFormat("fr-FR", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 0,
+});
+
+const dateShort = new Intl.DateTimeFormat("fr-FR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
 
 function escapeCsvCell(value: string): string {
   if (/[",\n\r]/.test(value)) {
@@ -37,8 +98,10 @@ function escapeCsvCell(value: string): string {
 function downloadMeetingsCsv(meetings: RendezVousMeetingRow[]) {
   const headers = [
     "Prospect",
+    "Potentiel (EUR)",
     "Date du rendez-vous",
-    "Résultat",
+    "Étape",
+    "SalesScore",
     "Commercial",
     "Durée (min)",
   ];
@@ -47,8 +110,10 @@ function downloadMeetingsCsv(meetings: RendezVousMeetingRow[]) {
     ...meetings.map((m) =>
       [
         escapeCsvCell(m.prospectName),
+        String(ESTIMATED_TAM_EUR_PER_RDV),
         escapeCsvCell(m.meetingAt),
-        escapeCsvCell(m.outcome),
+        escapeCsvCell(meetingOutcomeLabel(m.outcome)),
+        m.salesScore != null ? String(m.salesScore) : "",
         escapeCsvCell(m.sellerEmail ?? ""),
         m.durationMin != null ? String(m.durationMin) : "",
       ].join(","),
@@ -64,11 +129,6 @@ function downloadMeetingsCsv(meetings: RendezVousMeetingRow[]) {
   a.click();
   URL.revokeObjectURL(url);
 }
-
-const dateFmt = new Intl.DateTimeFormat("fr-FR", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
 
 const PAGE_SIZE = 10;
 const MAX_PAGE_BUTTONS = 4;
@@ -95,19 +155,30 @@ export function RendezVousMeetingsShell({
   meetings: RendezVousMeetingRow[];
 }) {
   const [query, setQuery] = useState("");
+  const [etapeFilter, setEtapeFilter] = useState<MeetingOutcome | "ALL">(
+    "ALL",
+  );
+  const [potentialFilter, setPotentialFilter] = useState<PotentialBucket>(
+    "ALL",
+  );
   const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return meetings;
-    return meetings.filter((m) => m.prospectName.toLowerCase().includes(q));
-  }, [meetings, query]);
+    return meetings.filter((m) => {
+      if (q && !m.prospectName.toLowerCase().includes(q)) return false;
+      if (etapeFilter !== "ALL" && m.outcome !== etapeFilter) return false;
+      if (!matchesPotentialBucket(m.potentialEur, potentialFilter)) return false;
+      return true;
+    });
+  }, [meetings, query, etapeFilter, potentialFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
   useEffect(() => {
     setPage(1);
-  }, [query]);
+  }, [query, etapeFilter, potentialFilter]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -120,18 +191,81 @@ export function RendezVousMeetingsShell({
   const rangeEnd = Math.min(startIndex + PAGE_SIZE, filtered.length);
   const pageNumbers = paginationWindow(currentPage, totalPages);
 
+  const pageIds = pageRows.map((m) => m.id);
+  const allPageSelected =
+    pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const somePageSelected =
+    !allPageSelected && pageIds.some((id) => selectedIds.has(id));
+
+  const toggleRow = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const togglePage = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) pageIds.forEach((id) => next.add(id));
+      else pageIds.forEach((id) => next.delete(id));
+      return next;
+    });
+  };
+
+  const filterSelectClass =
+    "h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm shadow-none outline-none focus-visible:border-[#6C4DFF] focus-visible:ring-2 focus-visible:ring-[#6C4DFF]/30 dark:border-neutral-800 dark:bg-neutral-950";
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-md flex-1">
-          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input
-            aria-label="Rechercher un prospect"
-            placeholder="Rechercher un prospect…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="h-10 rounded-xl border-neutral-200 bg-white pl-9 shadow-none dark:border-neutral-800 dark:bg-neutral-950"
-          />
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative sm:max-w-sm sm:flex-1">
+            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input
+              aria-label="Rechercher un prospect"
+              placeholder="Rechercher un prospect…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="h-10 rounded-xl border-neutral-200 bg-white pl-9 shadow-none dark:border-neutral-800 dark:bg-neutral-950"
+            />
+          </div>
+          <label className="sr-only" htmlFor="filter-potentiel">
+            Potentiel
+          </label>
+          <select
+            id="filter-potentiel"
+            value={potentialFilter}
+            onChange={(e) =>
+              setPotentialFilter(e.target.value as PotentialBucket)
+            }
+            className={filterSelectClass}
+          >
+            {POTENTIAL_FILTER_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <label className="sr-only" htmlFor="filter-etape">
+            Étape
+          </label>
+          <select
+            id="filter-etape"
+            value={etapeFilter}
+            onChange={(e) =>
+              setEtapeFilter(e.target.value as MeetingOutcome | "ALL")
+            }
+            className={filterSelectClass}
+          >
+            {ETAPE_FILTER_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button
@@ -159,21 +293,35 @@ export function RendezVousMeetingsShell({
 
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <table className="w-full min-w-[820px] text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50/80 dark:border-neutral-800 dark:bg-neutral-900/50">
-                <th className="text-muted-foreground w-12 px-4 py-3.5" />
+                <th className="w-12 px-4 py-3.5">
+                  <input
+                    type="checkbox"
+                    aria-label="Tout sélectionner sur cette page"
+                    checked={allPageSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = somePageSelected;
+                    }}
+                    onChange={(e) => togglePage(e.target.checked)}
+                    className="size-4 cursor-pointer rounded border border-neutral-300 accent-[#6C4DFF] dark:border-neutral-600"
+                  />
+                </th>
                 <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase">
-                  Client
+                  Prospect
+                </th>
+                <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase sm:table-cell">
+                  Potentiel
+                </th>
+                <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase">
+                  Date du RDV
+                </th>
+                <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase">
+                  Étape
                 </th>
                 <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase md:table-cell">
-                  Commercial
-                </th>
-                <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase">
-                  Statut
-                </th>
-                <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase lg:table-cell">
-                  Date
+                  SalesScore
                 </th>
                 <th className="text-muted-foreground w-20 px-4 py-3.5 text-right text-[11px] font-semibold tracking-wider uppercase">
                   Actions
@@ -184,65 +332,83 @@ export function RendezVousMeetingsShell({
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="text-muted-foreground px-4 py-12 text-center"
                   >
                     {meetings.length === 0
                       ? "Aucun rendez-vous pour cette organisation."
-                      : "Aucun résultat pour cette recherche."}
+                      : "Aucun résultat avec ces filtres."}
                   </td>
                 </tr>
               ) : (
-                pageRows.map((m) => (
-                  <tr
-                    key={m.id}
-                    className="hover:bg-neutral-50/80 dark:hover:bg-neutral-900/40"
-                  >
-                    <td className="px-4 py-3.5 align-middle">
-                      <span
-                        className="border-neutral-300 bg-background inline-block size-4 rounded border dark:border-neutral-600"
-                        aria-hidden
-                      />
-                    </td>
-                    <td className="px-4 py-3.5 align-middle">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-neutral-100 text-neutral-700 flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold dark:bg-neutral-800 dark:text-neutral-200">
-                          {prospectInitials(m.prospectName)}
+                pageRows.map((m) => {
+                  const checked = selectedIds.has(m.id);
+                  return (
+                    <tr
+                      key={m.id}
+                      data-state={checked ? "selected" : undefined}
+                      className="hover:bg-neutral-50/80 data-[state=selected]:bg-[#6C4DFF]/5 dark:hover:bg-neutral-900/40"
+                    >
+                      <td className="px-4 py-3.5 align-middle">
+                        <input
+                          type="checkbox"
+                          aria-label={`Sélectionner ${m.prospectName}`}
+                          checked={checked}
+                          onChange={(e) =>
+                            toggleRow(m.id, e.target.checked)
+                          }
+                          className="size-4 cursor-pointer rounded border border-neutral-300 accent-[#6C4DFF] dark:border-neutral-600"
+                        />
+                      </td>
+                      <td className="px-4 py-3.5 align-middle">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-neutral-100 text-neutral-700 flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold dark:bg-neutral-800 dark:text-neutral-200">
+                            {prospectInitials(m.prospectName)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-neutral-950 truncate font-semibold dark:text-neutral-50">
+                              {m.prospectName}
+                            </p>
+                            <p className="text-muted-foreground truncate text-xs">
+                              Entreprise
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-neutral-950 truncate font-medium dark:text-neutral-50">
-                            {m.prospectName}
-                          </p>
-                          <p className="text-muted-foreground truncate text-xs md:hidden">
-                            {dateFmt.format(new Date(m.meetingAt))}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="text-muted-foreground hidden px-4 py-3.5 align-middle md:table-cell">
-                      <span className="truncate">{m.sellerEmail ?? "—"}</span>
-                    </td>
-                    <td className="px-4 py-3.5 align-middle">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
-                          meetingOutcomeBadgeClass(m.outcome),
+                      </td>
+                      <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell">
+                        {eurCompact.format(ESTIMATED_TAM_EUR_PER_RDV)}
+                      </td>
+                      <td className="text-muted-foreground whitespace-nowrap px-4 py-3.5 align-middle tabular-nums">
+                        {dateShort.format(new Date(m.meetingAt))}
+                      </td>
+                      <td className="px-4 py-3.5 align-middle">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                            meetingEtapePillClass(m.outcome),
+                          )}
+                        >
+                          {meetingEtapeLabel(m.outcome)}
+                        </span>
+                      </td>
+                      <td className="hidden px-4 py-3.5 align-middle md:table-cell">
+                        {m.salesScore != null ? (
+                          <span className="text-base font-semibold tabular-nums text-neutral-950 dark:text-neutral-100">
+                            {m.salesScore}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
                         )}
-                      >
-                        {meetingOutcomeLabel(m.outcome)}
-                      </span>
-                    </td>
-                    <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums lg:table-cell">
-                      {dateFmt.format(new Date(m.meetingAt))}
-                    </td>
-                    <td className="px-4 py-3.5 text-right align-middle">
-                      <RendezVousMeetingRowActions
-                        meetingId={m.id}
-                        prospectName={m.prospectName}
-                      />
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-4 py-3.5 text-right align-middle">
+                        <RendezVousMeetingRowActions
+                          meetingId={m.id}
+                          prospectName={m.prospectName}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -254,6 +420,12 @@ export function RendezVousMeetingsShell({
             à <span className="text-foreground font-medium">{rangeEnd}</span> sur{" "}
             <span className="text-foreground font-medium">{filtered.length}</span>{" "}
             entrée{filtered.length > 1 ? "s" : ""}
+            {selectedIds.size > 0 ? (
+              <span className="text-muted-foreground ml-2">
+                · <span className="text-foreground font-medium">{selectedIds.size}</span>{" "}
+                sélectionné{selectedIds.size > 1 ? "s" : ""}
+              </span>
+            ) : null}
           </p>
           <nav
             aria-label="Pagination"

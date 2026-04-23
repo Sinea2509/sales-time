@@ -1,7 +1,8 @@
 import { RendezVousMeetingsShell } from "@/components/organisms/rendez-vous-meetings-shell";
+import { ESTIMATED_TAM_EUR_PER_RDV } from "@/lib/dashboard-estimates";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
-import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { makeApplicationDeps } from "@/src/adapters/composition";
 
 export const dynamic = "force-dynamic";
 
@@ -11,13 +12,10 @@ export default async function RendezVousPage() {
     redirect("/dashboard");
   }
 
-  const meetings = await prisma.meeting.findMany({
-    where: { clerkOrgId: actor.activeTenantClerkOrgId },
-    orderBy: { meetingAt: "desc" },
-    take: 100,
-    include: {
-      seller: { select: { email: true } },
-    },
+  const deps = makeApplicationDeps();
+  const meetings = await deps.meetings.listRecentMeetingsForDashboard({
+    clerkOrgId: actor.activeTenantClerkOrgId,
+    limit: 200,
   });
 
   const rows = meetings.map((m) => ({
@@ -26,7 +24,9 @@ export default async function RendezVousPage() {
     meetingAt: m.meetingAt.toISOString(),
     outcome: m.outcome,
     durationMin: m.durationMin,
-    sellerEmail: m.seller.email,
+    sellerEmail: m.sellerEmail,
+    salesScore: m.salesScore,
+    potentialEur: ESTIMATED_TAM_EUR_PER_RDV,
   }));
 
   return (

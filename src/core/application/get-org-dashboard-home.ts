@@ -21,6 +21,9 @@ export type OrgDashboardHome = {
   nbRdvsTrendPercent: number | null;
   tucTrendPoints: number | null;
   avgDurationTrendPercent: number | null;
+  /** Note globale /5 (moyenne SalesScore /100 ÷ 20, arrondi 0.1), null si aucune analyse. */
+  noteGlobaleOn5: number | null;
+  noteGlobaleTrendPoints: number | null;
   recentMeetings: RecentMeetingListRow[];
 };
 
@@ -30,6 +33,17 @@ function tucPercentForMeetings(meetings: RecentMeetingListRow[]): number | null 
   if (meetings.length === 0) return null;
   const withBoth = meetings.filter((m) => m.hasSoncas && m.hasDisc).length;
   return Math.round((100 * withBoth) / meetings.length);
+}
+
+function noteGlobaleOn5ForMeetings(
+  meetings: RecentMeetingListRow[],
+): number | null {
+  const scores = meetings
+    .map((m) => m.salesScore)
+    .filter((s): s is number => s != null);
+  if (scores.length === 0) return null;
+  const avg = scores.reduce((acc, s) => acc + s, 0) / scores.length;
+  return Math.round((avg / 20) * 10) / 10;
 }
 
 export async function getOrgDashboardHome(
@@ -89,6 +103,9 @@ export async function getOrgDashboardHome(
   const tucOptimisePercent = tucPercentForMeetings(recentMeetings);
   const tucPrevPercent = tucPercentForMeetings(recentMeetingsPrev);
 
+  const noteGlobaleOn5 = noteGlobaleOn5ForMeetings(recentMeetings);
+  const noteGlobalePrevOn5 = noteGlobaleOn5ForMeetings(recentMeetingsPrev);
+
   const nbRdvsTrendPercent = percentChangeVsPrevious(nbRdvs, nbRdvsPrev);
   const tamTrendPercent = percentChangeVsPrevious(tamCumuleEur, tamPrevEur);
 
@@ -102,6 +119,11 @@ export async function getOrgDashboardHome(
       ? percentChangeVsPrevious(avgDurationMin, avgDurationPrev)
       : null;
 
+  const noteGlobaleTrendPoints =
+    noteGlobaleOn5 != null && noteGlobalePrevOn5 != null
+      ? Math.round((noteGlobaleOn5 - noteGlobalePrevOn5) * 10) / 10
+      : null;
+
   return {
     statsWindowDays: input.statsWindowDays,
     tamCumuleEur,
@@ -112,6 +134,8 @@ export async function getOrgDashboardHome(
     nbRdvsTrendPercent,
     tucTrendPoints,
     avgDurationTrendPercent,
+    noteGlobaleOn5,
+    noteGlobaleTrendPoints,
     recentMeetings,
   };
 }

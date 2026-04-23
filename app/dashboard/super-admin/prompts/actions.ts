@@ -2,17 +2,26 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { makeApplicationDeps } from "@/src/adapters/composition";
 import { ensureClerkUserSynced } from "@/src/adapters/prisma/sync-clerk-user";
 import { publishGlobalPromptVersion } from "@/src/core/application/publish-global-prompt-version";
-import type { AnalysisKindSlug } from "@/src/core/ports/prompt-template-repository-port";
 
-export async function publishPromptAction(input: {
-  kind: AnalysisKindSlug;
-  markdown: string;
-  auditAction: "PUBLISH_PROMPT" | "RESTORE_PROMPT";
-}) {
+const publishPromptSchema = z.object({
+  kind: z.enum(["SONCAS", "DISC"]),
+  markdown: z.string().min(1).max(200_000),
+  auditAction: z.enum(["PUBLISH_PROMPT", "RESTORE_PROMPT"]),
+});
+
+export type PublishPromptInput = z.input<typeof publishPromptSchema>;
+
+export async function publishPromptAction(input: PublishPromptInput) {
+  const parsed = publishPromptSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false as const, error: "VALIDATION" };
+  }
+
   const { userId } = await auth();
   if (!userId) return { ok: false as const, error: "UNAUTHENTICATED" };
 
@@ -28,9 +37,9 @@ export async function publishPromptAction(input: {
   const result = await publishGlobalPromptVersion(deps, {
     actorInternalUserId: userRow.id,
     isSuperAdmin,
-    kind: input.kind,
-    markdown: input.markdown,
-    auditAction: input.auditAction,
+    kind: parsed.data.kind,
+    markdown: parsed.data.markdown,
+    auditAction: parsed.data.auditAction,
   });
 
   if (!result.ok) {
