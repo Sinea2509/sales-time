@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import {
-  ChevronRight,
   Lightbulb,
   Sparkles,
   Target,
@@ -10,6 +8,10 @@ import {
 } from "lucide-react";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
+import {
+  AnalyseTopMeetingsTable,
+  type AnalyseTopMeetingRow,
+} from "@/components/organisms/analyse-top-meetings-table";
 import { MeetingMatrixScatter } from "@/components/organisms/meeting-matrix-scatter";
 import { SalesProfileRadar } from "@/components/organisms/sales-profile-radar";
 import {
@@ -21,7 +23,6 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ESTIMATED_TAM_EUR_PER_RDV } from "@/lib/dashboard-estimates";
-import { prospectInitials } from "@/lib/prospect-initials";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { parseStatsWindowDays } from "@/lib/dashboard-stats-window";
 import { makeApplicationDeps } from "@/src/adapters/composition";
@@ -32,12 +33,6 @@ export const dynamic = "force-dynamic";
 type AnalysePageProps = {
   searchParams?: Promise<{ jours?: string }>;
 };
-
-const dateShort = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-});
 
 export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   const actor = await requireDashboardActor();
@@ -86,10 +81,18 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     outcome: m.outcome,
   }));
 
-  const top10 = [...meetings]
+  const top10: AnalyseTopMeetingRow[] = [...meetings]
     .filter((m) => m.salesScore != null)
     .sort((a, b) => (b.salesScore ?? 0) - (a.salesScore ?? 0))
-    .slice(0, 10);
+    .slice(0, 10)
+    .map((m) => ({
+      id: m.id,
+      prospectName: m.prospectName,
+      meetingAt: m.meetingAt.toISOString(),
+      salesScore: m.salesScore ?? 0,
+      outcome: m.outcome,
+      potentialEur: ESTIMATED_TAM_EUR_PER_RDV,
+    }));
 
   return (
     <div className="space-y-8">
@@ -134,41 +137,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
               <CardDescription>Classés par SalesScore</CardDescription>
             </CardHeader>
             <CardContent>
-              {top10.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  Aucun rendez-vous analysé pour l’instant.
-                </p>
-              ) : (
-                <ol className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                  {top10.map((m, index) => (
-                    <li key={m.id}>
-                      <Link
-                        href={`/dashboard/rendez-vous/${m.id}`}
-                        className="group flex items-center gap-3 py-2.5 transition-colors hover:bg-neutral-50/80 dark:hover:bg-neutral-900/40"
-                      >
-                        <span className="text-muted-foreground w-5 text-right text-sm font-medium tabular-nums">
-                          {index + 1}
-                        </span>
-                        <div className="bg-neutral-100 text-neutral-700 flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold dark:bg-neutral-800 dark:text-neutral-200">
-                          {prospectInitials(m.prospectName)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-neutral-950 truncate text-sm font-semibold dark:text-neutral-50">
-                            {m.prospectName}
-                          </p>
-                          <p className="text-muted-foreground truncate text-xs">
-                            {dateShort.format(new Date(m.meetingAt))}
-                          </p>
-                        </div>
-                        <span className="text-base font-semibold tabular-nums text-neutral-950 dark:text-neutral-100">
-                          {m.salesScore}
-                        </span>
-                        <ChevronRight className="text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5" />
-                      </Link>
-                    </li>
-                  ))}
-                </ol>
-              )}
+              <AnalyseTopMeetingsTable rows={top10} />
             </CardContent>
           </Card>
         </div>
