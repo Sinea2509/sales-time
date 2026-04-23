@@ -1,7 +1,7 @@
 "use client";
 
 import { RadarChart } from "@mui/x-charts/RadarChart";
-import type { SoncasDriverAverages } from "@/lib/org-soncas-team-aggregate";
+import type { SoncasDriverAverages } from "@/src/core/domain/org-soncas-team-aggregate";
 
 const METRICS = [
   "Sécurité",
@@ -52,7 +52,7 @@ export function OrgSoncasRadar({
             label: seriesLabel,
             data,
             fillArea: true,
-            color: "#6C4DFF",
+            color: "var(--brand)",
           },
         ]}
         radar={{

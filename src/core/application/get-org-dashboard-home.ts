@@ -1,10 +1,10 @@
-import { ESTIMATED_TAM_EUR_PER_RDV } from "@/lib/dashboard-estimates";
-import { percentChangeVsPrevious } from "@/lib/dashboard-trend";
+import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
+import { percentChangeVsPrevious } from "@/src/core/domain/dashboard-trend";
 import {
   meetingAtSinceForStatsWindow,
   previousMeetingAtWindowStart,
   type StatsWindowDays,
-} from "@/lib/dashboard-stats-window";
+} from "@/src/core/domain/dashboard-stats-window";
 import type {
   MeetingRepositoryPort,
   RecentMeetingListRow,
@@ -49,13 +49,13 @@ function noteGlobaleOn5ForMeetings(
 export async function getOrgDashboardHome(
   deps: { meetings: MeetingRepositoryPort },
   input: {
-    clerkOrgId: string | null;
+    organizationId: string | null;
     statsWindowDays: StatsWindowDays;
     /** When set, KPIs and recent meetings are scoped to this seller (member role). */
     sellerUserId?: string | null;
   },
 ): Promise<OrgDashboardHome | null> {
-  if (!input.clerkOrgId) return null;
+  if (!input.organizationId) return null;
 
   const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
   const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays);
@@ -74,40 +74,40 @@ export async function getOrgDashboardHome(
     recentMeetings,
   ] = await Promise.all([
     deps.meetings.countMeetingsWithMeetingAtSince({
-      clerkOrgId: input.clerkOrgId,
+      organizationId: input.organizationId,
       since: sinceCurrent,
       sellerUserId: seller,
     }),
     deps.meetings.countMeetingsWithMeetingAtBetween({
-      clerkOrgId: input.clerkOrgId,
+      organizationId: input.organizationId,
       meetingAtGte: sincePrev,
       meetingAtLt: sinceCurrent,
       sellerUserId: seller,
     }),
     deps.meetings.averageDurationMinForMeetingsInWindow({
-      clerkOrgId: input.clerkOrgId,
+      organizationId: input.organizationId,
       meetingAtGte: sinceCurrent,
       sellerUserId: seller,
     }),
     deps.meetings.averageDurationMinForMeetingsInWindow({
-      clerkOrgId: input.clerkOrgId,
+      organizationId: input.organizationId,
       meetingAtGte: sincePrev,
       meetingAtLt: sinceCurrent,
       sellerUserId: seller,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
-      clerkOrgId: input.clerkOrgId,
+      organizationId: input.organizationId,
       meetingAtSince: sinceCurrent,
       sellerUserId: seller,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
-      clerkOrgId: input.clerkOrgId,
+      organizationId: input.organizationId,
       meetingAtSince: sincePrev,
       meetingAtBefore: sinceCurrent,
       sellerUserId: seller,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
-      clerkOrgId: input.clerkOrgId,
+      organizationId: input.organizationId,
       limit: RECENT_LIMIT,
       meetingAtSince: sinceCurrent,
       sellerUserId: seller,

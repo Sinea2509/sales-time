@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Eye, MoreHorizontal, Sparkles, Trash2 } from "lucide-react";
-import { deleteMeetingAction } from "@/app/dashboard/rendez-vous/actions";
+import { deleteMeetingAction } from "@/app/company/rendez-vous/actions";
 import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -54,14 +54,14 @@ export function RendezVousMeetingRowActions({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuItem
-          onClick={() => router.push(`/dashboard/rendez-vous/${meetingId}`)}
+          onClick={() => router.push(`/company/rendez-vous/${meetingId}`)}
         >
           <Eye className="size-4" />
           Ouvrir
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() =>
-            router.push(`/dashboard/rendez-vous/${meetingId}#analyse`)
+            router.push(`/company/rendez-vous/${meetingId}#analyse`)
           }
         >
           <Sparkles className="size-4" />

@@ -1,11 +1,13 @@
 import type { ActorContext } from "@/src/core/domain/actor-context";
 import { DashboardHeader } from "@/components/organisms/dashboard-header";
+import type { OrgSwitcherMembership } from "@/components/organisms/org-switcher";
 import { OrgDashboardShell } from "@/components/templates/org-dashboard-shell";
 
 type Props = {
   actor: ActorContext;
   superAdminOrgCookie: string | null;
   analysesUsed: number;
+  organizationSwitcherMemberships?: OrgSwitcherMembership[];
   children: React.ReactNode;
 };
 
@@ -13,6 +15,7 @@ export function AuthenticatedAppShell({
   actor,
   superAdminOrgCookie,
   analysesUsed,
+  organizationSwitcherMemberships = [],
   children,
 }: Props) {
   const showSuperAdminNav =
@@ -27,10 +30,11 @@ export function AuthenticatedAppShell({
       <OrgDashboardShell
         showSuperAdminNav={showSuperAdminNav}
         isElevatedSuperAdmin={isElevatedSuperAdmin}
-        elevatedClerkOrgId={superAdminOrgCookie}
-        activeTenantClerkOrgId={actor.activeTenantClerkOrgId}
+        elevatedOrganizationId={superAdminOrgCookie}
+        activeOrganizationId={actor.activeOrganizationId}
         dashboardRoleMode={actor.dashboardRoleMode}
         analysesUsed={analysesUsed}
+        organizationSwitcherMemberships={organizationSwitcherMemberships}
       >
         {children}
       </OrgDashboardShell>
@@ -42,7 +46,7 @@ export function AuthenticatedAppShell({
       <DashboardHeader
         showSuperAdminNav={showSuperAdminNav}
         isElevatedSuperAdmin={isElevatedSuperAdmin}
-        elevatedClerkOrgId={superAdminOrgCookie}
+        elevatedOrganizationId={superAdminOrgCookie}
       />
       <main className="mx-auto w-full max-w-6xl flex-1 p-6">{children}</main>
     </div>

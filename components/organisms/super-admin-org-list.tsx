@@ -1,7 +1,8 @@
 "use client";
 
 import { useTransition } from "react";
-import { enterSuperAdminOrganizationAction } from "@/app/dashboard/super-admin-actions";
+import { useTranslations } from "next-intl";
+import { enterSuperAdminOrganizationAction } from "@/app/company/super-admin-actions";
 import type { OrganizationSummary } from "@/src/core/ports/organization-directory-port";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,18 +21,13 @@ type Props = {
 
 export function SuperAdminOrgList({ organizations }: Props) {
   const [pending, startTransition] = useTransition();
+  const t = useTranslations("superAdminOrgList");
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Super admin — organizations
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Entering an organization records an audit log and grants org-admin
-          capabilities for that Clerk organization while the session cookie is
-          set.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground mt-1 text-sm">{t("description")}</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         {organizations.map((org) => (
@@ -45,11 +41,11 @@ export function SuperAdminOrgList({ organizations }: Props) {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor={`reason-${org.id}`}>Reason (optional)</Label>
+                <Label htmlFor={`reason-${org.id}`}>{t("reasonLabel")}</Label>
                 <Input
                   id={`reason-${org.id}`}
                   name="reason"
-                  placeholder="Ticket / incident reference"
+                  placeholder={t("reasonPlaceholder")}
                   disabled={pending}
                 />
               </div>
@@ -63,13 +59,13 @@ export function SuperAdminOrgList({ organizations }: Props) {
                   const reason = input?.value?.trim() || null;
                   startTransition(() => {
                     void enterSuperAdminOrganizationAction({
-                      targetClerkOrgId: org.id,
+                      targetOrganizationId: org.id,
                       reason,
                     });
                   });
                 }}
               >
-                Operate in this organization
+                {t("operateButton")}
               </Button>
             </CardContent>
           </Card>

@@ -6,4 +6,6 @@ export type OrganizationSummary = {
 
 export interface OrganizationDirectoryPort {
   listOrganizations(input: { limit: number }): Promise<OrganizationSummary[]>;
+
+  getOrganizationById(id: string): Promise<OrganizationSummary | null>;
 }

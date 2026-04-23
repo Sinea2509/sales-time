@@ -13,31 +13,31 @@ import { cn } from "@/lib/utils";
 
 const SETTINGS_NAV = [
   {
-    href: "/dashboard/settings",
+    href: "/company/settings",
     label: "Aperçu",
     icon: LayoutGrid,
     match: "exact" as const,
   },
   {
-    href: "/dashboard/settings/contexte",
+    href: "/company/settings/contexte",
     label: "Contexte",
     icon: Building2,
     match: "prefix" as const,
   },
   {
-    href: "/dashboard/settings/coach-ia",
+    href: "/company/settings/coach-ia",
     label: "Coach IA",
     icon: Sparkles,
     match: "prefix" as const,
   },
   {
-    href: "/dashboard/settings/process",
+    href: "/company/settings/process",
     label: "Process",
     icon: ClipboardList,
     match: "prefix" as const,
   },
   {
-    href: "/dashboard/settings/equipe",
+    href: "/company/settings/equipe",
     label: "Équipe & accès",
     icon: Users,
     match: "prefix" as const,
@@ -71,7 +71,7 @@ export function OrgSettingsShell({ children }: { children: React.ReactNode }) {
                   className={cn(
                     "flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
                     active
-                      ? "bg-[#6C4DFF]/10 font-medium text-[#6C4DFF] dark:bg-[#6C4DFF]/15 dark:text-[#c4b5fd]"
+                      ? "bg-brand/10 font-medium text-brand dark:bg-brand/15 dark:text-brand-muted"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                 >

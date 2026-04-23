@@ -1,9 +1,9 @@
 "use client";
 
-import { OrganizationSwitcher } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   BarChart3,
   CalendarDays,
@@ -30,6 +30,10 @@ import {
 } from "@/components/ui/sidebar";
 import { buttonVariants } from "@/components/ui/button";
 import { DashboardHeader } from "@/components/organisms/dashboard-header";
+import {
+  OrgSwitcher,
+  type OrgSwitcherMembership,
+} from "@/components/organisms/org-switcher";
 import { cn } from "@/lib/utils";
 import type { DashboardRoleMode } from "@/src/core/domain/authorization-policy";
 
@@ -40,61 +44,15 @@ type NavItem = {
   match?: "exact" | "prefix";
 };
 
-function mainNavItems(): NavItem[] {
-  return [
-    {
-      href: "/dashboard",
-      label: "Tableau de bord",
-      icon: LayoutDashboard,
-      match: "exact",
-    },
-  ];
-}
-
-function orgProductNavItems(role: DashboardRoleMode | null): NavItem[] {
-  const isAdmin = role === "admin";
-  return [
-    {
-      href: "/dashboard/rendez-vous",
-      label: isAdmin ? "Rendez-vous (équipe)" : "Mes rendez-vous",
-      icon: CalendarDays,
-    },
-    {
-      href: "/dashboard/analyse",
-      label: isAdmin ? "Analyse (équipe)" : "Mon analyse",
-      icon: BarChart3,
-    },
-  ];
-}
-
-function orgAdminNavItems(role: DashboardRoleMode | null): NavItem[] {
-  if (role !== "admin") return [];
-  return [
-    {
-      href: "/dashboard/settings",
-      label: "Paramètres org.",
-      icon: Settings2,
-      match: "prefix",
-    },
-  ];
-}
-
-const footerNav: NavItem[] = [
-  {
-    href: "/dashboard/super-admin",
-    label: "Super admin",
-    icon: Shield,
-  },
-];
-
 type OrgDashboardShellProps = {
   children: React.ReactNode;
   showSuperAdminNav: boolean;
   isElevatedSuperAdmin: boolean;
-  elevatedClerkOrgId: string | null;
-  activeTenantClerkOrgId: string | null;
+  elevatedOrganizationId: string | null;
+  activeOrganizationId: string | null;
   dashboardRoleMode: DashboardRoleMode | null;
   analysesUsed: number;
+  organizationSwitcherMemberships: OrgSwitcherMembership[];
 };
 
 function navActive(pathname: string, item: NavItem) {
@@ -108,15 +66,55 @@ export function OrgDashboardShell({
   children,
   showSuperAdminNav,
   isElevatedSuperAdmin,
-  elevatedClerkOrgId,
-  activeTenantClerkOrgId,
+  elevatedOrganizationId,
+  activeOrganizationId,
   dashboardRoleMode,
   analysesUsed,
+  organizationSwitcherMemberships,
 }: OrgDashboardShellProps) {
   const pathname = usePathname();
-  const mainNav = mainNavItems();
-  const orgProductNav = orgProductNavItems(dashboardRoleMode);
-  const orgAdminNav = orgAdminNavItems(dashboardRoleMode);
+  const tNav = useTranslations("nav");
+  const isAdmin = dashboardRoleMode === "admin";
+  const mainNav: NavItem[] = [
+    {
+      href: "/company",
+      label: tNav("dashboard"),
+      icon: LayoutDashboard,
+      match: "exact",
+    },
+  ];
+  const orgProductNav: NavItem[] = [
+    {
+      href: "/company/rendez-vous",
+      label: isAdmin ? tNav("meetingsTeam") : tNav("meetingsMine"),
+      icon: CalendarDays,
+    },
+    {
+      href: "/company/analyse",
+      label: isAdmin ? tNav("analyseTeam") : tNav("analyseMine"),
+      icon: BarChart3,
+    },
+  ];
+  const orgAdminNav: NavItem[] =
+    dashboardRoleMode === "admin"
+      ? [
+          {
+            href: "/company/settings",
+            label: tNav("orgSettings"),
+            icon: Settings2,
+            match: "prefix",
+          },
+        ]
+      : [];
+  const footerNav: NavItem[] = showSuperAdminNav
+    ? [
+        {
+          href: "/admin",
+          label: tNav("superAdmin"),
+          icon: Shield,
+        },
+      ]
+    : [];
   const [showQuotaPopup, setShowQuotaPopup] = useState(false);
   const freeAnalysesLimit = 5;
   const quotaReached = analysesUsed >= freeAnalysesLimit;
@@ -125,6 +123,8 @@ export function OrgDashboardShell({
     Math.max(0, (analysesUsed / freeAnalysesLimit) * 100),
   );
 
+  // SessionStorage is unavailable during SSR; open the quota modal once per tab after mount.
+  /* eslint-disable react-hooks/set-state-in-effect -- intentional client-only sync with sessionStorage */
   useEffect(() => {
     if (!quotaReached) {
       setShowQuotaPopup(false);
@@ -136,36 +136,16 @@ export function OrgDashboardShell({
       sessionStorage.setItem("quota-popup-seen", "1");
     }
   }, [quotaReached]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon" side="left" variant="sidebar">
         <SidebarHeader className="border-b border-sidebar-border">
-          <div className="group-data-[collapsible=icon]:hidden px-2 py-1.5">
-            <OrganizationSwitcher
-              hidePersonal
-              afterCreateOrganizationUrl="/dashboard"
-              afterSelectOrganizationUrl="/dashboard"
-              appearance={{
-                elements: {
-                  rootBox: "w-full max-w-full",
-                  organizationSwitcherTrigger:
-                    "w-full max-w-full justify-between border border-sidebar-border bg-sidebar-accent/30 px-2 py-1.5 text-sidebar-foreground shadow-none hover:bg-sidebar-accent",
-                },
-              }}
-            />
-          </div>
-          <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center py-1.5">
-            <OrganizationSwitcher
-              hidePersonal
-              afterCreateOrganizationUrl="/dashboard"
-              afterSelectOrganizationUrl="/dashboard"
-              appearance={{
-                elements: {
-                  organizationSwitcherTrigger:
-                    "flex size-8 items-center justify-center rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-0 hover:bg-sidebar-accent",
-                },
-              }}
+          <div className="px-2 py-1.5">
+            <OrgSwitcher
+              memberships={organizationSwitcherMemberships}
+              currentOrganizationId={activeOrganizationId}
             />
           </div>
         </SidebarHeader>
@@ -247,7 +227,7 @@ export function OrgDashboardShell({
             </>
           ) : null}
 
-          {!activeTenantClerkOrgId ? (
+          {!activeOrganizationId ? (
             <>
               <SidebarSeparator />
               <p className="text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden px-4 pb-2 text-xs leading-snug">
@@ -270,7 +250,7 @@ export function OrgDashboardShell({
               <div className="mt-3">
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#171717]/20">
                   <div
-                    className="h-full rounded-full bg-[#6C4DFF]"
+                    className="h-full rounded-full bg-brand"
                     style={{ width: `${progressPercent}%` }}
                     aria-hidden
                   />
@@ -280,7 +260,7 @@ export function OrgDashboardShell({
                 href="/plan"
                 className={cn(
                   buttonVariants({ size: "sm" }),
-                  "mt-3 h-8 w-full rounded-md bg-[#6C4DFF] px-3 text-xs text-white hover:bg-[#5a3fd9]",
+                  "mt-3 h-8 w-full rounded-md bg-brand px-3 text-xs text-white hover:bg-brand-hover",
                 )}
               >
                 Voir tout les plans
@@ -289,12 +269,7 @@ export function OrgDashboardShell({
           </div>
 
           <SidebarMenu>
-            {footerNav
-              .filter(
-                (item) =>
-                  item.href !== "/dashboard/super-admin" || showSuperAdminNav,
-              )
-              .map((item) => {
+            {footerNav.map((item) => {
                 const Icon = item.icon;
                 const active = navActive(pathname, item);
                 return (
@@ -310,9 +285,9 @@ export function OrgDashboardShell({
                 );
               })}
           </SidebarMenu>
-          {activeTenantClerkOrgId ? (
+          {activeOrganizationId ? (
             <p className="text-sidebar-foreground/60 truncate px-2 pb-1 font-mono text-[10px]">
-              {activeTenantClerkOrgId}
+              {activeOrganizationId}
             </p>
           ) : null}
         </SidebarFooter>
@@ -356,7 +331,7 @@ export function OrgDashboardShell({
                 href="/plan"
                 className={cn(
                   buttonVariants({ size: "sm" }),
-                  "h-8 rounded-md bg-[#6C4DFF] text-white hover:bg-[#5a3fd9]",
+                  "h-8 rounded-md bg-brand text-white hover:bg-brand-hover",
                 )}
                 onClick={() => setShowQuotaPopup(false)}
               >
@@ -371,7 +346,7 @@ export function OrgDashboardShell({
         <DashboardHeader
           showSuperAdminNav={showSuperAdminNav}
           isElevatedSuperAdmin={isElevatedSuperAdmin}
-          elevatedClerkOrgId={elevatedClerkOrgId}
+          elevatedOrganizationId={elevatedOrganizationId}
           showSidebarTrigger
           showOrganizationSwitcher={false}
           showHeaderNavLinks={false}

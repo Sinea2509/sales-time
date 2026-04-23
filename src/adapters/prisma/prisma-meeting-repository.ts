@@ -1,10 +1,11 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
-import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
-import { salesScoreFromSoncasResult } from "@/lib/dashboard-sales-score";
-import { normalizePersonDisplayKey } from "@/lib/person-normalize";
-import { outreachPriorityScore } from "@/lib/person-outreach-priority";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
+import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
+import { normalizePersonDisplayKey } from "@/src/core/domain/person-normalize";
+import { outreachPriorityScore } from "@/src/core/domain/person-outreach-priority";
 import type {
   MeetingAnalysisRow,
+  MeetingDetailWithAnalyses,
   MeetingRepositoryPort,
   MeetingRow,
   PersonOutreachSummaryRow,
@@ -13,7 +14,7 @@ import type {
 
 function mapMeeting(row: {
   id: string;
-  clerkOrgId: string;
+  organizationId: string;
   sellerUserId: string;
   personId: string;
   prospectName: string;
@@ -27,7 +28,7 @@ function mapMeeting(row: {
 }): MeetingRow {
   return {
     id: row.id,
-    clerkOrgId: row.clerkOrgId,
+    organizationId: row.organizationId,
     sellerUserId: row.sellerUserId,
     personId: row.personId,
     prospectName: row.prospectName,
@@ -67,7 +68,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
   async createMeeting(input: {
-    clerkOrgId: string;
+    organizationId: string;
     sellerUserId: string;
     prospectName: string;
     meetingAt: Date;
@@ -80,13 +81,13 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     const normalizedKey = normalizePersonDisplayKey(displayName);
     const person = await this.db.person.upsert({
       where: {
-        clerkOrgId_normalizedKey: {
-          clerkOrgId: input.clerkOrgId,
+        organizationId_normalizedKey: {
+          organizationId: input.organizationId,
           normalizedKey,
         },
       },
       create: {
-        clerkOrgId: input.clerkOrgId,
+        organizationId: input.organizationId,
         displayName,
         normalizedKey,
       },
@@ -95,7 +96,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
 
     const row = await this.db.meeting.create({
       data: {
-        clerkOrgId: input.clerkOrgId,
+        organizationId: input.organizationId,
         sellerUserId: input.sellerUserId,
         personId: person.id,
         prospectName: displayName,
@@ -111,20 +112,20 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
 
   async findMeetingByIdForOrg(input: {
     id: string;
-    clerkOrgId: string;
+    organizationId: string;
   }): Promise<MeetingRow | null> {
     const row = await this.db.meeting.findFirst({
-      where: { id: input.id, clerkOrgId: input.clerkOrgId },
+      where: { id: input.id, organizationId: input.organizationId },
     });
     return row ? mapMeeting(row) : null;
   }
 
   async listMeetingsForOrg(input: {
-    clerkOrgId: string;
+    organizationId: string;
     limit?: number;
   }): Promise<MeetingRow[]> {
     const rows = await this.db.meeting.findMany({
-      where: { clerkOrgId: input.clerkOrgId },
+      where: { organizationId: input.organizationId },
       orderBy: { meetingAt: "desc" },
       take: input.limit ?? 100,
     });
@@ -154,23 +155,28 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
 
   async findLatestAnalysisForMeeting(input: {
     meetingId: string;
+    organizationId: string;
     kind: "SONCAS" | "DISC";
   }): Promise<MeetingAnalysisRow | null> {
     const row = await this.db.meetingAnalysis.findFirst({
-      where: { meetingId: input.meetingId, kind: input.kind },
+      where: {
+        meetingId: input.meetingId,
+        kind: input.kind,
+        meeting: { organizationId: input.organizationId },
+      },
       orderBy: { createdAt: "desc" },
     });
     return row ? mapAnalysis(row) : null;
   }
 
   async countMeetingsWithMeetingAtSince(input: {
-    clerkOrgId: string;
+    organizationId: string;
     since: Date;
     sellerUserId?: string;
   }): Promise<number> {
     return this.db.meeting.count({
       where: {
-        clerkOrgId: input.clerkOrgId,
+        organizationId: input.organizationId,
         meetingAt: { gte: input.since },
         ...sellerWhere(input.sellerUserId),
       },
@@ -178,14 +184,14 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   }
 
   async countMeetingsWithMeetingAtSinceAndOutcome(input: {
-    clerkOrgId: string;
+    organizationId: string;
     since: Date;
     outcome: MeetingOutcome;
     sellerUserId?: string;
   }): Promise<number> {
     return this.db.meeting.count({
       where: {
-        clerkOrgId: input.clerkOrgId,
+        organizationId: input.organizationId,
         meetingAt: { gte: input.since },
         outcome: input.outcome,
         ...sellerWhere(input.sellerUserId),
@@ -194,7 +200,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   }
 
   async listAnalysesForOrgMeetingsSince(input: {
-    clerkOrgId: string;
+    organizationId: string;
     meetingAtSince: Date;
     kinds: Array<"SONCAS" | "DISC">;
     sellerUserId?: string;
@@ -203,7 +209,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       where: {
         kind: { in: input.kinds },
         meeting: {
-          clerkOrgId: input.clerkOrgId,
+          organizationId: input.organizationId,
           meetingAt: { gte: input.meetingAtSince },
           ...sellerWhere(input.sellerUserId),
         },
@@ -221,21 +227,21 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     return rows.map(mapAnalysis);
   }
 
-  async countMeetingsForOrg(input: { clerkOrgId: string }): Promise<number> {
+  async countMeetingsForOrg(input: { organizationId: string }): Promise<number> {
     return this.db.meeting.count({
-      where: { clerkOrgId: input.clerkOrgId },
+      where: { organizationId: input.organizationId },
     });
   }
 
   async countMeetingsWithMeetingAtBetween(input: {
-    clerkOrgId: string;
+    organizationId: string;
     meetingAtGte: Date;
     meetingAtLt: Date;
     sellerUserId?: string;
   }): Promise<number> {
     return this.db.meeting.count({
       where: {
-        clerkOrgId: input.clerkOrgId,
+        organizationId: input.organizationId,
         meetingAt: { gte: input.meetingAtGte, lt: input.meetingAtLt },
         ...sellerWhere(input.sellerUserId),
       },
@@ -243,14 +249,14 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   }
 
   async averageDurationMinForMeetingsInWindow(input: {
-    clerkOrgId: string;
+    organizationId: string;
     meetingAtGte: Date;
     meetingAtLt?: Date;
     sellerUserId?: string;
   }): Promise<number | null> {
     const row = await this.db.meeting.aggregate({
       where: {
-        clerkOrgId: input.clerkOrgId,
+        organizationId: input.organizationId,
         meetingAt: {
           gte: input.meetingAtGte,
           ...(input.meetingAtLt != null ? { lt: input.meetingAtLt } : {}),
@@ -265,7 +271,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   }
 
   async listRecentMeetingsForDashboard(input: {
-    clerkOrgId: string;
+    organizationId: string;
     limit?: number;
     meetingAtSince?: Date;
     meetingAtBefore?: Date;
@@ -274,7 +280,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   }): Promise<RecentMeetingListRow[]> {
     const rows = await this.db.meeting.findMany({
       where: {
-        clerkOrgId: input.clerkOrgId,
+        organizationId: input.organizationId,
         ...sellerWhere(input.sellerUserId),
         ...(input.meetingAtSince != null || input.meetingAtBefore != null
           ? {
@@ -322,7 +328,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   }
 
   async listPersonOutreachSummaries(input: {
-    clerkOrgId: string;
+    organizationId: string;
     sellerUserId?: string;
     limit?: number;
   }): Promise<PersonOutreachSummaryRow[]> {
@@ -330,7 +336,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     const grouped = await this.db.meeting.groupBy({
       by: ["personId"],
       where: {
-        clerkOrgId: input.clerkOrgId,
+        organizationId: input.organizationId,
         ...sellerWhere(input.sellerUserId),
       },
       _count: { _all: true },
@@ -349,7 +355,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
 
     const latestRows = await this.db.meeting.findMany({
       where: {
-        clerkOrgId: input.clerkOrgId,
+        organizationId: input.organizationId,
         personId: { in: personIds },
         ...sellerWhere(input.sellerUserId),
       },
@@ -391,5 +397,49 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
 
     rows.sort((a, b) => b.outreachPriorityScore - a.outreachPriorityScore);
     return rows.slice(0, take);
+  }
+
+  async countMeetingAnalysesForOrganization(
+    organizationId: string,
+  ): Promise<number> {
+    return this.db.meetingAnalysis.count({
+      where: { meeting: { organizationId } },
+    });
+  }
+
+  async deleteMeetingByIdForOrg(input: {
+    id: string;
+    organizationId: string;
+  }): Promise<boolean> {
+    const res = await this.db.meeting.deleteMany({
+      where: { id: input.id, organizationId: input.organizationId },
+    });
+    return res.count > 0;
+  }
+
+  async findMeetingDetailWithAnalyses(input: {
+    id: string;
+    organizationId: string;
+  }): Promise<MeetingDetailWithAnalyses | null> {
+    const row = await this.db.meeting.findFirst({
+      where: { id: input.id, organizationId: input.organizationId },
+      include: {
+        analyses: { orderBy: { createdAt: "desc" } },
+      },
+    });
+    if (!row) return null;
+    return {
+      id: row.id,
+      prospectName: row.prospectName,
+      meetingAt: row.meetingAt,
+      outcome: row.outcome,
+      transcript: row.transcript,
+      notes: row.notes,
+      analyses: row.analyses.map((a) => ({
+        kind: a.kind as "SONCAS" | "DISC",
+        model: a.model,
+        result: a.result,
+      })),
+    };
   }
 }

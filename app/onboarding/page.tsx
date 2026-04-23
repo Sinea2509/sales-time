@@ -1,7 +1,5 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
-import { prisma } from "@/lib/prisma";
 import {
   DEFAULT_INVITE_MESSAGE,
   DEFAULT_MEETING_TYPES,
@@ -11,7 +9,8 @@ import {
   initialInviteRowsFromStored,
   parseStoredInviteRows,
 } from "@/lib/onboarding-invites";
-import { ensureClerkUserSynced } from "@/src/adapters/prisma/sync-clerk-user";
+import { needsRegisterProfile } from "@/lib/register-profile-gate";
+import { makeApplicationDeps } from "@/src/adapters/composition";
 
 export const dynamic = "force-dynamic";
 
@@ -21,24 +20,26 @@ function asStringArray(value: unknown): string[] {
 }
 
 export default async function OnboardingPage() {
-  const { userId } = await auth();
-  if (!userId) {
+  const deps = makeApplicationDeps();
+  const principal = await deps.auth.getAuthenticatedPrincipal();
+  if (!principal) {
     redirect("/sign-in");
   }
 
-  await ensureClerkUserSynced(userId);
-
-  const user = await prisma.user.findUnique({
-    where: { clerkUserId: userId },
-    include: { onboardingProfile: true },
-  });
+  const user = await deps.users.findUserWithOnboardingByUserId(
+    principal.userId,
+  );
 
   if (!user) {
     redirect("/sign-in");
   }
 
+  if (needsRegisterProfile(user)) {
+    redirect("/register/profile");
+  }
+
   if (user.onboardingProfile?.completedAt) {
-    redirect("/dashboard");
+    redirect("/company");
   }
 
   const p = user.onboardingProfile;

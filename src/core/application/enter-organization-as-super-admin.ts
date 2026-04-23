@@ -1,39 +1,41 @@
 import type { AuthSessionPort } from "../ports/auth-session-port";
 import type { AuditRepositoryPort } from "../ports/audit-repository-port";
-import type { UserRepositoryPort } from "../ports/user-repository-port";
+import type { OrganizationDirectoryPort } from "../ports/organization-directory-port";
 
 export type EnterSuperAdminOrgResult =
   | { ok: true }
   | {
       ok: false;
-      error: "NOT_SUPER_ADMIN" | "USER_NOT_SYNCED";
+      error: "NOT_SUPER_ADMIN" | "NOT_AUTHENTICATED" | "ORG_NOT_FOUND";
     };
 
 export async function enterOrganizationAsSuperAdmin(
   deps: {
     auth: AuthSessionPort;
-    users: UserRepositoryPort;
     audit: AuditRepositoryPort;
+    orgDirectory: OrganizationDirectoryPort;
   },
-  input: { targetClerkOrgId: string; reason?: string | null },
+  input: { targetOrganizationId: string; reason?: string | null },
 ): Promise<EnterSuperAdminOrgResult> {
-  const clerkUserId = await deps.auth.getClerkUserId();
-  if (!clerkUserId) {
-    return { ok: false, error: "USER_NOT_SYNCED" };
+  const principal = await deps.auth.getAuthenticatedPrincipal();
+  if (!principal) {
+    return { ok: false, error: "NOT_AUTHENTICATED" };
   }
 
-  const user = await deps.users.findByClerkUserId(clerkUserId);
-  if (!user) {
-    return { ok: false, error: "USER_NOT_SYNCED" };
-  }
-
-  if (!user.systemRoles.includes("SUPER_ADMIN")) {
+  if (!principal.systemRoles.includes("SUPER_ADMIN")) {
     return { ok: false, error: "NOT_SUPER_ADMIN" };
   }
 
+  const org = await deps.orgDirectory.getOrganizationById(
+    input.targetOrganizationId,
+  );
+  if (!org) {
+    return { ok: false, error: "ORG_NOT_FOUND" };
+  }
+
   await deps.audit.logSuperAdminAction({
-    actorInternalUserId: user.id,
-    clerkOrgId: input.targetClerkOrgId,
+    actorInternalUserId: principal.userId,
+    organizationId: input.targetOrganizationId,
     action: "ENTER_ORG",
     reason: input.reason,
   });

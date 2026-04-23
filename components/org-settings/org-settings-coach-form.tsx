@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { updateOrganizationCoach } from "@/app/dashboard/settings/actions";
+import { updateOrganizationCoach } from "@/app/company/settings/actions";
 import { cn } from "@/lib/utils";
 
 function linesToArray(s: string, max: number, maxLineLen: number): string[] {
@@ -135,7 +135,7 @@ export function OrgSettingsCoachForm({ initial }: { initial: OrgCoachFormInitial
       <Button
         type="submit"
         disabled={pending}
-        className="bg-[#6C4DFF] text-white hover:bg-[#5a3fd9]"
+        className="bg-brand text-white hover:bg-brand-hover"
       >
         Enregistrer
       </Button>

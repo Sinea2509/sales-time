@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Building2, Clock3, ShieldCheck } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -11,8 +10,6 @@ import {
 } from "@/components/ui/card";
 import { LandingSiteFooter } from "@/components/organisms/landing-site-footer";
 import { LandingSiteHeader } from "@/components/organisms/landing-site-header";
-
-const signInRedirect = "/dashboard";
 
 const features = [
   {
@@ -30,7 +27,7 @@ const features = [
   {
     title: "Trust by design",
     description:
-      "Enterprise-ready auth with Clerk, audited super-admin access when you need to support any tenant.",
+      "Built-in auth and audited super-admin access when you need to support any tenant.",
     icon: ShieldCheck,
   },
 ] as const;
@@ -64,61 +61,54 @@ export function SalesTimeLanding() {
             </h1>
             <p className="text-muted-foreground mx-auto mt-5 max-w-xl text-lg text-pretty sm:text-xl">
               Create your account on the sign-up page, then continue with
-              onboarding. Prefer a quick return visit? Use the modal to sign in.
+              onboarding. Returning users can sign in on the dedicated page.
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <SignedOut>
-                <Link
-                  href="/sign-up"
-                  className={cn(
-                    buttonVariants({ size: "lg" }),
-                    "inline-flex min-w-[200px] justify-center px-8 shadow-md",
-                  )}
-                >
-                  Create free account
-                </Link>
-                <SignInButton mode="modal" forceRedirectUrl={signInRedirect}>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="min-w-[200px] border-border/80 bg-background/80 backdrop-blur"
-                  >
-                    Sign in
-                  </Button>
-                </SignInButton>
-              </SignedOut>
-              <SignedIn>
-                <Link
-                  href={signInRedirect}
-                  className={cn(
-                    buttonVariants({ size: "lg" }),
-                    "min-w-[200px] px-8 shadow-md",
-                  )}
-                >
-                  Open dashboard
-                </Link>
-              </SignedIn>
+              <Link
+                href="/sign-up"
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "inline-flex min-w-[200px] justify-center px-8 shadow-md",
+                )}
+              >
+                Create free account
+              </Link>
+              <Link
+                href="/sign-in"
+                className={cn(
+                  buttonVariants({ size: "lg", variant: "outline" }),
+                  "inline-flex min-w-[200px] justify-center border-border/80 bg-background/80 px-8 backdrop-blur",
+                )}
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/company"
+                className={cn(
+                  buttonVariants({ size: "lg", variant: "secondary" }),
+                  "inline-flex min-w-[200px] justify-center px-8 shadow-md",
+                )}
+              >
+                Open dashboard
+              </Link>
             </div>
 
-            <SignedOut>
-              <p className="text-muted-foreground mt-6 text-sm">
-                Prefer a dedicated page?{" "}
-                <Link
-                  href="/sign-in"
-                  className="text-foreground font-medium underline-offset-4 hover:underline"
-                >
-                  Sign in
-                </Link>
-                {" · "}
-                <Link
-                  href="/sign-up"
-                  className="text-foreground font-medium underline-offset-4 hover:underline"
-                >
-                  Sign up
-                </Link>
-              </p>
-            </SignedOut>
+            <p className="text-muted-foreground mt-6 text-sm">
+              <Link
+                href="/sign-in"
+                className="text-foreground font-medium underline-offset-4 hover:underline"
+              >
+                Sign in
+              </Link>
+              {" · "}
+              <Link
+                href="/sign-up"
+                className="text-foreground font-medium underline-offset-4 hover:underline"
+              >
+                Sign up
+              </Link>
+            </p>
           </div>
         </section>
 
@@ -174,9 +164,9 @@ export function SalesTimeLanding() {
                   <div>
                     <p className="font-medium">Choose how you authenticate</p>
                     <p className="text-muted-foreground mt-1">
-                      New accounts use the full sign-up page (SSO and security
-                      options). Returning users can use the modal or the
-                      full-page sign-in for password reset.
+                      New accounts use the full sign-up page. Returning users sign
+                      in with e-mail and password; password reset is available
+                      from the sign-in page.
                     </p>
                   </div>
                 </li>
@@ -185,11 +175,11 @@ export function SalesTimeLanding() {
                     2
                   </span>
                   <div>
-                    <p className="font-medium">Create or join an organization</p>
+                    <p className="font-medium">Profile, then onboarding</p>
                     <p className="text-muted-foreground mt-1">
-                      After sign-up, you complete the French onboarding wizard
-                      (context, coach IA, process, invitations), then pick or
-                      create your organization in the app.
+                      After sign-up you add your name and role, then the French
+                      onboarding wizard (context, coach IA, process,
+                      invitations), which creates your first organization.
                     </p>
                   </div>
                 </li>
@@ -214,50 +204,50 @@ export function SalesTimeLanding() {
                 in and jump back to your workspace.
               </p>
               <div className="mt-8 flex flex-col gap-3">
-                <SignedOut>
-                  <Link
-                    href="/sign-up"
-                    className={cn(
-                      buttonVariants({ size: "lg" }),
-                      "inline-flex w-full justify-center",
-                    )}
-                  >
-                    Create account
-                  </Link>
-                  <SignInButton mode="modal" forceRedirectUrl={signInRedirect}>
-                    <Button size="lg" variant="secondary" className="w-full">
-                      Sign in to Sales Time
-                    </Button>
-                  </SignInButton>
-                  <div className="text-muted-foreground flex flex-col gap-2 border-t pt-4 text-center text-xs sm:text-sm">
-                    <span>Full-page flows</span>
-                    <div className="flex justify-center gap-4">
-                      <Link
-                        href="/sign-up"
-                        className="text-foreground font-medium underline-offset-4 hover:underline"
-                      >
-                        Sign up
-                      </Link>
-                      <Link
-                        href="/sign-in"
-                        className="text-foreground font-medium underline-offset-4 hover:underline"
-                      >
-                        Sign in
-                      </Link>
-                    </div>
+                <Link
+                  href="/sign-up"
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "inline-flex w-full justify-center",
+                  )}
+                >
+                  Create account
+                </Link>
+                <Link
+                  href="/sign-in"
+                  className={cn(
+                    buttonVariants({ size: "lg", variant: "secondary" }),
+                    "inline-flex w-full justify-center",
+                  )}
+                >
+                  Sign in to Sales Time
+                </Link>
+                <Link
+                  href="/company"
+                  className={cn(
+                    buttonVariants({ size: "lg", variant: "outline" }),
+                    "inline-flex w-full justify-center",
+                  )}
+                >
+                  Go to dashboard
+                </Link>
+                <div className="text-muted-foreground flex flex-col gap-2 border-t pt-4 text-center text-xs sm:text-sm">
+                  <span>Full-page flows</span>
+                  <div className="flex justify-center gap-4">
+                    <Link
+                      href="/sign-up"
+                      className="text-foreground font-medium underline-offset-4 hover:underline"
+                    >
+                      Sign up
+                    </Link>
+                    <Link
+                      href="/sign-in"
+                      className="text-foreground font-medium underline-offset-4 hover:underline"
+                    >
+                      Sign in
+                    </Link>
                   </div>
-                </SignedOut>
-                <SignedIn>
-                  <Link
-                    href={signInRedirect}
-                    className={cn(
-                      buttonVariants({ size: "lg" }),
-                      "inline-flex w-full justify-center",
-                    )}
-                  >
-                    Go to dashboard
-                  </Link>
-                </SignedIn>
+                </div>
               </div>
             </div>
           </div>

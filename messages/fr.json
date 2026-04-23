@@ -1,0 +1,39 @@
+{
+  "common": {
+    "appName": "Sales Time",
+    "toggleSidebar": "Afficher ou masquer le menu latéral",
+    "account": "Compte",
+    "superAdmin": "Super admin",
+    "exitSuperAdminOrg": "Quitter l'org super admin"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "meetingsTeam": "Rendez-vous (équipe)",
+    "meetingsMine": "Mes rendez-vous",
+    "analyseTeam": "Analyse (équipe)",
+    "analyseMine": "Mon analyse",
+    "orgSettings": "Paramètres org.",
+    "superAdmin": "Super admin"
+  },
+  "elevated": {
+    "badge": "Mode super admin"
+  },
+  "accountPage": {
+    "title": "Compte",
+    "description": "Profil, sécurité, mot de passe et sessions sont gérés dans Clerk."
+  },
+  "superAdminPage": {
+    "title": "Super admin",
+    "orgListTitle": "Super admin — organisations",
+    "accessDeniedTitle": "Super admin",
+    "accessDeniedBody": "Vous n’avez pas accès à cette zone, ou votre utilisateur n’est pas encore synchronisé dans la base applicative.",
+    "promptsLink": "Prompts SONCAS / DISC"
+  },
+  "superAdminOrgList": {
+    "title": "Super admin — organisations",
+    "description": "Entrer dans une organisation enregistre une trace d’audit et accorde les droits d’admin d’organisation pour cette org Clerk tant que le cookie de session est défini.",
+    "reasonLabel": "Motif (optionnel)",
+    "reasonPlaceholder": "Référence ticket / incident",
+    "operateButton": "Opérer dans cette organisation"
+  }
+}

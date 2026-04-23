@@ -1,8 +1,8 @@
-import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 
 export type MeetingRow = {
   id: string;
-  clerkOrgId: string;
+  organizationId: string;
   sellerUserId: string;
   personId: string;
   prospectName: string;
@@ -46,9 +46,24 @@ export type PersonOutreachSummaryRow = {
   outreachPriorityScore: number;
 };
 
+/** Meeting detail page: transcript + ordered analyses. */
+export type MeetingDetailWithAnalyses = {
+  id: string;
+  prospectName: string;
+  meetingAt: Date;
+  outcome: MeetingOutcome;
+  transcript: string;
+  notes: string | null;
+  analyses: Array<{
+    kind: "SONCAS" | "DISC";
+    model: string;
+    result: unknown;
+  }>;
+};
+
 export interface MeetingRepositoryPort {
   createMeeting(input: {
-    clerkOrgId: string;
+    organizationId: string;
     sellerUserId: string;
     prospectName: string;
     meetingAt: Date;
@@ -60,11 +75,11 @@ export interface MeetingRepositoryPort {
 
   findMeetingByIdForOrg(input: {
     id: string;
-    clerkOrgId: string;
+    organizationId: string;
   }): Promise<MeetingRow | null>;
 
   listMeetingsForOrg(input: {
-    clerkOrgId: string;
+    organizationId: string;
     limit?: number;
   }): Promise<MeetingRow[]>;
 
@@ -79,33 +94,34 @@ export interface MeetingRepositoryPort {
 
   findLatestAnalysisForMeeting(input: {
     meetingId: string;
+    organizationId: string;
     kind: "SONCAS" | "DISC";
   }): Promise<MeetingAnalysisRow | null>;
 
   countMeetingsWithMeetingAtSince(input: {
-    clerkOrgId: string;
+    organizationId: string;
     since: Date;
     sellerUserId?: string;
   }): Promise<number>;
 
   countMeetingsWithMeetingAtSinceAndOutcome(input: {
-    clerkOrgId: string;
+    organizationId: string;
     since: Date;
     outcome: MeetingOutcome;
     sellerUserId?: string;
   }): Promise<number>;
 
   listAnalysesForOrgMeetingsSince(input: {
-    clerkOrgId: string;
+    organizationId: string;
     meetingAtSince: Date;
     kinds: Array<"SONCAS" | "DISC">;
     sellerUserId?: string;
   }): Promise<MeetingAnalysisRow[]>;
 
-  countMeetingsForOrg(input: { clerkOrgId: string }): Promise<number>;
+  countMeetingsForOrg(input: { organizationId: string }): Promise<number>;
 
   countMeetingsWithMeetingAtBetween(input: {
-    clerkOrgId: string;
+    organizationId: string;
     meetingAtGte: Date;
     meetingAtLt: Date;
     sellerUserId?: string;
@@ -113,14 +129,14 @@ export interface MeetingRepositoryPort {
 
   /** Moyenne de `durationMin` (non null) sur la fenêtre [gte, lt) ou [gte, +∞). */
   averageDurationMinForMeetingsInWindow(input: {
-    clerkOrgId: string;
+    organizationId: string;
     meetingAtGte: Date;
     meetingAtLt?: Date;
     sellerUserId?: string;
   }): Promise<number | null>;
 
   listRecentMeetingsForDashboard(input: {
-    clerkOrgId: string;
+    organizationId: string;
     limit?: number;
     /** Si défini : RDV dont la date de rendez-vous est >= ce jour (fenêtre KPI). */
     meetingAtSince?: Date;
@@ -133,8 +149,20 @@ export interface MeetingRepositoryPort {
   }): Promise<RecentMeetingListRow[]>;
 
   listPersonOutreachSummaries(input: {
-    clerkOrgId: string;
+    organizationId: string;
     sellerUserId?: string;
     limit?: number;
   }): Promise<PersonOutreachSummaryRow[]>;
+
+  countMeetingAnalysesForOrganization(organizationId: string): Promise<number>;
+
+  deleteMeetingByIdForOrg(input: {
+    id: string;
+    organizationId: string;
+  }): Promise<boolean>;
+
+  findMeetingDetailWithAnalyses(input: {
+    id: string;
+    organizationId: string;
+  }): Promise<MeetingDetailWithAnalyses | null>;
 }

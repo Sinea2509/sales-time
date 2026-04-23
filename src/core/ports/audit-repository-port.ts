@@ -7,7 +7,7 @@ export type SuperAdminAuditAction =
 export interface AuditRepositoryPort {
   logSuperAdminAction(input: {
     actorInternalUserId: string;
-    clerkOrgId: string;
+    organizationId: string;
     action: SuperAdminAuditAction;
     reason?: string | null;
   }): Promise<void>;

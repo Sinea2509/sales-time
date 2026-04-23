@@ -1,7 +1,7 @@
 import {
   discResultSchema,
   soncasResultSchema,
-} from "@/lib/analysis-result-zod";
+} from "@/src/core/domain/analysis-result-zod";
 import type { MeetingAnalysisRow } from "@/src/core/ports/meeting-repository-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 
@@ -38,12 +38,12 @@ function latestPerMeeting(
 export async function getOrgDashboardKpis(
   deps: { meetings: MeetingRepositoryPort },
   input: {
-    clerkOrgId: string | null;
+    organizationId: string | null;
     meetingAtSince: Date;
     sellerUserId?: string | null;
   },
 ): Promise<OrgDashboardKpis | null> {
-  if (!input.clerkOrgId) return null;
+  if (!input.organizationId) return null;
 
   const since = input.meetingAtSince;
   const seller =
@@ -52,12 +52,12 @@ export async function getOrgDashboardKpis(
       : undefined;
 
   const total = await deps.meetings.countMeetingsWithMeetingAtSince({
-    clerkOrgId: input.clerkOrgId,
+    organizationId: input.organizationId,
     since,
     sellerUserId: seller,
   });
   const won = await deps.meetings.countMeetingsWithMeetingAtSinceAndOutcome({
-    clerkOrgId: input.clerkOrgId,
+    organizationId: input.organizationId,
     since,
     outcome: "WON",
     sellerUserId: seller,
@@ -67,7 +67,7 @@ export async function getOrgDashboardKpis(
     total === 0 ? null : Math.round((100 * won) / total);
 
   const analyses = await deps.meetings.listAnalysesForOrgMeetingsSince({
-    clerkOrgId: input.clerkOrgId,
+    organizationId: input.organizationId,
     meetingAtSince: since,
     kinds: ["SONCAS", "DISC"],
     sellerUserId: seller,

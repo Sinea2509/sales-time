@@ -10,10 +10,11 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DataTableHead } from "@/components/molecules/data-table-head";
 import { buttonVariants } from "@/components/ui/button";
 import { meetingEtapeLabel, meetingEtapePillClass } from "@/lib/meeting-etape-pill";
 import { prospectInitials } from "@/lib/prospect-initials";
-import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import { cn } from "@/lib/utils";
 
 export type AnalyseTopMeetingRow = {
@@ -90,7 +91,7 @@ export function AnalyseTopMeetingsTable({ rows }: { rows: AnalyseTopMeetingRow[]
   if (rows.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        Aucun rendez-vous analyse pour l'instant.
+        Aucun rendez-vous analyse pour l&apos;instant.
       </p>
     );
   }
@@ -100,10 +101,8 @@ export function AnalyseTopMeetingsTable({ rows }: { rows: AnalyseTopMeetingRow[]
       <table className="w-full min-w-[760px] text-left text-sm">
         <thead>
           <tr className="border-b border-neutral-200 bg-neutral-50/80 dark:border-neutral-800 dark:bg-neutral-900/50">
-            <th className="px-3 py-2.5 text-[11px] font-semibold tracking-wider uppercase">
-              Prospect
-            </th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold tracking-wider uppercase">
+            <DataTableHead className="px-3 py-2.5">Prospect</DataTableHead>
+            <DataTableHead className="px-3 py-2.5">
               <div className="flex items-center gap-1">
                 <span>Potentiel</span>
                 <DropdownMenu>
@@ -130,8 +129,8 @@ export function AnalyseTopMeetingsTable({ rows }: { rows: AnalyseTopMeetingRow[]
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold tracking-wider uppercase">
+            </DataTableHead>
+            <DataTableHead className="px-3 py-2.5">
               <div className="flex items-center gap-1">
                 <span>Opportunity</span>
                 <DropdownMenu>
@@ -160,14 +159,10 @@ export function AnalyseTopMeetingsTable({ rows }: { rows: AnalyseTopMeetingRow[]
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold tracking-wider uppercase">
-              Date
-            </th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold tracking-wider uppercase">
-              Score
-            </th>
-            <th className="px-3 py-2.5" />
+            </DataTableHead>
+            <DataTableHead className="px-3 py-2.5">Date</DataTableHead>
+            <DataTableHead className="px-3 py-2.5">Score</DataTableHead>
+            <DataTableHead className="px-3 py-2.5" />
           </tr>
         </thead>
         <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -205,7 +200,7 @@ export function AnalyseTopMeetingsTable({ rows }: { rows: AnalyseTopMeetingRow[]
                 <td className="px-3 py-2.5 font-semibold tabular-nums">{m.salesScore}</td>
                 <td className="px-3 py-2.5 text-right">
                   <Link
-                    href={`/dashboard/rendez-vous/${m.id}`}
+                    href={`/company/rendez-vous/${m.id}`}
                     className={cn(
                       buttonVariants({ variant: "ghost", size: "icon-sm" }),
                       "text-muted-foreground hover:text-foreground",

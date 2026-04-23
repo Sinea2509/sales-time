@@ -1,11 +1,11 @@
-import Link from "next/link";
 import { Suspense } from "react";
+import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
+import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/molecules/rendez-vous-meeting-row-actions";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
-import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ESTIMATED_TAM_EUR_PER_RDV } from "@/lib/dashboard-estimates";
+import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
 import { meetingEtapeLabel, meetingEtapePillClass } from "@/lib/meeting-etape-pill";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { cn } from "@/lib/utils";
@@ -59,29 +59,19 @@ export function DashboardHomeShell({
               score de relance (plus élevé = relancer en priorité).
             </p>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-[#6C4DFF]/15 bg-gradient-to-br from-[#6C4DFF]/8 via-white to-emerald-500/5 shadow-md dark:border-[#6C4DFF]/25 dark:from-[#6C4DFF]/15 dark:via-zinc-900 dark:to-emerald-500/10">
+          <div className="overflow-hidden rounded-2xl border border-brand/15 bg-gradient-to-br from-brand/8 via-white to-emerald-500/5 shadow-md dark:border-brand/25 dark:from-brand/15 dark:via-zinc-900 dark:to-emerald-500/10">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-left text-sm">
                 <thead>
-                  <tr className="border-b border-[#6C4DFF]/10 bg-white/60 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="text-muted-foreground px-4 py-3 text-[11px] font-semibold tracking-wider uppercase">
-                      Contact
-                    </th>
-                    <th className="text-muted-foreground px-4 py-3 text-[11px] font-semibold tracking-wider uppercase">
-                      RDV
-                    </th>
-                    <th className="text-muted-foreground px-4 py-3 text-[11px] font-semibold tracking-wider uppercase">
-                      Dernier RDV
-                    </th>
-                    <th className="text-muted-foreground hidden px-4 py-3 text-[11px] font-semibold tracking-wider uppercase sm:table-cell">
+                  <tr className="border-b border-brand/10 bg-white/60 dark:border-zinc-800 dark:bg-zinc-950/60">
+                    <DataTableHead className="px-4 py-3">Contact</DataTableHead>
+                    <DataTableHead className="px-4 py-3">RDV</DataTableHead>
+                    <DataTableHead className="px-4 py-3">Dernier RDV</DataTableHead>
+                    <DataTableHead className="hidden px-4 py-3 sm:table-cell">
                       Durée moy.
-                    </th>
-                    <th className="text-muted-foreground px-4 py-3 text-[11px] font-semibold tracking-wider uppercase">
-                      Priorité
-                    </th>
-                    <th className="text-muted-foreground px-4 py-3 text-[11px] font-semibold tracking-wider uppercase">
-                      Dernière étape
-                    </th>
+                    </DataTableHead>
+                    <DataTableHead className="px-4 py-3">Priorité</DataTableHead>
+                    <DataTableHead className="px-4 py-3">Dernière étape</DataTableHead>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -92,7 +82,7 @@ export function DashboardHomeShell({
                     >
                       <td className="px-4 py-3 align-middle">
                         <div className="flex items-center gap-2">
-                          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#6C4DFF]/15 text-xs font-semibold text-[#5a3fd9] dark:text-[#c4b5fd]">
+                          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/15 text-xs font-semibold text-brand-hover dark:text-brand-muted">
                             {prospectInitials(p.displayName)}
                           </span>
                           <span className="font-medium text-zinc-950 dark:text-zinc-50">
@@ -110,7 +100,7 @@ export function DashboardHomeShell({
                         {p.avgDurationMin != null ? `${p.avgDurationMin} min` : "—"}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-[#6C4DFF]/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-[#5a3fd9] dark:text-[#c4b5fd]">
+                        <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-brand/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-brand-hover dark:text-brand-muted">
                           {p.outreachPriorityScore}
                         </span>
                       </td>
@@ -134,25 +124,21 @@ export function DashboardHomeShell({
       ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-        <Link
-          href="/dashboard/rendez-vous/nouveau"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            "h-10 rounded-lg border-[#6C4DFF]/25 bg-[#6C4DFF]/10 px-4 text-[#5a3fd9] hover:bg-[#6C4DFF]/15 dark:text-[#c4b5fd]",
-          )}
+        <BrandCtaLink
+          href="/company/rendez-vous/nouveau"
+          variant="outline"
+          className="h-10 rounded-lg"
         >
           Préparer un RDV
-        </Link>
-        <Link
-          href="/dashboard/analyse"
-          className={cn(
-            buttonVariants({ size: "sm" }),
-            "h-10 gap-1 rounded-lg border-0 bg-[#6C4DFF] px-4 text-white hover:bg-[#5a3fd9]",
-          )}
+        </BrandCtaLink>
+        <BrandCtaLink
+          href="/company/analyse"
+          variant="primary"
+          className="h-10 gap-1 rounded-lg"
         >
           <span className="text-lg leading-none">+</span>
           Analyser un nouveau RDV
-        </Link>
+        </BrandCtaLink>
       </div>
 
       <section className="space-y-3">
@@ -165,24 +151,24 @@ export function DashboardHomeShell({
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
-                  <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase dark:text-zinc-500">
+                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
                     Prospect
-                  </th>
-                  <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase sm:table-cell dark:text-zinc-500">
+                  </DataTableHead>
+                  <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-500">
                     Potentiel
-                  </th>
-                  <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase dark:text-zinc-500">
+                  </DataTableHead>
+                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
                     Date du RDV
-                  </th>
-                  <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase dark:text-zinc-500">
+                  </DataTableHead>
+                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
                     Étape
-                  </th>
-                  <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase md:table-cell dark:text-zinc-500">
+                  </DataTableHead>
+                  <DataTableHead className="hidden px-4 py-3.5 md:table-cell dark:text-zinc-500">
                     SalesScore
-                  </th>
-                  <th className="text-muted-foreground w-20 px-4 py-3.5 text-right text-[11px] font-semibold tracking-wider uppercase dark:text-zinc-500">
+                  </DataTableHead>
+                  <DataTableHead className="w-20 px-4 py-3.5 text-right dark:text-zinc-500">
                     Actions
-                  </th>
+                  </DataTableHead>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">

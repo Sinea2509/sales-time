@@ -1,7 +1,7 @@
 import type {
   DiscAnalysisResult,
   SoncasAnalysisResult,
-} from "@/lib/analysis-result-zod";
+} from "@/src/core/domain/analysis-result-zod";
 
 export interface AnalysisPort {
   analyzeSoncas(input: {

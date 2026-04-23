@@ -1,4 +1,4 @@
-import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 
 /** Pastilles type maquette (neutre / succès / alerte). */
 export function meetingOutcomeBadgeClass(outcome: MeetingOutcome): string {

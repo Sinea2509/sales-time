@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const signInRedirect = "/dashboard";
 
 export function LandingSiteHeader() {
   return (
@@ -23,36 +20,39 @@ export function LandingSiteHeader() {
           className="flex items-center gap-2 sm:gap-3"
           aria-label="Primary"
         >
-          <SignedOut>
-            <SignInButton mode="modal" forceRedirectUrl={signInRedirect}>
-              <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
-                Sign in
-              </Button>
-            </SignInButton>
-            <Link
-              href="/sign-up"
-              className={cn(buttonVariants({ size: "sm" }), "shadow-sm")}
-            >
-              Get started
-            </Link>
-            <Link
-              href="/sign-in"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "sm" }),
-                "sm:hidden",
-              )}
-            >
-              Sign in
-            </Link>
-          </SignedOut>
-          <SignedIn>
-            <Link
-              href={signInRedirect}
-              className={cn(buttonVariants({ size: "sm" }), "shadow-sm")}
-            >
-              Dashboard
-            </Link>
-          </SignedIn>
+          <Link
+            href="/sign-in"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              "hidden sm:inline-flex",
+            )}
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/sign-up"
+            className={cn(buttonVariants({ size: "sm" }), "shadow-sm")}
+          >
+            Get started
+          </Link>
+          <Link
+            href="/sign-in"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              "sm:hidden",
+            )}
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/company"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "hidden md:inline-flex",
+            )}
+          >
+            Dashboard
+          </Link>
         </nav>
       </div>
     </header>

@@ -56,7 +56,7 @@ const onboardingSecondaryGreyClass =
   "border border-neutral-200 bg-[#F5F5F5] text-foreground shadow-none hover:bg-[#EBEBEB] dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700";
 
 const violetSoftCtaClass =
-  "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-[#6C4DFF]/10 px-4 py-2.5 text-sm font-medium text-[#6C4DFF] shadow-none hover:bg-[#6C4DFF]/15 sm:w-auto dark:bg-[#6C4DFF]/10 dark:text-[#c4b5fd] dark:hover:bg-[#6C4DFF]/20";
+  "inline-flex w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-brand/10 px-4 py-2.5 text-sm font-medium text-brand shadow-none hover:bg-brand/15 sm:w-auto dark:bg-brand/10 dark:text-brand-muted dark:hover:bg-brand/20";
 
 function OnboardingProcessRow({
   value,
@@ -86,7 +86,7 @@ function OnboardingProcessRow({
       <div
         className={cn(
           "group border-border flex items-center gap-2 rounded-lg border bg-background px-3 py-2.5 transition-colors",
-          "hover:border-[#6C4DFF]/20 hover:bg-[#6C4DFF]/5",
+          "hover:border-brand/20 hover:bg-brand/5",
         )}
       >
         {editing ? (
@@ -361,7 +361,7 @@ export function OnboardingWizard({ initial }: Props) {
                   className={cn(
                     "flex h-full flex-col gap-1 rounded-xl border px-3 py-2.5 text-left sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:px-3 sm:py-1.5",
                     active
-                      ? "border-[#6C4DFF] bg-[#6C4DFF]/10 text-foreground dark:border-[#6C4DFF]/80 dark:bg-[#6C4DFF]/15"
+                      ? "border-brand bg-brand/10 text-foreground dark:border-brand/80 dark:bg-brand/15"
                       : done
                         ? "border-border bg-muted/60 text-muted-foreground"
                         : "border-border bg-background text-muted-foreground",
@@ -372,7 +372,7 @@ export function OnboardingWizard({ initial }: Props) {
                       className={cn(
                         "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums",
                         active
-                          ? "bg-[#6C4DFF] text-white"
+                          ? "bg-brand text-white"
                           : done
                             ? "bg-muted-foreground/20 text-foreground"
                             : "bg-muted text-muted-foreground",
@@ -675,7 +675,7 @@ export function OnboardingWizard({ initial }: Props) {
                   ))}
                 </ul>
                 {meetingDraftOpen ? (
-                  <div className="flex flex-col gap-2 rounded-lg border border-dashed border-[#6C4DFF]/30 bg-[#6C4DFF]/5 p-3 sm:flex-row sm:items-center">
+                  <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand/30 bg-brand/5 p-3 sm:flex-row sm:items-center">
                     <Input
                       value={draftMeeting}
                       onChange={(e) => setDraftMeeting(e.target.value)}
@@ -702,7 +702,7 @@ export function OnboardingWizard({ initial }: Props) {
                         size="sm"
                         className={cn(
                           "border-0 text-white",
-                          "bg-[#6C4DFF] hover:bg-[#5a3fd9]",
+                          "bg-brand hover:bg-brand-hover",
                         )}
                         onClick={() => {
                           const v = draftMeeting.trim();
@@ -737,7 +737,7 @@ export function OnboardingWizard({ initial }: Props) {
                     setDraftMeeting("");
                   }}
                 >
-                  <Plus className="size-4 shrink-0 text-[#6C4DFF] dark:text-[#c4b5fd]" />
+                  <Plus className="size-4 shrink-0 text-brand dark:text-brand-muted" />
                   + Ajouter un type
                 </Button>
               </div>
@@ -773,7 +773,7 @@ export function OnboardingWizard({ initial }: Props) {
                   ))}
                 </ul>
                 {pipelineDraftOpen ? (
-                  <div className="flex flex-col gap-2 rounded-lg border border-dashed border-[#6C4DFF]/30 bg-[#6C4DFF]/5 p-3 sm:flex-row sm:items-center">
+                  <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand/30 bg-brand/5 p-3 sm:flex-row sm:items-center">
                     <Input
                       value={draftStage}
                       onChange={(e) => setDraftStage(e.target.value)}
@@ -800,7 +800,7 @@ export function OnboardingWizard({ initial }: Props) {
                         size="sm"
                         className={cn(
                           "border-0 text-white",
-                          "bg-[#6C4DFF] hover:bg-[#5a3fd9]",
+                          "bg-brand hover:bg-brand-hover",
                         )}
                         onClick={() => {
                           const v = draftStage.trim();
@@ -835,7 +835,7 @@ export function OnboardingWizard({ initial }: Props) {
                     setDraftStage("");
                   }}
                 >
-                  <Plus className="size-4 shrink-0 text-[#6C4DFF] dark:text-[#c4b5fd]" />
+                  <Plus className="size-4 shrink-0 text-brand dark:text-brand-muted" />
                   + Ajouter une étape
                 </Button>
               </div>
@@ -912,11 +912,11 @@ export function OnboardingWizard({ initial }: Props) {
                   onClick={() =>
                     setInviteRows((xs) => [
                       ...xs,
-                      { email: "", role: "org:member" },
+                      { email: "", role: "MEMBER" },
                     ])
                   }
                 >
-                  <Plus className="size-4 shrink-0 text-[#6C4DFF] dark:text-[#c4b5fd]" />
+                  <Plus className="size-4 shrink-0 text-brand dark:text-brand-muted" />
                   + Ajouter une invitation
                 </Button>
               </div>
@@ -962,7 +962,7 @@ export function OnboardingWizard({ initial }: Props) {
             disabled={pending}
             className={cn(
               "rounded-lg border-0 px-6 font-medium text-white shadow-sm",
-              "bg-[#6C4DFF] hover:bg-[#5a3fd9] dark:bg-[#6C4DFF] dark:hover:bg-[#5a3fd9]",
+              "bg-brand hover:bg-brand-hover dark:bg-brand dark:hover:bg-brand-hover",
             )}
           >
             {step === 4 ? "Terminer" : "Suivant"}

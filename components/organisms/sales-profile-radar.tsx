@@ -47,7 +47,7 @@ export function SalesProfileRadar({
             label: seriesLabel,
             data,
             fillArea: true,
-            color: "#6C4DFF",
+            color: "var(--brand)",
           },
         ]}
         radar={{

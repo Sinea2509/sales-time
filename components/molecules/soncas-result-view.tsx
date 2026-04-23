@@ -4,7 +4,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { SoncasAnalysisResult } from "@/lib/analysis-result-zod";
+import type { SoncasAnalysisResult } from "@/src/core/domain/analysis-result-zod";
 
 const labels: Record<keyof SoncasAnalysisResult["drivers"], string> = {
   securite: "Sécurité",

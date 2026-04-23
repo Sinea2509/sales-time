@@ -1,4 +1,4 @@
-import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 
 const labels: Record<MeetingOutcome, string> = {
   WON: "Gagné",

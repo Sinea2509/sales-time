@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { makeApplicationDeps } from "@/src/adapters/composition";
 import {
   Card,
   CardContent,
@@ -14,8 +14,9 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function PlanPage() {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  const deps = makeApplicationDeps();
+  const principal = await deps.auth.getAuthenticatedPrincipal();
+  if (!principal) redirect("/sign-in");
 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-6 p-6">
@@ -40,11 +41,11 @@ export default async function PlanPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-[#6C4DFF]/30 shadow-sm dark:border-[#6C4DFF]/40">
+        <Card className="border-brand/30 shadow-sm dark:border-brand/40">
           <CardHeader>
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-base">Team</CardTitle>
-              <span className="rounded-full bg-[#6C4DFF]/10 px-2 py-0.5 text-xs font-semibold text-[#6C4DFF]">
+              <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand">
                 Populaire
               </span>
             </div>
@@ -60,7 +61,7 @@ export default async function PlanPage() {
               href="#"
               className={cn(
                 buttonVariants({ size: "sm" }),
-                "bg-[#6C4DFF] text-white hover:bg-[#5a3fd9]",
+                "bg-brand text-white hover:bg-brand-hover",
               )}
             >
               Choisir Team

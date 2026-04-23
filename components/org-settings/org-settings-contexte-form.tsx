@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updateOrganizationContext } from "@/app/dashboard/settings/actions";
+import { updateOrganizationContext } from "@/app/company/settings/actions";
 import {
   ONBOARDING_DEAL_SIZE_OPTIONS,
   ONBOARDING_INDUSTRY_OPTIONS,
@@ -190,7 +190,7 @@ export function OrgSettingsContexteForm({
       <Button
         type="submit"
         disabled={pending}
-        className="bg-[#6C4DFF] text-white hover:bg-[#5a3fd9]"
+        className="bg-brand text-white hover:bg-brand-hover"
       >
         Enregistrer
       </Button>

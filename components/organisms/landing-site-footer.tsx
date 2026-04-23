@@ -18,7 +18,7 @@ export function LandingSiteFooter() {
           <Link href="/sign-up" className="hover:text-foreground underline-offset-4 hover:underline">
             Create account
           </Link>
-          <Link href="/dashboard" className="hover:text-foreground underline-offset-4 hover:underline">
+          <Link href="/company" className="hover:text-foreground underline-offset-4 hover:underline">
             App
           </Link>
         </div>

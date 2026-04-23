@@ -13,6 +13,23 @@ enum SystemRoleType {
   SUPER_ADMIN
 }
 
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum OrganizationMembershipRole {
+  ADMIN
+  MEMBER
+}
+
+enum OrganizationInvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
 enum MeetingOutcome {
   WON
   LOST
@@ -31,22 +48,114 @@ enum OnboardingSharedPhraseKind {
   ARGUMENT
 }
 
-model User {
-  id          String   @id @default(cuid())
-  clerkUserId String   @unique
-  email       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  systemRoles              SystemRole[]
-  auditLogsAsActor         SuperAdminAuditLog[]      @relation("AuditActor")
-  onboardingProfile        OnboardingProfile?
-  meetingsAsSeller         Meeting[]                 @relation("MeetingSeller")
-  promptTemplateVersions   PromptTemplateVersion[]
-  onboardingPhrasesCreated OnboardingSharedPhrase[] @relation("OnboardingPhraseAuthor")
+enum UserProfileRole {
+  COMMERCIAL
+  SALES_MANAGER
+  LEADERSHIP
+  OTHER
 }
 
-/// Phrases d’objections / arguments partagées entre tous les utilisateurs (onboarding Coach IA).
+model User {
+  id                           String    @id @default(cuid())
+  email                        String    @unique
+  passwordHash                 String
+  /** Canonical hostname from signup (e.g. `example.com`); used when creating the first org. */
+  signupWebsiteNormalized      String?
+  firstName                    String?
+  lastName                     String?
+  profileRole                  UserProfileRole?
+  registerProfileCompletedAt   DateTime?
+  status                       UserStatus @default(ACTIVE)
+  createdAt                    DateTime  @default(now())
+  updatedAt                    DateTime  @updatedAt
+
+  sessions                   Session[]
+  passwordResetTokens        PasswordResetToken[]
+  systemRoles                SystemRole[]
+  auditLogsAsActor           SuperAdminAuditLog[]      @relation("AuditActor")
+  onboardingProfile          OnboardingProfile?
+  meetingsAsSeller           Meeting[]                 @relation("MeetingSeller")
+  promptTemplateVersions     PromptTemplateVersion[]
+  onboardingPhrasesCreated   OnboardingSharedPhrase[] @relation("OnboardingPhraseAuthor")
+  organizationMemberships    OrganizationMembership[]
+  invitationsSent            OrganizationInvitation[] @relation("InvitationInviter")
+  invitationsAccepted        OrganizationInvitation[] @relation("InvitationAcceptor")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  lastSeenAt DateTime @default(now())
+  userAgent  String?  @db.VarChar(512)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  /** Stable hostname key for deduplication (matches `User.signupWebsiteNormalized`). */
+  websiteNormalized String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  settings     OrganizationSettings?
+  memberships  OrganizationMembership[]
+  invitations  OrganizationInvitation[]
+  people       Person[]
+  meetings     Meeting[]
+}
+
+model OrganizationMembership {
+  id             String                     @id @default(cuid())
+  userId         String
+  user           User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role           OrganizationMembershipRole
+  createdAt      DateTime                   @default(now())
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+model OrganizationInvitation {
+  id               String                       @id @default(cuid())
+  organizationId   String
+  organization     Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email            String                       @db.VarChar(320)
+  role             OrganizationMembershipRole
+  tokenHash        String                       @unique
+  expiresAt        DateTime
+  status           OrganizationInvitationStatus @default(PENDING)
+  invitedByUserId  String
+  invitedBy        User                         @relation("InvitationInviter", fields: [invitedByUserId], references: [id], onDelete: Restrict)
+  acceptedByUserId String?
+  acceptedBy       User?                        @relation("InvitationAcceptor", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+  createdAt        DateTime                     @default(now())
+
+  @@index([organizationId])
+  @@index([email])
+}
+
 model OnboardingSharedPhrase {
   id              String                     @id @default(cuid())
   kind            OnboardingSharedPhraseKind
@@ -60,27 +169,23 @@ model OnboardingSharedPhrase {
   @@index([kind, createdAt])
 }
 
-/// Admin onboarding wizard (design: Onboarding admin.pdf) — post–Clerk sign-up.
-/// Configuration partagée au niveau de l’organisation (Clerk org id).
-/// Éditable par les org admins depuis /dashboard/settings.
+/// Org-scoped settings (editable from /company/settings).
 model OrganizationSettings {
-  id         String @id @default(cuid())
-  clerkOrgId String @unique
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  // Contexte (aligné sur l’onboarding admin)
   companyName           String?
   industrySector        String?
   commercialTeamSize    String?
   averageSalesCycle     String?
   averageDealSize       String?
 
-  // Coach IA
   companyPitch       String? @db.Text
   objections         Json?
   keyArguments       Json?
   industryVocabulary String? @db.Text
 
-  // Process
   meetingTypes   Json?
   pipelineStages Json?
 
@@ -93,26 +198,23 @@ model OnboardingProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Étape 1 — Contexte
   companyName           String?
   industrySector        String?
   commercialTeamSize    String?
   averageSalesCycle     String?
   averageDealSize       String?
 
-  // Étape 2 — Coach IA
-  companyPitch         String? @db.Text
-  objections           Json?
-  keyArguments         Json?
-  industryVocabulary   String? @db.Text
+  companyPitch       String? @db.Text
+  objections         Json?
+  keyArguments       Json?
+  industryVocabulary String? @db.Text
 
-  // Étape 3 — Process
-  meetingTypes    Json?
-  pipelineStages  Json?
+  meetingTypes   Json?
+  pipelineStages Json?
 
-  // Étape 4 — Invitations
-  inviteEmails   Json?
-  inviteMessage  String? @db.Text
+  /// Draft invites (wizard) until step 4 creates OrganizationInvitation rows.
+  inviteEmails  Json?
+  inviteMessage String? @db.Text
 
   currentStep Int       @default(1)
   completedAt DateTime?
@@ -131,52 +233,53 @@ model SystemRole {
 }
 
 model SuperAdminAuditLog {
-  id          String   @id @default(cuid())
-  actorUserId String
-  actor       User     @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: Cascade)
-  clerkOrgId  String
-  action      String
-  reason      String?
-  createdAt   DateTime @default(now())
+  id              String   @id @default(cuid())
+  actorUserId     String
+  actor           User     @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: Cascade)
+  organizationId  String
+  action          String
+  reason          String?
+  createdAt       DateTime @default(now())
 
   @@index([actorUserId])
-  @@index([clerkOrgId])
+  @@index([organizationId])
 }
 
-/// Canonical contact per organization (deduped by normalized display key).
 model Person {
-  id            String    @id @default(cuid())
-  clerkOrgId    String
-  displayName   String
-  normalizedKey String
-  meetings      Meeting[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  displayName    String
+  normalizedKey  String
+  meetings       Meeting[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  @@unique([clerkOrgId, normalizedKey])
-  @@index([clerkOrgId])
+  @@unique([organizationId, normalizedKey])
+  @@index([organizationId])
 }
 
 model Meeting {
-  id           String         @id @default(cuid())
-  clerkOrgId   String
-  sellerUserId String
-  seller       User           @relation("MeetingSeller", fields: [sellerUserId], references: [id], onDelete: Cascade)
-  personId     String
-  person       Person         @relation(fields: [personId], references: [id], onDelete: Restrict)
-  prospectName String
-  meetingAt    DateTime
-  durationMin  Int?
-  transcript   String         @db.Text
-  notes        String?        @db.Text
-  outcome      MeetingOutcome
-  analyses     MeetingAnalysis[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sellerUserId   String
+  seller         User           @relation("MeetingSeller", fields: [sellerUserId], references: [id], onDelete: Cascade)
+  personId       String
+  person         Person         @relation(fields: [personId], references: [id], onDelete: Restrict)
+  prospectName   String
+  meetingAt      DateTime
+  durationMin      Int?
+  transcript     String         @db.Text
+  notes          String?        @db.Text
+  outcome        MeetingOutcome
+  analyses       MeetingAnalysis[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  @@index([clerkOrgId])
+  @@index([organizationId])
   @@index([sellerUserId])
-  @@index([clerkOrgId, sellerUserId])
+  @@index([organizationId, sellerUserId])
   @@index([personId])
 }
 

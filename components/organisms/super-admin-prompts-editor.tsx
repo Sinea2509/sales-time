@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { publishPromptAction } from "@/app/dashboard/super-admin/prompts/actions";
+import { publishPromptAction } from "@/app/admin/prompts/actions";
 import type { AnalysisKindSlug } from "@/src/core/ports/prompt-template-repository-port";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";

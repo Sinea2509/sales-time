@@ -7,7 +7,7 @@ import {
   meetingEtapePillClass,
 } from "@/lib/meeting-etape-pill";
 import { cn } from "@/lib/utils";
-import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 
 export type MeetingMatrixPoint = {
   id: string;

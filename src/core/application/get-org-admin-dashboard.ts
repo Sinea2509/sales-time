@@ -1,11 +1,11 @@
-import { ESTIMATED_TAM_EUR_PER_RDV } from "@/lib/dashboard-estimates";
+import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
 import {
   averageSoncasDriverScores,
   type SoncasDriverAverages,
-} from "@/lib/org-soncas-team-aggregate";
-import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
+} from "@/src/core/domain/org-soncas-team-aggregate";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
-import { meetingAtSinceForStatsWindow, type StatsWindowDays } from "@/lib/dashboard-stats-window";
+import { meetingAtSinceForStatsWindow, type StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getOrgDashboardHome, type OrgDashboardHome } from "./get-org-dashboard-home";
 import { getOrgDashboardKpis, type OrgDashboardKpis } from "./get-org-dashboard-kpis";
 
@@ -185,25 +185,25 @@ export function buildOrgAdminImprovementBullets(
 export async function getOrgAdminDashboard(
   deps: { meetings: MeetingRepositoryPort },
   input: {
-    clerkOrgId: string | null;
+    organizationId: string | null;
     statsWindowDays: StatsWindowDays;
   },
 ): Promise<OrgAdminDashboard | null> {
-  if (!input.clerkOrgId) return null;
+  if (!input.organizationId) return null;
 
   const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
 
   const [home, kpis, meetings] = await Promise.all([
     getOrgDashboardHome(deps, {
-      clerkOrgId: input.clerkOrgId,
+      organizationId: input.organizationId,
       statsWindowDays: input.statsWindowDays,
     }),
     getOrgDashboardKpis(deps, {
-      clerkOrgId: input.clerkOrgId,
+      organizationId: input.organizationId,
       meetingAtSince: sinceCurrent,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
-      clerkOrgId: input.clerkOrgId,
+      organizationId: input.organizationId,
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
       meetingAtSince: sinceCurrent,
       includeLatestSoncasResult: true,

@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,17 +8,19 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
+import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/molecules/rendez-vous-meeting-row-actions";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ESTIMATED_TAM_EUR_PER_RDV } from "@/lib/dashboard-estimates";
+import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
 import {
   meetingEtapeLabel,
   meetingEtapePillClass,
 } from "@/lib/meeting-etape-pill";
 import { meetingOutcomeLabel } from "@/lib/meeting-outcome-labels";
 import { prospectInitials } from "@/lib/prospect-initials";
-import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import { cn } from "@/lib/utils";
 
 export type RendezVousMeetingRow = {
@@ -179,15 +180,25 @@ export function RendezVousMeetingsShell({
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
-  useEffect(() => {
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+
+  const setQueryAndResetPage = useCallback((value: string) => {
+    setQuery(value);
     setPage(1);
-  }, [query, etapeFilter, potentialFilter]);
+  }, []);
 
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
+  const setPotentialFilterAndResetPage = useCallback((value: PotentialBucket) => {
+    setPotentialFilter(value);
+    setPage(1);
+  }, []);
 
-  const currentPage = Math.min(page, totalPages);
+  const setEtapeFilterAndResetPage = useCallback(
+    (value: MeetingOutcome | "ALL") => {
+      setEtapeFilter(value);
+      setPage(1);
+    },
+    [],
+  );
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const pageRows = filtered.slice(startIndex, startIndex + PAGE_SIZE);
   const rangeStart = filtered.length === 0 ? 0 : startIndex + 1;
@@ -219,7 +230,7 @@ export function RendezVousMeetingsShell({
   };
 
   const filterSelectClass =
-    "h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm shadow-none outline-none focus-visible:border-[#6C4DFF] focus-visible:ring-2 focus-visible:ring-[#6C4DFF]/30 dark:border-neutral-800 dark:bg-neutral-950";
+    "h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm shadow-none outline-none focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/30 dark:border-neutral-800 dark:bg-neutral-950";
 
   return (
     <div className="space-y-4">
@@ -231,7 +242,7 @@ export function RendezVousMeetingsShell({
               aria-label="Rechercher un prospect"
               placeholder="Rechercher un prospect…"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => setQueryAndResetPage(e.target.value)}
               className="h-10 rounded-xl border-neutral-200 bg-white pl-9 shadow-none dark:border-neutral-800 dark:bg-neutral-950"
             />
           </div>
@@ -242,7 +253,7 @@ export function RendezVousMeetingsShell({
             id="filter-potentiel"
             value={potentialFilter}
             onChange={(e) =>
-              setPotentialFilter(e.target.value as PotentialBucket)
+              setPotentialFilterAndResetPage(e.target.value as PotentialBucket)
             }
             className={filterSelectClass}
           >
@@ -259,7 +270,9 @@ export function RendezVousMeetingsShell({
             id="filter-etape"
             value={etapeFilter}
             onChange={(e) =>
-              setEtapeFilter(e.target.value as MeetingOutcome | "ALL")
+              setEtapeFilterAndResetPage(
+                e.target.value as MeetingOutcome | "ALL",
+              )
             }
             className={filterSelectClass}
           >
@@ -275,22 +288,20 @@ export function RendezVousMeetingsShell({
             type="button"
             variant="outline"
             size="sm"
-            className="h-10 rounded-lg border-[#6C4DFF]/25 bg-[#6C4DFF]/10 text-[#5a3fd9] hover:bg-[#6C4DFF]/15 dark:text-[#c4b5fd]"
+            className="h-10 rounded-lg border-brand/25 bg-brand/10 text-brand-hover hover:bg-brand/15 dark:text-brand-muted"
             onClick={() => downloadMeetingsCsv(filtered)}
           >
             <Download className="size-4" />
             Exporter
           </Button>
-          <Link
-            href="/dashboard/rendez-vous/nouveau"
-            className={cn(
-              buttonVariants({ size: "sm" }),
-              "h-10 gap-1.5 rounded-lg border-0 bg-[#6C4DFF] px-4 text-white hover:bg-[#5a3fd9]",
-            )}
+          <BrandCtaLink
+            href="/company/rendez-vous/nouveau"
+            variant="primary"
+            className="h-10 gap-1.5 rounded-lg"
           >
             <Plus className="size-4" />
             Nouveau rendez-vous
-          </Link>
+          </BrandCtaLink>
         </div>
       </div>
 
@@ -308,32 +319,26 @@ export function RendezVousMeetingsShell({
                       if (el) el.indeterminate = somePageSelected;
                     }}
                     onChange={(e) => togglePage(e.target.checked)}
-                    className="size-4 cursor-pointer rounded border border-neutral-300 accent-[#6C4DFF] dark:border-neutral-600"
+                    className="size-4 cursor-pointer rounded border border-neutral-300 accent-brand dark:border-neutral-600"
                   />
                 </th>
-                <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase">
-                  Prospect
-                </th>
+                <DataTableHead className="px-4 py-3.5">Prospect</DataTableHead>
                 {showSellerColumn ? (
-                  <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase md:table-cell">
+                  <DataTableHead className="hidden px-4 py-3.5 md:table-cell">
                     Commercial
-                  </th>
+                  </DataTableHead>
                 ) : null}
-                <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase sm:table-cell">
+                <DataTableHead className="hidden px-4 py-3.5 sm:table-cell">
                   Potentiel
-                </th>
-                <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase">
-                  Date du RDV
-                </th>
-                <th className="text-muted-foreground px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase">
-                  Étape
-                </th>
-                <th className="text-muted-foreground hidden px-4 py-3.5 text-[11px] font-semibold tracking-wider uppercase md:table-cell">
+                </DataTableHead>
+                <DataTableHead className="px-4 py-3.5">Date du RDV</DataTableHead>
+                <DataTableHead className="px-4 py-3.5">Étape</DataTableHead>
+                <DataTableHead className="hidden px-4 py-3.5 md:table-cell">
                   SalesScore
-                </th>
-                <th className="text-muted-foreground w-20 px-4 py-3.5 text-right text-[11px] font-semibold tracking-wider uppercase">
+                </DataTableHead>
+                <DataTableHead className="w-20 px-4 py-3.5 text-right">
                   Actions
-                </th>
+                </DataTableHead>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -355,7 +360,7 @@ export function RendezVousMeetingsShell({
                     <tr
                       key={m.id}
                       data-state={checked ? "selected" : undefined}
-                      className="hover:bg-neutral-50/80 data-[state=selected]:bg-[#6C4DFF]/5 dark:hover:bg-neutral-900/40"
+                      className="hover:bg-neutral-50/80 data-[state=selected]:bg-brand/5 dark:hover:bg-neutral-900/40"
                     >
                       <td className="px-4 py-3.5 align-middle">
                         <input
@@ -365,7 +370,7 @@ export function RendezVousMeetingsShell({
                           onChange={(e) =>
                             toggleRow(m.id, e.target.checked)
                           }
-                          className="size-4 cursor-pointer rounded border border-neutral-300 accent-[#6C4DFF] dark:border-neutral-600"
+                          className="size-4 cursor-pointer rounded border border-neutral-300 accent-brand dark:border-neutral-600"
                         />
                       </td>
                       <td className="px-4 py-3.5 align-middle">
@@ -465,7 +470,7 @@ export function RendezVousMeetingsShell({
                   className={cn(
                     "inline-flex size-8 items-center justify-center rounded-md border text-sm font-medium tabular-nums transition-colors",
                     isActive
-                      ? "border-[#6C4DFF] bg-[#6C4DFF] text-white hover:bg-[#5a3fd9]"
+                      ? "border-brand bg-brand text-white hover:bg-brand-hover"
                       : "text-muted-foreground hover:text-foreground border-neutral-200 bg-white hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900",
                   )}
                 >

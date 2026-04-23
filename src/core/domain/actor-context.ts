@@ -1,27 +1,26 @@
-import type { DashboardRoleMode } from "./authorization-policy";
+import type { DashboardRoleMode, WorkspaceRoleMode } from "./authorization-policy";
 import type { SystemRoleType } from "./system-role-type";
 
-/** Clerk organization role slug (defaults: org:admin | org:member). */
-export type ClerkOrgRoleSlug = string | null;
+export type OrganizationMembershipRoleSlug = "ADMIN" | "MEMBER" | null;
 
 export type ActorContext =
   | { kind: "guest" }
   | {
       kind: "authenticated";
-      clerkUserId: string;
-      internalUserId: string | null;
-      /** Active org on the Clerk session JWT. */
-      sessionClerkOrgId: string | null;
-      sessionClerkOrgRole: ClerkOrgRoleSlug;
-      /** Resolved tenant for app logic (super-admin cookie wins when set). */
-      activeTenantClerkOrgId: string | null;
+      userId: string;
+      internalUserId: string;
+      email: string;
+      /** Org id from membership cookie (may be invalid if tampered). */
+      sessionOrganizationId: string | null;
+      /** Role in `sessionOrganizationId` when it matches a membership. */
+      organizationMembershipRole: OrganizationMembershipRoleSlug;
+      /** Resolved tenant (elevation cookie wins for super admins). */
+      activeOrganizationId: string | null;
       systemRoles: SystemRoleType[];
-      superAdminActiveClerkOrgId: string | null;
+      superAdminElevatedOrganizationId: string | null;
       canManageOrganization: boolean;
       isElevatedSuperAdmin: boolean;
-      /**
-       * Admin = org-wide aggregates / management UI; member = seller-scoped.
-       * Null when no tenant org is active.
-       */
+      workspaceRoleMode: WorkspaceRoleMode | null;
+      /** @deprecated Use workspaceRoleMode */
       dashboardRoleMode: DashboardRoleMode | null;
     };

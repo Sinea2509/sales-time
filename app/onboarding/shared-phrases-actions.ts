@@ -1,6 +1,5 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
@@ -8,8 +7,8 @@ import {
   DEFAULT_OBJECTION_PHRASES,
   normalizePhraseKey,
 } from "@/lib/onboarding-shared-default-phrases";
-import { prisma } from "@/lib/prisma";
-import type { OnboardingSharedPhraseKind } from "@/lib/generated/prisma/enums";
+import { makeApplicationDeps } from "@/src/adapters/composition";
+import type { OnboardingSharedPhraseKindSlug } from "@/src/core/ports/onboarding-shared-phrase-repository-port";
 
 export type SharedPhraseRow = {
   id: string;
@@ -28,7 +27,9 @@ const createPhraseSchema = z.object({
     .max(300, "300 caractères maximum."),
 });
 
-function builtinsForKind(kind: OnboardingSharedPhraseKind): readonly string[] {
+function builtinsForKind(
+  kind: OnboardingSharedPhraseKindSlug,
+): readonly string[] {
   return kind === "OBJECTION"
     ? DEFAULT_OBJECTION_PHRASES
     : DEFAULT_ARGUMENT_PHRASES;
@@ -45,7 +46,7 @@ export async function listOnboardingSharedPhrases(
   if (!kindParsed.success) {
     return { ok: false, message: "Type invalide." };
   }
-  const kind = kindParsed.data as OnboardingSharedPhraseKind;
+  const kind = kindParsed.data;
 
   const builtInSet = new Set(
     builtinsForKind(kind).map((t) => normalizePhraseKey(t)),
@@ -57,11 +58,10 @@ export async function listOnboardingSharedPhrases(
     source: "builtin" as const,
   }));
 
-  const dbRows = await prisma.onboardingSharedPhrase.findMany({
-    where: { kind },
-    orderBy: { createdAt: "desc" },
+  const deps = makeApplicationDeps();
+  const dbRows = await deps.onboardingSharedPhrases.listByKind({
+    kind,
     take: 150,
-    select: { id: true, text: true, normalizedText: true },
   });
 
   const community: SharedPhraseRow[] = [];
@@ -84,8 +84,9 @@ export type CreateSharedPhraseResult =
 export async function createOnboardingSharedPhrase(
   raw: z.input<typeof createPhraseSchema>,
 ): Promise<CreateSharedPhraseResult> {
-  const { userId } = await auth();
-  if (!userId) {
+  const deps = makeApplicationDeps();
+  const principal = await deps.auth.getAuthenticatedPrincipal();
+  if (!principal) {
     redirect("/sign-in");
   }
 
@@ -103,18 +104,13 @@ export async function createOnboardingSharedPhrase(
     return { ok: false, message: "Phrase trop courte." };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { clerkUserId: userId },
-    select: { id: true },
-  });
+  const user = await deps.users.findById(principal.userId);
   if (!user) {
     return { ok: false, message: "Utilisateur introuvable." };
   }
 
   const builtInSet = new Set(
-    builtinsForKind(kind as OnboardingSharedPhraseKind).map((t) =>
-      normalizePhraseKey(t),
-    ),
+    builtinsForKind(kind).map((t) => normalizePhraseKey(t)),
   );
   if (builtInSet.has(normalizedText)) {
     return {
@@ -124,14 +120,11 @@ export async function createOnboardingSharedPhrase(
   }
 
   try {
-    const row = await prisma.onboardingSharedPhrase.create({
-      data: {
-        kind: kind as OnboardingSharedPhraseKind,
-        text: text.trim(),
-        normalizedText,
-        createdByUserId: user.id,
-      },
-      select: { id: true, text: true },
+    const row = await deps.onboardingSharedPhrases.createPhrase({
+      kind,
+      text: text.trim(),
+      normalizedText,
+      createdByUserId: user.id,
     });
     return {
       ok: true,

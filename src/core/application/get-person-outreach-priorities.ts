@@ -3,7 +3,7 @@ import type { MeetingRepositoryPort } from "../ports/meeting-repository-port";
 export async function listPersonOutreachPriorities(
   deps: { meetings: MeetingRepositoryPort },
   input: {
-    clerkOrgId: string;
+    organizationId: string;
     sellerUserId?: string;
     limit?: number;
   },

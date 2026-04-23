@@ -83,4 +83,4 @@ Use **`activeTenantClerkOrgId`** for org-scoped queries and mutations, not only 
 
 ## Middleware
 
-[`middleware.ts`](middleware.ts) protects all routes except `/`, `/sign-in`, `/sign-up`, and `/api/webhooks/*`. Next.js 16 may warn about the `middleware` → `proxy` migration; follow upstream guidance when upgrading.
+[`proxy.ts`](proxy.ts) combines Clerk auth protection (all routes except `/`, `/sign-in`, `/sign-up`, and `/api/webhooks/*`) with **next-intl** locale handling (`fr` default, `en` optional, `localePrefix: never`).

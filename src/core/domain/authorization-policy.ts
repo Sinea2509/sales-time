@@ -1,67 +1,77 @@
-import type { ClerkOrgRoleSlug } from "./actor-context";
+import type { OrganizationMembershipRole } from "@/lib/generated/prisma/enums";
+
+export type WorkspaceRoleMode = "admin" | "member";
+
+/** @deprecated Prefer WorkspaceRoleMode; kept for incremental refactors. */
+export type DashboardRoleMode = WorkspaceRoleMode;
 
 export type ResolvedAuthorization = {
-  /** Tenant boundary for org-scoped operations (Clerk organization id). */
-  activeTenantClerkOrgId: string | null;
+  /** Tenant boundary for org-scoped operations (internal organization id). */
+  activeOrganizationId: string | null;
   canManageOrganization: boolean;
   isElevatedSuperAdmin: boolean;
 };
 
-/** Product UI / data scope for the active tenant (null when no org selected). */
-export type DashboardRoleMode = "admin" | "member";
-
-export function resolveDashboardRoleMode(input: {
-  activeTenantClerkOrgId: string | null;
-  canManageOrganization: boolean;
-}): DashboardRoleMode | null {
-  if (!input.activeTenantClerkOrgId) return null;
-  return input.canManageOrganization ? "admin" : "member";
-}
+export type MembershipForAuth = {
+  organizationId: string;
+  role: OrganizationMembershipRole;
+};
 
 /**
- * Resolves which Clerk org is the active tenant and whether the actor may
- * administer it. Super admins with an elevation cookie operate as org admin
- * for that org without requiring Clerk's session `orgId` to match.
+ * Resolves active org and admin capability. Super-admin elevation cookie wins
+ * for `activeOrganizationId` when set; otherwise the session org cookie must
+ * match a membership.
  */
 export function resolveActorAuthorization(input: {
-  sessionClerkOrgId: string | null;
-  sessionClerkOrgRole: ClerkOrgRoleSlug;
+  sessionActiveOrganizationId: string | null;
+  superAdminElevatedOrganizationId: string | null;
+  memberships: MembershipForAuth[];
   isSuperAdmin: boolean;
-  superAdminActiveClerkOrgId: string | null;
 }): ResolvedAuthorization {
   const {
-    sessionClerkOrgId,
-    sessionClerkOrgRole,
+    sessionActiveOrganizationId,
+    superAdminElevatedOrganizationId,
+    memberships,
     isSuperAdmin,
-    superAdminActiveClerkOrgId,
   } = input;
 
-  const activeTenantClerkOrgId =
-    isSuperAdmin && superAdminActiveClerkOrgId
-      ? superAdminActiveClerkOrgId
-      : sessionClerkOrgId;
+  const activeOrganizationId =
+    isSuperAdmin && superAdminElevatedOrganizationId
+      ? superAdminElevatedOrganizationId
+      : sessionActiveOrganizationId;
 
   const isElevatedSuperAdmin = Boolean(
     isSuperAdmin &&
-      superAdminActiveClerkOrgId &&
-      superAdminActiveClerkOrgId === activeTenantClerkOrgId,
+      superAdminElevatedOrganizationId &&
+      superAdminElevatedOrganizationId === activeOrganizationId,
   );
 
-  const sessionMatchesTenant =
-    Boolean(sessionClerkOrgId) &&
-    sessionClerkOrgId === activeTenantClerkOrgId;
+  const membership = activeOrganizationId
+    ? memberships.find((m) => m.organizationId === activeOrganizationId)
+    : undefined;
 
-  const isClerkOrgAdminForTenant =
-    sessionMatchesTenant && sessionClerkOrgRole === "org:admin";
+  const isOrgAdminForTenant =
+    membership !== undefined && membership.role === "ADMIN";
 
   const canManageOrganization = Boolean(
-    activeTenantClerkOrgId &&
-      (isElevatedSuperAdmin || isClerkOrgAdminForTenant),
+    activeOrganizationId &&
+      (isElevatedSuperAdmin || isOrgAdminForTenant),
   );
 
   return {
-    activeTenantClerkOrgId,
+    activeOrganizationId,
     canManageOrganization,
     isElevatedSuperAdmin,
   };
 }
+
+export function resolveWorkspaceRoleMode(input: {
+  activeOrganizationId: string | null;
+  canManageOrganization: boolean;
+}): WorkspaceRoleMode | null {
+  if (!input.activeOrganizationId) return null;
+  return input.canManageOrganization ? "admin" : "member";
+}
+
+/** @deprecated Use resolveWorkspaceRoleMode */
+export const resolveDashboardRoleMode = resolveWorkspaceRoleMode;

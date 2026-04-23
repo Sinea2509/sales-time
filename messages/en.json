@@ -1,0 +1,39 @@
+{
+  "common": {
+    "appName": "Sales Time",
+    "toggleSidebar": "Toggle sidebar",
+    "account": "Account",
+    "superAdmin": "Super admin",
+    "exitSuperAdminOrg": "Exit super admin org"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "meetingsTeam": "Meetings (team)",
+    "meetingsMine": "My meetings",
+    "analyseTeam": "Analysis (team)",
+    "analyseMine": "My analysis",
+    "orgSettings": "Org settings",
+    "superAdmin": "Super admin"
+  },
+  "elevated": {
+    "badge": "Super admin mode"
+  },
+  "accountPage": {
+    "title": "Account",
+    "description": "Profile, security, password reset, and sessions are managed in Clerk."
+  },
+  "superAdminPage": {
+    "title": "Super admin",
+    "orgListTitle": "Super admin — organizations",
+    "accessDeniedTitle": "Super admin",
+    "accessDeniedBody": "You do not have access to this area, or your user is not synced to the application database yet.",
+    "promptsLink": "SONCAS / DISC prompts"
+  },
+  "superAdminOrgList": {
+    "title": "Super admin — organizations",
+    "description": "Entering an organization records an audit log and grants org-admin capabilities for that Clerk organization while the session cookie is set.",
+    "reasonLabel": "Reason (optional)",
+    "reasonPlaceholder": "Ticket / incident reference",
+    "operateButton": "Operate in this organization"
+  }
+}

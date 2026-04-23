@@ -4,7 +4,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { DiscAnalysisResult } from "@/lib/analysis-result-zod";
+import type { DiscAnalysisResult } from "@/src/core/domain/analysis-result-zod";
 
 type Props = { result: DiscAnalysisResult };
 

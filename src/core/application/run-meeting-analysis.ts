@@ -23,19 +23,19 @@ export async function runMeetingAnalysis(
     analysis: AnalysisPort;
   },
   input: {
-    clerkOrgId: string | null;
+    organizationId: string | null;
     meetingId: string;
     kind: AnalysisKindToRun;
     model: string;
   },
 ): Promise<RunMeetingAnalysisResult> {
-  if (!input.clerkOrgId) {
+  if (!input.organizationId) {
     return { ok: false, error: "NO_ACTIVE_ORG" };
   }
 
   const meeting = await deps.meetings.findMeetingByIdForOrg({
     id: input.meetingId,
-    clerkOrgId: input.clerkOrgId,
+    organizationId: input.organizationId,
   });
   if (!meeting) {
     return { ok: false, error: "MEETING_NOT_FOUND" };

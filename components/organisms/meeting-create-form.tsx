@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { createMeetingAction } from "@/app/dashboard/rendez-vous/actions";
+import { createMeetingAction } from "@/app/company/rendez-vous/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +36,7 @@ export function MeetingCreateForm() {
             );
             return;
           }
-          router.push(`/dashboard/rendez-vous/${res.meetingId}`);
+          router.push(`/company/rendez-vous/${res.meetingId}`);
           router.refresh();
         });
       }}

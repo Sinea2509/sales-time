@@ -61,7 +61,7 @@ describe("publishGlobalPromptVersion", () => {
     });
     expect(audit.logSuperAdminAction).toHaveBeenCalledWith({
       actorInternalUserId: "u1",
-      clerkOrgId: GLOBAL_PROMPT_AUDIT_ORG_ID,
+      organizationId: GLOBAL_PROMPT_AUDIT_ORG_ID,
       action: "RESTORE_PROMPT",
       reason: "SONCAS prompt v2",
     });

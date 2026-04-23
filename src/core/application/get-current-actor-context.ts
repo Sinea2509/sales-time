@@ -1,56 +1,80 @@
 import type { ActorContext } from "../domain/actor-context";
 import {
   resolveActorAuthorization,
-  resolveDashboardRoleMode,
+  resolveWorkspaceRoleMode,
 } from "../domain/authorization-policy";
 import type { AuthSessionPort } from "../ports/auth-session-port";
-import type { UserRepositoryPort } from "../ports/user-repository-port";
+
+function membershipRoleForOrg(
+  memberships: { organizationId: string; role: string }[],
+  orgId: string | null,
+): "ADMIN" | "MEMBER" | null {
+  if (!orgId) return null;
+  const m = memberships.find((x) => x.organizationId === orgId);
+  if (!m) return null;
+  return m.role === "ADMIN" ? "ADMIN" : "MEMBER";
+}
+
+function resolveSessionOrganizationId(input: {
+  cookieOrgId: string | null;
+  memberships: { organizationId: string }[];
+}): string | null {
+  const { cookieOrgId, memberships } = input;
+  if (
+    cookieOrgId &&
+    memberships.some((m) => m.organizationId === cookieOrgId)
+  ) {
+    return cookieOrgId;
+  }
+  return memberships[0]?.organizationId ?? null;
+}
 
 export async function getCurrentActorContext(
-  deps: {
-    auth: AuthSessionPort;
-    users: UserRepositoryPort;
-  },
-  params: { superAdminActiveClerkOrgId: string | null },
+  deps: { auth: AuthSessionPort },
+  params: { superAdminElevatedOrganizationId: string | null },
 ): Promise<ActorContext> {
-  const clerkUserId = await deps.auth.getClerkUserId();
-  if (!clerkUserId) {
+  const principal = await deps.auth.getAuthenticatedPrincipal();
+  if (!principal) {
     return { kind: "guest" };
   }
 
-  const user = await deps.users.findByClerkUserId(clerkUserId);
-  const sessionClerkOrgId = await deps.auth.getClerkOrganizationId();
-  const sessionClerkOrgRole = await deps.auth.getClerkOrganizationRole();
-  const systemRoles = user?.systemRoles ?? [];
-  const isSuperAdmin = systemRoles.includes("SUPER_ADMIN");
+  const sessionOrganizationId = resolveSessionOrganizationId({
+    cookieOrgId: principal.activeOrganizationIdFromCookie,
+    memberships: principal.memberships,
+  });
 
   const {
-    activeTenantClerkOrgId,
+    activeOrganizationId,
     canManageOrganization,
     isElevatedSuperAdmin,
   } = resolveActorAuthorization({
-    sessionClerkOrgId,
-    sessionClerkOrgRole,
-    isSuperAdmin,
-    superAdminActiveClerkOrgId: params.superAdminActiveClerkOrgId,
+    sessionActiveOrganizationId: sessionOrganizationId,
+    superAdminElevatedOrganizationId: params.superAdminElevatedOrganizationId,
+    memberships: principal.memberships,
+    isSuperAdmin: principal.systemRoles.includes("SUPER_ADMIN"),
   });
 
-  const dashboardRoleMode = resolveDashboardRoleMode({
-    activeTenantClerkOrgId,
+  const workspaceRoleMode = resolveWorkspaceRoleMode({
+    activeOrganizationId,
     canManageOrganization,
   });
 
   return {
     kind: "authenticated",
-    clerkUserId,
-    internalUserId: user?.id ?? null,
-    sessionClerkOrgId,
-    sessionClerkOrgRole,
-    activeTenantClerkOrgId,
-    systemRoles,
-    superAdminActiveClerkOrgId: params.superAdminActiveClerkOrgId,
+    userId: principal.userId,
+    internalUserId: principal.userId,
+    email: principal.email,
+    sessionOrganizationId: principal.activeOrganizationIdFromCookie,
+    organizationMembershipRole: membershipRoleForOrg(
+      principal.memberships,
+      activeOrganizationId,
+    ),
+    activeOrganizationId,
+    systemRoles: principal.systemRoles,
+    superAdminElevatedOrganizationId: params.superAdminElevatedOrganizationId,
     canManageOrganization,
     isElevatedSuperAdmin,
-    dashboardRoleMode,
+    workspaceRoleMode,
+    dashboardRoleMode: workspaceRoleMode,
   };
 }

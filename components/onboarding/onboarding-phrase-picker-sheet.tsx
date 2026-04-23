@@ -243,7 +243,7 @@ export function OnboardingPhrasePickerSheet({
             onClick={handleConfirm}
             className={cn(
               "rounded-lg border-0 text-white shadow-sm",
-              "bg-[#6C4DFF] hover:bg-[#5a3fd9] dark:bg-[#6C4DFF] dark:hover:bg-[#5a3fd9]",
+              "bg-brand hover:bg-brand-hover dark:bg-brand dark:hover:bg-brand-hover",
             )}
           >
             Ajouter à ma liste
@@ -282,13 +282,13 @@ function PhraseBlock({
               className={cn(
                 "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors",
                 selectedIds.has(p.id)
-                  ? "border-[#6C4DFF]/50 bg-[#6C4DFF]/8"
+                  ? "border-brand/50 bg-brand/8"
                   : "border-border hover:bg-muted/40",
               )}
             >
               <input
                 type="checkbox"
-                className="mt-1 size-4 shrink-0 accent-[#6C4DFF]"
+                className="mt-1 size-4 shrink-0 accent-brand"
                 checked={selectedIds.has(p.id)}
                 onChange={() => onToggle(p.id)}
               />

@@ -1,4 +1,4 @@
-export type OnboardingInviteRole = "org:admin" | "org:member";
+export type OnboardingInviteRole = "ADMIN" | "MEMBER";
 
 export type OnboardingInviteRow = {
   email: string;
@@ -9,13 +9,13 @@ export const ONBOARDING_INVITE_ROLE_OPTIONS: {
   value: OnboardingInviteRole;
   label: string;
 }[] = [
-  { value: "org:admin", label: "Admin" },
-  { value: "org:member", label: "Member" },
+  { value: "ADMIN", label: "Admin" },
+  { value: "MEMBER", label: "Member" },
 ];
 
 function normalizeRole(raw: unknown): OnboardingInviteRole {
-  if (raw === "org:admin" || raw === "admin") return "org:admin";
-  return "org:member";
+  if (raw === "ADMIN" || raw === "org:admin" || raw === "admin") return "ADMIN";
+  return "MEMBER";
 }
 
 /** Reads legacy `string[]` or `{ email, role }[]` from JSON. */
@@ -26,7 +26,7 @@ export function parseStoredInviteRows(value: unknown): OnboardingInviteRow[] {
     if (typeof item === "string") {
       const email = item.trim();
       if (email.length > 0) {
-        out.push({ email, role: "org:member" });
+        out.push({ email, role: "MEMBER" });
       }
       continue;
     }
@@ -46,7 +46,7 @@ export function parseStoredInviteRows(value: unknown): OnboardingInviteRow[] {
 
 const emptyRow = (): OnboardingInviteRow => ({
   email: "",
-  role: "org:member",
+  role: "MEMBER",
 });
 
 /** When nothing is saved yet, show three empty rows; otherwise restore saved invites. */

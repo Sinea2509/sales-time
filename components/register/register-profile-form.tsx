@@ -1,0 +1,87 @@
+"use client";
+
+import { useFormState, useFormStatus } from "react-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { REGISTER_PROFILE_ROLE_OPTIONS } from "@/lib/register-profile-options";
+import { orgSettingsSelectClassName } from "@/components/org-settings/org-settings-select-class";
+import {
+  completeRegisterProfile,
+  type CompleteRegisterProfileResult,
+} from "@/app/register/profile/actions";
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button
+      type="submit"
+      disabled={pending}
+      className="h-10 w-full bg-brand text-white hover:bg-brand-hover sm:w-auto"
+    >
+      Continuer vers l&apos;onboarding
+    </Button>
+  );
+}
+
+export function RegisterProfileForm() {
+  const [state, formAction] = useFormState<
+    CompleteRegisterProfileResult | undefined,
+    FormData
+  >(completeRegisterProfile, undefined);
+
+  return (
+    <form action={formAction} className="space-y-5">
+      {state?.ok === false ? (
+        <p className="text-destructive text-sm" role="alert">
+          {state.message}
+        </p>
+      ) : null}
+
+      <div className="space-y-2">
+        <Label htmlFor="firstName">Prénom</Label>
+        <Input
+          id="firstName"
+          name="firstName"
+          required
+          autoComplete="given-name"
+          maxLength={80}
+          className="h-10"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="lastName">Nom</Label>
+        <Input
+          id="lastName"
+          name="lastName"
+          required
+          autoComplete="family-name"
+          maxLength={80}
+          className="h-10"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="profileRole">Votre rôle</Label>
+        <select
+          id="profileRole"
+          name="profileRole"
+          required
+          className={cn(orgSettingsSelectClassName, "h-10")}
+          defaultValue=""
+        >
+          <option value="" disabled>
+            Sélectionnez un rôle
+          </option>
+          {REGISTER_PROFILE_ROLE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <SubmitButton />
+    </form>
+  );
+}

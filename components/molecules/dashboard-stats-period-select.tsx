@@ -6,7 +6,7 @@ import { useTransition } from "react";
 import {
   STATS_WINDOW_DAYS_OPTIONS,
   type StatsWindowDays,
-} from "@/lib/dashboard-stats-window";
+} from "@/src/core/domain/dashboard-stats-window";
 import { cn } from "@/lib/utils";
 
 const LABELS: Record<StatsWindowDays, string> = {

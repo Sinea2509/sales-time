@@ -1,4 +1,4 @@
-import type { MeetingOutcome } from "@/lib/generated/prisma/enums";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 
 export type CreateMeetingResult =
@@ -8,7 +8,7 @@ export type CreateMeetingResult =
 export async function createMeetingForOrg(
   deps: { meetings: MeetingRepositoryPort },
   input: {
-    clerkOrgId: string | null;
+    organizationId: string | null;
     sellerInternalUserId: string | null;
     prospectName: string;
     meetingAt: Date;
@@ -18,7 +18,7 @@ export async function createMeetingForOrg(
     outcome: MeetingOutcome;
   },
 ): Promise<CreateMeetingResult> {
-  if (!input.clerkOrgId) {
+  if (!input.organizationId) {
     return { ok: false, error: "NO_ACTIVE_ORG" };
   }
   if (!input.sellerInternalUserId) {
@@ -26,7 +26,7 @@ export async function createMeetingForOrg(
   }
 
   const meeting = await deps.meetings.createMeeting({
-    clerkOrgId: input.clerkOrgId,
+    organizationId: input.organizationId,
     sellerUserId: input.sellerInternalUserId,
     prospectName: input.prospectName.trim(),
     meetingAt: input.meetingAt,

@@ -15,7 +15,7 @@ describe("runMeetingAnalysis", () => {
     const result = await runMeetingAnalysis(
       { meetings, prompts, analysis } as never,
       {
-        clerkOrgId: "org_1",
+        organizationId: "org_1",
         meetingId: "m1",
         kind: "SONCAS",
         model: "openai/gpt-4o-mini",
@@ -30,7 +30,7 @@ describe("runMeetingAnalysis", () => {
     const meetings = {
       findMeetingByIdForOrg: vi.fn().mockResolvedValue({
         id: "m1",
-        clerkOrgId: "org_1",
+        organizationId: "org_1",
         transcript: "Hello",
         notes: null,
       }),
@@ -41,7 +41,7 @@ describe("runMeetingAnalysis", () => {
     const result = await runMeetingAnalysis(
       { meetings, prompts, analysis } as never,
       {
-        clerkOrgId: "org_1",
+        organizationId: "org_1",
         meetingId: "m1",
         kind: "DISC",
         model: "openai/gpt-4o-mini",
@@ -55,7 +55,7 @@ describe("runMeetingAnalysis", () => {
     const meetings = {
       findMeetingByIdForOrg: vi.fn().mockResolvedValue({
         id: "m1",
-        clerkOrgId: "org_1",
+        organizationId: "org_1",
         transcript: "Bonjour",
         notes: "Rdv commercial",
       }),
@@ -100,7 +100,7 @@ describe("runMeetingAnalysis", () => {
     const result = await runMeetingAnalysis(
       { meetings, prompts, analysis } as never,
       {
-        clerkOrgId: "org_1",
+        organizationId: "org_1",
         meetingId: "m1",
         kind: "SONCAS",
         model: "openai/gpt-4o-mini",

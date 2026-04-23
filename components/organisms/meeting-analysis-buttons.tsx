@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import {
   runDiscAnalysisAction,
   runSoncasAnalysisAction,
-} from "@/app/dashboard/analyse/actions";
+} from "@/app/company/analyse/actions";
 import { Button } from "@/components/ui/button";
 
 type Props = { meetingId: string };
