@@ -26,7 +26,9 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { buttonVariants } from "@/components/ui/button";
 import { DashboardHeader } from "@/components/organisms/dashboard-header";
+import { cn } from "@/lib/utils";
 
 type NavItem = {
   href: string;
