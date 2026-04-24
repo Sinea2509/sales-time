@@ -4,9 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { hashToken } from "@/lib/auth/tokens";
 import { SESSION_MAX_AGE_SEC } from "@/lib/auth/constants";
 
-function mapSystemRole(role: string): SystemRoleType {
-  if (role === "SUPER_ADMIN") return "SUPER_ADMIN";
-  throw new Error(`Unknown system role: ${role}`);
+function mapSystemRoles(roles: { role: string }[]): SystemRoleType[] {
+  const out: SystemRoleType[] = [];
+  for (const r of roles) {
+    if (r.role === "SUPER_ADMIN") out.push("SUPER_ADMIN");
+  }
+  return out;
 }
 
 export type MembershipDto = {
@@ -82,7 +85,7 @@ export async function findSessionPrincipal(
     firstName: u.firstName,
     lastName: u.lastName,
     registerProfileCompletedAt: u.registerProfileCompletedAt,
-    systemRoles: u.systemRoles.map((r) => mapSystemRole(r.role)),
+    systemRoles: mapSystemRoles(u.systemRoles),
     memberships: u.organizationMemberships.map((m) => ({
       organizationId: m.organizationId,
       role: m.role,

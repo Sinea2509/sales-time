@@ -8,9 +8,12 @@ import type {
 import type { SystemRoleType } from "@/src/core/domain/system-role-type";
 import type { UserProfileRole } from "@/src/core/domain/user-profile-role";
 
-function mapRole(role: string): SystemRoleType {
-  if (role === "SUPER_ADMIN") return "SUPER_ADMIN";
-  throw new Error(`Unknown system role: ${role}`);
+function mapRoles(roles: { role: string }[]): SystemRoleType[] {
+  const out: SystemRoleType[] = [];
+  for (const r of roles) {
+    if (r.role === "SUPER_ADMIN") out.push("SUPER_ADMIN");
+  }
+  return out;
 }
 
 function mapOnboardingProfile(row: {
@@ -65,7 +68,7 @@ export class PrismaUserRepository implements UserRepositoryPort {
     return {
       id: row.id,
       email: row.email,
-      systemRoles: row.systemRoles.map((r) => mapRole(r.role)),
+      systemRoles: mapRoles(row.systemRoles),
     };
   }
 
@@ -81,7 +84,7 @@ export class PrismaUserRepository implements UserRepositoryPort {
       id: row.id,
       email: row.email,
       registerProfileCompletedAt: row.registerProfileCompletedAt,
-      systemRoles: row.systemRoles.map((r) => mapRole(r.role)),
+      systemRoles: mapRoles(row.systemRoles),
       onboardingProfile: row.onboardingProfile
         ? mapOnboardingProfile(row.onboardingProfile)
         : null,

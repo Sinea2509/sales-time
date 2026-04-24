@@ -15,5 +15,9 @@ export async function readSuperAdminOrgCookie(): Promise<string | null> {
   const principal = await sessionAuthAdapter.getAuthenticatedPrincipal();
   if (!principal) return null;
 
-  return verifySuperAdminOrgCookieValue(raw, principal.userId);
+  try {
+    return verifySuperAdminOrgCookieValue(raw, principal.userId);
+  } catch {
+    return null;
+  }
 }

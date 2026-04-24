@@ -14,7 +14,14 @@ function createPrismaClient(): PrismaClient {
   }
 
   const pool =
-    globalForPrisma.pgPool ?? new Pool({ connectionString: databaseUrl });
+    globalForPrisma.pgPool ??
+    new Pool({
+      connectionString: databaseUrl,
+      max: Number(process.env.PG_POOL_MAX ?? "10"),
+      connectionTimeoutMillis: Number(
+        process.env.PG_CONNECTION_TIMEOUT_MS ?? "15000",
+      ),
+    });
   globalForPrisma.pgPool = pool;
 
   const adapter = new PrismaPg(pool);
