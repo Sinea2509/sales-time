@@ -25,7 +25,15 @@ function SubmitButton() {
   );
 }
 
-export function RegisterProfileForm() {
+type RegisterProfileFormProps = {
+  defaultFirstName?: string | null;
+  defaultLastName?: string | null;
+};
+
+export function RegisterProfileForm({
+  defaultFirstName,
+  defaultLastName,
+}: RegisterProfileFormProps) {
   const [state, formAction] = useFormState<
     CompleteRegisterProfileResult | undefined,
     FormData
@@ -48,6 +56,7 @@ export function RegisterProfileForm() {
           autoComplete="given-name"
           maxLength={80}
           className="h-10"
+          defaultValue={defaultFirstName ?? ""}
         />
       </div>
       <div className="space-y-2">
@@ -59,6 +68,7 @@ export function RegisterProfileForm() {
           autoComplete="family-name"
           maxLength={80}
           className="h-10"
+          defaultValue={defaultLastName ?? ""}
         />
       </div>
       <div className="space-y-2">

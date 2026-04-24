@@ -1,5 +1,8 @@
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
-import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
+import type {
+  MeetingAnalysisKind,
+  MeetingRepositoryPort,
+} from "@/src/core/ports/meeting-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 
 export type RunMeetingAnalysisResult =
@@ -14,7 +17,7 @@ export type RunMeetingAnalysisResult =
       message?: string;
     };
 
-export type AnalysisKindToRun = "SONCAS" | "DISC";
+export type AnalysisKindToRun = MeetingAnalysisKind;
 
 export async function runMeetingAnalysis(
   deps: {
@@ -66,15 +69,47 @@ export async function runMeetingAnalysis(
       return { ok: true, analysisId: row.id };
     }
 
-    const { result } = await deps.analysis.analyzeDisc({
+    if (input.kind === "DISC") {
+      const { result } = await deps.analysis.analyzeDisc({
+        systemMarkdown: promptVersion.markdown,
+        transcript: meeting.transcript,
+        notes: meeting.notes,
+        model: input.model,
+      });
+      const row = await deps.meetings.createAnalysis({
+        meetingId: meeting.id,
+        kind: "DISC",
+        promptVersionId: promptVersion.id,
+        model: input.model,
+        result,
+      });
+      return { ok: true, analysisId: row.id };
+    }
+
+    const [priorSoncas, priorDisc] = await Promise.all([
+      deps.meetings.findLatestAnalysisForMeeting({
+        meetingId: meeting.id,
+        organizationId: input.organizationId,
+        kind: "SONCAS",
+      }),
+      deps.meetings.findLatestAnalysisForMeeting({
+        meetingId: meeting.id,
+        organizationId: input.organizationId,
+        kind: "DISC",
+      }),
+    ]);
+
+    const { result } = await deps.analysis.analyzeKiss({
       systemMarkdown: promptVersion.markdown,
       transcript: meeting.transcript,
       notes: meeting.notes,
       model: input.model,
+      priorSoncasResult: priorSoncas?.result,
+      priorDiscResult: priorDisc?.result,
     });
     const row = await deps.meetings.createAnalysis({
       meetingId: meeting.id,
-      kind: "DISC",
+      kind: "KISS",
       promptVersionId: promptVersion.id,
       model: input.model,
       result,

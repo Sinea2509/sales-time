@@ -4,6 +4,7 @@ import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-sc
 import { normalizePersonDisplayKey } from "@/src/core/domain/person-normalize";
 import { outreachPriorityScore } from "@/src/core/domain/person-outreach-priority";
 import type {
+  MeetingAnalysisKind,
   MeetingAnalysisRow,
   MeetingDetailWithAnalyses,
   MeetingRepositoryPort,
@@ -20,6 +21,10 @@ function mapMeeting(row: {
   prospectName: string;
   meetingAt: Date;
   durationMin: number | null;
+  meetingType: string | null;
+  pipelineStage: string | null;
+  potentialAmount: number | null;
+  followUpEmailDraft: string | null;
   transcript: string;
   notes: string | null;
   outcome: MeetingOutcome;
@@ -34,6 +39,10 @@ function mapMeeting(row: {
     prospectName: row.prospectName,
     meetingAt: row.meetingAt,
     durationMin: row.durationMin,
+    meetingType: row.meetingType,
+    pipelineStage: row.pipelineStage,
+    potentialAmount: row.potentialAmount,
+    followUpEmailDraft: row.followUpEmailDraft,
     transcript: row.transcript,
     notes: row.notes,
     outcome: row.outcome,
@@ -45,7 +54,7 @@ function mapMeeting(row: {
 function mapAnalysis(row: {
   id: string;
   meetingId: string;
-  kind: "SONCAS" | "DISC";
+  kind: MeetingAnalysisKind;
   model: string;
   result: unknown;
   createdAt: Date;
@@ -70,38 +79,65 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   async createMeeting(input: {
     organizationId: string;
     sellerUserId: string;
+    personId?: string | null;
     prospectName: string;
     meetingAt: Date;
     durationMin: number | null;
+    meetingType: string | null;
+    pipelineStage: string | null;
+    potentialAmount: number | null;
     transcript: string;
     notes: string | null;
     outcome: MeetingOutcome;
   }): Promise<MeetingRow> {
-    const displayName = input.prospectName.trim();
-    const normalizedKey = normalizePersonDisplayKey(displayName);
-    const person = await this.db.person.upsert({
-      where: {
-        organizationId_normalizedKey: {
+    let personId: string;
+    let prospectDisplay: string;
+
+    if (input.personId) {
+      const linked = await this.db.person.findFirst({
+        where: {
+          id: input.personId,
           organizationId: input.organizationId,
+        },
+      });
+      if (!linked) {
+        throw new Error("MEETING_CREATE_INVALID_PERSON");
+      }
+      personId = linked.id;
+      prospectDisplay = linked.displayName;
+    } else {
+      const displayName = input.prospectName.trim();
+      const normalizedKey = normalizePersonDisplayKey(displayName);
+      const person = await this.db.person.upsert({
+        where: {
+          organizationId_normalizedKey: {
+            organizationId: input.organizationId,
+            normalizedKey,
+          },
+        },
+        create: {
+          organizationId: input.organizationId,
+          displayName,
           normalizedKey,
         },
-      },
-      create: {
-        organizationId: input.organizationId,
-        displayName,
-        normalizedKey,
-      },
-      update: { displayName },
-    });
+        update: { displayName },
+      });
+      personId = person.id;
+      prospectDisplay = displayName;
+    }
 
     const row = await this.db.meeting.create({
       data: {
         organizationId: input.organizationId,
         sellerUserId: input.sellerUserId,
-        personId: person.id,
-        prospectName: displayName,
+        personId,
+        prospectName: prospectDisplay,
         meetingAt: input.meetingAt,
         durationMin: input.durationMin,
+        meetingType: input.meetingType,
+        pipelineStage: input.pipelineStage,
+        potentialAmount: input.potentialAmount,
+        followUpEmailDraft: null,
         transcript: input.transcript,
         notes: input.notes,
         outcome: input.outcome,
@@ -132,9 +168,23 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     return rows.map(mapMeeting);
   }
 
+  async listMeetingsForPersonInOrg(input: {
+    organizationId: string;
+    personId: string;
+  }): Promise<MeetingRow[]> {
+    const rows = await this.db.meeting.findMany({
+      where: {
+        organizationId: input.organizationId,
+        personId: input.personId,
+      },
+      orderBy: { meetingAt: "desc" },
+    });
+    return rows.map(mapMeeting);
+  }
+
   async createAnalysis(input: {
     meetingId: string;
-    kind: "SONCAS" | "DISC";
+    kind: MeetingAnalysisKind;
     promptVersionId: string;
     model: string;
     result: unknown;
@@ -156,7 +206,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   async findLatestAnalysisForMeeting(input: {
     meetingId: string;
     organizationId: string;
-    kind: "SONCAS" | "DISC";
+    kind: MeetingAnalysisKind;
   }): Promise<MeetingAnalysisRow | null> {
     const row = await this.db.meetingAnalysis.findFirst({
       where: {
@@ -202,7 +252,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   async listAnalysesForOrgMeetingsSince(input: {
     organizationId: string;
     meetingAtSince: Date;
-    kinds: Array<"SONCAS" | "DISC">;
+    kinds: MeetingAnalysisKind[];
     sellerUserId?: string;
   }): Promise<MeetingAnalysisRow[]> {
     const rows = await this.db.meetingAnalysis.findMany({
@@ -316,6 +366,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
         sellerEmail: row.seller.email,
         hasSoncas: kinds.has("SONCAS"),
         hasDisc: kinds.has("DISC"),
+        hasKiss: kinds.has("KISS"),
         salesScore: soncas
           ? salesScoreFromSoncasResult(soncas.result)
           : null,
@@ -430,16 +481,33 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     if (!row) return null;
     return {
       id: row.id,
+      sellerUserId: row.sellerUserId,
       prospectName: row.prospectName,
       meetingAt: row.meetingAt,
       outcome: row.outcome,
+      meetingType: row.meetingType,
+      pipelineStage: row.pipelineStage,
+      potentialAmount: row.potentialAmount,
+      followUpEmailDraft: row.followUpEmailDraft,
       transcript: row.transcript,
       notes: row.notes,
       analyses: row.analyses.map((a) => ({
-        kind: a.kind as "SONCAS" | "DISC",
+        kind: a.kind as MeetingAnalysisKind,
         model: a.model,
         result: a.result,
       })),
     };
+  }
+
+  async updateMeetingFollowUpDraft(input: {
+    id: string;
+    organizationId: string;
+    followUpEmailDraft: string | null;
+  }): Promise<boolean> {
+    const res = await this.db.meeting.updateMany({
+      where: { id: input.id, organizationId: input.organizationId },
+      data: { followUpEmailDraft: input.followUpEmailDraft },
+    });
+    return res.count > 0;
   }
 }

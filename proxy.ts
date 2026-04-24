@@ -26,6 +26,7 @@ function isPublicPath(pathname: string): boolean {
     "/forgot-password",
     "/reset-password",
     "/invitations",
+    "/super-admin-invitations",
     "/sign-out",
     "/api/webhooks",
     "/api/health",

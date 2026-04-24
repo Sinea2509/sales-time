@@ -41,9 +41,10 @@ export default async function SuperAdminPromptsPage() {
     redirect("/company");
   }
 
-  const [soncas, disc] = await Promise.all([
+  const [soncas, disc, kiss] = await Promise.all([
     loadPromptTab("SONCAS"),
     loadPromptTab("DISC"),
+    loadPromptTab("KISS"),
   ]);
 
   return (
@@ -53,8 +54,8 @@ export default async function SuperAdminPromptsPage() {
           Prompts d’analyse (global)
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Markdown versionné pour SONCAS et DISC. Chaque publication crée une
-          nouvelle version et une entrée d’audit super admin.
+          Markdown versionné pour SONCAS, DISC et KISS. Chaque publication crée
+          une nouvelle version et une entrée d’audit super admin.
         </p>
       </div>
 
@@ -82,6 +83,23 @@ export default async function SuperAdminPromptsPage() {
             kind="DISC"
             initialMarkdown={disc.initialMarkdown}
             versions={disc.versions}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">KISS</CardTitle>
+          <CardDescription>
+            Instructions système pour l’analyse KISS (Keep / Improve / Stop /
+            Start)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SuperAdminPromptsEditor
+            kind="KISS"
+            initialMarkdown={kiss.initialMarkdown}
+            versions={kiss.versions}
           />
         </CardContent>
       </Card>

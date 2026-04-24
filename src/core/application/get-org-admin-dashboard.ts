@@ -54,6 +54,7 @@ function aggregateTeamMembers(
     salesScore: number | null;
     hasSoncas: boolean;
     hasDisc: boolean;
+    hasKiss?: boolean;
   }>,
 ): OrgAdminTeamMemberRow[] {
   const bySeller = new Map<

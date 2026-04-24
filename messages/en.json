@@ -12,6 +12,7 @@
     "meetingsMine": "My meetings",
     "analyseTeam": "Analysis (team)",
     "analyseMine": "My analysis",
+    "contacts": "Contacts",
     "orgSettings": "Org settings",
     "superAdmin": "Super admin"
   },
@@ -27,7 +28,13 @@
     "orgListTitle": "Super admin — organizations",
     "accessDeniedTitle": "Super admin",
     "accessDeniedBody": "You do not have access to this area, or your user is not synced to the application database yet.",
-    "promptsLink": "SONCAS / DISC prompts"
+    "promptsLink": "SONCAS / DISC prompts",
+    "superAdminsLink": "Invite super admin"
+  },
+  "superAdminInvitesPage": {
+    "title": "Super administrators",
+    "description": "Invitations are limited to the platform admin area. Organization members are managed under Settings → Team.",
+    "backToOrgs": "← Organizations"
   },
   "superAdminOrgList": {
     "title": "Super admin — organizations",

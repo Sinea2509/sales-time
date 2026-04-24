@@ -12,6 +12,7 @@
     "meetingsMine": "Mes rendez-vous",
     "analyseTeam": "Analyse (équipe)",
     "analyseMine": "Mon analyse",
+    "contacts": "Contacts",
     "orgSettings": "Paramètres org.",
     "superAdmin": "Super admin"
   },
@@ -27,7 +28,13 @@
     "orgListTitle": "Super admin — organisations",
     "accessDeniedTitle": "Super admin",
     "accessDeniedBody": "Vous n’avez pas accès à cette zone, ou votre utilisateur n’est pas encore synchronisé dans la base applicative.",
-    "promptsLink": "Prompts SONCAS / DISC"
+    "promptsLink": "Prompts SONCAS / DISC",
+    "superAdminsLink": "Inviter super admin"
+  },
+  "superAdminInvitesPage": {
+    "title": "Super administrateurs",
+    "description": "Invitations réservées à l’espace plateforme. Les membres d’une organisation se gèrent dans Paramètres → Équipe.",
+    "backToOrgs": "← Organisations"
   },
   "superAdminOrgList": {
     "title": "Super admin — organisations",

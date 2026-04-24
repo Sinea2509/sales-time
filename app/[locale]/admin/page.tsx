@@ -34,6 +34,18 @@ export default async function SuperAdminPage() {
         >
           {t("promptsLink")}
         </Link>
+        <Link
+          href="/admin/analytics"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+        >
+          Analytics plateforme
+        </Link>
+        <Link
+          href="/admin/super-admins"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+        >
+          {t("superAdminsLink")}
+        </Link>
       </div>
       <SuperAdminOrgList organizations={result.organizations} />
     </div>

@@ -6,7 +6,7 @@ import { makeApplicationDeps } from "@/src/adapters/composition";
 import { publishGlobalPromptVersion } from "@/src/core/application/publish-global-prompt-version";
 
 const publishPromptSchema = z.object({
-  kind: z.enum(["SONCAS", "DISC"]),
+  kind: z.enum(["SONCAS", "DISC", "KISS"]),
   markdown: z.string().min(1).max(200_000),
   auditAction: z.enum(["PUBLISH_PROMPT", "RESTORE_PROMPT"]),
 });

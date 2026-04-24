@@ -17,11 +17,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Sales Time — Revenue workspace",
+    default: "Sales Time — Coach commercial IA",
     template: "%s · Sales Time",
   },
   description:
-    "Salestime: team workspaces, Clerk-powered sign-in and sign-up, organizations, and secure operations.",
+    "Sales Time transforme vos transcripts de RDV en compte rendu structuré, coaching KISS, profil prospect DISC/SONCAS et mail de suivi — pour gagner du TUC et piloter la qualité commerciale.",
 };
 
 export default async function RootLayout({

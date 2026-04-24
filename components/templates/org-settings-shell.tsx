@@ -6,6 +6,7 @@ import {
   Building2,
   ClipboardList,
   LayoutGrid,
+  Mail,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -34,6 +35,12 @@ const SETTINGS_NAV = [
     href: "/company/settings/process",
     label: "Process",
     icon: ClipboardList,
+    match: "prefix" as const,
+  },
+  {
+    href: "/company/settings/email",
+    label: "E-mail de suivi",
+    icon: Mail,
     match: "prefix" as const,
   },
   {

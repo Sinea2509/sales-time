@@ -10,6 +10,7 @@ describe("runMeetingAnalysis", () => {
     const analysis = {
       analyzeSoncas: vi.fn(),
       analyzeDisc: vi.fn(),
+      analyzeKiss: vi.fn(),
     };
 
     const result = await runMeetingAnalysis(
@@ -36,7 +37,11 @@ describe("runMeetingAnalysis", () => {
       }),
     };
     const prompts = { getCurrentVersion: vi.fn().mockResolvedValue(null) };
-    const analysis = { analyzeSoncas: vi.fn(), analyzeDisc: vi.fn() };
+    const analysis = {
+      analyzeSoncas: vi.fn(),
+      analyzeDisc: vi.fn(),
+      analyzeKiss: vi.fn(),
+    };
 
     const result = await runMeetingAnalysis(
       { meetings, prompts, analysis } as never,
@@ -95,6 +100,7 @@ describe("runMeetingAnalysis", () => {
         },
       }),
       analyzeDisc: vi.fn(),
+      analyzeKiss: vi.fn(),
     };
 
     const result = await runMeetingAnalysis(

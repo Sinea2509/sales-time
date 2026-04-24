@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   BarChart3,
+  BookUser,
   CalendarDays,
   LayoutDashboard,
   Settings2,
@@ -88,6 +89,11 @@ export function OrgDashboardShell({
       href: "/company/rendez-vous",
       label: isAdmin ? tNav("meetingsTeam") : tNav("meetingsMine"),
       icon: CalendarDays,
+    },
+    {
+      href: "/company/contacts",
+      label: tNav("contacts"),
+      icon: BookUser,
     },
     {
       href: "/company/analyse",

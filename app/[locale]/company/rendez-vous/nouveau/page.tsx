@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { MeetingCreateForm } from "@/components/organisms/meeting-create-form";
+import { stringArrayFromOrgJson } from "@/lib/org-settings-json";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
+import { makeApplicationDeps } from "@/src/adapters/composition";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +21,23 @@ export default async function NouveauRendezVousPage() {
   if (actor.kind !== "authenticated" || !actor.activeOrganizationId) {
     redirect("/company");
   }
+
+  const deps = makeApplicationDeps();
+  const settings = await deps.organizationSettings.findByOrganizationId(
+    actor.activeOrganizationId,
+  );
+  const meetingTypeOptions = stringArrayFromOrgJson(settings?.meetingTypes, [
+    "Découverte",
+    "Démo",
+    "Proposition",
+    "Négociation",
+  ]);
+  const pipelineStageOptions = stringArrayFromOrgJson(settings?.pipelineStages, [
+    "Lead",
+    "Qualifié",
+    "Proposition",
+    "Gagné",
+  ]);
 
   return (
     <div className="space-y-6">
@@ -48,7 +67,10 @@ export default async function NouveauRendezVousPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <MeetingCreateForm />
+          <MeetingCreateForm
+            meetingTypeOptions={meetingTypeOptions}
+            pipelineStageOptions={pipelineStageOptions}
+          />
         </CardContent>
       </Card>
     </div>

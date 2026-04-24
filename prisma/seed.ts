@@ -1,15 +1,20 @@
 /**
- * Seeds default analysis prompts and optionally a local SUPER_ADMIN user.
+ * Seeds default analysis prompts and a SUPER_ADMIN user (defaults below).
  *
- *   DATABASE_URL=... SEED_SUPER_ADMIN_EMAIL=you@co.com SEED_SUPER_ADMIN_PASSWORD='secret' npx prisma db seed
+ *   DATABASE_URL=... npx prisma db seed
  *
- * If `SEED_SUPER_ADMIN_EMAIL` is omitted, only prompt templates are ensured (using a throwaway author id is not possible — we require an existing user id for `authorUserId` on template versions). So: create a user first via sign-up, then set env to that email for first-time seed, or use defaults below.
+ * Override with `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD`.
+ * To reset the password for an existing seed user (dev/staging only):
+ *   SEED_SUPER_ADMIN_RESET_PASSWORD=1 npx prisma db seed
+ *
+ * Production refuses to run unless `ALLOW_DANGEROUS_PROD_SEED=1`.
  */
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { PrismaClient } from "../lib/generated/prisma/client";
 import {
   DEFAULT_DISC_MARKDOWN,
+  DEFAULT_KISS_MARKDOWN,
   DEFAULT_SONCAS_MARKDOWN,
 } from "../lib/default-analysis-prompts";
 import { hashPassword } from "../lib/auth/password";
@@ -34,9 +39,10 @@ const pool = new Pool({ connectionString: databaseUrl });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 async function ensurePromptTemplates(authorUserId: string) {
-  const seeds: Array<{ kind: "SONCAS" | "DISC"; markdown: string }> = [
+  const seeds: Array<{ kind: "SONCAS" | "DISC" | "KISS"; markdown: string }> = [
     { kind: "SONCAS", markdown: DEFAULT_SONCAS_MARKDOWN },
     { kind: "DISC", markdown: DEFAULT_DISC_MARKDOWN },
+    { kind: "KISS", markdown: DEFAULT_KISS_MARKDOWN },
   ];
 
   for (const { kind, markdown } of seeds) {
@@ -66,9 +72,10 @@ async function ensurePromptTemplates(authorUserId: string) {
 async function main() {
   const email =
     process.env.SEED_SUPER_ADMIN_EMAIL?.trim().toLowerCase() ??
-    "superadmin@example.com";
+    "stephane@mytradeshow.ai";
   const password =
-    process.env.SEED_SUPER_ADMIN_PASSWORD?.trim() ?? "DevPassword123!";
+    process.env.SEED_SUPER_ADMIN_PASSWORD?.trim() ??
+    "MyTradeshow2026!SuperAdmin";
 
   let user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -79,6 +86,18 @@ async function main() {
       },
     });
     console.log(`Created seed user ${email} (change password after first login).`);
+  } else if (
+    process.env.SEED_SUPER_ADMIN_RESET_PASSWORD === "1" &&
+    (process.env.NODE_ENV !== "production" ||
+      process.env.ALLOW_DANGEROUS_PROD_SEED === "1")
+  ) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await hashPassword(password) },
+    });
+    console.log(
+      `Updated password for existing user ${email} (SEED_SUPER_ADMIN_RESET_PASSWORD=1).`,
+    );
   }
 
   await prisma.systemRole.upsert({

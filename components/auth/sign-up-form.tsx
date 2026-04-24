@@ -32,6 +32,30 @@ export function SignUpForm() {
       ) : null}
 
       <div className="space-y-2">
+        <Label htmlFor="firstName">Prénom</Label>
+        <Input
+          id="firstName"
+          name="firstName"
+          required
+          autoComplete="given-name"
+          maxLength={80}
+          disabled={pending}
+          className="h-10"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="lastName">Nom</Label>
+        <Input
+          id="lastName"
+          name="lastName"
+          required
+          autoComplete="family-name"
+          maxLength={80}
+          disabled={pending}
+          className="h-10"
+        />
+      </div>
+      <div className="space-y-2">
         <Label htmlFor="email">E-mail professionnel</Label>
         <Input
           id="email"

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createMeetingAction } from "@/app/[locale]/company/rendez-vous/actions";
+import { ContactPicker } from "@/components/organisms/contact-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,16 @@ const outcomes = [
   { value: "OTHER", label: "Autre" },
 ] as const;
 
-export function MeetingCreateForm() {
+const selectClassName =
+  "border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none";
+
+export function MeetingCreateForm({
+  meetingTypeOptions,
+  pipelineStageOptions,
+}: {
+  meetingTypeOptions: string[];
+  pipelineStageOptions: string[];
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +42,9 @@ export function MeetingCreateForm() {
             setError(
               res.error === "VALIDATION"
                 ? "Vérifiez les champs obligatoires."
-                : res.error,
+                : res.error === "INVALID_PERSON"
+                  ? "Contact introuvable. Rechargez la page ou choisissez un autre contact."
+                  : res.error,
             );
             return;
           }
@@ -42,9 +54,8 @@ export function MeetingCreateForm() {
       }}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="prospectName">Prospect</Label>
-          <Input id="prospectName" name="prospectName" required />
+        <div className="space-y-2 sm:col-span-2">
+          <ContactPicker />
         </div>
         <div className="space-y-2">
           <Label htmlFor="meetingAt">Date du rendez-vous</Label>
@@ -66,11 +77,44 @@ export function MeetingCreateForm() {
           />
         </div>
         <div className="space-y-2">
+          <Label htmlFor="meetingType">Type de rendez-vous</Label>
+          <select id="meetingType" name="meetingType" className={selectClassName}>
+            <option value="">—</option>
+            {meetingTypeOptions.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="pipelineStage">Étape pipeline</Label>
+          <select id="pipelineStage" name="pipelineStage" className={selectClassName}>
+            <option value="">—</option>
+            {pipelineStageOptions.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="potentialAmount">Montant potentiel (€)</Label>
+          <Input
+            id="potentialAmount"
+            name="potentialAmount"
+            type="number"
+            min={0}
+            step="0.01"
+            placeholder="Optionnel"
+          />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="outcome">Résultat</Label>
           <select
             id="outcome"
             name="outcome"
-            className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+            className={selectClassName}
             defaultValue="FOLLOW_UP"
             required
           >

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export { kissResultSchema, type KissAnalysisResult } from "./kiss-result-zod";
+
 export const soncasDriverBlockSchema = z.object({
   score: z.number().min(0).max(100),
   evidence: z.array(z.string()),

@@ -12,6 +12,14 @@ export type OrganizationSettingsRow = {
   industryVocabulary: string | null;
   meetingTypes: unknown;
   pipelineStages: unknown;
+  emailTone: string | null;
+  emailVouvoiement: boolean;
+  emailSignature: string | null;
+  tamCrMinutes: number;
+  tamCrmMinutes: number;
+  tamEmailMinutes: number;
+  tamResidualMinutes: number;
+  tamObjectiveMinutesPerMonth: number;
 };
 
 export interface OrganizationSettingsRepositoryPort {
@@ -45,6 +53,15 @@ export interface OrganizationSettingsRepositoryPort {
     fields: {
       meetingTypes: unknown;
       pipelineStages: unknown;
+    },
+  ): Promise<void>;
+
+  upsertEmailFields(
+    organizationId: string,
+    fields: {
+      emailTone: string | null;
+      emailVouvoiement: boolean;
+      emailSignature: string | null;
     },
   ): Promise<void>;
 }

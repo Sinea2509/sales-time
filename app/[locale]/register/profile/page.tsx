@@ -39,13 +39,16 @@ export default async function RegisterProfilePage() {
               Votre profil
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Vous avez déjà créé votre compte (e-mail et mot de passe). Indiquez
-              simplement comment vous apparaîtrez dans l&apos;équipe et votre
-              rôle métier.
+              Vérifiez votre nom tel qu&apos;il apparaîtra dans l&apos;équipe,
+              puis choisissez votre rôle métier pour continuer vers
+              l&apos;onboarding.
             </p>
           </header>
 
-          <RegisterProfileForm />
+          <RegisterProfileForm
+            defaultFirstName={user?.firstName ?? null}
+            defaultLastName={user?.lastName ?? null}
+          />
 
           <p className="text-muted-foreground text-sm">
             Un problème avec le compte ?{" "}

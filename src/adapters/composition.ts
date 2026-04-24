@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { sessionAuthAdapter } from "@/src/adapters/auth/session-auth-adapter";
 import { makePrismaOrganizationDirectoryPort } from "@/src/adapters/prisma/prisma-organization-directory";
 import { PrismaAuditRepository } from "@/src/adapters/prisma/prisma-audit-repository";
+import { PrismaContactRepository } from "@/src/adapters/prisma/prisma-contact-repository";
 import { PrismaMeetingRepository } from "@/src/adapters/prisma/prisma-meeting-repository";
 import { PrismaOnboardingProfileRepository } from "@/src/adapters/prisma/prisma-onboarding-profile-repository";
 import { PrismaOnboardingSharedPhraseRepository } from "@/src/adapters/prisma/prisma-onboarding-shared-phrase-repository";
@@ -12,6 +13,7 @@ import { VercelAIAnalysisAdapter } from "@/src/adapters/vercel/vercel-ai-analysi
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { AuditRepositoryPort } from "@/src/core/ports/audit-repository-port";
 import type { AuthSessionPort } from "@/src/core/ports/auth-session-port";
+import type { ContactRepositoryPort } from "@/src/core/ports/contact-repository-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 import type { OnboardingProfileRepositoryPort } from "@/src/core/ports/onboarding-profile-repository-port";
 import type { OnboardingSharedPhraseRepositoryPort } from "@/src/core/ports/onboarding-shared-phrase-repository-port";
@@ -26,6 +28,7 @@ export type ApplicationDeps = {
   audit: AuditRepositoryPort;
   orgDirectory: OrganizationDirectoryPort;
   meetings: MeetingRepositoryPort;
+  contacts: ContactRepositoryPort;
   prompts: PromptTemplateRepositoryPort;
   analysis: AnalysisPort;
   organizationSettings: OrganizationSettingsRepositoryPort;
@@ -40,6 +43,7 @@ export function makeApplicationDeps(): ApplicationDeps {
     audit: new PrismaAuditRepository(prisma),
     orgDirectory: makePrismaOrganizationDirectoryPort(prisma),
     meetings: new PrismaMeetingRepository(prisma),
+    contacts: new PrismaContactRepository(prisma),
     prompts: new PrismaPromptTemplateRepository(prisma),
     analysis: new VercelAIAnalysisAdapter(),
     organizationSettings: new PrismaOrganizationSettingsRepository(prisma),

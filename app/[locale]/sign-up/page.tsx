@@ -19,10 +19,10 @@ export default function SignUpPage() {
               Créer un compte
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              E-mail professionnel, site web de l&apos;entreprise et mot de passe.
-              Nous vérifions le domaine pour qu&apos;une seule organisation soit
-              créée par site. Ensuite vous compléterez votre profil puis
-              l&apos;onboarding équipe.
+              Prénom, nom, e-mail professionnel, site web de l&apos;entreprise et
+              mot de passe. Nous vérifions le domaine pour qu&apos;une seule
+              organisation soit créée par site. Ensuite vous indiquerez votre
+              rôle métier puis l&apos;onboarding équipe.
             </p>
           </header>
 

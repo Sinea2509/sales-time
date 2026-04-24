@@ -1,4 +1,4 @@
-export type AnalysisKindSlug = "SONCAS" | "DISC";
+export type AnalysisKindSlug = "SONCAS" | "DISC" | "KISS";
 
 export type PromptTemplateVersionRow = {
   id: string;

@@ -11,6 +11,8 @@ import { prisma } from "@/lib/prisma";
 
 const schema = z
   .object({
+    firstName: z.string().trim().min(1, "Le prénom est requis").max(80),
+    lastName: z.string().trim().min(1, "Le nom est requis").max(80),
     email: z.string().trim().email().transform((e) => e.toLowerCase()),
     website: z.string().trim().min(1, "Le site web est requis.").max(500),
     password: z.string().min(8, "Au moins 8 caractères.").max(200),
@@ -28,6 +30,8 @@ export async function signUpAction(
   formData: FormData,
 ): Promise<SignUpState> {
   const parsed = schema.safeParse({
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
     email: formData.get("email"),
     website: formData.get("website"),
     password: formData.get("password"),
@@ -36,6 +40,8 @@ export async function signUpAction(
   if (!parsed.success) {
     const flat = parsed.error.flatten();
     const msg =
+      flat.fieldErrors.firstName?.[0] ??
+      flat.fieldErrors.lastName?.[0] ??
       flat.fieldErrors.website?.[0] ??
       flat.fieldErrors.password?.[0] ??
       flat.fieldErrors.confirmPassword?.[0] ??
@@ -80,6 +86,8 @@ export async function signUpAction(
       email: parsed.data.email,
       passwordHash,
       signupWebsiteNormalized: websiteNorm.value,
+      firstName: parsed.data.firstName,
+      lastName: parsed.data.lastName,
     },
   });
 

@@ -140,6 +140,8 @@ describe("signUpAction", () => {
     const r = await signUpAction(
       null,
       form({
+        firstName: "Ada",
+        lastName: "Lovelace",
         email: "nope",
         website: "https://example.com",
         password: "password12",
@@ -154,6 +156,8 @@ describe("signUpAction", () => {
     const r = await signUpAction(
       null,
       form({
+        firstName: "Ada",
+        lastName: "Lovelace",
         email: "a@b.co",
         website: "https://example.com",
         password: "password12",
@@ -170,6 +174,8 @@ describe("signUpAction", () => {
     const r = await signUpAction(
       null,
       form({
+        firstName: "Ada",
+        lastName: "Lovelace",
         email: "a@b.co",
         website: "@@@",
         password: "password12",
@@ -192,6 +198,8 @@ describe("signUpAction", () => {
     const r = await signUpAction(
       null,
       form({
+        firstName: "Ada",
+        lastName: "Lovelace",
         email: "new@b.co",
         website: "https://acme.com",
         password: "password12",
@@ -209,6 +217,8 @@ describe("signUpAction", () => {
     const r = await signUpAction(
       null,
       form({
+        firstName: "Ada",
+        lastName: "Lovelace",
         email: "exists@b.co",
         website: "https://newco.io",
         password: "password12",
@@ -236,6 +246,8 @@ describe("signUpAction", () => {
       signUpAction(
         null,
         form({
+          firstName: "Jane",
+          lastName: "Doe",
           email: "Hi@B.co",
           website: "WWW.Example.COM/path",
           password: "password12",
@@ -249,6 +261,8 @@ describe("signUpAction", () => {
         email: "hi@b.co",
         passwordHash: "hash",
         signupWebsiteNormalized: "example.com",
+        firstName: "Jane",
+        lastName: "Doe",
       },
     });
     expect(createSessionRecordMock).toHaveBeenCalledWith(
@@ -545,6 +559,8 @@ describe("completeRegisterProfile", () => {
     getAuthenticatedPrincipalMock.mockResolvedValue({ userId: "u1" });
     findRegisterGateByUserIdMock.mockResolvedValue({
       id: "u1",
+      firstName: null,
+      lastName: null,
       registerProfileCompletedAt: new Date(),
       onboardingProfile: null,
     });
@@ -567,6 +583,8 @@ describe("completeRegisterProfile", () => {
     getAuthenticatedPrincipalMock.mockResolvedValue({ userId: "u1" });
     findRegisterGateByUserIdMock.mockResolvedValue({
       id: "u1",
+      firstName: null,
+      lastName: null,
       registerProfileCompletedAt: null,
       onboardingProfile: null,
     });

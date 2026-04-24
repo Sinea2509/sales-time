@@ -43,6 +43,8 @@ export interface UserRepositoryPort {
   /** Post–sign-up register profile gate + onboarding redirect. */
   findRegisterGateByUserId(userId: string): Promise<{
     id: string;
+    firstName: string | null;
+    lastName: string | null;
     registerProfileCompletedAt: Date | null;
     onboardingProfile: { completedAt: Date | null } | null;
   } | null>;

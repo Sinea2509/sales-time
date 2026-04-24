@@ -3,21 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { updateOrganizationProcess } from "@/app/[locale]/company/settings/actions";
 import { cn } from "@/lib/utils";
-
-function linesToTypes(s: string, max: number, maxLen: number): string[] {
-  const out: string[] = [];
-  for (const line of s.split("\n")) {
-    const t = line.trim();
-    if (!t) continue;
-    out.push(t.slice(0, maxLen));
-    if (out.length >= max) break;
-  }
-  return out;
-}
+import { EditableStringList } from "@/components/org-settings/editable-string-list";
 
 export type OrgProcessFormInitial = {
   meetingTypes: string[];
@@ -34,17 +22,13 @@ export function OrgSettingsProcessForm({
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(
     null,
   );
-  const [meetingText, setMeetingText] = useState(initial.meetingTypes.join("\n"));
-  const [pipelineText, setPipelineText] = useState(
-    initial.pipelineStages.join("\n"),
-  );
+  const [meetingTypes, setMeetingTypes] = useState(initial.meetingTypes);
+  const [pipelineStages, setPipelineStages] = useState(initial.pipelineStages);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage(null);
     startTransition(async () => {
-      const meetingTypes = linesToTypes(meetingText, 40, 120);
-      const pipelineStages = linesToTypes(pipelineText, 40, 120);
       const r = await updateOrganizationProcess({
         meetingTypes,
         pipelineStages,
@@ -59,7 +43,7 @@ export function OrgSettingsProcessForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-10">
       {message ? (
         <p
           className={cn(
@@ -72,24 +56,21 @@ export function OrgSettingsProcessForm({
         </p>
       ) : null}
 
-      <div className="space-y-2">
-        <Label htmlFor="org-mt">Types de rendez-vous (un par ligne)</Label>
-        <Textarea
-          id="org-mt"
-          value={meetingText}
-          onChange={(e) => setMeetingText(e.target.value)}
-          rows={8}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="org-pl">Étapes du pipeline (une par ligne)</Label>
-        <Textarea
-          id="org-pl"
-          value={pipelineText}
-          onChange={(e) => setPipelineText(e.target.value)}
-          rows={8}
-        />
-      </div>
+      <EditableStringList
+        id="org-meeting-types"
+        title="Types de rendez-vous"
+        description="Ex. Découverte, démo, négociation — utilisés dans les formulaires et rapports."
+        items={meetingTypes}
+        onChange={setMeetingTypes}
+      />
+
+      <EditableStringList
+        id="org-pipeline-stages"
+        title="Étapes du pipeline"
+        description="Repères commerciaux alignés sur votre processus de vente."
+        items={pipelineStages}
+        onChange={setPipelineStages}
+      />
 
       <Button
         type="submit"

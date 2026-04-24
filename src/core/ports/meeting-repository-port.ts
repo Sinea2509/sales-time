@@ -1,5 +1,8 @@
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 
+/** Analysis kinds persisted on \`MeetingAnalysis\`. */
+export type MeetingAnalysisKind = "SONCAS" | "DISC" | "KISS";
+
 export type MeetingRow = {
   id: string;
   organizationId: string;
@@ -8,6 +11,10 @@ export type MeetingRow = {
   prospectName: string;
   meetingAt: Date;
   durationMin: number | null;
+  meetingType: string | null;
+  pipelineStage: string | null;
+  potentialAmount: number | null;
+  followUpEmailDraft: string | null;
   transcript: string;
   notes: string | null;
   outcome: MeetingOutcome;
@@ -18,7 +25,7 @@ export type MeetingRow = {
 export type MeetingAnalysisRow = {
   id: string;
   meetingId: string;
-  kind: "SONCAS" | "DISC";
+  kind: MeetingAnalysisKind;
   model: string;
   result: unknown;
   createdAt: Date;
@@ -29,6 +36,7 @@ export type RecentMeetingListRow = MeetingRow & {
   sellerEmail: string | null;
   hasSoncas: boolean;
   hasDisc: boolean;
+  hasKiss: boolean;
   /** Moyenne des scores SONCAS (6 leviers), si analyse présente. */
   salesScore: number | null;
   /** Dernier résultat SONCAS brut (agrégations admin / radar équipe). */
@@ -49,13 +57,18 @@ export type PersonOutreachSummaryRow = {
 /** Meeting detail page: transcript + ordered analyses. */
 export type MeetingDetailWithAnalyses = {
   id: string;
+  sellerUserId: string;
   prospectName: string;
   meetingAt: Date;
   outcome: MeetingOutcome;
+  meetingType: string | null;
+  pipelineStage: string | null;
+  potentialAmount: number | null;
+  followUpEmailDraft: string | null;
   transcript: string;
   notes: string | null;
   analyses: Array<{
-    kind: "SONCAS" | "DISC";
+    kind: MeetingAnalysisKind;
     model: string;
     result: unknown;
   }>;
@@ -65,9 +78,14 @@ export interface MeetingRepositoryPort {
   createMeeting(input: {
     organizationId: string;
     sellerUserId: string;
+    /** When set, must reference an existing Person in the same organization. */
+    personId?: string | null;
     prospectName: string;
     meetingAt: Date;
     durationMin: number | null;
+    meetingType: string | null;
+    pipelineStage: string | null;
+    potentialAmount: number | null;
     transcript: string;
     notes: string | null;
     outcome: MeetingOutcome;
@@ -83,9 +101,14 @@ export interface MeetingRepositoryPort {
     limit?: number;
   }): Promise<MeetingRow[]>;
 
+  listMeetingsForPersonInOrg(input: {
+    organizationId: string;
+    personId: string;
+  }): Promise<MeetingRow[]>;
+
   createAnalysis(input: {
     meetingId: string;
-    kind: "SONCAS" | "DISC";
+    kind: MeetingAnalysisKind;
     promptVersionId: string;
     model: string;
     result: unknown;
@@ -95,7 +118,7 @@ export interface MeetingRepositoryPort {
   findLatestAnalysisForMeeting(input: {
     meetingId: string;
     organizationId: string;
-    kind: "SONCAS" | "DISC";
+    kind: MeetingAnalysisKind;
   }): Promise<MeetingAnalysisRow | null>;
 
   countMeetingsWithMeetingAtSince(input: {
@@ -114,7 +137,7 @@ export interface MeetingRepositoryPort {
   listAnalysesForOrgMeetingsSince(input: {
     organizationId: string;
     meetingAtSince: Date;
-    kinds: Array<"SONCAS" | "DISC">;
+    kinds: MeetingAnalysisKind[];
     sellerUserId?: string;
   }): Promise<MeetingAnalysisRow[]>;
 
@@ -165,4 +188,10 @@ export interface MeetingRepositoryPort {
     id: string;
     organizationId: string;
   }): Promise<MeetingDetailWithAnalyses | null>;
+
+  updateMeetingFollowUpDraft(input: {
+    id: string;
+    organizationId: string;
+    followUpEmailDraft: string | null;
+  }): Promise<boolean>;
 }

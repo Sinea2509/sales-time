@@ -18,6 +18,14 @@ function mapRow(row: {
   industryVocabulary: string | null;
   meetingTypes: unknown;
   pipelineStages: unknown;
+  emailTone: string | null;
+  emailVouvoiement: boolean;
+  emailSignature: string | null;
+  tamCrMinutes: number;
+  tamCrmMinutes: number;
+  tamEmailMinutes: number;
+  tamResidualMinutes: number;
+  tamObjectiveMinutesPerMonth: number;
 }): OrganizationSettingsRow {
   return {
     id: row.id,
@@ -33,6 +41,14 @@ function mapRow(row: {
     industryVocabulary: row.industryVocabulary,
     meetingTypes: row.meetingTypes,
     pipelineStages: row.pipelineStages,
+    emailTone: row.emailTone,
+    emailVouvoiement: row.emailVouvoiement,
+    emailSignature: row.emailSignature,
+    tamCrMinutes: row.tamCrMinutes,
+    tamCrmMinutes: row.tamCrmMinutes,
+    tamEmailMinutes: row.tamEmailMinutes,
+    tamResidualMinutes: row.tamResidualMinutes,
+    tamObjectiveMinutesPerMonth: row.tamObjectiveMinutesPerMonth,
   };
 }
 
@@ -104,6 +120,21 @@ export class PrismaOrganizationSettingsRepository
       where: { organizationId },
       create: { organizationId, ...jsonFields },
       update: jsonFields,
+    });
+  }
+
+  async upsertEmailFields(
+    organizationId: string,
+    fields: {
+      emailTone: string | null;
+      emailVouvoiement: boolean;
+      emailSignature: string | null;
+    },
+  ): Promise<void> {
+    await this.db.organizationSettings.upsert({
+      where: { organizationId },
+      create: { organizationId, ...fields },
+      update: fields,
     });
   }
 }

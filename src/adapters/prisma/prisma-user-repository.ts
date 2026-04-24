@@ -92,6 +92,8 @@ export class PrismaUserRepository implements UserRepositoryPort {
     userId: string,
   ): Promise<{
     id: string;
+    firstName: string | null;
+    lastName: string | null;
     registerProfileCompletedAt: Date | null;
     onboardingProfile: { completedAt: Date | null } | null;
   } | null> {
@@ -99,6 +101,8 @@ export class PrismaUserRepository implements UserRepositoryPort {
       where: { id: userId },
       select: {
         id: true,
+        firstName: true,
+        lastName: true,
         registerProfileCompletedAt: true,
         onboardingProfile: { select: { completedAt: true } },
       },

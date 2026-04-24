@@ -116,3 +116,30 @@ export async function updateOrganizationProcess(
   revalidatePath("/company/settings", "layout");
   return { ok: true };
 }
+
+const orgEmailSchema = z.object({
+  emailTone: z.enum(["formal", "informal"]).nullable(),
+  emailVouvoiement: z.boolean(),
+  emailSignature: z.string().max(10_000).nullable(),
+});
+
+export async function updateOrganizationEmailSettings(
+  raw: z.input<typeof orgEmailSchema>,
+): Promise<OrgSettingsActionResult> {
+  const organizationId = await requireOrgAdminOrganizationId();
+  if (!organizationId) {
+    return { ok: false, message: "Accès refusé." };
+  }
+  const parsed = orgEmailSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, message: "Données invalides." };
+  }
+  const deps = makeApplicationDeps();
+  await deps.organizationSettings.upsertEmailFields(organizationId, {
+    emailTone: parsed.data.emailTone,
+    emailVouvoiement: parsed.data.emailVouvoiement,
+    emailSignature: parsed.data.emailSignature?.trim() || null,
+  });
+  revalidatePath("/company/settings", "layout");
+  return { ok: true };
+}
