@@ -12,7 +12,7 @@ type CookiePayload = {
   exp: number;
 };
 
-function hmacSecret(): string {
+function requireHmacSecretForSigning(): string {
   const explicit = process.env.SUPER_ADMIN_ORG_COOKIE_SECRET?.trim();
   if (explicit) return explicit;
   if (process.env.NODE_ENV !== "production") {
@@ -21,6 +21,16 @@ function hmacSecret(): string {
   throw new Error(
     "Set SUPER_ADMIN_ORG_COOKIE_SECRET to sign the super-admin elevation cookie.",
   );
+}
+
+/** Verification must never throw: missing prod secret means we ignore elevation cookies. */
+function hmacSecretForVerification(): string | null {
+  const explicit = process.env.SUPER_ADMIN_ORG_COOKIE_SECRET?.trim();
+  if (explicit) return explicit;
+  if (process.env.NODE_ENV !== "production") {
+    return "dev-super-admin-org-cookie-hmac-insecure";
+  }
+  return null;
 }
 
 /**
@@ -41,7 +51,7 @@ export function signSuperAdminOrgCookieValue(input: {
   };
   const payloadJson = JSON.stringify(payload);
   const payloadB64 = Buffer.from(payloadJson, "utf8").toString("base64url");
-  const sig = createHmac("sha256", hmacSecret())
+  const sig = createHmac("sha256", requireHmacSecretForSigning())
     .update(payloadB64)
     .digest("base64url");
   return `${payloadB64}.${sig}`;
@@ -56,7 +66,10 @@ export function verifySuperAdminOrgCookieValue(
   const [payloadB64, sigB64] = parts;
   if (!payloadB64 || !sigB64) return null;
 
-  const expectedSig = createHmac("sha256", hmacSecret())
+  const secret = hmacSecretForVerification();
+  if (!secret) return null;
+
+  const expectedSig = createHmac("sha256", secret)
     .update(payloadB64)
     .digest("base64url");
 

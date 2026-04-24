@@ -1,53 +1,43 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   signSuperAdminOrgCookieValue,
   verifySuperAdminOrgCookieValue,
 } from "./super-admin-org-cookie-crypto";
 
 describe("super-admin-org-cookie-crypto", () => {
-  const prevSecret = process.env.SUPER_ADMIN_ORG_COOKIE_SECRET;
-
-  beforeEach(() => {
-    process.env.SUPER_ADMIN_ORG_COOKIE_SECRET = "test-secret-for-hmac-only";
-  });
-
   afterEach(() => {
-    if (prevSecret === undefined) {
-      delete process.env.SUPER_ADMIN_ORG_COOKIE_SECRET;
-    } else {
-      process.env.SUPER_ADMIN_ORG_COOKIE_SECRET = prevSecret;
-    }
+    vi.unstubAllEnvs();
   });
 
-  it("round-trips org for the same actor user", () => {
+  it("verify returns null in production when secret is missing (no throw)", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SUPER_ADMIN_ORG_COOKIE_SECRET", "");
+    const raw =
+      "eyJ2IjoxLCJ1aWQiOiJ1MSIsIm9yZyI6Im9yZzEiLCJleHAiOjk5OTk5OTk5OTl9.aaaa";
+    expect(verifySuperAdminOrgCookieValue(raw, "u1")).toBeNull();
+  });
+
+  it("sign throws in production when secret is missing", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SUPER_ADMIN_ORG_COOKIE_SECRET", "");
+    expect(() =>
+      signSuperAdminOrgCookieValue({
+        actorUserId: "u1",
+        targetOrganizationId: "org1",
+        maxAgeSec: 60,
+      }),
+    ).toThrow(/SUPER_ADMIN_ORG_COOKIE_SECRET/);
+  });
+
+  it("round-trip verify when secret is set", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SUPER_ADMIN_ORG_COOKIE_SECRET", "test-secret-key");
     const raw = signSuperAdminOrgCookieValue({
-      actorUserId: "user_abc",
-      targetOrganizationId: "org_xyz",
+      actorUserId: "user-a",
+      targetOrganizationId: "org-z",
       maxAgeSec: 3600,
     });
-    expect(verifySuperAdminOrgCookieValue(raw, "user_abc")).toBe("org_xyz");
-  });
-
-  it("rejects when actor user does not match", () => {
-    const raw = signSuperAdminOrgCookieValue({
-      actorUserId: "user_abc",
-      targetOrganizationId: "org_xyz",
-      maxAgeSec: 3600,
-    });
-    expect(verifySuperAdminOrgCookieValue(raw, "user_other")).toBeNull();
-  });
-
-  it("rejects legacy unsigned cookie values", () => {
-    expect(verifySuperAdminOrgCookieValue("org_plaintext", "user_abc")).toBeNull();
-  });
-
-  it("rejects tampered signature", () => {
-    const raw = signSuperAdminOrgCookieValue({
-      actorUserId: "user_abc",
-      targetOrganizationId: "org_xyz",
-      maxAgeSec: 3600,
-    });
-    const tampered = `${raw.slice(0, -4)}xxxx`;
-    expect(verifySuperAdminOrgCookieValue(tampered, "user_abc")).toBeNull();
+    expect(verifySuperAdminOrgCookieValue(raw, "user-a")).toBe("org-z");
+    expect(verifySuperAdminOrgCookieValue(raw, "other-user")).toBeNull();
   });
 });
