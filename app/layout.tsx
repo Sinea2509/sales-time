@@ -5,6 +5,9 @@ import { getLocale, getMessages } from "next-intl/server";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
+/** Required: `getLocale` / `getMessages` read request headers via next-intl (see DYNAMIC_SERVER_USAGE). */
+export const dynamic = "force-dynamic";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
