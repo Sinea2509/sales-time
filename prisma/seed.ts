@@ -9,8 +9,7 @@
  *
  * Production refuses to run unless `ALLOW_DANGEROUS_PROD_SEED=1`.
  */
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../lib/generated/prisma/client";
 import {
   DEFAULT_DISC_MARKDOWN,
@@ -35,8 +34,9 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
-const pool = new Pool({ connectionString: databaseUrl });
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
+const prisma = new PrismaClient({
+  adapter: new PrismaNeon({ connectionString: databaseUrl }),
+});
 
 async function ensurePromptTemplates(authorUserId: string) {
   const seeds: Array<{ kind: "SONCAS" | "DISC" | "KISS"; markdown: string }> = [
@@ -120,5 +120,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-    await pool.end();
   });
