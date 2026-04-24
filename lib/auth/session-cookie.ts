@@ -5,6 +5,15 @@ import {
   SESSION_MAX_AGE_SEC,
 } from "@/lib/auth/constants";
 
+/** Production normally uses Secure cookies (HTTPS). Set ALLOW_INSECURE_SESSION_COOKIES=1 for local `next start` over http. */
+function useSecureSessionCookies(): boolean {
+  if (process.env.NODE_ENV !== "production") return false;
+  const allowInsecure =
+    process.env.ALLOW_INSECURE_SESSION_COOKIES === "1" ||
+    process.env.ALLOW_INSECURE_SESSION_COOKIES === "true";
+  return !allowInsecure;
+}
+
 export async function getSessionTokenFromCookies(): Promise<string | null> {
   const jar = await cookies();
   const v = jar.get(SESSION_COOKIE_NAME)?.value;
@@ -41,7 +50,7 @@ export async function setActiveOrganizationCookie(
   const jar = await cookies();
   jar.set(ACTIVE_ORG_COOKIE_NAME, organizationId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: useSecureSessionCookies(),
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_MAX_AGE_SEC,

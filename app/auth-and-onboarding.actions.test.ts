@@ -294,6 +294,9 @@ describe("signInAction", () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: "u1",
       passwordHash: "h",
+      status: "ACTIVE",
+      systemRoles: [],
+      organizationMemberships: [],
     } as never);
     verifyPasswordMock.mockResolvedValue(false);
     const r = await signInAction(
@@ -307,6 +310,9 @@ describe("signInAction", () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: "u1",
       passwordHash: "h",
+      status: "ACTIVE",
+      systemRoles: [],
+      organizationMemberships: [{ organizationId: "org1" }],
     } as never);
     verifyPasswordMock.mockResolvedValue(true);
     createSessionRecordMock.mockResolvedValue(undefined);
@@ -317,10 +323,30 @@ describe("signInAction", () => {
     ).rejects.toThrow("REDIRECT:/company");
   });
 
+  it("redirects to /admin when super admin has no organization", async () => {
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: "u1",
+      passwordHash: "h",
+      status: "ACTIVE",
+      systemRoles: [{ role: "SUPER_ADMIN" }],
+      organizationMemberships: [],
+    } as never);
+    verifyPasswordMock.mockResolvedValue(true);
+    createSessionRecordMock.mockResolvedValue(undefined);
+    setSessionCookieMock.mockResolvedValue(undefined);
+
+    await expect(
+      signInAction(null, form({ email: "a@b.co", password: "password12" })),
+    ).rejects.toThrow("REDIRECT:/admin");
+  });
+
   it("redirects to safe relative next when provided", async () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: "u1",
       passwordHash: "h",
+      status: "ACTIVE",
+      systemRoles: [],
+      organizationMemberships: [{ organizationId: "org1" }],
     } as never);
     verifyPasswordMock.mockResolvedValue(true);
     createSessionRecordMock.mockResolvedValue(undefined);
@@ -342,6 +368,9 @@ describe("signInAction", () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: "u1",
       passwordHash: "h",
+      status: "ACTIVE",
+      systemRoles: [],
+      organizationMemberships: [{ organizationId: "org1" }],
     } as never);
     verifyPasswordMock.mockResolvedValue(true);
     createSessionRecordMock.mockResolvedValue(undefined);

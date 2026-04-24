@@ -31,9 +31,22 @@ export async function signInAction(
 
   const user = await prisma.user.findUnique({
     where: { email: parsed.data.email },
+    select: {
+      id: true,
+      passwordHash: true,
+      status: true,
+      systemRoles: { select: { role: true } },
+      organizationMemberships: { select: { organizationId: true } },
+    },
   });
   if (!user) {
     return { ok: false, message: "E-mail ou mot de passe incorrect." };
+  }
+  if (user.status === "DISABLED") {
+    return {
+      ok: false,
+      message: "Ce compte est désactivé. Contactez un administrateur.",
+    };
   }
   const ok = await verifyPassword(user.passwordHash, parsed.data.password);
   if (!ok) {
@@ -51,6 +64,12 @@ export async function signInAction(
   const next = parsed.data.next?.trim();
   if (next && next.startsWith("/") && !next.startsWith("//")) {
     redirect(next);
+  }
+
+  const isSuperAdmin = user.systemRoles.some((r) => r.role === "SUPER_ADMIN");
+  const hasNoOrg = user.organizationMemberships.length === 0;
+  if (isSuperAdmin && hasNoOrg) {
+    redirect("/admin");
   }
   redirect("/company");
 }
