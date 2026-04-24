@@ -1,8 +1,8 @@
--- CreateEnum
-CREATE TYPE "SuperAdminInvitationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REVOKED', 'EXPIRED');
+-- CreateEnum (idempotent)
+DO $$ BEGIN CREATE TYPE "SuperAdminInvitationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REVOKED', 'EXPIRED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- CreateTable
-CREATE TABLE "SuperAdminInvitation" (
+CREATE TABLE IF NOT EXISTS "SuperAdminInvitation" (
     "id" TEXT NOT NULL,
     "email" VARCHAR(320) NOT NULL,
     "tokenHash" TEXT NOT NULL,
@@ -16,13 +16,11 @@ CREATE TABLE "SuperAdminInvitation" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "SuperAdminInvitation_tokenHash_key" ON "SuperAdminInvitation"("tokenHash");
+CREATE UNIQUE INDEX IF NOT EXISTS "SuperAdminInvitation_tokenHash_key" ON "SuperAdminInvitation"("tokenHash");
 
 -- CreateIndex
-CREATE INDEX "SuperAdminInvitation_email_idx" ON "SuperAdminInvitation"("email");
+CREATE INDEX IF NOT EXISTS "SuperAdminInvitation_email_idx" ON "SuperAdminInvitation"("email");
 
--- AddForeignKey
-ALTER TABLE "SuperAdminInvitation" ADD CONSTRAINT "SuperAdminInvitation_invitedByUserId_fkey" FOREIGN KEY ("invitedByUserId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "SuperAdminInvitation" ADD CONSTRAINT "SuperAdminInvitation_acceptedByUserId_fkey" FOREIGN KEY ("acceptedByUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- AddForeignKey (idempotent)
+DO $$ BEGIN ALTER TABLE "SuperAdminInvitation" ADD CONSTRAINT "SuperAdminInvitation_invitedByUserId_fkey" FOREIGN KEY ("invitedByUserId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "SuperAdminInvitation" ADD CONSTRAINT "SuperAdminInvitation_acceptedByUserId_fkey" FOREIGN KEY ("acceptedByUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
