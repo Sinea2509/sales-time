@@ -13,7 +13,7 @@ export function AdminActivityChart({ data }: Props) {
         Utilisateurs actifs / jour (14j)
       </h3>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Nombre d'utilisateurs uniques avec session active par jour
+        Nombre d&apos;utilisateurs uniques avec session active par jour
       </p>
       <div className="mt-4 h-[220px]">
         <BarChart

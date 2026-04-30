@@ -183,10 +183,10 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 render={<Link href="/company" />}
-                tooltip="Retour à l'app"
+                tooltip={"Retour à l'app"}
               >
                 <ArrowLeft />
-                <span>Retour à l'app</span>
+                <span>{"Retour à l'app"}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>

@@ -65,6 +65,16 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (!open) {
+      setQuery("");
+      setSearchResults({ users: [], organizations: [] });
+      setActiveIndex(0);
+    }
+  }
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -76,34 +86,30 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onOpenChange]);
 
-  useEffect(() => {
-    if (!open) {
-      setQuery("");
-      setSearchResults({ users: [], organizations: [] });
-      setActiveIndex(0);
-    }
-  }, [open]);
+  const trimmedQuery = query.trim();
 
   useEffect(() => {
-    const q = query.trim();
-    if (q.length < 2) {
-      setSearchResults({ users: [], organizations: [] });
+    if (trimmedQuery.length < 2) {
       return;
     }
     const timeout = setTimeout(() => {
       startTransition(async () => {
-        const results = await searchAdminAction(q);
+        const results = await searchAdminAction(trimmedQuery);
         setSearchResults(results);
       });
     }, 200);
     return () => clearTimeout(timeout);
-  }, [query, startTransition]);
+  }, [trimmedQuery, startTransition]);
 
   const allResults = useMemo(() => {
+    const merged =
+      trimmedQuery.length < 2
+        ? { users: [], organizations: [] }
+        : searchResults;
     const q = query.toLowerCase();
     const pages = PAGES.filter((p) => p.label.toLowerCase().includes(q));
 
-    const orgs: ResultItem[] = searchResults.organizations.map((o) => ({
+    const orgs: ResultItem[] = merged.organizations.map((o) => ({
       id: `org-${o.id}`,
       icon: Building2,
       label: o.name,
@@ -112,7 +118,7 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
       section: "Organisations",
     }));
 
-    const users: ResultItem[] = searchResults.users.map((u) => ({
+    const users: ResultItem[] = merged.users.map((u) => ({
       id: `user-${u.id}`,
       icon: Users,
       label: u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.email,
@@ -122,11 +128,17 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
     }));
 
     return [...pages, ...orgs, ...users];
-  }, [query, searchResults]);
+  }, [query, trimmedQuery, searchResults]);
 
-  useEffect(() => {
+  const resultsFingerprint = useMemo(
+    () => allResults.map((r) => r.id).join("|"),
+    [allResults],
+  );
+  const [prevFingerprint, setPrevFingerprint] = useState(resultsFingerprint);
+  if (resultsFingerprint !== prevFingerprint) {
+    setPrevFingerprint(resultsFingerprint);
     setActiveIndex(0);
-  }, [allResults]);
+  }
 
   const navigate = useCallback(
     (href: string) => {
@@ -137,9 +149,10 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
   );
 
   function handleKeyDown(e: React.KeyboardEvent) {
+    const maxIdx = Math.max(0, allResults.length - 1);
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, allResults.length - 1));
+      setActiveIndex((i) => Math.min(i + 1, maxIdx));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActiveIndex((i) => Math.max(i - 1, 0));

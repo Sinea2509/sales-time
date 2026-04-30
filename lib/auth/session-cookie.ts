@@ -6,7 +6,7 @@ import {
 } from "@/lib/auth/constants";
 
 /** Production normally uses Secure cookies (HTTPS). Set ALLOW_INSECURE_SESSION_COOKIES=1 for local `next start` over http. */
-function useSecureSessionCookies(): boolean {
+function shouldUseSecureSessionCookies(): boolean {
   if (process.env.NODE_ENV !== "production") return false;
   const allowInsecure =
     process.env.ALLOW_INSECURE_SESSION_COOKIES === "1" ||
@@ -50,7 +50,7 @@ export async function setActiveOrganizationCookie(
   const jar = await cookies();
   jar.set(ACTIVE_ORG_COOKIE_NAME, organizationId, {
     httpOnly: true,
-    secure: useSecureSessionCookies(),
+    secure: shouldUseSecureSessionCookies(),
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_MAX_AGE_SEC,

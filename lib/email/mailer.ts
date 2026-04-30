@@ -12,7 +12,6 @@ export type SendEmailInput = {
 export async function sendTransactionalEmail(input: SendEmailInput): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) {
-    // eslint-disable-next-line no-console -- intentional dev fallback
     console.info("[email:dev]", {
       to: input.to,
       subject: input.subject,

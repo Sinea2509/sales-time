@@ -73,8 +73,8 @@ export default async function SuperAdminPromptsPage() {
           Éditeur de prompts
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Markdown versionné pour chaque méthode d'analyse. Chaque publication
-          crée une nouvelle version avec un audit super admin.
+          Markdown versionné pour chaque méthode d&apos;analyse. Chaque
+          publication crée une nouvelle version avec un audit super admin.
         </p>
       </div>
 

@@ -102,7 +102,7 @@ export default async function HealthPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Santé système</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          État de l'infrastructure et métriques de la base de données.
+          État de l&apos;infrastructure et métriques de la base de données.
         </p>
       </div>
 

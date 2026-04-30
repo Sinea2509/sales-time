@@ -427,9 +427,9 @@ export function AdminUserTable({ users, organizations }: Props) {
       <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier l'utilisateur</DialogTitle>
+            <DialogTitle>Modifier l&apos;utilisateur</DialogTitle>
             <DialogDescription>
-              Modifier les informations de profil de l'utilisateur.
+              Modifier les informations de profil de l&apos;utilisateur.
             </DialogDescription>
           </DialogHeader>
           {editUser && (
@@ -498,9 +498,10 @@ export function AdminUserTable({ users, organizations }: Props) {
       <Dialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Supprimer l'utilisateur</DialogTitle>
+            <DialogTitle>Supprimer l&apos;utilisateur</DialogTitle>
             <DialogDescription>
-              Cette action est irréversible. Toutes les données de l'utilisateur seront supprimées.
+              Cette action est irréversible. Toutes les données de
+              l&apos;utilisateur seront supprimées.
             </DialogDescription>
           </DialogHeader>
           {deleteUser && (

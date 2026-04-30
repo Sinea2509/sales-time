@@ -13,7 +13,7 @@ export function AdminOrgGrowthChart({ data }: Props) {
         Nouvelles organisations / mois
       </h3>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Croissance du nombre d'organisations sur les 6 derniers mois
+        Croissance du nombre d&apos;organisations sur les 6 derniers mois
       </p>
       <div className="mt-4 h-[220px]">
         <BarChart

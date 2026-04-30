@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Building2,
   Users,
   CalendarDays,
   BarChart3,

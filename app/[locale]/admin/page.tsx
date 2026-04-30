@@ -173,7 +173,7 @@ export default async function AdminDashboardPage(props: {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard plateforme</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Vue d'ensemble de l'activité et des KPIs SaaS de Sales Time.
+            Vue d&apos;ensemble de l&apos;activité et des KPIs SaaS de Sales Time.
           </p>
         </div>
         <AdminDateRangePicker />
@@ -266,7 +266,7 @@ export default async function AdminDashboardPage(props: {
           icon={TrendingDown}
           label="Stickiness (DAU/MAU)"
           value={mau > 0 ? `${Math.round((dau / mau) * 100)}%` : "—"}
-          footer="Ratio d'engagement quotidien"
+          footer={"Ratio d'engagement quotidien"}
           accent="violet"
         />
       </div>

@@ -365,9 +365,9 @@ export function AdminOrgTable({ organizations }: Props) {
       <Dialog open={!!editOrg} onOpenChange={() => setEditOrg(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier l'organisation</DialogTitle>
+            <DialogTitle>Modifier l&apos;organisation</DialogTitle>
             <DialogDescription>
-              Modifier les informations de l'organisation.
+              Modifier les informations de l&apos;organisation.
             </DialogDescription>
           </DialogHeader>
           {editOrg && (
@@ -415,7 +415,7 @@ export function AdminOrgTable({ organizations }: Props) {
       <Dialog open={!!deleteOrg} onOpenChange={() => setDeleteOrg(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Supprimer l'organisation</DialogTitle>
+            <DialogTitle>Supprimer l&apos;organisation</DialogTitle>
             <DialogDescription>
               Cette action est irréversible. Toutes les données associées
               (membres, rendez-vous, analyses) seront supprimées.
