@@ -245,7 +245,32 @@ export function OrgDashboardShell({
         </SidebarContent>
 
         <SidebarFooter className="border-t border-sidebar-border">
-          <div className="group-data-[collapsible=icon]:hidden px-2 pb-3">
+          {footerNav.length > 0 ? (
+            <SidebarMenu>
+              {footerNav.map((item) => {
+                const Icon = item.icon;
+                const active = navActive(pathname, item);
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      isActive={active}
+                      render={<Link href={item.href} />}
+                    >
+                      <Icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          ) : null}
+
+          <div
+            className={cn(
+              "group-data-[collapsible=icon]:hidden px-2 pb-3",
+              footerNav.length > 0 ? "pt-1" : "pt-2",
+            )}
+          >
             <div className="rounded-xl border border-[#404040]/20 bg-[#F5F5F5] p-3">
               <p className="text-sm font-semibold text-[#171717]">
                 Essai gratuit
@@ -273,29 +298,6 @@ export function OrgDashboardShell({
               </Link>
             </div>
           </div>
-
-          <SidebarMenu>
-            {footerNav.map((item) => {
-                const Icon = item.icon;
-                const active = navActive(pathname, item);
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      isActive={active}
-                      render={<Link href={item.href} />}
-                    >
-                      <Icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-          </SidebarMenu>
-          {activeOrganizationId ? (
-            <p className="text-sidebar-foreground/60 truncate px-2 pb-1 font-mono text-[10px]">
-              {activeOrganizationId}
-            </p>
-          ) : null}
         </SidebarFooter>
       </Sidebar>
 
