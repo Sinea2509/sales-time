@@ -133,31 +133,111 @@ function renderMarkdownToHtml(md: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Simple line-diff
+// Line diff (LCS) + side-by-side rows
 // ---------------------------------------------------------------------------
-type DiffLine = { type: "added" | "removed" | "unchanged"; text: string };
+type DiffOp =
+  | { kind: "equal"; oldIndex: number; newIndex: number }
+  | { kind: "delete"; oldIndex: number }
+  | { kind: "insert"; newIndex: number };
 
-function computeDiff(oldText: string, newText: string): DiffLine[] {
-  const oldLines = oldText.split("\n");
-  const newLines = newText.split("\n");
-  const result: DiffLine[] = [];
+type SideBySideDiffRow = {
+  oldLineNo: number | null;
+  newLineNo: number | null;
+  oldText: string | null;
+  newText: string | null;
+  /** Single row replacing adjacent delete+insert (same visual row) */
+  rowKind: "unchanged" | "added-only" | "removed-only" | "replaced";
+};
 
-  const max = Math.max(oldLines.length, newLines.length);
-  for (let i = 0; i < max; i++) {
-    const o = oldLines[i];
-    const n = newLines[i];
-    if (o === undefined) {
-      result.push({ type: "added", text: n });
-    } else if (n === undefined) {
-      result.push({ type: "removed", text: o });
-    } else if (o === n) {
-      result.push({ type: "unchanged", text: o });
-    } else {
-      result.push({ type: "removed", text: o });
-      result.push({ type: "added", text: n });
+/** Myers-style line diff via LCS backtrack — correct for reordered / inserted blocks */
+function computeDiffOps(oldLines: string[], newLines: string[]): DiffOp[] {
+  const m = oldLines.length;
+  const n = newLines.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () =>
+    Array.from({ length: n + 1 }, () => 0),
+  );
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (oldLines[i - 1] === newLines[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
     }
   }
-  return result;
+  const ops: DiffOp[] = [];
+  let i = m;
+  let j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+      ops.push({ kind: "equal", oldIndex: i - 1, newIndex: j - 1 });
+      i--;
+      j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      ops.push({ kind: "insert", newIndex: j - 1 });
+      j--;
+    } else {
+      ops.push({ kind: "delete", oldIndex: i - 1 });
+      i--;
+    }
+  }
+  ops.reverse();
+  return ops;
+}
+
+/** Pair adjacent delete+insert into one side-by-side "replaced" row when possible */
+function opsToSideBySideRows(oldLines: string[], newLines: string[]): SideBySideDiffRow[] {
+  const ops = computeDiffOps(oldLines, newLines);
+  const rows: SideBySideDiffRow[] = [];
+  let k = 0;
+  while (k < ops.length) {
+    const cur = ops[k];
+    const next = ops[k + 1];
+    if (cur.kind === "delete" && next?.kind === "insert") {
+      rows.push({
+        oldLineNo: cur.oldIndex + 1,
+        newLineNo: next.newIndex + 1,
+        oldText: oldLines[cur.oldIndex],
+        newText: newLines[next.newIndex],
+        rowKind: "replaced",
+      });
+      k += 2;
+      continue;
+    }
+    if (cur.kind === "equal") {
+      rows.push({
+        oldLineNo: cur.oldIndex + 1,
+        newLineNo: cur.newIndex + 1,
+        oldText: oldLines[cur.oldIndex],
+        newText: newLines[cur.newIndex],
+        rowKind: "unchanged",
+      });
+    } else if (cur.kind === "delete") {
+      rows.push({
+        oldLineNo: cur.oldIndex + 1,
+        newLineNo: null,
+        oldText: oldLines[cur.oldIndex],
+        newText: null,
+        rowKind: "removed-only",
+      });
+    } else {
+      rows.push({
+        oldLineNo: null,
+        newLineNo: cur.newIndex + 1,
+        oldText: null,
+        newText: newLines[cur.newIndex],
+        rowKind: "added-only",
+      });
+    }
+    k++;
+  }
+  return rows;
+}
+
+function computeSideBySideDiff(oldText: string, newText: string): SideBySideDiffRow[] {
+  const oldLines = oldText.split("\n");
+  const newLines = newText.split("\n");
+  return opsToSideBySideRows(oldLines, newLines);
 }
 
 // ---------------------------------------------------------------------------
@@ -191,8 +271,8 @@ export function SuperAdminPromptsEditor({
     [showPreview, markdown],
   );
 
-  const diffLines = useMemo(
-    () => (diffVersion ? computeDiff(diffVersion.markdown, markdown) : null),
+  const diffRows = useMemo(
+    () => (diffVersion ? computeSideBySideDiff(diffVersion.markdown, markdown) : null),
     [diffVersion, markdown],
   );
 
@@ -316,13 +396,18 @@ export function SuperAdminPromptsEditor({
         </DialogContent>
       </Dialog>
 
-      {/* Diff view */}
-      {diffLines && diffVersion && (
-        <div className="space-y-2 rounded-lg border p-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium">
-              Diff — v{diffVersion.version} → brouillon actuel
-            </h4>
+      {/* Diff view — side by side with line numbers */}
+      {diffRows && diffVersion && (
+        <div className="space-y-3 rounded-lg border p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h4 className="text-sm font-medium">
+                Diff — v{diffVersion.version} → brouillon actuel
+              </h4>
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                Colonne gauche : version publiée. Colonne droite : éditeur actuel.
+              </p>
+            </div>
             <Button
               type="button"
               variant="ghost"
@@ -333,23 +418,102 @@ export function SuperAdminPromptsEditor({
               Fermer
             </Button>
           </div>
-          <div className="max-h-80 overflow-y-auto rounded-md border bg-black/[0.02] font-mono text-xs dark:bg-white/[0.02]">
-            {diffLines.map((dl, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "whitespace-pre-wrap px-3 py-0.5",
-                  dl.type === "added" && "bg-green-500/10 text-green-700 dark:text-green-400",
-                  dl.type === "removed" && "bg-red-500/10 text-red-700 line-through dark:text-red-400",
-                  dl.type === "unchanged" && "text-muted-foreground",
-                )}
-              >
-                <span className="mr-2 inline-block w-4 select-none text-right opacity-50">
-                  {dl.type === "added" ? "+" : dl.type === "removed" ? "−" : " "}
-                </span>
-                {dl.text || "\u00A0"}
+          <div className="flex flex-wrap gap-3 text-[11px] leading-tight">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2.5 shrink-0 rounded-sm bg-emerald-500/35 ring-1 ring-emerald-600/30" />
+              Ajouté
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2.5 shrink-0 rounded-sm bg-rose-500/35 ring-1 ring-rose-600/30" />
+              Supprimé
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2.5 shrink-0 rounded-sm bg-muted ring-1 ring-border" />
+              Inchangé
+            </span>
+          </div>
+          <div className="overflow-hidden rounded-md border">
+            <div className="bg-muted/40 text-muted-foreground grid max-h-[min(70vh,520px)] grid-cols-2 divide-x border-b text-[10px] font-medium tracking-wide uppercase">
+              <div className="flex min-h-8 items-center gap-2 px-2 py-1.5">
+                <span className="text-foreground/80 shrink-0">v{diffVersion.version}</span>
+                <span className="truncate font-normal normal-case">référence</span>
               </div>
-            ))}
+              <div className="flex min-h-8 items-center gap-2 px-2 py-1.5">
+                <span className="text-foreground/80 shrink-0">Brouillon</span>
+                <span className="truncate font-normal normal-case">modifications</span>
+              </div>
+            </div>
+            <div className="max-h-[min(70vh,520px)] overflow-auto">
+              <div className="divide-y divide-border/60">
+                {diffRows.map((row, i) => {
+                  const leftHighlight =
+                    row.rowKind === "removed-only" || row.rowKind === "replaced";
+                  const rightHighlight =
+                    row.rowKind === "added-only" || row.rowKind === "replaced";
+                  return (
+                    <div
+                      key={i}
+                      className="grid grid-cols-2 font-mono text-xs leading-snug"
+                    >
+                      <div
+                        className={cn(
+                          "flex min-h-[1.375rem] min-w-0",
+                          leftHighlight &&
+                            "bg-rose-500/12 text-rose-950 dark:bg-rose-500/15 dark:text-rose-100",
+                          !leftHighlight && row.oldText !== null && "bg-background",
+                          row.oldText === null && "bg-muted/25",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "w-11 shrink-0 select-none border-r border-border/50 py-0.5 pr-1.5 text-right tabular-nums",
+                            leftHighlight
+                              ? "text-rose-700/90 dark:text-rose-300/90"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {row.oldLineNo ?? ""}
+                        </div>
+                        <div className="min-w-0 flex-1 whitespace-pre-wrap break-words px-2 py-0.5">
+                          {row.oldText === null ? (
+                            <span className="text-muted-foreground/35 select-none">·</span>
+                          ) : (
+                            row.oldText || "\u00A0"
+                          )}
+                        </div>
+                      </div>
+                      <div
+                        className={cn(
+                          "flex min-h-[1.375rem] min-w-0",
+                          rightHighlight &&
+                            "bg-emerald-500/12 text-emerald-950 dark:bg-emerald-500/15 dark:text-emerald-100",
+                          !rightHighlight && row.newText !== null && "bg-background",
+                          row.newText === null && "bg-muted/25",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "w-11 shrink-0 select-none border-r border-border/50 py-0.5 pr-1.5 text-right tabular-nums",
+                            rightHighlight
+                              ? "text-emerald-800/90 dark:text-emerald-300/90"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {row.newLineNo ?? ""}
+                        </div>
+                        <div className="min-w-0 flex-1 whitespace-pre-wrap break-words px-2 py-0.5">
+                          {row.newText === null ? (
+                            <span className="text-muted-foreground/35 select-none">·</span>
+                          ) : (
+                            row.newText || "\u00A0"
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}
