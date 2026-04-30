@@ -202,6 +202,8 @@ model OrganizationSettings {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   companyName           String?
+  /** Public URL for the organization logo (e.g. Vercel Blob). */
+  logoUrl               String? @db.Text
   industrySector        String?
   commercialTeamSize    String?
   averageSalesCycle     String?

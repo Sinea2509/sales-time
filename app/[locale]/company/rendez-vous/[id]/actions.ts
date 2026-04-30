@@ -5,7 +5,7 @@ import { z } from "zod";
 import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { requireAiGatewayApiKey } from "@/lib/env";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { generateFollowUpEmailForMeeting } from "@/src/core/application/generate-follow-up-email";
 import { runMeetingAnalysis } from "@/src/core/application/run-meeting-analysis";
@@ -16,7 +16,7 @@ export async function runAllMeetingAnalysesAction(meetingId: string) {
   const parsed = meetingIdSchema.safeParse(meetingId);
   if (!parsed.success) return { ok: false as const, error: "VALIDATION" as const };
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
   requireAiGatewayApiKey();
@@ -53,7 +53,7 @@ export async function generateFollowUpEmailAction(meetingId: string) {
   const parsed = meetingIdSchema.safeParse(meetingId);
   if (!parsed.success) return { ok: false as const, error: "VALIDATION" as const };
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
   requireAiGatewayApiKey();
@@ -114,7 +114,7 @@ export async function saveFollowUpEmailDraftAction(meetingId: string, draft: str
   const parsed = meetingIdSchema.safeParse(meetingId);
   if (!parsed.success) return { ok: false as const, error: "VALIDATION" as const };
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
 

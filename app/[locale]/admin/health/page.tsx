@@ -11,7 +11,7 @@ import {
   TimerOff,
   MailPlus,
 } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { AdminKpiCard } from "@/components/molecules/admin-kpi-card";
 import { cn } from "@/lib/utils";
 import {
@@ -23,16 +23,6 @@ import {
 } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
-
-async function measureDbLatency(): Promise<{ ok: boolean; ms: number }> {
-  const start = performance.now();
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    return { ok: true, ms: Math.round(performance.now() - start) };
-  } catch {
-    return { ok: false, ms: Math.round(performance.now() - start) };
-  }
-}
 
 function dbStatusColor(ms: number, ok: boolean) {
   if (!ok) return "text-red-600 dark:text-red-400";
@@ -60,9 +50,14 @@ function dbBadgeClasses(ms: number, ok: boolean) {
 
 export default async function HealthPage() {
   const now = new Date();
+  const deps = getApplicationDeps();
 
-  const [
-    dbHealth,
+  const [dbHealth, counts] = await Promise.all([
+    deps.platformHealth.measureSelectOneLatency(),
+    deps.platformHealth.getAdminHealthCounts(now),
+  ]);
+
+  const {
     userCount,
     orgCount,
     meetingCount,
@@ -72,22 +67,7 @@ export default async function HealthPage() {
     expiredSessions,
     pendingOrgInvitations,
     pendingSuperAdminInvitations,
-  ] = await Promise.all([
-    measureDbLatency(),
-    prisma.user.count(),
-    prisma.organization.count(),
-    prisma.meeting.count(),
-    prisma.meetingAnalysis.count(),
-    prisma.session.count(),
-    prisma.session.count({ where: { expiresAt: { gt: now } } }),
-    prisma.session.count({ where: { expiresAt: { lte: now } } }),
-    prisma.organizationInvitation.count({
-      where: { status: "PENDING", expiresAt: { gt: now } },
-    }),
-    prisma.superAdminInvitation.count({
-      where: { status: "PENDING", expiresAt: { gt: now } },
-    }),
-  ]);
+  } = counts;
 
   const totalDbRows =
     userCount + orgCount + meetingCount + analysisCount + sessionCount;

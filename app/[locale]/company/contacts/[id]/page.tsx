@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { ContactEditForm } from "@/components/organisms/contact-edit-form";
 import { buttonVariants } from "@/components/ui/button";
@@ -33,7 +33,7 @@ export default async function ContactDetailPage({ params }: Props) {
     redirect("/company");
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const contact = await deps.contacts.findById({
     id,
     organizationId: actor.activeOrganizationId,

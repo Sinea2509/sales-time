@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { sessionAuthAdapter } from "@/src/adapters/auth/session-auth-adapter";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { SUPER_ADMIN_ORG_COOKIE } from "@/lib/super-admin-cookie";
 import { verifySuperAdminOrgCookieValue } from "@/lib/super-admin-org-cookie-crypto";
 
@@ -12,7 +12,7 @@ export async function readSuperAdminOrgCookie(): Promise<string | null> {
   const raw = jar.get(SUPER_ADMIN_ORG_COOKIE)?.value;
   if (!raw) return null;
 
-  const principal = await sessionAuthAdapter.getAuthenticatedPrincipal();
+  const principal = await getApplicationDeps().auth.getAuthenticatedPrincipal();
   if (!principal) return null;
 
   try {

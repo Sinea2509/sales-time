@@ -1,9 +1,6 @@
-import type { OrganizationMembershipRole } from "@/lib/generated/prisma/enums";
+import type { OrganizationMembershipRole } from "./organization-membership-role";
 
 export type WorkspaceRoleMode = "admin" | "member";
-
-/** @deprecated Prefer WorkspaceRoleMode; kept for incremental refactors. */
-export type DashboardRoleMode = WorkspaceRoleMode;
 
 export type ResolvedAuthorization = {
   /** Tenant boundary for org-scoped operations (internal organization id). */
@@ -54,8 +51,7 @@ export function resolveActorAuthorization(input: {
     membership !== undefined && membership.role === "ADMIN";
 
   const canManageOrganization = Boolean(
-    activeOrganizationId &&
-      (isElevatedSuperAdmin || isOrgAdminForTenant),
+    activeOrganizationId && (isElevatedSuperAdmin || isOrgAdminForTenant),
   );
 
   return {
@@ -72,6 +68,3 @@ export function resolveWorkspaceRoleMode(input: {
   if (!input.activeOrganizationId) return null;
   return input.canManageOrganization ? "admin" : "member";
 }
-
-/** @deprecated Use resolveWorkspaceRoleMode */
-export const resolveDashboardRoleMode = resolveWorkspaceRoleMode;

@@ -1,10 +1,4 @@
-import {
-  Banknote,
-  Box,
-  Clock,
-  Sparkles,
-  Wallet,
-} from "lucide-react";
+import { Banknote, Box, Clock, Wallet } from "lucide-react";
 import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { KpiTile } from "@/components/molecules/kpi-tile";
@@ -12,7 +6,6 @@ import {
   TrendPercentPill,
   TrendPointsPill,
 } from "@/components/molecules/trend-pill";
-import { cn } from "@/lib/utils";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 
 const eurFormatter = new Intl.NumberFormat("fr-FR", {
@@ -21,13 +14,7 @@ const eurFormatter = new Intl.NumberFormat("fr-FR", {
   maximumFractionDigits: 0,
 });
 
-export function DashboardKpiCards({
-  home,
-  showGlobalNote = true,
-}: {
-  home: OrgDashboardHome;
-  showGlobalNote?: boolean;
-}) {
+export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
   const heroIsDuration = home.avgDurationMin != null;
   const heroTrend = heroIsDuration
     ? home.avgDurationTrendPercent
@@ -40,12 +27,7 @@ export function DashboardKpiCards({
   const heroLabel = heroIsDuration ? "Temps moyen RDV" : "TAM cumulé";
 
   return (
-    <div
-      className={cn(
-        "grid gap-4 sm:grid-cols-2",
-        showGlobalNote ? "xl:grid-cols-4" : "xl:grid-cols-3",
-      )}
-    >
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <KpiTile
         icon={HeroIcon}
         label={heroLabel}
@@ -90,25 +72,6 @@ export function DashboardKpiCards({
       >
         {home.tucOptimisePercent === null ? "—" : `${home.tucOptimisePercent}%`}
       </KpiTile>
-
-      {showGlobalNote ? (
-        <KpiTile
-          icon={Sparkles}
-          label="Note globale"
-          trend={<TrendPointsPill points={home.noteGlobaleTrendPoints} />}
-        >
-          {home.noteGlobaleOn5 === null ? (
-            "—"
-          ) : (
-            <>
-              {home.noteGlobaleOn5.toFixed(1)}
-              <span className="text-muted-foreground ml-1 text-lg font-medium dark:text-zinc-400">
-                / 5
-              </span>
-            </>
-          )}
-        </KpiTile>
-      ) : null}
     </div>
   );
 }

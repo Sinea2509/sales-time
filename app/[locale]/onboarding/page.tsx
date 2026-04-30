@@ -10,7 +10,7 @@ import {
   parseStoredInviteRows,
 } from "@/lib/onboarding-invites";
 import { needsRegisterProfile } from "@/lib/register-profile-gate";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ function asStringArray(value: unknown): string[] {
 }
 
 export default async function OnboardingPage() {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) {
     redirect("/sign-in");

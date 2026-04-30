@@ -5,12 +5,12 @@ import {
   DEFAULT_PIPELINE_STAGES,
 } from "@/lib/onboarding-defaults";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 
 export default async function OrganizationSettingsProcessPage() {
   const superAdminOrgCookie = await readSuperAdminOrgCookie();
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const actor = await getCurrentActorContext({ auth: deps.auth }, {
     superAdminElevatedOrganizationId: superAdminOrgCookie,
   });

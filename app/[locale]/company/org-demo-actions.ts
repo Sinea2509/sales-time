@@ -1,12 +1,12 @@
 "use server";
 
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 
 /** Example guarded server action: only org admins (or elevated super admins) may run. */
 export async function exampleOrgAdminOnlyAction() {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const superAdminOrg = await readSuperAdminOrgCookie();
   const ctx = await getCurrentActorContext(
     { auth: deps.auth },

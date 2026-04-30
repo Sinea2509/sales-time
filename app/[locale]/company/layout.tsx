@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/templates/authenticated-app-shell";
 import { needsRegisterProfile } from "@/lib/register-profile-gate";
-import { prisma } from "@/lib/prisma";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +12,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) {
     redirect("/sign-in");
@@ -49,10 +48,7 @@ export default async function DashboardLayout({
 
   const organizationSwitcherMemberships = await Promise.all(
     principal.memberships.map(async (m) => {
-      const org = await prisma.organization.findUnique({
-        where: { id: m.organizationId },
-        select: { name: true },
-      });
+      const org = await deps.orgDirectory.getOrganizationById(m.organizationId);
       return {
         organizationId: m.organizationId,
         name: org?.name ?? m.organizationId,

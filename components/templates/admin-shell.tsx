@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Link, usePathname } from "@/i18n/navigation";
 import {
   LayoutDashboard,
@@ -28,7 +29,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
@@ -102,6 +102,7 @@ const configNav: NavItem[] = [
 
 export function AdminShell({ children, userEmail }: AdminShellProps) {
   const pathname = usePathname();
+  const isMobile = useIsMobile();
   const [commandOpen, setCommandOpen] = useState(false);
   const initials = userEmail
     .split("@")[0]
@@ -110,7 +111,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar collapsible="icon" side="left" variant="sidebar">
+      <Sidebar collapsible="none" side="left" variant="sidebar">
         <SidebarHeader className="border-b border-sidebar-border">
           <div className="flex items-center gap-2.5 px-2 py-2">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand text-white">
@@ -209,13 +210,14 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
             </span>
           </div>
         </SidebarFooter>
-        <SidebarRail />
       </Sidebar>
 
       <AdminCommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
       <SidebarInset className="min-h-svh bg-[var(--app-shell-surface)]">
         <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 flex h-14 items-center gap-3 border-b px-4 backdrop-blur">
-          <SidebarTrigger className="-ml-1 shrink-0" />
+          {isMobile ? (
+            <SidebarTrigger className="-ml-1 shrink-0" />
+          ) : null}
           <button
             onClick={() => setCommandOpen(true)}
             className={cn(

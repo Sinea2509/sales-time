@@ -4,34 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
-import { prisma } from "@/lib/prisma";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
+import { requireSuperAdminActor } from "@/src/core/application/require-super-admin";
 
 export type SuperAdminInviteActionResult =
   | { ok: true }
   | { ok: false; message: string };
-
-async function requireSuperAdmin(): Promise<
-  | { ok: true; actorUserId: string }
-  | { ok: false; message: string }
-> {
-  const deps = makeApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) {
-    return { ok: false, message: "Non authentifié." };
-  }
-  const user = await prisma.user.findUnique({
-    where: { id: principal.userId },
-    select: {
-      systemRoles: { select: { role: true } },
-    },
-  });
-  const isSuper = user?.systemRoles.some((r) => r.role === "SUPER_ADMIN");
-  if (!isSuper) {
-    return { ok: false, message: "Accès réservé aux super administrateurs." };
-  }
-  return { ok: true, actorUserId: principal.userId };
-}
 
 const inviteSchema = z.object({
   email: z.string().trim().email().transform((e) => e.toLowerCase()),
@@ -40,7 +18,8 @@ const inviteSchema = z.object({
 export async function inviteSuperAdminAction(
   raw: z.input<typeof inviteSchema>,
 ): Promise<SuperAdminInviteActionResult> {
-  const gate = await requireSuperAdmin();
+  const deps = getApplicationDeps();
+  const gate = await requireSuperAdminActor(deps);
   if (!gate.ok) return gate;
 
   const parsed = inviteSchema.safeParse(raw);
@@ -50,13 +29,7 @@ export async function inviteSuperAdminAction(
 
   const email = parsed.data.email;
 
-  const existingRole = await prisma.user.findFirst({
-    where: {
-      email,
-      systemRoles: { some: { role: "SUPER_ADMIN" } },
-    },
-    select: { id: true },
-  });
+  const existingRole = await deps.backoffice.findUserWithSuperAdminByEmail(email);
   if (existingRole) {
     return {
       ok: false,
@@ -64,13 +37,7 @@ export async function inviteSuperAdminAction(
     };
   }
 
-  const pending = await prisma.superAdminInvitation.findFirst({
-    where: {
-      email,
-      status: "PENDING",
-      expiresAt: { gt: new Date() },
-    },
-  });
+  const pending = await deps.backoffice.findPendingSuperAdminInvitationByEmail(email);
   if (pending) {
     return {
       ok: false,
@@ -81,13 +48,11 @@ export async function inviteSuperAdminAction(
   const rawToken = generateOpaqueToken(32);
   const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
-  await prisma.superAdminInvitation.create({
-    data: {
-      email,
-      tokenHash: hashToken(rawToken),
-      expiresAt,
-      invitedByUserId: gate.actorUserId,
-    },
+  await deps.backoffice.createSuperAdminInvitation({
+    email,
+    tokenHash: hashToken(rawToken),
+    expiresAt,
+    invitedByUserId: gate.actorUserId,
   });
 
   const base =
@@ -107,7 +72,8 @@ export async function inviteSuperAdminAction(
 export async function revokeSuperAdminInvitationAction(
   invitationId: string,
 ): Promise<SuperAdminInviteActionResult> {
-  const gate = await requireSuperAdmin();
+  const deps = getApplicationDeps();
+  const gate = await requireSuperAdminActor(deps);
   if (!gate.ok) return gate;
 
   const idParsed = z.string().cuid().safeParse(invitationId);
@@ -115,17 +81,12 @@ export async function revokeSuperAdminInvitationAction(
     return { ok: false, message: "Identifiant invalide." };
   }
 
-  const inv = await prisma.superAdminInvitation.findFirst({
-    where: { id: idParsed.data, status: "PENDING" },
-  });
+  const inv = await deps.backoffice.findPendingSuperAdminInvitationById(idParsed.data);
   if (!inv) {
     return { ok: false, message: "Invitation introuvable ou déjà traitée." };
   }
 
-  await prisma.superAdminInvitation.update({
-    where: { id: inv.id },
-    data: { status: "REVOKED" },
-  });
+  await deps.backoffice.revokeSuperAdminInvitation(inv.id);
 
   revalidatePath("/admin/super-admins");
   return { ok: true };
@@ -134,7 +95,8 @@ export async function revokeSuperAdminInvitationAction(
 export async function revokeSuperAdminRoleAction(
   targetUserId: string,
 ): Promise<SuperAdminInviteActionResult> {
-  const gate = await requireSuperAdmin();
+  const deps = getApplicationDeps();
+  const gate = await requireSuperAdminActor(deps);
   if (!gate.ok) return gate;
 
   if (targetUserId === gate.actorUserId) {
@@ -149,23 +111,18 @@ export async function revokeSuperAdminRoleAction(
     return { ok: false, message: "Identifiant invalide." };
   }
 
-  const role = await prisma.systemRole.findFirst({
-    where: { userId: idParsed.data, role: "SUPER_ADMIN" },
-    include: { user: { select: { email: true } } },
-  });
+  const role = await deps.backoffice.findSuperAdminSystemRoleForUser(idParsed.data);
   if (!role) {
     return { ok: false, message: "Ce rôle est introuvable." };
   }
 
-  await prisma.systemRole.delete({ where: { id: role.id } });
+  await deps.backoffice.deleteSystemRole(role.roleRecordId);
 
-  await prisma.superAdminAuditLog.create({
-    data: {
-      actorUserId: gate.actorUserId,
-      organizationId: "system",
-      action: "REVOKE_SUPER_ADMIN",
-      reason: `Révoqué le rôle super admin de ${role.user.email}`,
-    },
+  await deps.backoffice.createSuperAdminAuditLog({
+    actorUserId: gate.actorUserId,
+    organizationId: "system",
+    action: "REVOKE_SUPER_ADMIN",
+    reason: `Révoqué le rôle super admin de ${role.userEmail}`,
   });
 
   revalidatePath("/admin/super-admins");

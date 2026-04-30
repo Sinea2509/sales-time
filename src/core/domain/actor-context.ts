@@ -1,4 +1,4 @@
-import type { DashboardRoleMode, WorkspaceRoleMode } from "./authorization-policy";
+import type { WorkspaceRoleMode } from "./authorization-policy";
 import type { SystemRoleType } from "./system-role-type";
 
 export type OrganizationMembershipRoleSlug = "ADMIN" | "MEMBER" | null;
@@ -21,6 +21,4 @@ export type ActorContext =
       canManageOrganization: boolean;
       isElevatedSuperAdmin: boolean;
       workspaceRoleMode: WorkspaceRoleMode | null;
-      /** @deprecated Use workspaceRoleMode */
-      dashboardRoleMode: DashboardRoleMode | null;
     };

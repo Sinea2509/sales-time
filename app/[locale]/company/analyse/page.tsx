@@ -30,7 +30,7 @@ import {
   parseStatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
 import { averageSoncasDriverScores } from "@/src/core/domain/org-soncas-team-aggregate";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import {
   buildOrgAdminImprovementBullets,
   buildOrgAdminProgressBullets,
@@ -50,7 +50,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     redirect("/company");
   }
 
-  if (actor.dashboardRoleMode === "member" && !actor.internalUserId) {
+  if (actor.workspaceRoleMode === "member" && !actor.internalUserId) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold tracking-tight">Analyse</h1>
@@ -70,11 +70,11 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   const sp = searchParams != null ? await searchParams : {};
   const statsWindowDays = parseStatsWindowDays(sp.jours);
 
-  const deps = makeApplicationDeps();
-  const isOrgAdmin = actor.dashboardRoleMode === "admin";
+  const deps = getApplicationDeps();
+  const isOrgAdmin = actor.workspaceRoleMode === "admin";
   const sinceWindow = meetingAtSinceForStatsWindow(statsWindowDays);
   const sellerScope =
-    actor.dashboardRoleMode === "member"
+    actor.workspaceRoleMode === "member"
       ? (actor.internalUserId ?? undefined)
       : undefined;
 

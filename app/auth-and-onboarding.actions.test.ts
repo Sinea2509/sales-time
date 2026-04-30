@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Prisma } from "@/lib/generated/prisma/client";
 
 const redirectMock = vi.fn<(url: string) => never>();
 
@@ -32,6 +31,7 @@ const prismaMock = vi.hoisted(() => ({
   organizationInvitation: {
     findFirst: vi.fn(),
     update: vi.fn(),
+    create: vi.fn(),
   },
   organizationMembership: {
     upsert: vi.fn(),
@@ -51,9 +51,6 @@ vi.mock("@/lib/auth/password", () => ({
 const createSessionRecordMock = vi.hoisted(() => vi.fn());
 const setSessionCookieMock = vi.hoisted(() => vi.fn());
 const setActiveOrganizationCookieMock = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/auth/session-db", () => ({
-  createSessionRecord: createSessionRecordMock,
-}));
 vi.mock("@/lib/auth/session-cookie", () => ({
   setSessionCookie: setSessionCookieMock,
   setActiveOrganizationCookie: setActiveOrganizationCookieMock,
@@ -72,8 +69,156 @@ const updateAfterStep1Mock = vi.hoisted(() => vi.fn());
 const updateAfterStep2Mock = vi.hoisted(() => vi.fn());
 const updateAfterStep3Mock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/src/adapters/composition", () => ({
-  makeApplicationDeps: () => ({
+const registrationRegisterNewUserMock = vi.hoisted(() =>
+  vi.fn(async (input: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    passwordHash: string;
+    signupWebsiteNormalized: string;
+  }) => {
+    const existingOrg = await prismaMock.organization.findUnique({
+      where: { websiteNormalized: input.signupWebsiteNormalized },
+    });
+    if (existingOrg) return { ok: false as const, error: "WEBSITE_TAKEN" as const };
+    const existing = await prismaMock.user.findUnique({
+      where: { email: input.email },
+    });
+    if (existing) return { ok: false as const, error: "EMAIL_TAKEN" as const };
+    const user = await prismaMock.user.create({
+      data: {
+        email: input.email,
+        passwordHash: input.passwordHash,
+        signupWebsiteNormalized: input.signupWebsiteNormalized,
+        firstName: input.firstName,
+        lastName: input.lastName,
+      },
+    });
+    return { ok: true as const, userId: user.id };
+  }),
+);
+
+const signInFindUserMock = vi.hoisted(() =>
+  vi.fn(async (email: string) => {
+    const user = await prismaMock.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        passwordHash: true,
+        status: true,
+        systemRoles: { select: { role: true } },
+        organizationMemberships: { select: { organizationId: true } },
+      },
+    });
+    if (!user) return null;
+    return {
+      id: user.id,
+      passwordHash: user.passwordHash,
+      status: user.status,
+      isSuperAdmin: user.systemRoles.some(
+        (r: { role: string }) => r.role === "SUPER_ADMIN",
+      ),
+      organizationMembershipCount: user.organizationMemberships.length,
+    };
+  }),
+);
+
+const passwordResetFindUserMock = vi.hoisted(() =>
+  vi.fn(async (email: string) => {
+    const user = await prismaMock.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, status: true },
+    });
+    if (!user || user.status === "DISABLED") return null;
+    return { id: user.id, email: user.email };
+  }),
+);
+
+const passwordResetCreateTokenMock = vi.hoisted(() =>
+  vi.fn(async (input: { userId: string; rawToken: string; expiresAt: Date }) => {
+    const { hashToken } = await import("@/lib/auth/tokens");
+    await prismaMock.passwordResetToken.create({
+      data: {
+        userId: input.userId,
+        tokenHash: hashToken(input.rawToken),
+        expiresAt: input.expiresAt,
+      },
+    });
+  }),
+);
+
+const passwordResetConsumeMock = vi.hoisted(() =>
+  vi.fn(async (input: { rawToken: string; passwordHash: string }) => {
+    const { hashToken } = await import("@/lib/auth/tokens");
+    const th = hashToken(input.rawToken);
+    const row = await prismaMock.passwordResetToken.findFirst({
+      where: {
+        tokenHash: th,
+        consumedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+    });
+    if (!row) return { ok: false as const };
+    await prismaMock.$transaction([
+      prismaMock.user.update({
+        where: { id: row.userId },
+        data: { passwordHash: input.passwordHash },
+      }),
+      prismaMock.passwordResetToken.updateMany({
+        where: { userId: row.userId },
+        data: { consumedAt: new Date() },
+      }),
+    ]);
+    return { ok: true as const };
+  }),
+);
+
+const organizationInvitationsAcceptMock = vi.hoisted(() =>
+  vi.fn(async (input: { tokenPlaintext: string; userId: string; userEmail: string }) => {
+    const { hashToken } = await import("@/lib/auth/tokens");
+    const th = hashToken(input.tokenPlaintext);
+    const inv = await prismaMock.organizationInvitation.findFirst({
+      where: {
+        tokenHash: th,
+        status: "PENDING",
+        expiresAt: { gt: new Date() },
+      },
+    });
+    if (!inv) return { ok: false as const, error: "INVALID" as const };
+    if (input.userEmail.toLowerCase() !== inv.email.toLowerCase()) {
+      return { ok: false as const, error: "EMAIL_MISMATCH" as const };
+    }
+    await prismaMock.$transaction([
+      prismaMock.organizationMembership.upsert({
+        where: {
+          userId_organizationId: {
+            userId: input.userId,
+            organizationId: inv.organizationId,
+          },
+        },
+        create: {
+          userId: input.userId,
+          organizationId: inv.organizationId,
+          role: inv.role,
+        },
+        update: { role: inv.role },
+      }),
+      prismaMock.organizationInvitation.update({
+        where: { id: inv.id },
+        data: {
+          status: "ACCEPTED",
+          acceptedByUserId: input.userId,
+        },
+      }),
+    ]);
+    return { ok: true as const, organizationId: inv.organizationId };
+  }),
+);
+
+const onboardingCompletionStep4Mock = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/application-deps", () => ({
+  getApplicationDeps: () => ({
     auth: {
       getAuthenticatedPrincipal: getAuthenticatedPrincipalMock,
     },
@@ -86,6 +231,26 @@ vi.mock("@/src/adapters/composition", () => ({
       updateAfterStep1: updateAfterStep1Mock,
       updateAfterStep2: updateAfterStep2Mock,
       updateAfterStep3: updateAfterStep3Mock,
+    },
+    session: {
+      createSessionRecord: createSessionRecordMock,
+    },
+    registration: {
+      registerNewUser: registrationRegisterNewUserMock,
+    },
+    signInRead: {
+      findUserForPasswordSignIn: signInFindUserMock,
+    },
+    passwordReset: {
+      findActiveUserByEmail: passwordResetFindUserMock,
+      createResetToken: passwordResetCreateTokenMock,
+      resetPasswordWithToken: passwordResetConsumeMock,
+    },
+    organizationInvitations: {
+      acceptPendingInvitation: organizationInvitationsAcceptMock,
+    },
+    onboardingCompletion: {
+      completeStep4CreateOrganizationAndInvites: onboardingCompletionStep4Mock,
     },
   }),
 }));
@@ -708,42 +873,20 @@ describe("onboarding steps", () => {
   });
 
   it("submitOnboardingStep4 fails when step1 company name missing", async () => {
-    prismaMock.onboardingProfile.findUnique.mockResolvedValue({
-      companyName: null,
-    } as never);
+    onboardingCompletionStep4Mock.mockResolvedValueOnce({
+      ok: false,
+      error: "PROFILE_INCOMPLETE",
+    });
     const r = await submitOnboardingStep4({ invites: [] });
     expect(r.ok).toBe(false);
     expect(r.ok === false && r.message).toContain("étape entreprise");
   });
 
   it("submitOnboardingStep4 fails when website key already has an org", async () => {
-    prismaMock.onboardingProfile.findUnique.mockResolvedValue({
-      companyName: "Acme",
-      industrySector: null,
-      commercialTeamSize: null,
-      averageSalesCycle: null,
-      averageDealSize: null,
-      companyPitch: null,
-      objections: [],
-      keyArguments: [],
-      industryVocabulary: null,
-      meetingTypes: ["m"],
-      pipelineStages: ["p"],
-    } as never);
-    prismaMock.user.findUnique.mockResolvedValue({
-      signupWebsiteNormalized: "acme.com",
-    } as never);
-    prismaMock.organization.findUnique.mockImplementation(
-      async ({ where }: { where: Record<string, unknown> }) => {
-        if (
-          "websiteNormalized" in where &&
-          where.websiteNormalized === "acme.com"
-        ) {
-          return { id: "taken" } as never;
-        }
-        return null;
-      },
-    );
+    onboardingCompletionStep4Mock.mockResolvedValueOnce({
+      ok: false,
+      error: "WEBSITE_TAKEN",
+    });
 
     const r = await submitOnboardingStep4({ invites: [] });
     expect(r.ok).toBe(false);
@@ -751,53 +894,12 @@ describe("onboarding steps", () => {
   });
 
   it("submitOnboardingStep4 creates org and redirects to /company", async () => {
-    prismaMock.onboardingProfile.findUnique.mockResolvedValue({
+    onboardingCompletionStep4Mock.mockResolvedValueOnce({
+      ok: true,
+      organizationId: "org-1",
       companyName: "Ma Société",
-      industrySector: null,
-      commercialTeamSize: null,
-      averageSalesCycle: null,
-      averageDealSize: null,
-      companyPitch: null,
-      objections: [],
-      keyArguments: [],
-      industryVocabulary: null,
-      meetingTypes: ["m"],
-      pipelineStages: ["p"],
-    } as never);
-    prismaMock.user.findUnique.mockResolvedValue({
-      signupWebsiteNormalized: "masociete.fr",
-    } as never);
-    prismaMock.organization.findUnique.mockImplementation(
-      async ({ where }: { where: Record<string, unknown> }) => {
-        if ("websiteNormalized" in where) {
-          return null;
-        }
-        return null;
-      },
-    );
-
-    prismaMock.$transaction.mockImplementationOnce(
-      async (fn: (tx: Record<string, unknown>) => Promise<string>) => {
-        const tx = {
-          organization: {
-            create: vi.fn().mockResolvedValue({ id: "org-1" }),
-          },
-          organizationMembership: {
-            create: vi.fn().mockResolvedValue({}),
-          },
-          organizationSettings: {
-            create: vi.fn().mockResolvedValue({}),
-          },
-          organizationInvitation: {
-            create: vi.fn().mockResolvedValue({}),
-          },
-          onboardingProfile: {
-            update: vi.fn().mockResolvedValue({}),
-          },
-        };
-        return fn(tx as never);
-      },
-    );
+      mailPayloads: [{ to: "peer@b.co", link: "https://example.com/inv" }],
+    });
     setActiveOrganizationCookieMock.mockResolvedValue(undefined);
     sendTransactionalEmailMock.mockResolvedValue(undefined);
 
@@ -812,29 +914,9 @@ describe("onboarding steps", () => {
   });
 
   it("submitOnboardingStep4 maps P2002 to friendly message", async () => {
-    prismaMock.onboardingProfile.findUnique.mockResolvedValue({
-      companyName: "Dup",
-      industrySector: null,
-      commercialTeamSize: null,
-      averageSalesCycle: null,
-      averageDealSize: null,
-      companyPitch: null,
-      objections: [],
-      keyArguments: [],
-      industryVocabulary: null,
-      meetingTypes: ["m"],
-      pipelineStages: ["p"],
-    } as never);
-    prismaMock.user.findUnique.mockResolvedValue({
-      signupWebsiteNormalized: "dup.com",
-    } as never);
-    prismaMock.organization.findUnique.mockResolvedValue(null);
-
-    prismaMock.$transaction.mockImplementationOnce(async () => {
-      throw new Prisma.PrismaClientKnownRequestError("Unique", {
-        code: "P2002",
-        clientVersion: "test",
-      });
+    onboardingCompletionStep4Mock.mockResolvedValueOnce({
+      ok: false,
+      error: "UNIQUE_CONFLICT",
     });
 
     const r = await submitOnboardingStep4({ invites: [] });

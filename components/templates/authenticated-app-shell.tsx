@@ -32,7 +32,7 @@ export function AuthenticatedAppShell({
         isElevatedSuperAdmin={isElevatedSuperAdmin}
         elevatedOrganizationId={superAdminOrgCookie}
         activeOrganizationId={actor.activeOrganizationId}
-        dashboardRoleMode={actor.dashboardRoleMode}
+        workspaceRoleMode={actor.workspaceRoleMode}
         analysesUsed={analysesUsed}
         organizationSwitcherMemberships={organizationSwitcherMemberships}
       >

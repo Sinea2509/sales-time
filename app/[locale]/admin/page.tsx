@@ -8,7 +8,7 @@ import {
   Activity,
   Zap,
 } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { AdminKpiCard } from "@/components/molecules/admin-kpi-card";
 import { AdminActivityChart } from "@/components/organisms/admin-activity-chart";
 import { AdminOrgGrowthChart } from "@/components/organisms/admin-org-growth-chart";
@@ -29,20 +29,9 @@ export default async function AdminDashboardPage(props: {
 }) {
   const { range: rawRange } = await props.searchParams;
   const rangeDays = VALID_RANGES[rawRange ?? ""] ?? 30;
-  const halfRange = Math.floor(rangeDays / 2);
-
   const now = new Date();
-  const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const monthAgo = new Date(now.getTime() - rangeDays * 24 * 60 * 60 * 1000);
-  const prevMonthStart = new Date(
-    now.getTime() - rangeDays * 2 * 24 * 60 * 60 * 1000,
-  );
-  const prevWeekStart = new Date(
-    now.getTime() - halfRange * 2 * 24 * 60 * 60 * 1000,
-  );
-
-  const [
+  const deps = getApplicationDeps();
+  const {
     totalUsers,
     totalOrgs,
     totalMeetings,
@@ -62,96 +51,7 @@ export default async function AdminDashboardPage(props: {
     recentOrgs,
     dailyActiveData,
     orgGrowthData,
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.organization.count(),
-    prisma.meeting.count(),
-    prisma.meetingAnalysis.count(),
-    prisma.session
-      .groupBy({ by: ["userId"], where: { lastSeenAt: { gte: dayAgo } } })
-      .then((r) => r.length),
-    prisma.session
-      .groupBy({ by: ["userId"], where: { lastSeenAt: { gte: weekAgo } } })
-      .then((r) => r.length),
-    prisma.session
-      .groupBy({ by: ["userId"], where: { lastSeenAt: { gte: monthAgo } } })
-      .then((r) => r.length),
-    prisma.session
-      .groupBy({
-        by: ["userId"],
-        where: { lastSeenAt: { gte: prevWeekStart, lt: weekAgo } },
-      })
-      .then((r) => r.length),
-    prisma.session
-      .groupBy({
-        by: ["userId"],
-        where: { lastSeenAt: { gte: prevMonthStart, lt: monthAgo } },
-      })
-      .then((r) => r.length),
-    prisma.meeting.count({ where: { createdAt: { gte: monthAgo } } }),
-    prisma.meeting.count({
-      where: { createdAt: { gte: prevMonthStart, lt: monthAgo } },
-    }),
-    prisma.meetingAnalysis.count({ where: { createdAt: { gte: monthAgo } } }),
-    prisma.meeting
-      .groupBy({
-        by: ["organizationId"],
-        where: { createdAt: { gte: monthAgo } },
-      })
-      .then((r) => r.length),
-    prisma.user.count({ where: { createdAt: { gte: monthAgo } } }),
-    prisma.organization.count({ where: { createdAt: { gte: monthAgo } } }),
-    prisma.user.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      select: { id: true, email: true, firstName: true, lastName: true, createdAt: true, status: true },
-    }),
-    prisma.organization.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        createdAt: true,
-        _count: { select: { memberships: true, meetings: true } },
-      },
-    }),
-    // Daily active users for the last 14 days
-    Promise.all(
-      Array.from({ length: 14 }, (_, i) => {
-        const dayStart = new Date(now.getTime() - (13 - i) * 24 * 60 * 60 * 1000);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-        return prisma.session
-          .groupBy({
-            by: ["userId"],
-            where: { lastSeenAt: { gte: dayStart, lt: dayEnd } },
-          })
-          .then((r) => ({
-            date: dayStart.toISOString().slice(5, 10),
-            count: r.length,
-          }));
-      }),
-    ),
-    // Org growth for the last 6 months
-    Promise.all(
-      Array.from({ length: 6 }, (_, i) => {
-        const d = new Date(now);
-        d.setMonth(d.getMonth() - (5 - i));
-        d.setDate(1);
-        d.setHours(0, 0, 0, 0);
-        const next = new Date(d);
-        next.setMonth(next.getMonth() + 1);
-        return prisma.organization
-          .count({ where: { createdAt: { gte: d, lt: next } } })
-          .then((count) => ({
-            month: d.toLocaleDateString("fr-FR", { month: "short" }),
-            count,
-          }));
-      }),
-    ),
-  ]);
+  } = await deps.backoffice.getAdminDashboardBundle({ rangeDays, now });
 
   function trendPercent(current: number, previous: number): number | null {
     if (previous === 0) return current > 0 ? 100 : null;
@@ -330,7 +230,7 @@ export default async function AdminDashboardPage(props: {
                     {org.name}
                   </p>
                   <p className="truncate text-xs text-zinc-500">
-                    {org.slug} · {org._count.memberships} membre(s) · {org._count.meetings} RDV
+                    {org.slug} · {org.memberCount} membre(s) · {org.meetingCount} RDV
                   </p>
                 </div>
                 <span className="whitespace-nowrap text-xs text-zinc-400">

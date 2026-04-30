@@ -8,6 +8,7 @@ function mapRow(row: {
   id: string;
   organizationId: string;
   companyName: string | null;
+  logoUrl: string | null;
   industrySector: string | null;
   commercialTeamSize: string | null;
   averageSalesCycle: string | null;
@@ -31,6 +32,7 @@ function mapRow(row: {
     id: row.id,
     organizationId: row.organizationId,
     companyName: row.companyName,
+    logoUrl: row.logoUrl,
     industrySector: row.industrySector,
     commercialTeamSize: row.commercialTeamSize,
     averageSalesCycle: row.averageSalesCycle,
@@ -135,6 +137,17 @@ export class PrismaOrganizationSettingsRepository
       where: { organizationId },
       create: { organizationId, ...fields },
       update: fields,
+    });
+  }
+
+  async upsertLogoUrl(
+    organizationId: string,
+    logoUrl: string | null,
+  ): Promise<void> {
+    await this.db.organizationSettings.upsert({
+      where: { organizationId },
+      create: { organizationId, logoUrl },
+      update: { logoUrl },
     });
   }
 }

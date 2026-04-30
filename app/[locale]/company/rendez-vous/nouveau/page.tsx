@@ -11,7 +11,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { MeetingCreateForm } from "@/components/organisms/meeting-create-form";
 import { stringArrayFromOrgJson } from "@/lib/org-settings-json";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export default async function NouveauRendezVousPage() {
     redirect("/company");
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const settings = await deps.organizationSettings.findByOrganizationId(
     actor.activeOrganizationId,
   );

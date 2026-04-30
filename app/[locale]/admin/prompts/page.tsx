@@ -2,13 +2,13 @@ import { FileCode2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { SuperAdminPromptsEditor } from "@/components/organisms/super-admin-prompts-editor";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import type { AnalysisKindSlug } from "@/src/core/ports/prompt-template-repository-port";
 
 export const dynamic = "force-dynamic";
 
 async function loadPromptTab(kind: AnalysisKindSlug) {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const current = await deps.prompts.getCurrentVersion({ kind });
   const versions = await deps.prompts.listVersions({ kind, limit: 30 });
 

@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
+import { getApplicationDeps } from "@/lib/application-deps";
 
 export const dynamic = "force-dynamic";
 
@@ -17,17 +17,15 @@ export default async function ManagerCommercialViewPage({
   if (actor.kind !== "authenticated" || !actor.activeOrganizationId) {
     redirect("/company");
   }
-  if (actor.dashboardRoleMode !== "admin") {
+  if (actor.workspaceRoleMode !== "admin") {
     redirect("/company");
   }
 
-  const member = await prisma.organizationMembership.findFirst({
-    where: {
-      organizationId: actor.activeOrganizationId,
-      userId,
-    },
-    include: { user: { select: { email: true, firstName: true, lastName: true } } },
-  });
+  const deps = getApplicationDeps();
+  const member = await deps.organizationTeam.findMembershipForManagerView(
+    actor.activeOrganizationId,
+    userId,
+  );
   if (!member) notFound();
 
   const display =

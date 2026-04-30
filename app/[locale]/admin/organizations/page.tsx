@@ -1,39 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { AdminOrgTable } from "@/components/organisms/admin-org-table";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminOrganizationsPage() {
-  const organizations = await prisma.organization.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      websiteNormalized: true,
-      createdAt: true,
-      updatedAt: true,
-      _count: {
-        select: {
-          memberships: true,
-          meetings: true,
-          invitations: true,
-        },
-      },
-    },
-  });
-
-  const serialized = organizations.map((o) => ({
-    id: o.id,
-    name: o.name,
-    slug: o.slug,
-    website: o.websiteNormalized,
-    createdAt: o.createdAt.toISOString(),
-    updatedAt: o.updatedAt.toISOString(),
-    memberCount: o._count.memberships,
-    meetingCount: o._count.meetings,
-    invitationCount: o._count.invitations,
-  }));
+  const serialized = await getApplicationDeps().backoffice.listOrganizationsForAdminTable();
 
   return (
     <div className="space-y-6">

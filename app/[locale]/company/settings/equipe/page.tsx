@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import {
   OrgSettingsTeamList,
@@ -12,7 +11,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function OrganizationSettingsEquipePage() {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) redirect("/sign-in");
 
@@ -31,47 +30,25 @@ export default async function OrganizationSettingsEquipePage() {
 
   const orgId = ctx.activeOrganizationId;
 
-  const [memberships, invitations] = await Promise.all([
-    prisma.organizationMembership.findMany({
-      where: { organizationId: orgId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.organizationInvitation.findMany({
-      where: {
-        organizationId: orgId,
-        status: "PENDING",
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  const { members, invitations } =
+    await deps.organizationTeam.listMembersAndPendingInvitations(orgId);
 
-  const members: TeamMemberRow[] = memberships.map((m) => ({
-    membershipId: m.id,
-    userId: m.user.id,
-    email: m.user.email,
-    firstName: m.user.firstName,
-    lastName: m.user.lastName,
+  const memberRows: TeamMemberRow[] = members.map((m) => ({
+    membershipId: m.membershipId,
+    userId: m.userId,
+    email: m.email,
+    firstName: m.firstName,
+    lastName: m.lastName,
     role: m.role,
-    joinedAt: m.createdAt.toISOString(),
+    joinedAt: m.joinedAt,
   }));
 
   const invRows: TeamInvitationRow[] = invitations.map((i) => ({
     id: i.id,
     email: i.email,
     role: i.role,
-    expiresAt: i.expiresAt.toISOString(),
-    createdAt: i.createdAt.toISOString(),
+    expiresAt: i.expiresAt,
+    createdAt: i.createdAt,
   }));
 
   return (
@@ -85,7 +62,7 @@ export default async function OrganizationSettingsEquipePage() {
       </div>
 
       <OrgSettingsTeamList
-        members={members}
+        members={memberRows}
         invitations={invRows}
         currentUserId={principal.userId}
       />

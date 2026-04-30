@@ -58,7 +58,7 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [searchResults, setSearchResults] = useState<{
     users: { id: string; email: string; firstName: string | null; lastName: string | null }[];
-    organizations: { id: string; name: string; slug: string }[];
+    organizations: { id: string; name: string; slug: string | null }[];
   }>({ users: [], organizations: [] });
   const [, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -113,7 +113,7 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
       id: `org-${o.id}`,
       icon: Building2,
       label: o.name,
-      subtitle: o.slug,
+      subtitle: o.slug ?? undefined,
       href: `/admin/organizations`,
       section: "Organisations",
     }));

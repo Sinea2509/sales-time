@@ -3,8 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { hashPassword } from "@/lib/auth/password";
-import { hashToken } from "@/lib/auth/tokens";
-import { prisma } from "@/lib/prisma";
+import { getApplicationDeps } from "@/lib/application-deps";
 
 const passwordSchema = z
   .object({
@@ -36,32 +35,19 @@ export async function resetPasswordAction(
     return { ok: false, message: msg };
   }
 
-  const th = hashToken(parsed.data.token);
-  const row = await prisma.passwordResetToken.findFirst({
-    where: {
-      tokenHash: th,
-      consumedAt: null,
-      expiresAt: { gt: new Date() },
-    },
+  const passwordHash = await hashPassword(parsed.data.password);
+  const deps = getApplicationDeps();
+  const result = await deps.passwordReset.resetPasswordWithToken({
+    rawToken: parsed.data.token,
+    passwordHash,
   });
-  if (!row) {
+
+  if (!result.ok) {
     return {
       ok: false,
       message: "Ce lien est invalide ou expiré. Demandez un nouveau lien.",
     };
   }
-
-  const passwordHash = await hashPassword(parsed.data.password);
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: row.userId },
-      data: { passwordHash },
-    }),
-    prisma.passwordResetToken.updateMany({
-      where: { userId: row.userId },
-      data: { consumedAt: new Date() },
-    }),
-  ]);
 
   redirect("/sign-in");
 }

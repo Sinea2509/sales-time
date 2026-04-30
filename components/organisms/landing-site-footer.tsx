@@ -27,7 +27,7 @@ export function LandingSiteFooter() {
               Inscription
             </Link>
             <Link
-              href="/plan"
+              href="/company/plan"
               className="text-foreground/90 hover:text-brand font-medium underline-offset-4 hover:underline"
             >
               Plan produit

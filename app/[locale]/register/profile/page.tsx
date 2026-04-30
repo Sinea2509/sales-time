@@ -3,12 +3,12 @@ import { redirect } from "next/navigation";
 import { RegisterProfileForm } from "@/components/organisms/register-profile-form";
 import { SignupFlowIllustration } from "@/components/molecules/signup-flow-illustration";
 import { needsRegisterProfile } from "@/lib/register-profile-gate";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 
 export const dynamic = "force-dynamic";
 
 export default async function RegisterProfilePage() {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) {
     redirect("/sign-in");

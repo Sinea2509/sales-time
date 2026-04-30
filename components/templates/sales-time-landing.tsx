@@ -132,7 +132,7 @@ export function SalesTimeLanding() {
                 Essayer gratuitement
               </Link>
               <Link
-                href="/plan"
+                href="/company/plan"
                 className={cn(
                   buttonVariants({ size: "lg", variant: "outline" }),
                   "inline-flex min-w-[220px] justify-center border-border/90 bg-background/90 px-8 backdrop-blur",

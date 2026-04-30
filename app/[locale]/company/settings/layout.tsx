@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { OrgSettingsShell } from "@/components/templates/org-settings-shell";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 
 export default async function OrganizationSettingsLayout({
@@ -9,7 +9,7 @@ export default async function OrganizationSettingsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const superAdminOrgCookie = await readSuperAdminOrgCookie();
   const actor = await getCurrentActorContext(
     { auth: deps.auth },

@@ -21,7 +21,7 @@ export function LandingSiteHeader() {
           aria-label="Navigation principale"
         >
           <Link
-            href="/plan"
+            href="/company/plan"
             className={cn(
               buttonVariants({ variant: "ghost", size: "sm" }),
               "hidden text-muted-foreground hover:text-foreground sm:inline-flex",

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { makeApplicationDeps } from "@/src/adapters/composition";
 
 /**
  * Liveness: always 200 JSON `{ ok: true }`.
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true });
   }
   try {
-    await prisma.$queryRawUnsafe("SELECT 1");
+    await makeApplicationDeps().platformHealth.pingSelectOne();
     return NextResponse.json({ ok: true, db: true });
   } catch {
     return NextResponse.json(

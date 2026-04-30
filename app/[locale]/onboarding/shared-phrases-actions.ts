@@ -7,7 +7,7 @@ import {
   DEFAULT_OBJECTION_PHRASES,
   normalizePhraseKey,
 } from "@/lib/onboarding-shared-default-phrases";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import type { OnboardingSharedPhraseKindSlug } from "@/src/core/ports/onboarding-shared-phrase-repository-port";
 
 export type SharedPhraseRow = {
@@ -58,7 +58,7 @@ export async function listOnboardingSharedPhrases(
     source: "builtin" as const,
   }));
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const dbRows = await deps.onboardingSharedPhrases.listByKind({
     kind,
     take: 150,
@@ -84,7 +84,7 @@ export type CreateSharedPhraseResult =
 export async function createOnboardingSharedPhrase(
   raw: z.input<typeof createPhraseSchema>,
 ): Promise<CreateSharedPhraseResult> {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) {
     redirect("/sign-in");

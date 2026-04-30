@@ -2,17 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
 import { setActiveOrganizationCookie } from "@/lib/auth/session-cookie";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
-import { uniqueOrganizationSlug } from "@/lib/org-slug";
-import { prisma } from "@/lib/prisma";
-import { Prisma } from "@/lib/generated/prisma/client";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import type { DomainUser } from "@/src/core/ports/user-repository-port";
 
 async function requireUser(): Promise<DomainUser> {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) {
     redirect("/sign-in");
@@ -75,7 +71,7 @@ export async function submitOnboardingStep1(
       >,
     };
   }
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   await deps.onboardingProfiles.updateAfterStep1(user.id, {
     companyName: parsed.data.companyName,
     industrySector: parsed.data.industrySector ?? null,
@@ -101,7 +97,7 @@ export async function submitOnboardingStep2(
       >,
     };
   }
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   await deps.onboardingProfiles.updateAfterStep2(user.id, {
     companyPitch: parsed.data.companyPitch ?? null,
     objections: parsed.data.objections,
@@ -126,7 +122,7 @@ export async function submitOnboardingStep3(
       >,
     };
   }
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   await deps.onboardingProfiles.updateAfterStep3(user.id, {
     meetingTypes: parsed.data.meetingTypes,
     pipelineStages: parsed.data.pipelineStages,
@@ -150,37 +146,6 @@ export async function submitOnboardingStep4(
     };
   }
 
-  const profile = await prisma.onboardingProfile.findUnique({
-    where: { userId: user.id },
-  });
-  if (!profile?.companyName?.trim()) {
-    return {
-      ok: false,
-      message: "Complétez d’abord l’étape entreprise (nom de société).",
-    };
-  }
-
-  const companyName = profile.companyName.trim();
-  const slug = await uniqueOrganizationSlug(prisma, companyName);
-
-  const signupUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { signupWebsiteNormalized: true },
-  });
-  const websiteKey = signupUser?.signupWebsiteNormalized ?? null;
-  if (websiteKey) {
-    const taken = await prisma.organization.findUnique({
-      where: { websiteNormalized: websiteKey },
-    });
-    if (taken) {
-      return {
-        ok: false,
-        message:
-          "Une organisation est déjà enregistrée avec le site web associé à votre compte. Contactez le support si vous pensez qu’il s’agit d’une erreur.",
-      };
-    }
-  }
-
   const deduped = new Map<
     string,
     { email: string; role: "ADMIN" | "MEMBER" }
@@ -190,95 +155,43 @@ export async function submitOnboardingStep4(
     deduped.set(row.email, { email: row.email, role: row.role });
   }
 
-  const mailPayloads: { to: string; link: string }[] = [];
+  const deps = getApplicationDeps();
+  const result = await deps.onboardingCompletion.completeStep4CreateOrganizationAndInvites({
+    userId: user.id,
+    userEmail: user.email.toLowerCase(),
+    inviteMessage: parsed.data.inviteMessage ?? null,
+    inviteEmailsJson: parsed.data.invites as object,
+    invites: [...deduped.values()],
+  });
 
-  let orgId: string;
-  try {
-    orgId = await prisma.$transaction(async (tx) => {
-      const org = await tx.organization.create({
-        data: {
-          name: companyName,
-          slug,
-          ...(websiteKey ? { websiteNormalized: websiteKey } : {}),
-        },
-      });
-
-    await tx.organizationMembership.create({
-      data: {
-        userId: user.id,
-        organizationId: org.id,
-        role: "ADMIN",
-      },
-    });
-
-    await tx.organizationSettings.create({
-      data: {
-        organizationId: org.id,
-        companyName,
-        industrySector: profile.industrySector,
-        commercialTeamSize: profile.commercialTeamSize,
-        averageSalesCycle: profile.averageSalesCycle,
-        averageDealSize: profile.averageDealSize,
-        companyPitch: profile.companyPitch,
-        objections: profile.objections ?? undefined,
-        keyArguments: profile.keyArguments ?? undefined,
-        industryVocabulary: profile.industryVocabulary,
-        meetingTypes: profile.meetingTypes ?? undefined,
-        pipelineStages: profile.pipelineStages ?? undefined,
-      },
-    });
-
-    const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-    for (const inv of deduped.values()) {
-      const raw = generateOpaqueToken(32);
-      await tx.organizationInvitation.create({
-        data: {
-          organizationId: org.id,
-          email: inv.email,
-          role: inv.role,
-          tokenHash: hashToken(raw),
-          expiresAt,
-          invitedByUserId: user.id,
-        },
-      });
-      const base =
-        process.env.APP_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
-      mailPayloads.push({
-        to: inv.email,
-        link: `${base}/invitations/${encodeURIComponent(raw)}`,
-      });
+  if (!result.ok) {
+    if (result.error === "PROFILE_INCOMPLETE") {
+      return {
+        ok: false,
+        message: "Complétez d’abord l’étape entreprise (nom de société).",
+      };
     }
-
-    await tx.onboardingProfile.update({
-      where: { userId: user.id },
-      data: {
-        inviteEmails: parsed.data.invites as object,
-        inviteMessage: parsed.data.inviteMessage,
-        completedAt: new Date(),
-        currentStep: 4,
-      },
-    });
-
-      return org.id;
-    });
-  } catch (e) {
-    if (
-      e instanceof Prisma.PrismaClientKnownRequestError &&
-      e.code === "P2002"
-    ) {
+    if (result.error === "WEBSITE_TAKEN") {
+      return {
+        ok: false,
+        message:
+          "Une organisation est déjà enregistrée avec le site web associé à votre compte. Contactez le support si vous pensez qu’il s’agit d’une erreur.",
+      };
+    }
+    if (result.error === "UNIQUE_CONFLICT") {
       return {
         ok: false,
         message:
           "Ce site web est déjà utilisé par une autre organisation. Si vous rejoignez une équipe existante, demandez une invitation plutôt que de créer un espace.",
       };
     }
-    throw e;
+    return { ok: false, message: "Une erreur est survenue. Réessayez." };
   }
 
-  await setActiveOrganizationCookie(orgId);
+  await setActiveOrganizationCookie(result.organizationId);
 
-  const orgName = companyName;
-  for (const m of mailPayloads) {
+  const orgName = result.companyName;
+  for (const m of result.mailPayloads) {
     await sendTransactionalEmail({
       to: m.to,
       subject: `Invitation — ${orgName}`,

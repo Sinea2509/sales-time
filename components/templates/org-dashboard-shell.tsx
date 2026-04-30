@@ -2,6 +2,7 @@
 
 import { Link, usePathname } from "@/i18n/navigation";
 import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslations } from "next-intl";
 import {
   BarChart3,
@@ -25,7 +26,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { buttonVariants } from "@/components/ui/button";
@@ -35,7 +35,7 @@ import {
   type OrgSwitcherMembership,
 } from "@/components/organisms/org-switcher";
 import { cn } from "@/lib/utils";
-import type { DashboardRoleMode } from "@/src/core/domain/authorization-policy";
+import type { WorkspaceRoleMode } from "@/src/core/domain/authorization-policy";
 
 type NavItem = {
   href: string;
@@ -50,7 +50,7 @@ type OrgDashboardShellProps = {
   isElevatedSuperAdmin: boolean;
   elevatedOrganizationId: string | null;
   activeOrganizationId: string | null;
-  dashboardRoleMode: DashboardRoleMode | null;
+  workspaceRoleMode: WorkspaceRoleMode | null;
   analysesUsed: number;
   organizationSwitcherMemberships: OrgSwitcherMembership[];
 };
@@ -68,13 +68,14 @@ export function OrgDashboardShell({
   isElevatedSuperAdmin,
   elevatedOrganizationId,
   activeOrganizationId,
-  dashboardRoleMode,
+  workspaceRoleMode,
   analysesUsed,
   organizationSwitcherMemberships,
 }: OrgDashboardShellProps) {
   const pathname = usePathname();
+  const isMobile = useIsMobile();
   const tNav = useTranslations("nav");
-  const isAdmin = dashboardRoleMode === "admin";
+  const isAdmin = workspaceRoleMode === "admin";
   const mainNav: NavItem[] = [
     {
       href: "/company",
@@ -101,7 +102,7 @@ export function OrgDashboardShell({
     },
   ];
   const orgAdminNav: NavItem[] =
-    dashboardRoleMode === "admin"
+    workspaceRoleMode === "admin"
       ? [
           {
             href: "/company/settings",
@@ -145,7 +146,7 @@ export function OrgDashboardShell({
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar collapsible="icon" side="left" variant="sidebar">
+      <Sidebar collapsible="none" side="left" variant="sidebar">
         <SidebarHeader className="border-b border-sidebar-border">
           <div className="px-2 py-1.5">
             <OrgSwitcher
@@ -262,13 +263,13 @@ export function OrgDashboardShell({
                 </div>
               </div>
               <Link
-                href="/plan"
+                href="/company/plan"
                 className={cn(
                   buttonVariants({ size: "sm" }),
                   "mt-3 h-8 w-full rounded-md bg-brand px-3 text-xs text-white hover:bg-brand-hover",
                 )}
               >
-                Voir tout les plans
+                Voir tous les plans
               </Link>
             </div>
           </div>
@@ -296,7 +297,6 @@ export function OrgDashboardShell({
             </p>
           ) : null}
         </SidebarFooter>
-        <SidebarRail />
       </Sidebar>
 
       {showQuotaPopup ? (
@@ -333,7 +333,7 @@ export function OrgDashboardShell({
                 Fermer
               </button>
               <Link
-                href="/plan"
+                href="/company/plan"
                 className={cn(
                   buttonVariants({ size: "sm" }),
                   "h-8 rounded-md bg-brand text-white hover:bg-brand-hover",
@@ -352,7 +352,7 @@ export function OrgDashboardShell({
           showSuperAdminNav={showSuperAdminNav}
           isElevatedSuperAdmin={isElevatedSuperAdmin}
           elevatedOrganizationId={elevatedOrganizationId}
-          showSidebarTrigger
+          showSidebarTrigger={isMobile}
           showOrganizationSwitcher={false}
           showHeaderNavLinks={false}
         />

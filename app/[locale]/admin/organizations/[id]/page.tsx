@@ -10,7 +10,7 @@ import {
   Shield,
   Clock,
 } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -56,55 +56,18 @@ export default async function AdminOrganizationDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { id } = await params;
+  const deps = getApplicationDeps();
 
-  const org = await prisma.organization.findUnique({
-    where: { id },
-    include: {
-      memberships: {
-        include: {
-          user: { select: { email: true, firstName: true, lastName: true } },
-        },
-        orderBy: { createdAt: "asc" },
-      },
-      meetings: {
-        take: 10,
-        orderBy: { meetingAt: "desc" },
-        select: {
-          id: true,
-          prospectName: true,
-          meetingAt: true,
-          outcome: true,
-          sellerUserId: true,
-          seller: { select: { email: true, firstName: true, lastName: true } },
-        },
-      },
-      invitations: { select: { id: true } },
-      _count: {
-        select: {
-          memberships: true,
-          meetings: true,
-          invitations: true,
-        },
-      },
-    },
-  });
+  const org = await deps.backoffice.getOrganizationDetailForAdmin(id);
 
   if (!org) {
     redirect("/admin/organizations");
   }
 
-  const analysesCount = await prisma.meetingAnalysis.count({
-    where: { meeting: { organizationId: id } },
-  });
-
-  const auditLogs = await prisma.superAdminAuditLog.findMany({
-    where: { organizationId: id },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    include: {
-      actor: { select: { email: true } },
-    },
-  });
+  const [analysesCount, auditLogs] = await Promise.all([
+    deps.backoffice.countMeetingAnalysesForOrganization(id),
+    deps.backoffice.listAuditLogsForOrganization(id, 20),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -139,10 +102,10 @@ export default async function AdminOrganizationDetailPage({
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Users} label="Membres" value={org._count.memberships} accent="blue" />
-        <StatCard icon={CalendarDays} label="Rendez-vous" value={org._count.meetings} accent="emerald" />
+        <StatCard icon={Users} label="Membres" value={org.counts.memberships} accent="blue" />
+        <StatCard icon={CalendarDays} label="Rendez-vous" value={org.counts.meetings} accent="emerald" />
         <StatCard icon={BarChart3} label="Analyses" value={analysesCount} accent="violet" />
-        <StatCard icon={Mail} label="Invitations" value={org._count.invitations} accent="amber" />
+        <StatCard icon={Mail} label="Invitations" value={org.counts.invitations} accent="amber" />
       </div>
 
       {/* Members */}

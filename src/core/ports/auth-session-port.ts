@@ -1,4 +1,4 @@
-import type { SessionPrincipal } from "@/lib/auth/session-db";
+import type { SessionPrincipal } from "../domain/session-principal";
 
 export type AuthenticatedPrincipal = SessionPrincipal & {
   /** Raw `__stime_active_org` cookie value (may not match any membership). */

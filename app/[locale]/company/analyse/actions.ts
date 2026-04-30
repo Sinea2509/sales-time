@@ -5,7 +5,7 @@ import { z } from "zod";
 import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { requireAiGatewayApiKey } from "@/lib/env";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { runMeetingAnalysis } from "@/src/core/application/run-meeting-analysis";
 
@@ -17,7 +17,7 @@ export async function runSoncasAnalysisAction(meetingId: string) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
 
@@ -57,7 +57,7 @@ export async function runDiscAnalysisAction(meetingId: string) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
 
@@ -97,7 +97,7 @@ export async function runKissAnalysisAction(meetingId: string) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
 

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createMeetingForOrg } from "@/src/core/application/create-meeting";
 
@@ -52,7 +52,7 @@ const createMeetingSchema = z.object({
 const meetingIdSchema = z.string().trim().min(1).max(64);
 
 export async function createMeetingAction(formData: FormData) {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
 
@@ -120,7 +120,7 @@ export async function deleteMeetingAction(meetingId: string) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
 

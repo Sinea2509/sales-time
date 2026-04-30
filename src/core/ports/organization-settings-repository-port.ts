@@ -2,6 +2,7 @@ export type OrganizationSettingsRow = {
   id: string;
   organizationId: string;
   companyName: string | null;
+  logoUrl: string | null;
   industrySector: string | null;
   commercialTeamSize: string | null;
   averageSalesCycle: string | null;
@@ -64,4 +65,6 @@ export interface OrganizationSettingsRepositoryPort {
       emailSignature: string | null;
     },
   ): Promise<void>;
+
+  upsertLogoUrl(organizationId: string, logoUrl: string | null): Promise<void>;
 }

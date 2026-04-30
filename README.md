@@ -54,12 +54,18 @@ Override email/password with `SEED_SUPER_ADMIN_EMAIL` and `SEED_SUPER_ADMIN_PASS
 | `npm run e2e`     | Playwright (start dev server first)  |
 | `npm run db:*`    | Prisma generate / migrate / studio   |
 
+## Before you open a PR
+
+Run **`npm run lint`**, **`npm run typecheck`**, and **`npm test`**. If you change authentication, organization switching, invitations, or onboarding flows, also run **`npm run build`** and **`npm run e2e`** (start the dev server first for Playwright). CI runs lint, typecheck, and unit tests on every push and pull request ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+
 ## Architecture
 
-- **Domain / application**: [`src/core`](src/core) — policies and use-cases; no Next.js or Prisma imports.
-- **Ports**: [`src/core/ports`](src/core/ports) — interfaces for auth session, users, audit, org directory.
-- **Adapters**: [`src/adapters`](src/adapters) — session cookie + DB session resolution, Prisma repositories, [`composition.ts`](src/adapters/composition.ts) wiring, AI analysis adapter.
+- **Domain / application**: [`src/core`](src/core) — policies and use-cases. **Dependency rule:** no `next/*`, no `@/lib/prisma`, and no imports from `@/lib/generated/prisma` (use domain-owned types such as [`organization-membership-role.ts`](src/core/domain/organization-membership-role.ts) and map at adapters).
+- **Ports**: [`src/core/ports`](src/core/ports) — interfaces for auth, session persistence, users, audit, org directory, invitations, and other side effects.
+- **Adapters**: [`src/adapters`](src/adapters) — Prisma repositories, session + auth wiring, [`composition.ts`](src/adapters/composition.ts) (`makeApplicationDeps`), AI analysis adapter. **Runtime wiring:** Server Components and Server Actions use [`getApplicationDeps()`](lib/application-deps.ts) (React `cache`) for a single dependency graph per request.
 - **UI**: [`components/ui`](components/ui) (atoms), [`components/molecules`](components/molecules), [`components/organisms`](components/organisms), [`components/templates`](components/templates).
+
+**Migration note:** [`src/core`](src/core) is strict hexagonal; some routes under [`app/`](app/) still call Prisma directly while they are migrated behind ports. Prefer ports + use cases for new behavior.
 
 ## Authorization model
 

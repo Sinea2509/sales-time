@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { OrgSettingsEmailForm } from "@/components/organisms/org-settings-email-form";
 
@@ -15,7 +15,7 @@ export default async function OrgSettingsEmailPage() {
     redirect("/company");
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const row = await deps.organizationSettings.findByOrganizationId(
     actor.activeOrganizationId,
   );

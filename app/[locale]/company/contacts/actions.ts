@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { searchContactsByPrefix } from "@/src/core/application/search-contacts";
 import { Prisma } from "@/lib/generated/prisma/client";
-import type { ApplicationDeps } from "@/src/adapters/composition";
+import type { ApplicationDeps } from "@/lib/application-deps";
 
 type RequireOrgContextResult =
   | { ok: false; error: "UNAUTHENTICATED" | "NO_ORG" }
@@ -19,7 +19,7 @@ type RequireOrgContextResult =
     };
 
 async function requireOrgContext(): Promise<RequireOrgContextResult> {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
 

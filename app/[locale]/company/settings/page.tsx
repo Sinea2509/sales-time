@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Building2, ClipboardList, Sparkles, Users } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ const SECTIONS = [
     href: "/company/settings/contexte",
     title: "Contexte",
     description:
-      "Nom de l’entreprise, secteur, taille d’équipe, cycle et ticket moyen.",
+      "Logo, nom de l’entreprise, secteur, taille d’équipe, cycle et ticket moyen.",
     icon: Building2,
   },
   {
@@ -37,7 +37,7 @@ const SECTIONS = [
 
 export default async function OrganizationSettingsOverviewPage() {
   const superAdminOrgCookie = await readSuperAdminOrgCookie();
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const actor = await getCurrentActorContext({ auth: deps.auth }, {
     superAdminElevatedOrganizationId: superAdminOrgCookie,
   });

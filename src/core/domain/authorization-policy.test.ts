@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   resolveActorAuthorization,
-  resolveDashboardRoleMode,
+  resolveWorkspaceRoleMode,
 } from "./authorization-policy";
 
 describe("resolveActorAuthorization", () => {
@@ -76,10 +76,10 @@ describe("resolveActorAuthorization", () => {
   });
 });
 
-describe("resolveDashboardRoleMode", () => {
+describe("resolveWorkspaceRoleMode", () => {
   it("returns null when no tenant org", () => {
     expect(
-      resolveDashboardRoleMode({
+      resolveWorkspaceRoleMode({
         activeOrganizationId: null,
         canManageOrganization: true,
       }),
@@ -88,7 +88,7 @@ describe("resolveDashboardRoleMode", () => {
 
   it("returns admin when tenant active and can manage", () => {
     expect(
-      resolveDashboardRoleMode({
+      resolveWorkspaceRoleMode({
         activeOrganizationId: "org_1",
         canManageOrganization: true,
       }),
@@ -97,7 +97,7 @@ describe("resolveDashboardRoleMode", () => {
 
   it("returns member when tenant active but cannot manage", () => {
     expect(
-      resolveDashboardRoleMode({
+      resolveWorkspaceRoleMode({
         activeOrganizationId: "org_1",
         canManageOrganization: false,
       }),

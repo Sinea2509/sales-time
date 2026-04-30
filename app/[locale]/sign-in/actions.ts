@@ -2,11 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { createSessionRecord } from "@/lib/auth/session-db";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { generateOpaqueToken } from "@/lib/auth/tokens";
 import { setSessionCookie } from "@/lib/auth/session-cookie";
 import { verifyPassword } from "@/lib/auth/password";
-import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
   email: z.string().trim().email().transform((e) => e.toLowerCase()),
@@ -29,16 +28,10 @@ export async function signInAction(
     return { ok: false, message: "E-mail ou mot de passe invalide." };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
-    select: {
-      id: true,
-      passwordHash: true,
-      status: true,
-      systemRoles: { select: { role: true } },
-      organizationMemberships: { select: { organizationId: true } },
-    },
-  });
+  const deps = getApplicationDeps();
+  const user = await deps.signInRead.findUserForPasswordSignIn(
+    parsed.data.email,
+  );
   if (!user) {
     return { ok: false, message: "E-mail ou mot de passe incorrect." };
   }
@@ -54,7 +47,7 @@ export async function signInAction(
   }
 
   const raw = generateOpaqueToken();
-  await createSessionRecord({
+  await deps.session.createSessionRecord({
     userId: user.id,
     rawToken: raw,
     userAgent: null,
@@ -66,9 +59,8 @@ export async function signInAction(
     redirect(next);
   }
 
-  const isSuperAdmin = user.systemRoles.some((r) => r.role === "SUPER_ADMIN");
-  const hasNoOrg = user.organizationMemberships.length === 0;
-  if (isSuperAdmin && hasNoOrg) {
+  const hasNoOrg = user.organizationMembershipCount === 0;
+  if (user.isSuperAdmin && hasNoOrg) {
     redirect("/admin");
   }
   redirect("/company");

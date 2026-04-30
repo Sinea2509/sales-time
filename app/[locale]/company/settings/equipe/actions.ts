@@ -4,13 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
-import { prisma } from "@/lib/prisma";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 
 async function requireOrgAdmin() {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
 
@@ -35,6 +34,11 @@ async function requireOrgAdmin() {
 
 export type TeamActionResult = { ok: true } | { ok: false; message: string };
 
+const inviteSchema = z.object({
+  email: z.string().trim().email().transform((e) => e.toLowerCase()),
+  role: z.enum(["ADMIN", "MEMBER"]),
+});
+
 export async function inviteMemberAction(
   raw: z.input<typeof inviteSchema>,
 ): Promise<TeamActionResult> {
@@ -46,55 +50,41 @@ export async function inviteMemberAction(
     return { ok: false, message: "E-mail ou rôle invalide." };
   }
 
+  const deps = getApplicationDeps();
   const email = parsed.data.email.toLowerCase();
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true },
-  });
-  if (existingUser) {
-    const already = await prisma.organizationMembership.findUnique({
-      where: {
-        userId_organizationId: {
-          userId: existingUser.id,
-          organizationId: gate.organizationId,
-        },
-      },
-    });
+  const existingUserId = await deps.organizationTeam.findUserIdByEmail(email);
+  if (existingUserId) {
+    const already = await deps.organizationTeam.findMembership(
+      existingUserId,
+      gate.organizationId,
+    );
     if (already) {
       return { ok: false, message: "Cet utilisateur est déjà membre de l’organisation." };
     }
   }
 
-  const pending = await prisma.organizationInvitation.findFirst({
-    where: {
-      organizationId: gate.organizationId,
-      email,
-      status: "PENDING",
-      expiresAt: { gt: new Date() },
-    },
-  });
+  const pending = await deps.organizationTeam.findPendingInvitationForEmail(
+    gate.organizationId,
+    email,
+  );
   if (pending) {
     return { ok: false, message: "Une invitation est déjà en cours pour cette adresse." };
   }
 
-  const org = await prisma.organization.findUnique({
-    where: { id: gate.organizationId },
-    select: { name: true },
-  });
-  const orgName = org?.name ?? "Sales Time";
+  const orgName =
+    (await deps.organizationTeam.getOrganizationName(gate.organizationId)) ??
+    "Sales Time";
 
   const rawToken = generateOpaqueToken(32);
   const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
-  await prisma.organizationInvitation.create({
-    data: {
-      organizationId: gate.organizationId,
-      email,
-      role: parsed.data.role,
-      tokenHash: hashToken(rawToken),
-      expiresAt,
-      invitedByUserId: gate.actorUserId,
-    },
+  await deps.organizationTeam.createPendingInvitation({
+    organizationId: gate.organizationId,
+    email,
+    role: parsed.data.role,
+    tokenHash: hashToken(rawToken),
+    expiresAt,
+    invitedByUserId: gate.actorUserId,
   });
 
   const base =
@@ -111,11 +101,6 @@ export async function inviteMemberAction(
   return { ok: true };
 }
 
-const inviteSchema = z.object({
-  email: z.string().trim().email().transform((e) => e.toLowerCase()),
-  role: z.enum(["ADMIN", "MEMBER"]),
-});
-
 export async function changeRoleAction(
   membershipId: string,
   role: "ADMIN" | "MEMBER",
@@ -128,18 +113,19 @@ export async function changeRoleAction(
     return { ok: false, message: "Identifiant invalide." };
   }
 
-  const membership = await prisma.organizationMembership.findFirst({
-    where: { id: idParsed.data, organizationId: gate.organizationId },
-    include: { user: { select: { email: true } } },
-  });
+  const deps = getApplicationDeps();
+  const membership = await deps.organizationTeam.findMembershipWithUserEmail(
+    idParsed.data,
+    gate.organizationId,
+  );
   if (!membership) {
     return { ok: false, message: "Membre introuvable." };
   }
 
   if (role === "MEMBER" && membership.role === "ADMIN") {
-    const adminCount = await prisma.organizationMembership.count({
-      where: { organizationId: gate.organizationId, role: "ADMIN" },
-    });
+    const adminCount = await deps.organizationTeam.countAdminsInOrganization(
+      gate.organizationId,
+    );
     if (adminCount <= 1) {
       return {
         ok: false,
@@ -148,10 +134,7 @@ export async function changeRoleAction(
     }
   }
 
-  await prisma.organizationMembership.update({
-    where: { id: membership.id },
-    data: { role },
-  });
+  await deps.organizationTeam.updateMembershipRole(membership.id, role);
 
   revalidatePath("/company/settings/equipe");
   return { ok: true };
@@ -166,9 +149,11 @@ export async function removeMemberAction(membershipId: string): Promise<TeamActi
     return { ok: false, message: "Identifiant invalide." };
   }
 
-  const membership = await prisma.organizationMembership.findFirst({
-    where: { id: idParsed.data, organizationId: gate.organizationId },
-  });
+  const deps = getApplicationDeps();
+  const membership = await deps.organizationTeam.findMembershipByIdForOrg(
+    idParsed.data,
+    gate.organizationId,
+  );
   if (!membership) {
     return { ok: false, message: "Membre introuvable." };
   }
@@ -178,9 +163,9 @@ export async function removeMemberAction(membershipId: string): Promise<TeamActi
   }
 
   if (membership.role === "ADMIN") {
-    const adminCount = await prisma.organizationMembership.count({
-      where: { organizationId: gate.organizationId, role: "ADMIN" },
-    });
+    const adminCount = await deps.organizationTeam.countAdminsInOrganization(
+      gate.organizationId,
+    );
     if (adminCount <= 1) {
       return {
         ok: false,
@@ -189,9 +174,7 @@ export async function removeMemberAction(membershipId: string): Promise<TeamActi
     }
   }
 
-  await prisma.organizationMembership.delete({
-    where: { id: membership.id },
-  });
+  await deps.organizationTeam.deleteMembership(membership.id);
 
   revalidatePath("/company/settings/equipe");
   return { ok: true };
@@ -206,21 +189,16 @@ export async function revokeInvitationAction(invitationId: string): Promise<Team
     return { ok: false, message: "Identifiant invalide." };
   }
 
-  const inv = await prisma.organizationInvitation.findFirst({
-    where: {
-      id: idParsed.data,
-      organizationId: gate.organizationId,
-      status: "PENDING",
-    },
-  });
+  const deps = getApplicationDeps();
+  const inv = await deps.organizationTeam.findPendingInvitationByIdForOrg(
+    idParsed.data,
+    gate.organizationId,
+  );
   if (!inv) {
     return { ok: false, message: "Invitation introuvable ou déjà traitée." };
   }
 
-  await prisma.organizationInvitation.update({
-    where: { id: inv.id },
-    data: { status: "REVOKED" },
-  });
+  await deps.organizationTeam.revokeInvitation(inv.id);
 
   revalidatePath("/company/settings/equipe");
   return { ok: true };

@@ -1,11 +1,15 @@
 /**
  * Seeds default analysis prompts and a SUPER_ADMIN user (defaults below).
+ * Also ensures a fake org + member user for local / QA testing (see `ensureTestTenant`).
  *
  *   DATABASE_URL=... npx prisma db seed
  *
  * Override with `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD`.
  * To reset the password for an existing seed user (dev/staging only):
  *   SEED_SUPER_ADMIN_RESET_PASSWORD=1 npx prisma db seed
+ *
+ * Test tenant (optional env): `SEED_TEST_USER_EMAIL`, `SEED_TEST_USER_PASSWORD`,
+ * `SEED_TEST_ORG_SLUG`, `SEED_TEST_ORG_NAME`, `SEED_TEST_USER_RESET_PASSWORD=1`.
  *
  * Production refuses to run unless `ALLOW_DANGEROUS_PROD_SEED=1`.
  */
@@ -111,6 +115,99 @@ async function main() {
   await ensurePromptTemplates(user.id);
 
   console.log(`Super admin role ensured for user ${user.id} (${email}).`);
+
+  await ensureTestTenant();
+}
+
+const DEFAULT_TEST_USER_EMAIL = "test.user@fake-org.local";
+const DEFAULT_TEST_USER_PASSWORD = "FakeOrgTest2026!";
+const DEFAULT_TEST_ORG_SLUG = "fake-test-org";
+const DEFAULT_TEST_ORG_NAME = "Fake Test Organization";
+
+async function ensureTestTenant() {
+  const testEmail =
+    process.env.SEED_TEST_USER_EMAIL?.trim().toLowerCase() ??
+    DEFAULT_TEST_USER_EMAIL;
+  const testPassword =
+    process.env.SEED_TEST_USER_PASSWORD?.trim() ??
+    DEFAULT_TEST_USER_PASSWORD;
+  const orgSlug =
+    process.env.SEED_TEST_ORG_SLUG?.trim().toLowerCase() ??
+    DEFAULT_TEST_ORG_SLUG;
+  const orgName =
+    process.env.SEED_TEST_ORG_NAME?.trim() ?? DEFAULT_TEST_ORG_NAME;
+
+  const org = await prisma.organization.upsert({
+    where: { slug: orgSlug },
+    create: {
+      slug: orgSlug,
+      name: orgName,
+    },
+    update: { name: orgName },
+  });
+
+  await prisma.organizationSettings.upsert({
+    where: { organizationId: org.id },
+    create: {
+      organizationId: org.id,
+      companyName: orgName,
+    },
+    update: {
+      companyName: orgName,
+    },
+  });
+
+  let testUser = await prisma.user.findUnique({ where: { email: testEmail } });
+  if (!testUser) {
+    testUser = await prisma.user.create({
+      data: {
+        email: testEmail,
+        passwordHash: await hashPassword(testPassword),
+        firstName: "Test",
+        lastName: "User",
+        signupWebsiteNormalized: "fake-org.test",
+      },
+    });
+    console.log(`Created seed test user ${testEmail}.`);
+  } else if (
+    process.env.SEED_TEST_USER_RESET_PASSWORD === "1" &&
+    (process.env.NODE_ENV !== "production" ||
+      process.env.ALLOW_DANGEROUS_PROD_SEED === "1")
+  ) {
+    await prisma.user.update({
+      where: { id: testUser.id },
+      data: { passwordHash: await hashPassword(testPassword) },
+    });
+    console.log(
+      `Updated password for test user ${testEmail} (SEED_TEST_USER_RESET_PASSWORD=1).`,
+    );
+  }
+
+  await prisma.organizationMembership.upsert({
+    where: {
+      userId_organizationId: {
+        userId: testUser.id,
+        organizationId: org.id,
+      },
+    },
+    create: {
+      userId: testUser.id,
+      organizationId: org.id,
+      role: "ADMIN",
+    },
+    update: { role: "ADMIN" },
+  });
+
+  console.log(
+    [
+      "",
+      "--- Test tenant (sign-in with email + password) ---",
+      `  Email:        ${testEmail}`,
+      `  Password:     ${testPassword}`,
+      `  Organization: ${org.name} (slug: ${org.slug}, id: ${org.id})`,
+      "",
+    ].join("\n"),
+  );
 }
 
 main()

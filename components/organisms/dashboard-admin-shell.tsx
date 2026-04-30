@@ -125,7 +125,7 @@ export function DashboardAdminShell({ admin }: { admin: OrgAdminDashboard }) {
         <h2 className="text-foreground text-lg font-medium tracking-tight">
           Indicateurs détaillés
         </h2>
-        <DashboardKpiCards home={home} showGlobalNote />
+        <DashboardKpiCards home={home} />
       </div>
 
       <section className="space-y-3">

@@ -5,44 +5,37 @@ vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
 }));
 
-const prismaMock = vi.hoisted(() => ({
-  user: {
-    findUnique: vi.fn(),
-    findFirst: vi.fn(),
-    findMany: vi.fn(),
-    updateMany: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-  },
-  organization: {
-    findUnique: vi.fn(),
-    findFirst: vi.fn(),
-    findMany: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-    deleteMany: vi.fn(),
-  },
-  superAdminAuditLog: {
-    create: vi.fn(),
-    createMany: vi.fn(),
-  },
-  systemRole: {
-    findFirst: vi.fn(),
-    delete: vi.fn(),
-  },
-  superAdminInvitation: {
-    findFirst: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-  },
-  organizationInvitation: {
-    findFirst: vi.fn(),
-    create: vi.fn(),
-  },
+const backofficeMock = vi.hoisted(() => ({
+  findOrganizationBySlug: vi.fn(),
+  createOrganization: vi.fn(),
+  findOrganizationById: vi.fn(),
+  findOrganizationSlugConflict: vi.fn(),
+  updateOrganization: vi.fn(),
+  findOrganizationsByIds: vi.fn(),
+  deleteOrganizationsByIds: vi.fn(),
+  deleteOrganizationById: vi.fn(),
+  createSuperAdminAuditLog: vi.fn(),
+  createSuperAdminAuditLogsMany: vi.fn(),
+  findUsersByIdsForBulk: vi.fn(),
+  updateUsersStatusMany: vi.fn(),
+  findUserStatusById: vi.fn(),
+  updateUserStatus: vi.fn(),
+  findUserByIdExists: vi.fn(),
+  findUserEmailConflict: vi.fn(),
+  updateUserProfile: vi.fn(),
+  findUserForDelete: vi.fn(),
+  deleteUserById: vi.fn(),
+  findOrganizationNameById: vi.fn(),
+  findPendingOrganizationInvitation: vi.fn(),
+  createOrganizationInvitationAdmin: vi.fn(),
+  findUserWithSuperAdminByEmail: vi.fn(),
+  findPendingSuperAdminInvitationByEmail: vi.fn(),
+  createSuperAdminInvitation: vi.fn(),
+  findPendingSuperAdminInvitationById: vi.fn(),
+  revokeSuperAdminInvitation: vi.fn(),
+  findSuperAdminSystemRoleForUser: vi.fn(),
+  deleteSystemRole: vi.fn(),
 }));
-
-vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
 const sendTransactionalEmailMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue(undefined),
@@ -71,14 +64,15 @@ const INVITE_ID = "clinv00000000000000000001";
 const getAuthenticatedPrincipalMock = vi.hoisted(() => vi.fn());
 const findByIdMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/src/adapters/composition", () => ({
-  makeApplicationDeps: () => ({
+vi.mock("@/lib/application-deps", () => ({
+  getApplicationDeps: () => ({
     auth: {
       getAuthenticatedPrincipal: getAuthenticatedPrincipalMock,
     },
     users: {
       findById: findByIdMock,
     },
+    backoffice: backofficeMock,
   }),
 }));
 
@@ -102,20 +96,13 @@ import {
 } from "@/app/[locale]/admin/super-admins/actions";
 import { publishPromptAction } from "@/app/[locale]/admin/prompts/actions";
 
-/** Principal is super admin; Prisma gate uses `user.findUnique` for `ACTOR_ID` only. */
 function mockAuthenticatedSuperAdminPrincipal() {
   getAuthenticatedPrincipalMock.mockResolvedValue({ userId: ACTOR_ID });
-}
-
-function prismaUserFindUniqueSuperAdminGate() {
-  prismaMock.user.findUnique.mockImplementation(
-    ({ where }: { where: { id: string } }) => {
-      if (where.id === ACTOR_ID) {
-        return Promise.resolve({ systemRoles: [{ role: "SUPER_ADMIN" }] });
-      }
-      return Promise.resolve(null);
-    },
-  );
+  findByIdMock.mockResolvedValue({
+    id: ACTOR_ID,
+    email: "actor@test.com",
+    systemRoles: ["SUPER_ADMIN"],
+  });
 }
 
 beforeEach(() => {
@@ -129,67 +116,62 @@ beforeEach(() => {
     }
     return { ok: true as const, version: 99 };
   });
-  for (const mod of Object.values(prismaMock)) {
-    if (typeof mod === "object" && mod !== null) {
-      for (const fn of Object.values(mod)) {
-        if (typeof fn === "function" && "mockReset" in fn) {
-          (fn as ReturnType<typeof vi.fn>).mockReset();
-        }
-      }
+  for (const fn of Object.values(backofficeMock)) {
+    if (typeof fn === "function" && "mockReset" in fn) {
+      (fn as ReturnType<typeof vi.fn>).mockReset();
     }
   }
   sendTransactionalEmailMock.mockResolvedValue(undefined);
-  prismaUserFindUniqueSuperAdminGate();
+  mockAuthenticatedSuperAdminPrincipal();
 });
 
 describe("admin super-admin CRUD — organizations", () => {
   it("rejects create when not authenticated", async () => {
-    prismaMock.user.findUnique.mockReset();
+    findByIdMock.mockReset();
     getAuthenticatedPrincipalMock.mockResolvedValue(null);
     const r = await createOrganizationAction({ name: "Acme", slug: "acme" });
     expect(r).toEqual({ ok: false, message: "Non authentifié." });
-    expect(prismaMock.organization.create).not.toHaveBeenCalled();
+    expect(backofficeMock.createOrganization).not.toHaveBeenCalled();
   });
 
   it("creates organization and writes audit when super admin", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.organization.findUnique.mockResolvedValue(null);
-    prismaMock.organization.create.mockResolvedValue({});
-    prismaMock.superAdminAuditLog.create.mockResolvedValue({});
+    backofficeMock.findOrganizationBySlug.mockResolvedValue(null);
+    backofficeMock.createOrganization.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
 
     const r = await createOrganizationAction({ name: "Acme", slug: "acme-new" });
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.organization.create).toHaveBeenCalledWith({
-      data: { name: "Acme", slug: "acme-new" },
+    expect(backofficeMock.createOrganization).toHaveBeenCalledWith({
+      name: "Acme",
+      slug: "acme-new",
     });
-    expect(prismaMock.superAdminAuditLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          actorUserId: ACTOR_ID,
-          action: "CREATE_ORGANIZATION",
-        }),
-      }),
-    );
+    expect(backofficeMock.createSuperAdminAuditLog).toHaveBeenCalledWith({
+      actorUserId: ACTOR_ID,
+      organizationId: "system",
+      action: "CREATE_ORGANIZATION",
+      reason: expect.stringContaining("Acme"),
+    });
     expect(revalidatePathMock).toHaveBeenCalledWith("/admin/organizations");
   });
 
   it("rejects create on duplicate slug", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.organization.findUnique.mockResolvedValue({ id: "x" });
+    backofficeMock.findOrganizationBySlug.mockResolvedValue({ id: "x" });
 
     const r = await createOrganizationAction({ name: "Acme", slug: "taken" });
     expect(r).toEqual({ ok: false, message: "Ce slug est déjà utilisé." });
-    expect(prismaMock.organization.create).not.toHaveBeenCalled();
+    expect(backofficeMock.createOrganization).not.toHaveBeenCalled();
   });
 
   it("rejects update when slug belongs to another org", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.organization.findUnique.mockResolvedValue({
+    backofficeMock.findOrganizationById.mockResolvedValue({
       id: ORG_ID,
       name: "Old",
       slug: "old-slug",
     });
-    prismaMock.organization.findFirst.mockResolvedValue({ id: "other" });
+    backofficeMock.findOrganizationSlugConflict.mockResolvedValue(true);
 
     const r = await updateOrganizationAction({
       id: ORG_ID,
@@ -200,42 +182,38 @@ describe("admin super-admin CRUD — organizations", () => {
       ok: false,
       message: "Ce slug est déjà utilisé par une autre organisation.",
     });
-    expect(prismaMock.organization.update).not.toHaveBeenCalled();
+    expect(backofficeMock.updateOrganization).not.toHaveBeenCalled();
   });
 
   it("deletes organization and audits", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.organization.findUnique.mockResolvedValue({
+    backofficeMock.findOrganizationById.mockResolvedValue({
       id: ORG_ID,
       name: "Gone",
       slug: "gone",
     });
-    prismaMock.organization.delete.mockResolvedValue({});
-    prismaMock.superAdminAuditLog.create.mockResolvedValue({});
+    backofficeMock.deleteOrganizationById.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
 
     const r = await deleteOrganizationAction(ORG_ID);
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.organization.delete).toHaveBeenCalledWith({
-      where: { id: ORG_ID },
-    });
-    expect(prismaMock.superAdminAuditLog.create).toHaveBeenCalled();
+    expect(backofficeMock.deleteOrganizationById).toHaveBeenCalledWith(ORG_ID);
+    expect(backofficeMock.createSuperAdminAuditLog).toHaveBeenCalled();
   });
 
   it("bulk delete writes audit per org", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.organization.findMany.mockResolvedValue([
+    backofficeMock.findOrganizationsByIds.mockResolvedValue([
       { id: "a", name: "A", slug: "a" },
       { id: "b", name: "B", slug: "b" },
     ]);
-    prismaMock.organization.deleteMany.mockResolvedValue({ count: 2 });
-    prismaMock.superAdminAuditLog.createMany.mockResolvedValue({ count: 2 });
+    backofficeMock.deleteOrganizationsByIds.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLogsMany.mockResolvedValue(undefined);
 
     const r = await bulkDeleteOrganizationsAction(["a", "b"]);
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.superAdminAuditLog.createMany).toHaveBeenCalled();
-    expect(prismaMock.organization.deleteMany).toHaveBeenCalledWith({
-      where: { id: { in: ["a", "b"] } },
-    });
+    expect(backofficeMock.createSuperAdminAuditLogsMany).toHaveBeenCalled();
+    expect(backofficeMock.deleteOrganizationsByIds).toHaveBeenCalledWith(["a", "b"]);
   });
 
   it("rejects bulk delete with empty ids", async () => {
@@ -254,72 +232,49 @@ describe("admin super-admin CRUD — users", () => {
 
   it("bulk toggles user status and writes audit rows", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.user.findMany.mockResolvedValue([
+    backofficeMock.findUsersByIdsForBulk.mockResolvedValue([
       { id: "u1", email: "a@x.com" },
       { id: "u2", email: "b@x.com" },
     ]);
-    prismaMock.user.updateMany.mockResolvedValue({ count: 2 });
-    prismaMock.superAdminAuditLog.createMany.mockResolvedValue({ count: 2 });
+    backofficeMock.updateUsersStatusMany.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLogsMany.mockResolvedValue(undefined);
 
     const r = await bulkToggleUserStatusAction(["u1", "u2"], "DISABLED");
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
-      where: { id: { in: ["u1", "u2"] } },
-      data: { status: "DISABLED" },
-    });
-    expect(prismaMock.superAdminAuditLog.createMany).toHaveBeenCalled();
+    expect(backofficeMock.updateUsersStatusMany).toHaveBeenCalledWith(
+      ["u1", "u2"],
+      "DISABLED",
+    );
+    expect(backofficeMock.createSuperAdminAuditLogsMany).toHaveBeenCalled();
   });
 
   it("toggles user status and audits", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.user.findUnique.mockImplementation(
-      ({ where }: { where: { id: string } }) => {
-        if (where.id === ACTOR_ID) {
-          return Promise.resolve({ systemRoles: [{ role: "SUPER_ADMIN" }] });
-        }
-        if (where.id === OTHER_USER_ID) {
-          return Promise.resolve({
-            id: OTHER_USER_ID,
-            status: "ACTIVE",
-            email: "u@example.com",
-          });
-        }
-        return Promise.resolve(null);
-      },
-    );
-    prismaMock.user.update.mockResolvedValue({});
-    prismaMock.superAdminAuditLog.create.mockResolvedValue({});
+    backofficeMock.findUserStatusById.mockResolvedValue({
+      id: OTHER_USER_ID,
+      status: "ACTIVE",
+      email: "u@example.com",
+    });
+    backofficeMock.updateUserStatus.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
 
     const r = await toggleUserStatusAction(OTHER_USER_ID);
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.user.update).toHaveBeenCalledWith({
-      where: { id: OTHER_USER_ID },
-      data: { status: "DISABLED" },
-    });
-    expect(prismaMock.superAdminAuditLog.create).toHaveBeenCalledWith(
+    expect(backofficeMock.updateUserStatus).toHaveBeenCalledWith(
+      OTHER_USER_ID,
+      "DISABLED",
+    );
+    expect(backofficeMock.createSuperAdminAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ action: "BLOCK_USER" }),
+        action: "BLOCK_USER",
       }),
     );
   });
 
   it("rejects update user when email taken", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.user.findUnique.mockImplementation(
-      ({ where }: { where: { id: string } }) => {
-        if (where.id === ACTOR_ID) {
-          return Promise.resolve({ systemRoles: [{ role: "SUPER_ADMIN" }] });
-        }
-        if (where.id === OTHER_USER_ID) {
-          return Promise.resolve({
-            id: OTHER_USER_ID,
-            email: "old@example.com",
-          });
-        }
-        return Promise.resolve(null);
-      },
-    );
-    prismaMock.user.findFirst.mockResolvedValue({ id: "someone-else" });
+    backofficeMock.findUserByIdExists.mockResolvedValue({ id: OTHER_USER_ID });
+    backofficeMock.findUserEmailConflict.mockResolvedValue(true);
 
     const r = await updateUserAction({
       id: OTHER_USER_ID,
@@ -328,28 +283,15 @@ describe("admin super-admin CRUD — users", () => {
       email: "taken@example.com",
     });
     expect(r).toEqual({ ok: false, message: "Cet e-mail est déjà utilisé." });
-    expect(prismaMock.user.update).not.toHaveBeenCalled();
+    expect(backofficeMock.updateUserProfile).not.toHaveBeenCalled();
   });
 
   it("updates user profile and audits", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.user.findUnique.mockImplementation(
-      ({ where }: { where: { id: string } }) => {
-        if (where.id === ACTOR_ID) {
-          return Promise.resolve({ systemRoles: [{ role: "SUPER_ADMIN" }] });
-        }
-        if (where.id === OTHER_USER_ID) {
-          return Promise.resolve({
-            id: OTHER_USER_ID,
-            email: "old@example.com",
-          });
-        }
-        return Promise.resolve(null);
-      },
-    );
-    prismaMock.user.findFirst.mockResolvedValue(null);
-    prismaMock.user.update.mockResolvedValue({});
-    prismaMock.superAdminAuditLog.create.mockResolvedValue({});
+    backofficeMock.findUserByIdExists.mockResolvedValue({ id: OTHER_USER_ID });
+    backofficeMock.findUserEmailConflict.mockResolvedValue(false);
+    backofficeMock.updateUserProfile.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
 
     const r = await updateUserAction({
       id: OTHER_USER_ID,
@@ -358,51 +300,36 @@ describe("admin super-admin CRUD — users", () => {
       email: "new@example.com",
     });
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.user.update).toHaveBeenCalledWith({
-      where: { id: OTHER_USER_ID },
-      data: {
-        firstName: "Ann",
-        lastName: "Lee",
-        email: "new@example.com",
-      },
+    expect(backofficeMock.updateUserProfile).toHaveBeenCalledWith({
+      userId: OTHER_USER_ID,
+      firstName: "Ann",
+      lastName: "Lee",
+      email: "new@example.com",
     });
   });
 
   it("deletes user and audits", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.user.findUnique.mockImplementation(
-      ({ where }: { where: { id: string } }) => {
-        if (where.id === ACTOR_ID) {
-          return Promise.resolve({ systemRoles: [{ role: "SUPER_ADMIN" }] });
-        }
-        if (where.id === OTHER_USER_ID) {
-          return Promise.resolve({
-            id: OTHER_USER_ID,
-            email: "gone@example.com",
-          });
-        }
-        return Promise.resolve(null);
-      },
-    );
-    prismaMock.user.delete.mockResolvedValue({});
-    prismaMock.superAdminAuditLog.create.mockResolvedValue({});
+    backofficeMock.findUserForDelete.mockResolvedValue({
+      id: OTHER_USER_ID,
+      email: "gone@example.com",
+    });
+    backofficeMock.deleteUserById.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
 
     const r = await deleteUserAction(OTHER_USER_ID);
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.user.delete).toHaveBeenCalledWith({
-      where: { id: OTHER_USER_ID },
-    });
+    expect(backofficeMock.deleteUserById).toHaveBeenCalledWith(OTHER_USER_ID);
   });
 
   it("invites user to org when valid", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.organization.findUnique.mockResolvedValue({
-      id: ORG_ID,
+    backofficeMock.findOrganizationNameById.mockResolvedValue({
       name: "Org",
     });
-    prismaMock.organizationInvitation.findFirst.mockResolvedValue(null);
-    prismaMock.organizationInvitation.create.mockResolvedValue({});
-    prismaMock.superAdminAuditLog.create.mockResolvedValue({});
+    backofficeMock.findPendingOrganizationInvitation.mockResolvedValue(null);
+    backofficeMock.createOrganizationInvitationAdmin.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
 
     const r = await inviteUserToOrgAction({
       email: "join@example.com",
@@ -410,18 +337,16 @@ describe("admin super-admin CRUD — users", () => {
       role: "MEMBER",
     });
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.organizationInvitation.create).toHaveBeenCalled();
+    expect(backofficeMock.createOrganizationInvitationAdmin).toHaveBeenCalled();
     expect(sendTransactionalEmailMock).toHaveBeenCalled();
-    expect(prismaMock.superAdminAuditLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ action: "INVITE_USER_TO_ORG" }),
-      }),
+    expect(backofficeMock.createSuperAdminAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "INVITE_USER_TO_ORG" }),
     );
   });
 
   it("rejects org invite when org missing", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.organization.findUnique.mockResolvedValue(null);
+    backofficeMock.findOrganizationNameById.mockResolvedValue(null);
 
     const r = await inviteUserToOrgAction({
       email: "join@example.com",
@@ -429,32 +354,34 @@ describe("admin super-admin CRUD — users", () => {
       role: "ADMIN",
     });
     expect(r).toEqual({ ok: false, message: "Organisation introuvable." });
-    expect(prismaMock.organizationInvitation.create).not.toHaveBeenCalled();
+    expect(backofficeMock.createOrganizationInvitationAdmin).not.toHaveBeenCalled();
   });
 });
 
 describe("admin super-admin — super-admins & prompts", () => {
   it("inviteSuperAdmin rejects when user already super admin", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.user.findFirst.mockResolvedValueOnce({ id: "existing" });
+    backofficeMock.findUserWithSuperAdminByEmail.mockResolvedValueOnce({
+      id: "existing",
+    });
 
     const r = await inviteSuperAdminAction({ email: "boss@example.com" });
     expect(r).toEqual({
       ok: false,
       message: "Cet utilisateur est déjà super administrateur.",
     });
-    expect(prismaMock.superAdminInvitation.create).not.toHaveBeenCalled();
+    expect(backofficeMock.createSuperAdminInvitation).not.toHaveBeenCalled();
   });
 
   it("inviteSuperAdmin creates pending invitation and sends email", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.user.findFirst.mockResolvedValueOnce(null);
-    prismaMock.superAdminInvitation.findFirst.mockResolvedValue(null);
-    prismaMock.superAdminInvitation.create.mockResolvedValue({});
+    backofficeMock.findUserWithSuperAdminByEmail.mockResolvedValueOnce(null);
+    backofficeMock.findPendingSuperAdminInvitationByEmail.mockResolvedValue(null);
+    backofficeMock.createSuperAdminInvitation.mockResolvedValue(undefined);
 
     const r = await inviteSuperAdminAction({ email: "newadmin@example.com" });
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.superAdminInvitation.create).toHaveBeenCalled();
+    expect(backofficeMock.createSuperAdminInvitation).toHaveBeenCalled();
     expect(sendTransactionalEmailMock).toHaveBeenCalled();
   });
 
@@ -466,18 +393,14 @@ describe("admin super-admin — super-admins & prompts", () => {
 
   it("revokeSuperAdminInvitation revokes pending invite", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.superAdminInvitation.findFirst.mockResolvedValue({
+    backofficeMock.findPendingSuperAdminInvitationById.mockResolvedValue({
       id: INVITE_ID,
-      status: "PENDING",
     });
-    prismaMock.superAdminInvitation.update.mockResolvedValue({});
+    backofficeMock.revokeSuperAdminInvitation.mockResolvedValue(undefined);
 
     const r = await revokeSuperAdminInvitationAction(INVITE_ID);
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.superAdminInvitation.update).toHaveBeenCalledWith({
-      where: { id: INVITE_ID },
-      data: { status: "REVOKED" },
-    });
+    expect(backofficeMock.revokeSuperAdminInvitation).toHaveBeenCalledWith(INVITE_ID);
   });
 
   it("revokeSuperAdminRole rejects self-revoke", async () => {
@@ -487,29 +410,23 @@ describe("admin super-admin — super-admins & prompts", () => {
       ok: false,
       message: "Vous ne pouvez pas révoquer votre propre rôle.",
     });
-    expect(prismaMock.systemRole.delete).not.toHaveBeenCalled();
+    expect(backofficeMock.deleteSystemRole).not.toHaveBeenCalled();
   });
 
   it("revokeSuperAdminRole deletes role and audits", async () => {
     mockAuthenticatedSuperAdminPrincipal();
-    prismaMock.systemRole.findFirst.mockResolvedValue({
-      id: "role-row-id",
-      userId: OTHER_USER_ID,
-      role: "SUPER_ADMIN",
-      user: { email: "target@example.com" },
+    backofficeMock.findSuperAdminSystemRoleForUser.mockResolvedValue({
+      roleRecordId: "role-row-id",
+      userEmail: "target@example.com",
     });
-    prismaMock.systemRole.delete.mockResolvedValue({});
-    prismaMock.superAdminAuditLog.create.mockResolvedValue({});
+    backofficeMock.deleteSystemRole.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
 
     const r = await revokeSuperAdminRoleAction(OTHER_USER_ID);
     expect(r).toEqual({ ok: true });
-    expect(prismaMock.systemRole.delete).toHaveBeenCalledWith({
-      where: { id: "role-row-id" },
-    });
-    expect(prismaMock.superAdminAuditLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ action: "REVOKE_SUPER_ADMIN" }),
-      }),
+    expect(backofficeMock.deleteSystemRole).toHaveBeenCalledWith("role-row-id");
+    expect(backofficeMock.createSuperAdminAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "REVOKE_SUPER_ADMIN" }),
     );
   });
 

@@ -1,21 +1,15 @@
 import Link from "next/link";
-import { hashToken } from "@/lib/auth/tokens";
-import { prisma } from "@/lib/prisma";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { AcceptSuperAdminInvitationClient } from "@/components/organisms/accept-super-admin-invitation-client";
 
 type Props = { params: Promise<{ token: string }> };
 
 export default async function SuperAdminInvitationPage({ params }: Props) {
   const { token } = await params;
-  const th = hashToken(token);
-  const inv = await prisma.superAdminInvitation.findFirst({
-    where: {
-      tokenHash: th,
-      status: "PENDING",
-      expiresAt: { gt: new Date() },
-    },
-  });
+  const deps = getApplicationDeps();
+  const inv = await deps.superAdminInvitations.findPendingByTokenForPreview(
+    token,
+  );
 
   if (!inv) {
     return (
@@ -30,7 +24,6 @@ export default async function SuperAdminInvitationPage({ params }: Props) {
     );
   }
 
-  const deps = makeApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
 
   return (

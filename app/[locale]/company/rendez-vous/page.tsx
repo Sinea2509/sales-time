@@ -2,7 +2,7 @@ import { RendezVousMeetingsShell } from "@/components/organisms/rendez-vous-meet
 import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { redirect } from "next/navigation";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 
 export const dynamic = "force-dynamic";
 
@@ -12,14 +12,14 @@ export default async function RendezVousPage() {
     redirect("/company");
   }
 
-  const deps = makeApplicationDeps();
-  const isAdmin = actor.dashboardRoleMode === "admin";
+  const deps = getApplicationDeps();
+  const isAdmin = actor.workspaceRoleMode === "admin";
   const sellerScope =
-    actor.dashboardRoleMode === "member"
+    actor.workspaceRoleMode === "member"
       ? (actor.internalUserId ?? undefined)
       : undefined;
 
-  if (actor.dashboardRoleMode === "member" && !actor.internalUserId) {
+  if (actor.workspaceRoleMode === "member" && !actor.internalUserId) {
     redirect("/company");
   }
 

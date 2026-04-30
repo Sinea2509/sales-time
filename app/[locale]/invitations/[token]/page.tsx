@@ -1,22 +1,15 @@
 import Link from "next/link";
-import { hashToken } from "@/lib/auth/tokens";
-import { prisma } from "@/lib/prisma";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { AcceptInvitationClient } from "@/components/organisms/accept-invitation-client";
 
 type Props = { params: Promise<{ token: string }> };
 
 export default async function InvitationPage({ params }: Props) {
   const { token } = await params;
-  const th = hashToken(token);
-  const inv = await prisma.organizationInvitation.findFirst({
-    where: {
-      tokenHash: th,
-      status: "PENDING",
-      expiresAt: { gt: new Date() },
-    },
-    include: { organization: { select: { name: true } } },
-  });
+  const deps = getApplicationDeps();
+  const inv = await deps.organizationInvitations.findPendingByTokenForPreview(
+    token,
+  );
 
   if (!inv) {
     return (
@@ -31,14 +24,13 @@ export default async function InvitationPage({ params }: Props) {
     );
   }
 
-  const deps = makeApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
       <div className="w-full max-w-md space-y-6 rounded-xl border border-border p-8 text-center shadow-sm">
         <h1 className="text-2xl font-semibold tracking-tight">
-          Invitation — {inv.organization.name}
+          Invitation — {inv.organizationName}
         </h1>
         <p className="text-muted-foreground text-sm">
           Vous avez été invité en tant que{" "}

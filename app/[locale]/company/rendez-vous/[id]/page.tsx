@@ -22,7 +22,7 @@ import {
   kissResultSchema,
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +37,7 @@ export default async function RendezVousDetailPage({
     redirect("/company");
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const meeting = await deps.meetings.findMeetingDetailWithAnalyses({
     id,
     organizationId: actor.activeOrganizationId,

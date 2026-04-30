@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { setActiveOrganizationCookie } from "@/lib/auth/session-cookie";
-import { prisma } from "@/lib/prisma";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 
 const idSchema = z.string().trim().min(1).max(120);
 
@@ -16,7 +15,7 @@ export async function switchOrganizationAction(
     return { ok: false, error: "INVALID" };
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) {
     return { ok: false, error: "UNAUTHENTICATED" };
@@ -29,7 +28,7 @@ export async function switchOrganizationAction(
     if (!isSuper) {
       return { ok: false, error: "FORBIDDEN" };
     }
-    const org = await prisma.organization.findUnique({ where: { id } });
+    const org = await deps.orgDirectory.getOrganizationById(id);
     if (!org) {
       return { ok: false, error: "NOT_FOUND" };
     }

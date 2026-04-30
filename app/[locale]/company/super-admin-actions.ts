@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { shouldUseSecureSessionCookies } from "@/lib/auth/session-cookie";
 import { z } from "zod";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { enterOrganizationAsSuperAdmin } from "@/src/core/application/enter-organization-as-super-admin";
 import { exitSuperAdminOrganizationContext } from "@/src/core/application/exit-super-admin-organization-context";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
@@ -49,7 +49,7 @@ export async function enterSuperAdminOrganizationAction(
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const result = await enterOrganizationAsSuperAdmin(
     {
       auth: deps.auth,
@@ -102,7 +102,7 @@ export async function exitSuperAdminOrganizationAction(
     return { ok: false as const, error: "ORG_MISMATCH" as const };
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const result = await exitSuperAdminOrganizationContext(
     { auth: deps.auth, audit: deps.audit },
     {

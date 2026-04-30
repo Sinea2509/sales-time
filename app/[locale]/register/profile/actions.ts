@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import type { UserProfileRole } from "@/src/core/domain/user-profile-role";
 
 const profileRoleSchema = z.enum([
@@ -26,7 +26,7 @@ export async function completeRegisterProfile(
   _prev: CompleteRegisterProfileResult | undefined,
   formData: FormData,
 ): Promise<CompleteRegisterProfileResult> {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) {
     return { ok: false, message: "Session expirée." };

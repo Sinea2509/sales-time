@@ -3,11 +3,10 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { hashPassword } from "@/lib/auth/password";
-import { createSessionRecord } from "@/lib/auth/session-db";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { generateOpaqueToken } from "@/lib/auth/tokens";
 import { setSessionCookie } from "@/lib/auth/session-cookie";
 import { tryNormalizeWebsiteForOrgKey } from "@/lib/website/normalize-website";
-import { prisma } from "@/lib/prisma";
 
 const schema = z
   .object({
@@ -59,41 +58,33 @@ export async function signUpAction(
     return { ok: false, message: hint };
   }
 
-  const existingOrg = await prisma.organization.findUnique({
-    where: { websiteNormalized: websiteNorm.value },
+  const deps = getApplicationDeps();
+  const passwordHash = await hashPassword(parsed.data.password);
+  const reg = await deps.registration.registerNewUser({
+    email: parsed.data.email,
+    firstName: parsed.data.firstName,
+    lastName: parsed.data.lastName,
+    passwordHash,
+    signupWebsiteNormalized: websiteNorm.value,
   });
-  if (existingOrg) {
-    return {
-      ok: false,
-      message:
-        "Une organisation est déjà enregistrée avec ce site web. Connectez-vous ou contactez votre administrateur.",
-    };
-  }
 
-  const existing = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
-  });
-  if (existing) {
+  if (!reg.ok) {
+    if (reg.error === "WEBSITE_TAKEN") {
+      return {
+        ok: false,
+        message:
+          "Une organisation est déjà enregistrée avec ce site web. Connectez-vous ou contactez votre administrateur.",
+      };
+    }
     return {
       ok: false,
       message: "Un compte existe déjà avec cet e-mail.",
     };
   }
 
-  const passwordHash = await hashPassword(parsed.data.password);
-  const user = await prisma.user.create({
-    data: {
-      email: parsed.data.email,
-      passwordHash,
-      signupWebsiteNormalized: websiteNorm.value,
-      firstName: parsed.data.firstName,
-      lastName: parsed.data.lastName,
-    },
-  });
-
   const raw = generateOpaqueToken();
-  await createSessionRecord({
-    userId: user.id,
+  await deps.session.createSessionRecord({
+    userId: reg.userId,
     rawToken: raw,
     userAgent: null,
   });

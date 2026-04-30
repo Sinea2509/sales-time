@@ -9,7 +9,7 @@ import {
   Clock,
   Mail,
 } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -56,46 +56,16 @@ export default async function AdminUserDetailPage({
 }) {
   const { id } = await params;
 
-  const user = await prisma.user.findUnique({
-    where: { id },
-    include: {
-      systemRoles: { select: { role: true } },
-      organizationMemberships: {
-        include: {
-          organization: { select: { id: true, name: true, slug: true } },
-        },
-        orderBy: { createdAt: "asc" },
-      },
-      sessions: {
-        where: { expiresAt: { gt: new Date() } },
-        orderBy: { lastSeenAt: "desc" },
-        take: 20,
-      },
-      meetingsAsSeller: {
-        take: 10,
-        orderBy: { meetingAt: "desc" },
-        select: {
-          id: true,
-          prospectName: true,
-          meetingAt: true,
-          outcome: true,
-          organization: { select: { id: true, name: true } },
-        },
-      },
-    },
-  });
+  const user = await getApplicationDeps().backoffice.getUserDetailForAdmin(id);
 
   if (!user) {
     redirect("/admin/users");
   }
 
-  const isSuperAdmin = user.systemRoles.some((r) => r.role === "SUPER_ADMIN");
-
-  const [meetingCount, analysesCount, sessionCount] = await Promise.all([
-    prisma.meeting.count({ where: { sellerUserId: id } }),
-    prisma.meetingAnalysis.count({ where: { meeting: { sellerUserId: id } } }),
-    prisma.session.count({ where: { userId: id } }),
-  ]);
+  const isSuperAdmin = user.isSuperAdmin;
+  const meetingCount = user.meetingCount;
+  const analysesCount = user.analysesCount;
+  const sessionCount = user.sessionCount;
 
   const fullName =
     user.firstName && user.lastName

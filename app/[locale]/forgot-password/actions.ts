@@ -1,8 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
-import { prisma } from "@/lib/prisma";
+import { generateOpaqueToken } from "@/lib/auth/tokens";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 
 const schema = z.object({
@@ -20,22 +20,18 @@ export async function forgotPasswordAction(
     return { ok: false, message: "E-mail invalide." };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
-  });
+  const deps = getApplicationDeps();
+  const user = await deps.passwordReset.findActiveUserByEmail(parsed.data.email);
   if (!user) {
     return { ok: true };
   }
 
   const raw = generateOpaqueToken(32);
-  const tokenHash = hashToken(raw);
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-  await prisma.passwordResetToken.create({
-    data: {
-      userId: user.id,
-      tokenHash,
-      expiresAt,
-    },
+  await deps.passwordReset.createResetToken({
+    userId: user.id,
+    rawToken: raw,
+    expiresAt,
   });
 
   const base =

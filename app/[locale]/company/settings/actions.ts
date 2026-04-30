@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { uploadOrgLogoToBlob } from "@/lib/org-logo-upload";
 
 async function requireOrgAdminOrganizationId(): Promise<string | null> {
   const superAdminOrgCookie = await readSuperAdminOrgCookie();
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const ctx = await getCurrentActorContext({ auth: deps.auth }, {
     superAdminElevatedOrganizationId: superAdminOrgCookie,
   });
@@ -46,6 +47,10 @@ export type OrgSettingsActionResult =
   | { ok: true }
   | { ok: false; message: string };
 
+export type OrgLogoUploadResult =
+  | { ok: true; logoUrl: string }
+  | { ok: false; message: string };
+
 export async function updateOrganizationContext(
   raw: z.input<typeof orgContextSchema>,
 ): Promise<OrgSettingsActionResult> {
@@ -64,7 +69,7 @@ export async function updateOrganizationContext(
     averageSalesCycle: parsed.data.averageSalesCycle?.trim() || null,
     averageDealSize: parsed.data.averageDealSize?.trim() || null,
   };
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   await deps.organizationSettings.upsertContextFields(organizationId, data);
   revalidatePath("/company/settings", "layout");
   return { ok: true };
@@ -87,7 +92,7 @@ export async function updateOrganizationCoach(
     keyArguments: parsed.data.keyArguments,
     industryVocabulary: parsed.data.industryVocabulary?.trim() || null,
   };
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   await deps.organizationSettings.upsertCoachFields(organizationId, data);
   revalidatePath("/company/settings", "layout");
   return { ok: true };
@@ -111,7 +116,7 @@ export async function updateOrganizationProcess(
     meetingTypes: parsed.data.meetingTypes,
     pipelineStages: parsed.data.pipelineStages,
   };
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   await deps.organizationSettings.upsertProcessFields(organizationId, data);
   revalidatePath("/company/settings", "layout");
   return { ok: true };
@@ -122,6 +127,38 @@ const orgEmailSchema = z.object({
   emailVouvoiement: z.boolean(),
   emailSignature: z.string().max(10_000).nullable(),
 });
+
+export async function uploadOrganizationLogo(
+  formData: FormData,
+): Promise<OrgLogoUploadResult> {
+  const organizationId = await requireOrgAdminOrganizationId();
+  if (!organizationId) {
+    return { ok: false, message: "Accès refusé." };
+  }
+  const file = formData.get("logo");
+  if (!(file instanceof File)) {
+    return { ok: false, message: "Aucun fichier reçu." };
+  }
+  const uploaded = await uploadOrgLogoToBlob(organizationId, file);
+  if (!uploaded.ok) {
+    return uploaded;
+  }
+  const deps = getApplicationDeps();
+  await deps.organizationSettings.upsertLogoUrl(organizationId, uploaded.url);
+  revalidatePath("/company/settings", "layout");
+  return { ok: true, logoUrl: uploaded.url };
+}
+
+export async function removeOrganizationLogo(): Promise<OrgSettingsActionResult> {
+  const organizationId = await requireOrgAdminOrganizationId();
+  if (!organizationId) {
+    return { ok: false, message: "Accès refusé." };
+  }
+  const deps = getApplicationDeps();
+  await deps.organizationSettings.upsertLogoUrl(organizationId, null);
+  revalidatePath("/company/settings", "layout");
+  return { ok: true };
+}
 
 export async function updateOrganizationEmailSettings(
   raw: z.input<typeof orgEmailSchema>,
@@ -134,7 +171,7 @@ export async function updateOrganizationEmailSettings(
   if (!parsed.success) {
     return { ok: false, message: "Données invalides." };
   }
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   await deps.organizationSettings.upsertEmailFields(organizationId, {
     emailTone: parsed.data.emailTone,
     emailVouvoiement: parsed.data.emailVouvoiement,

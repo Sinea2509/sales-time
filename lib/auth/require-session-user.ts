@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 
 /** Redirects to `/sign-in` when there is no valid session. */
 export async function requireSessionUserId(): Promise<string> {
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) {
     redirect("/sign-in");

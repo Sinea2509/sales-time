@@ -9,7 +9,7 @@ import { DashboardAdminShell } from "@/components/organisms/dashboard-admin-shel
 import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { parseStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import { listPersonOutreachPriorities } from "@/src/core/application/get-person-outreach-priorities";
@@ -30,7 +30,7 @@ export default async function DashboardHomePage({
 
   const sp = searchParams != null ? await searchParams : {};
   const statsWindowDays = parseStatsWindowDays(sp.jours);
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
 
   if (!actor.activeOrganizationId) {
     return (
@@ -47,7 +47,7 @@ export default async function DashboardHomePage({
     );
   }
 
-  if (actor.dashboardRoleMode === "admin") {
+  if (actor.workspaceRoleMode === "admin") {
     const admin = await getOrgAdminDashboard(deps, {
       organizationId: actor.activeOrganizationId,
       statsWindowDays,
@@ -59,7 +59,7 @@ export default async function DashboardHomePage({
     );
   }
 
-  if (actor.dashboardRoleMode === "member" && !actor.internalUserId) {
+  if (actor.workspaceRoleMode === "member" && !actor.internalUserId) {
     return (
       <div className="space-y-6">
         <Card>

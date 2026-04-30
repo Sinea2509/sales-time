@@ -46,7 +46,7 @@ export function DashboardHomeShell({
         </Suspense>
       </div>
 
-      <DashboardKpiCards home={home} showGlobalNote={false} />
+      <DashboardKpiCards home={home} />
 
       {personOutreach.length > 0 ? (
         <section className="space-y-3">

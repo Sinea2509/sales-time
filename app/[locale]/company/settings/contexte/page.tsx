@@ -1,11 +1,12 @@
 import { OrgSettingsContexteForm } from "@/components/organisms/org-settings-contexte-form";
+import { OrgSettingsLogoForm } from "@/components/organisms/org-settings-logo-form";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 
 export default async function OrganizationSettingsContextePage() {
   const superAdminOrgCookie = await readSuperAdminOrgCookie();
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const actor = await getCurrentActorContext({ auth: deps.auth }, {
     superAdminElevatedOrganizationId: superAdminOrgCookie,
   });
@@ -25,6 +26,7 @@ export default async function OrganizationSettingsContextePage() {
           Informations commerciales de référence pour votre organisation.
         </p>
       </div>
+      <OrgSettingsLogoForm initialLogoUrl={row?.logoUrl ?? null} />
       <OrgSettingsContexteForm
         initial={{
           companyName: row?.companyName ?? "",

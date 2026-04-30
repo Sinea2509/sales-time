@@ -75,6 +75,5 @@ export async function getCurrentActorContext(
     canManageOrganization,
     isElevatedSuperAdmin,
     workspaceRoleMode,
-    dashboardRoleMode: workspaceRoleMode,
   };
 }

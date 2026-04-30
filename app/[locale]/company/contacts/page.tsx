@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,7 +29,7 @@ export default async function ContactsPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const q = typeof sp.q === "string" ? sp.q : "";
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const rows = await deps.contacts.listForOrg({
     organizationId: actor.activeOrganizationId,
     search: q || undefined,

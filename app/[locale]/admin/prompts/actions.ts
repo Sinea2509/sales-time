@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { publishGlobalPromptVersion } from "@/src/core/application/publish-global-prompt-version";
 
 const publishPromptSchema = z.object({
@@ -19,7 +19,7 @@ export async function publishPromptAction(input: PublishPromptInput) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const deps = makeApplicationDeps();
+  const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
 
