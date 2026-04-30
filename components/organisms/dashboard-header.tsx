@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { ElevatedModeIndicator } from "@/components/molecules/elevated-mode-indicator";
 import { Button, buttonVariants } from "@/components/ui/button";

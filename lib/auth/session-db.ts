@@ -73,10 +73,14 @@ export async function findSessionPrincipal(
     },
   });
   if (!row) return null;
-  await prisma.session.update({
-    where: { id: row.id },
-    data: { lastSeenAt: now },
-  });
+  try {
+    await prisma.session.update({
+      where: { id: row.id },
+      data: { lastSeenAt: now },
+    });
+  } catch {
+    // Best-effort: do not fail auth if lastSeen write fails (e.g. transient DB).
+  }
   const u = row.user;
   return {
     sessionId: row.id,

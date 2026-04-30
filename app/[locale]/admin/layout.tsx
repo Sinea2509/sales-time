@@ -15,7 +15,10 @@ export default async function AdminLayout({
     redirect("/sign-in");
   }
   const user = await deps.users.findById(principal.userId);
-  if (!user?.systemRoles.includes("SUPER_ADMIN")) {
+  if (!user) {
+    redirect("/sign-in");
+  }
+  if (!user.systemRoles.includes("SUPER_ADMIN")) {
     redirect("/company");
   }
 

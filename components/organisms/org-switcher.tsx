@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useTransition } from "react";
 import { switchOrganizationAction } from "@/app/[locale]/company/switch-organization-action";
 

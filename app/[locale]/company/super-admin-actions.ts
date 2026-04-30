@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { shouldUseSecureSessionCookies } from "@/lib/auth/session-cookie";
 import { z } from "zod";
 import { makeApplicationDeps } from "@/src/adapters/composition";
 import { enterOrganizationAsSuperAdmin } from "@/src/core/application/enter-organization-as-super-admin";
@@ -15,7 +16,7 @@ function cookieOptions() {
   return {
     httpOnly: true as const,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureSessionCookies(),
     path: "/",
     maxAge: 60 * 60 * 8,
   };
