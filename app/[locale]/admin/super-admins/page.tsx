@@ -23,6 +23,26 @@ export default async function SuperAdminInvitesPage() {
     return null;
   }
 
+  const superAdminRoles = await prisma.systemRole.findMany({
+    where: { role: "SUPER_ADMIN" },
+    orderBy: { createdAt: "asc" },
+    select: {
+      userId: true,
+      createdAt: true,
+      user: {
+        select: { email: true, firstName: true, lastName: true },
+      },
+    },
+  });
+
+  const superAdmins = superAdminRoles.map((r) => ({
+    userId: r.userId,
+    email: r.user.email,
+    firstName: r.user.firstName,
+    lastName: r.user.lastName,
+    grantedAt: r.createdAt.toISOString(),
+  }));
+
   const rows = await prisma.superAdminInvitation.findMany({
     where: {
       status: "PENDING",
@@ -53,7 +73,11 @@ export default async function SuperAdminInvitesPage() {
           {t("backToOrgs")}
         </Link>
       </div>
-      <SuperAdminInvitesPanel invitations={invitations} />
+      <SuperAdminInvitesPanel
+        currentUserId={principal.userId}
+        superAdmins={superAdmins}
+        invitations={invitations}
+      />
     </div>
   );
 }

@@ -1,53 +1,352 @@
-import Link from "next/link";
-import { getTranslations } from "next-intl/server";
-import { SuperAdminOrgList } from "@/components/organisms/super-admin-org-list";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { redirect } from "next/navigation";
+import {
+  Users,
+  Building2,
+  CalendarDays,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  Zap,
+} from "lucide-react";
+import { prisma } from "@/lib/prisma";
 import { makeApplicationDeps } from "@/src/adapters/composition";
-import { listOrganizationsForSuperAdmin } from "@/src/core/application/list-organizations-for-super-admin";
+import { AdminKpiCard } from "@/components/admin/admin-kpi-card";
+import { AdminActivityChart } from "@/components/admin/admin-activity-chart";
+import { AdminOrgGrowthChart } from "@/components/admin/admin-org-growth-chart";
+import { AdminDateRangePicker } from "@/components/admin/admin-date-range-picker";
 
-export default async function SuperAdminPage() {
-  const t = await getTranslations("superAdminPage");
+export const dynamic = "force-dynamic";
+
+const VALID_RANGES: Record<string, number> = {
+  "7d": 7,
+  "14d": 14,
+  "30d": 30,
+  "60d": 60,
+  "90d": 90,
+};
+
+export default async function AdminDashboardPage(props: {
+  searchParams: Promise<{ range?: string }>;
+}) {
   const deps = makeApplicationDeps();
-  const result = await listOrganizationsForSuperAdmin(
-    { auth: deps.auth, orgDirectory: deps.orgDirectory },
-    { limit: 100 },
+  const principal = await deps.auth.getAuthenticatedPrincipal();
+  if (!principal) redirect("/sign-in");
+
+  const { range: rawRange } = await props.searchParams;
+  const rangeDays = VALID_RANGES[rawRange ?? ""] ?? 30;
+  const halfRange = Math.floor(rangeDays / 2);
+
+  const now = new Date();
+  const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(now.getTime() - rangeDays * 24 * 60 * 60 * 1000);
+  const prevMonthStart = new Date(
+    now.getTime() - rangeDays * 2 * 24 * 60 * 60 * 1000,
+  );
+  const prevWeekStart = new Date(
+    now.getTime() - halfRange * 2 * 24 * 60 * 60 * 1000,
   );
 
-  if (!result.ok) {
-    return (
-      <div className="rounded-lg border border-border p-6">
-        <h1 className="text-lg font-semibold">{t("accessDeniedTitle")}</h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          {t("accessDeniedBody")}
-        </p>
-      </div>
-    );
+  const [
+    totalUsers,
+    totalOrgs,
+    totalMeetings,
+    totalAnalyses,
+    dau,
+    wau,
+    mau,
+    prevWau,
+    prevMau,
+    meetings30d,
+    prevMeetings30d,
+    analyses30d,
+    activeOrgs30d,
+    newUsersThisMonth,
+    newOrgsThisMonth,
+    recentUsers,
+    recentOrgs,
+    dailyActiveData,
+    orgGrowthData,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.organization.count(),
+    prisma.meeting.count(),
+    prisma.meetingAnalysis.count(),
+    prisma.session
+      .groupBy({ by: ["userId"], where: { lastSeenAt: { gte: dayAgo } } })
+      .then((r) => r.length),
+    prisma.session
+      .groupBy({ by: ["userId"], where: { lastSeenAt: { gte: weekAgo } } })
+      .then((r) => r.length),
+    prisma.session
+      .groupBy({ by: ["userId"], where: { lastSeenAt: { gte: monthAgo } } })
+      .then((r) => r.length),
+    prisma.session
+      .groupBy({
+        by: ["userId"],
+        where: { lastSeenAt: { gte: prevWeekStart, lt: weekAgo } },
+      })
+      .then((r) => r.length),
+    prisma.session
+      .groupBy({
+        by: ["userId"],
+        where: { lastSeenAt: { gte: prevMonthStart, lt: monthAgo } },
+      })
+      .then((r) => r.length),
+    prisma.meeting.count({ where: { createdAt: { gte: monthAgo } } }),
+    prisma.meeting.count({
+      where: { createdAt: { gte: prevMonthStart, lt: monthAgo } },
+    }),
+    prisma.meetingAnalysis.count({ where: { createdAt: { gte: monthAgo } } }),
+    prisma.meeting
+      .groupBy({
+        by: ["organizationId"],
+        where: { createdAt: { gte: monthAgo } },
+      })
+      .then((r) => r.length),
+    prisma.user.count({ where: { createdAt: { gte: monthAgo } } }),
+    prisma.organization.count({ where: { createdAt: { gte: monthAgo } } }),
+    prisma.user.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      select: { id: true, email: true, firstName: true, lastName: true, createdAt: true, status: true },
+    }),
+    prisma.organization.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        createdAt: true,
+        _count: { select: { memberships: true, meetings: true } },
+      },
+    }),
+    // Daily active users for the last 14 days
+    Promise.all(
+      Array.from({ length: 14 }, (_, i) => {
+        const dayStart = new Date(now.getTime() - (13 - i) * 24 * 60 * 60 * 1000);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+        return prisma.session
+          .groupBy({
+            by: ["userId"],
+            where: { lastSeenAt: { gte: dayStart, lt: dayEnd } },
+          })
+          .then((r) => ({
+            date: dayStart.toISOString().slice(5, 10),
+            count: r.length,
+          }));
+      }),
+    ),
+    // Org growth for the last 6 months
+    Promise.all(
+      Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(now);
+        d.setMonth(d.getMonth() - (5 - i));
+        d.setDate(1);
+        d.setHours(0, 0, 0, 0);
+        const next = new Date(d);
+        next.setMonth(next.getMonth() + 1);
+        return prisma.organization
+          .count({ where: { createdAt: { gte: d, lt: next } } })
+          .then((count) => ({
+            month: d.toLocaleDateString("fr-FR", { month: "short" }),
+            count,
+          }));
+      }),
+    ),
+  ]);
+
+  function trendPercent(current: number, previous: number): number | null {
+    if (previous === 0) return current > 0 ? 100 : null;
+    return Math.round(((current - previous) / previous) * 100);
   }
 
+  const wauTrend = trendPercent(wau, prevWau);
+  const mauTrend = trendPercent(mau, prevMau);
+  const meetingsTrend = trendPercent(meetings30d, prevMeetings30d);
+
+  const avgMeetingsPerOrg =
+    totalOrgs > 0 ? Math.round(totalMeetings / totalOrgs) : 0;
+  const avgAnalysesPerMeeting =
+    totalMeetings > 0 ? (totalAnalyses / totalMeetings).toFixed(1) : "0";
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Link
-          href="/admin/prompts"
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-        >
-          {t("promptsLink")}
-        </Link>
-        <Link
-          href="/admin/analytics"
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-        >
-          Analytics plateforme
-        </Link>
-        <Link
-          href="/admin/super-admins"
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-        >
-          {t("superAdminsLink")}
-        </Link>
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard plateforme</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Vue d'ensemble de l'activité et des KPIs SaaS de Sales Time.
+          </p>
+        </div>
+        <AdminDateRangePicker />
       </div>
-      <SuperAdminOrgList organizations={result.organizations} />
+
+      {/* Hero KPI Row */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <AdminKpiCard
+          icon={Users}
+          label="Utilisateurs totaux"
+          value={totalUsers}
+          footer={`+${newUsersThisMonth} ce mois`}
+          accent="blue"
+        />
+        <AdminKpiCard
+          icon={Building2}
+          label="Organisations"
+          value={totalOrgs}
+          footer={`+${newOrgsThisMonth} ce mois`}
+          accent="violet"
+        />
+        <AdminKpiCard
+          icon={CalendarDays}
+          label="Rendez-vous totaux"
+          value={totalMeetings}
+          footer={`${avgMeetingsPerOrg} moy. / org`}
+          accent="emerald"
+        />
+        <AdminKpiCard
+          icon={BarChart3}
+          label="Analyses totales"
+          value={totalAnalyses}
+          footer={`${avgAnalysesPerMeeting} moy. / RDV`}
+          accent="amber"
+        />
+      </div>
+
+      {/* Engagement Row */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <AdminKpiCard
+          icon={Activity}
+          label="DAU"
+          value={dau}
+          footer="Utilisateurs actifs (24h)"
+          accent="blue"
+        />
+        <AdminKpiCard
+          icon={TrendingUp}
+          label="WAU"
+          value={wau}
+          trend={wauTrend}
+          footer="Utilisateurs actifs (7j)"
+          accent="emerald"
+        />
+        <AdminKpiCard
+          icon={TrendingUp}
+          label="MAU"
+          value={mau}
+          trend={mauTrend}
+          footer={`Utilisateurs actifs (${rangeDays}j)`}
+          accent="violet"
+        />
+        <AdminKpiCard
+          icon={Zap}
+          label={`Orgs actives (${rangeDays}j)`}
+          value={activeOrgs30d}
+          footer="Au moins 1 RDV créé"
+          accent="amber"
+        />
+      </div>
+
+      {/* Activity Row */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <AdminKpiCard
+          icon={CalendarDays}
+          label={`RDV (${rangeDays} jours)`}
+          value={meetings30d}
+          trend={meetingsTrend}
+          footer={`vs. ${rangeDays} jours précédents`}
+          accent="emerald"
+        />
+        <AdminKpiCard
+          icon={BarChart3}
+          label={`Analyses (${rangeDays} jours)`}
+          value={analyses30d}
+          footer="Sur la période glissante"
+          accent="blue"
+        />
+        <AdminKpiCard
+          icon={TrendingDown}
+          label="Stickiness (DAU/MAU)"
+          value={mau > 0 ? `${Math.round((dau / mau) * 100)}%` : "—"}
+          footer="Ratio d'engagement quotidien"
+          accent="violet"
+        />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AdminActivityChart data={dailyActiveData} />
+        <AdminOrgGrowthChart data={orgGrowthData} />
+      </div>
+
+      {/* Recent Activity Tables */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Users */}
+        <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
+            <h3 className="text-sm font-semibold">Derniers utilisateurs inscrits</h3>
+          </div>
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            {recentUsers.map((u) => (
+              <div key={u.id} className="flex items-center justify-between px-5 py-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {u.firstName && u.lastName
+                      ? `${u.firstName} ${u.lastName}`
+                      : u.email}
+                  </p>
+                  <p className="truncate text-xs text-zinc-500">{u.email}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={
+                      u.status === "ACTIVE"
+                        ? "inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                        : "inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950 dark:text-red-300"
+                    }
+                  >
+                    {u.status === "ACTIVE" ? "Actif" : "Bloqué"}
+                  </span>
+                  <span className="whitespace-nowrap text-xs text-zinc-400">
+                    {u.createdAt.toLocaleDateString("fr-FR")}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Orgs */}
+        <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
+            <h3 className="text-sm font-semibold">Dernières organisations</h3>
+          </div>
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            {recentOrgs.map((org) => (
+              <div
+                key={org.id}
+                className="flex items-center justify-between px-5 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {org.name}
+                  </p>
+                  <p className="truncate text-xs text-zinc-500">
+                    {org.slug} · {org._count.memberships} membre(s) · {org._count.meetings} RDV
+                  </p>
+                </div>
+                <span className="whitespace-nowrap text-xs text-zinc-400">
+                  {org.createdAt.toLocaleDateString("fr-FR")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

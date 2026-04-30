@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { AdminShell } from "@/components/templates/admin-shell";
 import { makeApplicationDeps } from "@/src/adapters/composition";
 
 export const dynamic = "force-dynamic";
@@ -18,5 +19,11 @@ export default async function AdminLayout({
     redirect("/company");
   }
 
-  return <div className="mx-auto w-full max-w-6xl p-6">{children}</div>;
+  return (
+    <AdminShell
+      userEmail={user.email}
+    >
+      {children}
+    </AdminShell>
+  );
 }

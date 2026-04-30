@@ -130,3 +130,44 @@ export async function revokeSuperAdminInvitationAction(
   revalidatePath("/admin/super-admins");
   return { ok: true };
 }
+
+export async function revokeSuperAdminRoleAction(
+  targetUserId: string,
+): Promise<SuperAdminInviteActionResult> {
+  const gate = await requireSuperAdmin();
+  if (!gate.ok) return gate;
+
+  if (targetUserId === gate.actorUserId) {
+    return {
+      ok: false,
+      message: "Vous ne pouvez pas révoquer votre propre rôle.",
+    };
+  }
+
+  const idParsed = z.string().cuid().safeParse(targetUserId);
+  if (!idParsed.success) {
+    return { ok: false, message: "Identifiant invalide." };
+  }
+
+  const role = await prisma.systemRole.findFirst({
+    where: { userId: idParsed.data, role: "SUPER_ADMIN" },
+    include: { user: { select: { email: true } } },
+  });
+  if (!role) {
+    return { ok: false, message: "Ce rôle est introuvable." };
+  }
+
+  await prisma.systemRole.delete({ where: { id: role.id } });
+
+  await prisma.superAdminAuditLog.create({
+    data: {
+      actorUserId: gate.actorUserId,
+      organizationId: "system",
+      action: "REVOKE_SUPER_ADMIN",
+      reason: `Révoqué le rôle super admin de ${role.user.email}`,
+    },
+  });
+
+  revalidatePath("/admin/super-admins");
+  return { ok: true };
+}
