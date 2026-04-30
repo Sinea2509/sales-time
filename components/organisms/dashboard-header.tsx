@@ -87,15 +87,17 @@ export function DashboardHeader({
               {t("account")}
             </Link>
           ) : null}
-          <Link
-            href="/sign-out"
-            className={cn(
-              buttonVariants({ variant: "outline", size: "sm" }),
-              "inline-flex items-center justify-center",
-            )}
-          >
-            Déconnexion
-          </Link>
+          <form action="/sign-out" method="POST" className="inline">
+            <button
+              type="submit"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "inline-flex items-center justify-center",
+              )}
+            >
+              Déconnexion
+            </button>
+          </form>
         </div>
       </div>
     </header>

@@ -1,7 +1,7 @@
 -- Recovery before `prisma migrate deploy` on Neon/Vercel:
 -- 1) Remove orphaned failed row for renamed init migration (P3009).
 -- 2) Legacy SuperAdminAuditLog without organizationId (IF NOT EXISTS skips CREATE TABLE).
--- 3) Legacy Meeting with clerkOrgId instead of organizationId (same IF NOT EXISTS issue).
+-- 3) Legacy Meeting: superseded org foreign-key column vs organizationId (same IF NOT EXISTS issue).
 --    Only drops Meeting when it is empty; otherwise fix data manually or use a fresh Neon branch.
 
 DO $$

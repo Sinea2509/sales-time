@@ -1,3 +1,4 @@
+import { FileCode2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { SuperAdminPromptsEditor } from "@/components/organisms/super-admin-prompts-editor";
@@ -22,7 +23,7 @@ async function loadPromptTab(kind: AnalysisKindSlug) {
 
   const initialMarkdown =
     current?.markdown ??
-    "(Aucun prompt — exécutez `npx prisma db seed` avec CLERK_USER_ID.)";
+    "(Aucun prompt — exécutez `npx prisma db seed`.)";
 
   return {
     initialMarkdown,
@@ -38,19 +39,10 @@ async function loadPromptTab(kind: AnalysisKindSlug) {
   };
 }
 
-const TAB_META: Record<AnalysisKindSlug, { label: string; description: string }> = {
-  SONCAS: {
-    label: "SONCAS",
-    description: "Instructions système pour l'analyse SONCAS",
-  },
-  DISC: {
-    label: "DISC",
-    description: "Instructions système pour l'analyse DISC",
-  },
-  KISS: {
-    label: "KISS",
-    description: "Instructions système pour l'analyse KISS (Keep / Improve / Stop / Start)",
-  },
+const TAB_META: Record<AnalysisKindSlug, { label: string }> = {
+  SONCAS: { label: "SONCAS" },
+  DISC: { label: "DISC" },
+  KISS: { label: "KISS" },
 };
 
 export default async function SuperAdminPromptsPage() {
@@ -67,23 +59,29 @@ export default async function SuperAdminPromptsPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Éditeur de prompts
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Markdown versionné pour chaque méthode d&apos;analyse. Chaque
-          publication crée une nouvelle version avec un audit super admin.
-        </p>
+    <div className="mx-auto max-w-6xl space-y-8 pb-12">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex gap-4">
+          <div className="bg-primary/8 ring-border/60 flex size-12 shrink-0 items-center justify-center rounded-xl ring-1">
+            <FileCode2 className="text-primary size-6" aria-hidden />
+          </div>
+          <div className="min-w-0 space-y-1">
+            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              Super admin
+            </p>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Éditeur de prompts
+            </h1>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="SONCAS">
-        <TabsList>
+      <Tabs defaultValue="SONCAS" className="gap-6">
+        <TabsList className="grid h-auto w-full min-w-0 grid-cols-3 gap-1 p-1 sm:inline-flex sm:w-auto sm:max-w-md">
           {tabs.map(({ kind, data }) => (
-            <TabsTrigger key={kind} value={kind}>
-              {TAB_META[kind].label}
-              <Badge variant="secondary" className="ml-1.5 tabular-nums">
+            <TabsTrigger key={kind} value={kind} className="px-3 py-2">
+              <span className="truncate">{TAB_META[kind].label}</span>
+              <Badge variant="secondary" className="ml-1.5 shrink-0 tabular-nums sm:ml-2">
                 {data.versionCount}
               </Badge>
             </TabsTrigger>
@@ -91,12 +89,7 @@ export default async function SuperAdminPromptsPage() {
         </TabsList>
 
         {tabs.map(({ kind, data }) => (
-          <TabsContent key={kind} value={kind} className="pt-4">
-            <div className="mb-4">
-              <p className="text-muted-foreground text-sm">
-                {TAB_META[kind].description}
-              </p>
-            </div>
+          <TabsContent key={kind} value={kind} className="mt-6">
             <SuperAdminPromptsEditor
               kind={kind}
               initialMarkdown={data.initialMarkdown}

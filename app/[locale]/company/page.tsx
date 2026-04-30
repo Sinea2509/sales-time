@@ -39,7 +39,7 @@ export default async function DashboardHomePage({
           <CardHeader>
             <CardTitle className="text-base">Organisation</CardTitle>
             <CardDescription>
-              Sélectionnez une organisation Clerk pour afficher les indicateurs.
+              Sélectionnez une organisation pour afficher les indicateurs.
             </CardDescription>
           </CardHeader>
         </Card>

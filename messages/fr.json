@@ -21,7 +21,7 @@
   },
   "accountPage": {
     "title": "Compte",
-    "description": "Profil, sécurité, mot de passe et sessions sont gérés dans Clerk."
+    "description": "Profil, sécurité, mot de passe et sessions sont gérés dans cette application."
   },
   "superAdminPage": {
     "title": "Super admin",
@@ -38,7 +38,7 @@
   },
   "superAdminOrgList": {
     "title": "Super admin — organisations",
-    "description": "Entrer dans une organisation enregistre une trace d’audit et accorde les droits d’admin d’organisation pour cette org Clerk tant que le cookie de session est défini.",
+    "description": "Entrer dans une organisation enregistre une trace d’audit et accorde les droits d’admin d’organisation pour cette organisation tant que le cookie d’élévation est défini.",
     "reasonLabel": "Motif (optionnel)",
     "reasonPlaceholder": "Référence ticket / incident",
     "operateButton": "Opérer dans cette organisation"

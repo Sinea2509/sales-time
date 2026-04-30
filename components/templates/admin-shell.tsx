@@ -189,13 +189,12 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton
-                render={<Link href="/sign-out" />}
-                tooltip="Déconnexion"
-              >
-                <LogOut />
-                <span>Déconnexion</span>
-              </SidebarMenuButton>
+              <form action="/sign-out" method="POST" className="w-full">
+                <SidebarMenuButton type="submit" tooltip="Déconnexion">
+                  <LogOut />
+                  <span>Déconnexion</span>
+                </SidebarMenuButton>
+              </form>
             </SidebarMenuItem>
           </SidebarMenu>
 

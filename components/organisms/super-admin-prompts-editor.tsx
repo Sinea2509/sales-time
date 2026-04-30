@@ -9,6 +9,8 @@ import {
   RotateCcw,
   GitCompareArrows,
   X,
+  AlertCircle,
+  History,
 } from "lucide-react";
 import { publishPromptAction } from "@/app/[locale]/admin/prompts/actions";
 import type { AnalysisKindSlug } from "@/src/core/ports/prompt-template-repository-port";
@@ -24,6 +26,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 type VersionRow = {
@@ -265,6 +277,9 @@ export function SuperAdminPromptsEditor({
 
   const charCount = markdown.length;
   const lineCount = markdown.split("\n").length;
+  const isDirty = markdown !== initialMarkdown;
+  /** First publication when no history row exists yet */
+  const canPublish = isDirty || sorted.length === 0;
 
   const previewHtml = useMemo(
     () => (showPreview ? renderMarkdownToHtml(markdown) : ""),
@@ -299,75 +314,134 @@ export function SuperAdminPromptsEditor({
   );
 
   return (
-    <div className="space-y-4">
-      {/* Editor + Preview side-by-side */}
-      <div className={cn("grid gap-4", showPreview ? "lg:grid-cols-2" : "grid-cols-1")}>
-        {/* Editor column */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor={`md-${kind}`} className="text-sm font-medium">
-              Éditeur Markdown
-            </Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowPreview((p) => !p)}
-            >
-              {showPreview ? (
-                <>
-                  <EyeOff className="mr-1.5 size-3.5" />
-                  Masquer
-                </>
+    <div className="space-y-6">
+      <Card className="overflow-hidden shadow-sm">
+        <CardHeader className="bg-muted/20 border-b pb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <CardTitle className="text-base font-semibold">
+                Brouillon — {kind}
+              </CardTitle>
+              <CardDescription>
+                Contenu utilisé pour les prochaines analyses jusqu&apos;à publication
+                d&apos;une nouvelle version.
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {isDirty ? (
+                <Badge className="font-normal">Modifications non publiées</Badge>
+              ) : latestVersion > 0 ? (
+                <Badge variant="secondary" className="font-normal">
+                  Aligné sur v{latestVersion}
+                </Badge>
               ) : (
-                <>
-                  <Eye className="mr-1.5 size-3.5" />
-                  Prévisualisation
-                </>
+                <Badge variant="secondary" className="font-normal">
+                  Brouillon à jour
+                </Badge>
               )}
-            </Button>
+              {latestVersion > 0 ? (
+                <Badge variant="outline" className="tabular-nums">
+                  v{latestVersion} en prod
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="font-normal">
+                  Aucune version publiée
+                </Badge>
+              )}
+            </div>
           </div>
-          <Textarea
-            id={`md-${kind}`}
-            value={markdown}
-            onChange={(e) => setMarkdown(e.target.value)}
-            rows={22}
-            className="font-mono text-xs leading-relaxed"
-          />
-          <div className="text-muted-foreground flex items-center gap-3 text-xs">
-            <span>{charCount.toLocaleString("fr-FR")} caractères</span>
-            <span className="text-muted-foreground/40">·</span>
-            <span>{lineCount.toLocaleString("fr-FR")} lignes</span>
-          </div>
-        </div>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-6">
+          <div
+            className={cn(
+              "grid gap-4",
+              showPreview ? "lg:grid-cols-2 lg:gap-5" : "grid-cols-1",
+            )}
+          >
+            <div className="flex min-h-0 flex-col space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label htmlFor={`md-${kind}`} className="text-sm font-medium">
+                  Markdown
+                </Label>
+                <Button
+                  type="button"
+                  variant={showPreview ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setShowPreview((p) => !p)}
+                  className="shrink-0"
+                >
+                  {showPreview ? (
+                    <>
+                      <EyeOff className="mr-1.5 size-3.5" />
+                      Masquer l&apos;aperçu
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="mr-1.5 size-3.5" />
+                      Aperçu rendu
+                    </>
+                  )}
+                </Button>
+              </div>
+              <Textarea
+                id={`md-${kind}`}
+                value={markdown}
+                onChange={(e) => setMarkdown(e.target.value)}
+                spellCheck={false}
+                rows={20}
+                placeholder="Saisissez le prompt au format Markdown…"
+                className="font-mono text-xs leading-relaxed md:min-h-[28rem] md:resize-y"
+              />
+              <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                <span>{charCount.toLocaleString("fr-FR")} caractères</span>
+                <span className="text-muted-foreground/30 hidden sm:inline">·</span>
+                <span>{lineCount.toLocaleString("fr-FR")} lignes</span>
+              </div>
+            </div>
 
-        {/* Preview column */}
-        {showPreview && (
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Prévisualisation</Label>
-            <div
-              className="prose prose-sm dark:prose-invert max-h-[520px] overflow-y-auto rounded-lg border p-4 text-sm"
-              dangerouslySetInnerHTML={{ __html: previewHtml }}
-            />
+            {showPreview && (
+              <div className="flex min-h-0 flex-col space-y-2">
+                <Label className="text-sm font-medium">Aperçu</Label>
+                <div
+                  className="prose prose-sm dark:prose-invert border-border/80 bg-card/50 max-h-[min(28rem,70vh)] min-h-[12rem] overflow-y-auto rounded-xl border p-4 text-sm shadow-inner"
+                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                />
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </CardContent>
+        <CardFooter className="bg-muted/15 flex flex-col gap-3 border-t sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground max-w-xl text-xs leading-relaxed">
+            La publication enregistre une version immuable et met à jour le prompt
+            actif pour toutes les analyses {kind}.
+          </p>
+          <Button
+            type="button"
+            size="lg"
+            disabled={pending || !canPublish}
+            onClick={() => {
+              setError(null);
+              setPublishDialogOpen(true);
+            }}
+            title={
+              !canPublish
+                ? "Aucun changement par rapport au contenu chargé"
+                : undefined
+            }
+          >
+            <ArrowUpFromLine className="mr-2 size-4" />
+            {pending ? "Publication…" : "Publier une nouvelle version"}
+          </Button>
+        </CardFooter>
+      </Card>
 
       {error && (
-        <p className="text-destructive text-sm" role="alert">
-          {error}
-        </p>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>Action impossible</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
-
-      {/* Publish button */}
-      <Button
-        type="button"
-        disabled={pending}
-        onClick={() => setPublishDialogOpen(true)}
-      >
-        <ArrowUpFromLine className="mr-1.5 size-3.5" />
-        {pending ? "Publication…" : "Publier une nouvelle version"}
-      </Button>
 
       {/* Publish confirmation dialog */}
       <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
@@ -398,49 +472,54 @@ export function SuperAdminPromptsEditor({
 
       {/* Diff view — side by side with line numbers */}
       {diffRows && diffVersion && (
-        <div className="space-y-3 rounded-lg border p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h4 className="text-sm font-medium">
-                Diff — v{diffVersion.version} → brouillon actuel
-              </h4>
-              <p className="text-muted-foreground mt-0.5 text-xs">
-                Colonne gauche : version publiée. Colonne droite : éditeur actuel.
-              </p>
+        <Card className="border-primary/15 shadow-sm ring-1 ring-primary/10">
+          <CardHeader className="pb-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <CardTitle className="text-base">
+                  Comparaison v{diffVersion.version} → brouillon
+                </CardTitle>
+                <CardDescription>
+                  Gauche : version historique sélectionnée. Droite : contenu actuel
+                  de l&apos;éditeur.
+                </CardDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => setDiffVersion(null)}
+              >
+                <X className="mr-1.5 size-3.5" />
+                Fermer le diff
+              </Button>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setDiffVersion(null)}
-            >
-              <X className="mr-1 size-3.5" />
-              Fermer
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-3 text-[11px] leading-tight">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-2.5 shrink-0 rounded-sm bg-emerald-500/35 ring-1 ring-emerald-600/30" />
-              Ajouté
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-2.5 shrink-0 rounded-sm bg-rose-500/35 ring-1 ring-rose-600/30" />
-              Supprimé
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-2.5 shrink-0 rounded-sm bg-muted ring-1 ring-border" />
-              Inchangé
-            </span>
-          </div>
-          <div className="overflow-hidden rounded-md border">
-            <div className="bg-muted/40 text-muted-foreground grid max-h-[min(70vh,520px)] grid-cols-2 divide-x border-b text-[10px] font-medium tracking-wide uppercase">
-              <div className="flex min-h-8 items-center gap-2 px-2 py-1.5">
-                <span className="text-foreground/80 shrink-0">v{diffVersion.version}</span>
+            <div className="text-muted-foreground flex flex-wrap gap-4 pt-1 text-[11px]">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-2.5 shrink-0 rounded-sm bg-emerald-500/35 ring-1 ring-emerald-600/30" />
+                Ajouté
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-2.5 shrink-0 rounded-sm bg-rose-500/35 ring-1 ring-rose-600/30" />
+                Supprimé
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-2.5 shrink-0 rounded-sm bg-muted ring-1 ring-border" />
+                Inchangé
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="px-2 pb-4 sm:px-4">
+          <div className="overflow-hidden rounded-xl border bg-muted/20">
+            <div className="bg-muted/50 text-muted-foreground grid grid-cols-2 divide-x border-b text-[10px] font-medium tracking-wide uppercase">
+              <div className="flex min-h-9 items-center gap-2 px-3 py-2">
+                <span className="text-foreground/90 shrink-0">v{diffVersion.version}</span>
                 <span className="truncate font-normal normal-case">référence</span>
               </div>
-              <div className="flex min-h-8 items-center gap-2 px-2 py-1.5">
-                <span className="text-foreground/80 shrink-0">Brouillon</span>
-                <span className="truncate font-normal normal-case">modifications</span>
+              <div className="flex min-h-9 items-center gap-2 px-3 py-2">
+                <span className="text-foreground/90 shrink-0">Brouillon</span>
+                <span className="truncate font-normal normal-case">éditeur</span>
               </div>
             </div>
             <div className="max-h-[min(70vh,520px)] overflow-auto">
@@ -515,69 +594,107 @@ export function SuperAdminPromptsEditor({
               </div>
             </div>
           </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Version history */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Historique des versions</h3>
-        <ul className="max-h-[480px] space-y-2 overflow-y-auto rounded-lg border p-2">
-          {sorted.map((v) => (
-            <li
-              key={v.id}
-              className="bg-muted/30 space-y-2 rounded-md border p-3 text-xs"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="tabular-nums">
-                    v{v.version}
-                  </Badge>
-                  <span className="text-muted-foreground">
-                    {v.authorEmail ?? v.authorUserId}
-                  </span>
-                </div>
-                <span className="text-muted-foreground shrink-0">
-                  {new Date(v.createdAt).toLocaleString("fr-FR")}
-                </span>
-              </div>
+      <Card className="shadow-sm">
+        <CardHeader className="border-b pb-4">
+          <div className="flex items-center gap-2">
+            <div className="bg-muted flex size-8 items-center justify-center rounded-lg">
+              <History className="text-muted-foreground size-4" aria-hidden />
+            </div>
+            <div>
+              <CardTitle className="text-base">Historique des versions</CardTitle>
+              <CardDescription>
+                Jusqu&apos;à 30 dernières publications. Restaurer remplace le brouillon
+                (sans publier automatiquement).
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 pt-4 sm:px-4">
+          {sorted.length === 0 ? (
+            <p className="text-muted-foreground py-8 text-center text-sm">
+              Aucune version enregistrée pour ce prompt.
+            </p>
+          ) : (
+            <ul className="max-h-[min(32rem,55vh)] space-y-2 overflow-y-auto pr-1">
+              {sorted.map((v) => {
+                const isDiffTarget = diffVersion?.id === v.id;
+                return (
+                  <li
+                    key={v.id}
+                    className={cn(
+                      "space-y-3 rounded-xl border p-4 text-xs transition-colors",
+                      "hover:bg-muted/25",
+                      isDiffTarget
+                        ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
+                        : "bg-card border-border/80",
+                    )}
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="tabular-nums text-xs">
+                          v{v.version}
+                        </Badge>
+                        <span className="text-foreground/90 max-w-[220px] truncate text-xs font-medium sm:max-w-xs">
+                          {v.authorEmail ?? v.authorUserId}
+                        </span>
+                      </div>
+                      <time
+                        className="text-muted-foreground shrink-0 text-[11px] tabular-nums"
+                        dateTime={v.createdAt}
+                      >
+                        {new Date(v.createdAt).toLocaleString("fr-FR", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })}
+                      </time>
+                    </div>
 
-              {/* Preview snippet */}
-              <p className="text-muted-foreground truncate font-mono text-[11px]">
-                {v.markdown.slice(0, 100)}
-                {v.markdown.length > 100 ? "…" : ""}
-              </p>
+                    <p className="text-muted-foreground line-clamp-2 font-mono text-[11px] leading-relaxed">
+                      {v.markdown.slice(0, 180)}
+                      {v.markdown.length > 180 ? "…" : ""}
+                    </p>
 
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  disabled={pending}
-                  onClick={() => {
-                    setError(null);
-                    doPublish(v.markdown, "RESTORE_PROMPT");
-                  }}
-                >
-                  <RotateCcw className="mr-1 size-3" />
-                  Restaurer
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setDiffVersion((prev) => (prev?.id === v.id ? null : v))
-                  }
-                >
-                  <GitCompareArrows className="mr-1 size-3" />
-                  {diffVersion?.id === v.id ? "Masquer diff" : "Voir le diff"}
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+                    <Separator />
+
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        disabled={pending}
+                        onClick={() => {
+                          setError(null);
+                          doPublish(v.markdown, "RESTORE_PROMPT");
+                        }}
+                      >
+                        <RotateCcw className="mr-1.5 size-3.5" />
+                        Restaurer dans l&apos;éditeur
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={isDiffTarget ? "secondary" : "outline"}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() =>
+                          setDiffVersion((prev) => (prev?.id === v.id ? null : v))
+                        }
+                      >
+                        <GitCompareArrows className="mr-1.5 size-3.5" />
+                        {isDiffTarget ? "Masquer le diff" : "Comparer au brouillon"}
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

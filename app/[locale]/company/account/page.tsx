@@ -32,12 +32,14 @@ export default async function AccountPage() {
           </Link>
         </li>
         <li>
-          <Link
-            href="/sign-out"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Déconnexion
-          </Link>
+          <form action="/sign-out" method="POST">
+            <button
+              type="submit"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              Déconnexion
+            </button>
+          </form>
         </li>
       </ul>
     </div>

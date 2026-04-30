@@ -21,7 +21,7 @@
   },
   "accountPage": {
     "title": "Account",
-    "description": "Profile, security, password reset, and sessions are managed in Clerk."
+    "description": "Profile, security, password, and sessions are managed in this application."
   },
   "superAdminPage": {
     "title": "Super admin",
@@ -38,7 +38,7 @@
   },
   "superAdminOrgList": {
     "title": "Super admin — organizations",
-    "description": "Entering an organization records an audit log and grants org-admin capabilities for that Clerk organization while the session cookie is set.",
+    "description": "Entering an organization records an audit log and grants org-admin capabilities for that organization while the elevation cookie is set.",
     "reasonLabel": "Reason (optional)",
     "reasonPlaceholder": "Ticket / incident reference",
     "operateButton": "Operate in this organization"
