@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { AdminUserTable } from "@/components/admin/admin-user-table";
+import { AdminUserTable } from "@/components/organisms/admin-user-table";
 
 export const dynamic = "force-dynamic";
 

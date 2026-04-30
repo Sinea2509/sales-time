@@ -2,7 +2,7 @@ import Link from "next/link";
 import { hashToken } from "@/lib/auth/tokens";
 import { prisma } from "@/lib/prisma";
 import { makeApplicationDeps } from "@/src/adapters/composition";
-import { AcceptSuperAdminInvitationClient } from "@/components/auth/accept-super-admin-invitation-client";
+import { AcceptSuperAdminInvitationClient } from "@/components/organisms/accept-super-admin-invitation-client";
 
 type Props = { params: Promise<{ token: string }> };
 

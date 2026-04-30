@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SignInForm } from "@/components/auth/sign-in-form";
+import { SignInForm } from "@/components/organisms/sign-in-form";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

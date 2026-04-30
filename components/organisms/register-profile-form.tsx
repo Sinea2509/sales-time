@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { REGISTER_PROFILE_ROLE_OPTIONS } from "@/lib/register-profile-options";
-import { orgSettingsSelectClassName } from "@/components/org-settings/org-settings-select-class";
+import { orgSettingsSelectClassName } from "@/components/organisms/org-settings-select-class";
 import {
   completeRegisterProfile,
   type CompleteRegisterProfileResult,

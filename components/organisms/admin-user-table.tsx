@@ -38,7 +38,7 @@ import {
   inviteUserToOrgAction,
   bulkToggleUserStatusAction,
 } from "@/app/[locale]/admin/users/actions";
-import { AdminExportButton } from "@/components/admin/admin-export-button";
+import { AdminExportButton } from "@/components/molecules/admin-export-button";
 
 type UserRow = {
   id: string;

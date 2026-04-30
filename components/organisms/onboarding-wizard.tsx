@@ -35,7 +35,7 @@ import {
   ONBOARDING_INVITE_ROLE_OPTIONS,
   type OnboardingInviteRow,
 } from "@/lib/onboarding-invites";
-import { OnboardingPhrasePickerSheet } from "@/components/onboarding/onboarding-phrase-picker-sheet";
+import { OnboardingPhrasePickerSheet } from "@/components/organisms/onboarding-phrase-picker-sheet";
 import { cn } from "@/lib/utils";
 
 const STEPS = [

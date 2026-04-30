@@ -1,8 +1,6 @@
-import { redirect } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { SuperAdminPromptsEditor } from "@/components/organisms/super-admin-prompts-editor";
-import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { makeApplicationDeps } from "@/src/adapters/composition";
 import type { AnalysisKindSlug } from "@/src/core/ports/prompt-template-repository-port";
 
@@ -56,12 +54,6 @@ const TAB_META: Record<AnalysisKindSlug, { label: string; description: string }>
 };
 
 export default async function SuperAdminPromptsPage() {
-  const actor = await requireDashboardActor();
-  if (actor.kind !== "authenticated") redirect("/sign-in");
-  if (!actor.systemRoles.includes("SUPER_ADMIN")) {
-    redirect("/company");
-  }
-
   const [soncas, disc, kiss] = await Promise.all([
     loadPromptTab("SONCAS"),
     loadPromptTab("DISC"),

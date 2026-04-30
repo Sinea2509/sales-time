@@ -12,16 +12,7 @@ export default async function SuperAdminInvitesPage() {
   const t = await getTranslations("superAdminInvitesPage");
   const deps = makeApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) {
-    return null;
-  }
-  const user = await prisma.user.findUnique({
-    where: { id: principal.userId },
-    select: { systemRoles: { select: { role: true } } },
-  });
-  if (!user?.systemRoles.some((r) => r.role === "SUPER_ADMIN")) {
-    return null;
-  }
+  if (!principal) return null;
 
   const superAdminRoles = await prisma.systemRole.findMany({
     where: { role: "SUPER_ADMIN" },

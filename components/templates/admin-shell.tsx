@@ -15,7 +15,7 @@ import {
   LogOut,
   Search,
 } from "lucide-react";
-import { AdminCommandPalette } from "@/components/admin/admin-command-palette";
+import { AdminCommandPalette } from "@/components/organisms/admin-command-palette";
 import {
   Sidebar,
   SidebarContent,

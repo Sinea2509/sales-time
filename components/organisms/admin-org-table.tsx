@@ -30,7 +30,7 @@ import {
   deleteOrganizationAction,
   bulkDeleteOrganizationsAction,
 } from "@/app/[locale]/admin/organizations/actions";
-import { AdminExportButton } from "@/components/admin/admin-export-button";
+import { AdminExportButton } from "@/components/molecules/admin-export-button";
 
 type OrgRow = {
   id: string;

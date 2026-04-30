@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { makeApplicationDeps } from "@/src/adapters/composition";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
-import { OrgSettingsEmailForm } from "@/components/org-settings/org-settings-email-form";
+import { OrgSettingsEmailForm } from "@/components/organisms/org-settings-email-form";
 
 export const dynamic = "force-dynamic";
 

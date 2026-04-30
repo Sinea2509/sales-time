@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import {
   Users,
   Building2,
@@ -10,11 +9,10 @@ import {
   Zap,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { makeApplicationDeps } from "@/src/adapters/composition";
-import { AdminKpiCard } from "@/components/admin/admin-kpi-card";
-import { AdminActivityChart } from "@/components/admin/admin-activity-chart";
-import { AdminOrgGrowthChart } from "@/components/admin/admin-org-growth-chart";
-import { AdminDateRangePicker } from "@/components/admin/admin-date-range-picker";
+import { AdminKpiCard } from "@/components/molecules/admin-kpi-card";
+import { AdminActivityChart } from "@/components/organisms/admin-activity-chart";
+import { AdminOrgGrowthChart } from "@/components/organisms/admin-org-growth-chart";
+import { AdminDateRangePicker } from "@/components/molecules/admin-date-range-picker";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +27,6 @@ const VALID_RANGES: Record<string, number> = {
 export default async function AdminDashboardPage(props: {
   searchParams: Promise<{ range?: string }>;
 }) {
-  const deps = makeApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) redirect("/sign-in");
-
   const { range: rawRange } = await props.searchParams;
   const rangeDays = VALID_RANGES[rawRange ?? ""] ?? 30;
   const halfRange = Math.floor(rangeDays / 2);

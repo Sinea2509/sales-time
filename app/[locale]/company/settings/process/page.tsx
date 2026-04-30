@@ -1,4 +1,4 @@
-import { OrgSettingsProcessForm } from "@/components/org-settings/org-settings-process-form";
+import { OrgSettingsProcessForm } from "@/components/organisms/org-settings-process-form";
 import { asStringArray } from "@/lib/as-string-array";
 import {
   DEFAULT_MEETING_TYPES,

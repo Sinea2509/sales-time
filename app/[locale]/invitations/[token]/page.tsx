@@ -2,7 +2,7 @@ import Link from "next/link";
 import { hashToken } from "@/lib/auth/tokens";
 import { prisma } from "@/lib/prisma";
 import { makeApplicationDeps } from "@/src/adapters/composition";
-import { AcceptInvitationClient } from "@/components/auth/accept-invitation-client";
+import { AcceptInvitationClient } from "@/components/organisms/accept-invitation-client";
 
 type Props = { params: Promise<{ token: string }> };
 

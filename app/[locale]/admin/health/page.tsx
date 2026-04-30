@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import {
   Database,
   HeartPulse,
@@ -13,8 +12,7 @@ import {
   MailPlus,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { makeApplicationDeps } from "@/src/adapters/composition";
-import { AdminKpiCard } from "@/components/admin/admin-kpi-card";
+import { AdminKpiCard } from "@/components/molecules/admin-kpi-card";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -61,10 +59,6 @@ function dbBadgeClasses(ms: number, ok: boolean) {
 }
 
 export default async function HealthPage() {
-  const deps = makeApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) redirect("/sign-in");
-
   const now = new Date();
 
   const [

@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { AdminExportButton } from "@/components/admin/admin-export-button";
+import { AdminExportButton } from "@/components/molecules/admin-export-button";
 
 type AuditRow = {
   id: string;

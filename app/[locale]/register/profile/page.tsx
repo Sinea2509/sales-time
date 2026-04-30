@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { RegisterProfileForm } from "@/components/register/register-profile-form";
-import { SignupFlowIllustration } from "@/components/register/signup-flow-illustration";
+import { RegisterProfileForm } from "@/components/organisms/register-profile-form";
+import { SignupFlowIllustration } from "@/components/molecules/signup-flow-illustration";
 import { needsRegisterProfile } from "@/lib/register-profile-gate";
 import { makeApplicationDeps } from "@/src/adapters/composition";
 

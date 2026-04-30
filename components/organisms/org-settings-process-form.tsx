@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { updateOrganizationProcess } from "@/app/[locale]/company/settings/actions";
 import { cn } from "@/lib/utils";
-import { EditableStringList } from "@/components/org-settings/editable-string-list";
+import { EditableStringList } from "@/components/molecules/editable-string-list";
 
 export type OrgProcessFormInitial = {
   meetingTypes: string[];

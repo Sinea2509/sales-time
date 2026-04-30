@@ -14,7 +14,7 @@ import {
 } from "@/lib/onboarding-step1-options";
 import { optionsWithLegacy } from "@/lib/options-with-legacy";
 import { cn } from "@/lib/utils";
-import { orgSettingsSelectClassName } from "@/components/org-settings/org-settings-select-class";
+import { orgSettingsSelectClassName } from "@/components/organisms/org-settings-select-class";
 
 export type OrgContexteFormInitial = {
   companyName: string;

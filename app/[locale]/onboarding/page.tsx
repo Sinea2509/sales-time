@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
+import { OnboardingWizard } from "@/components/organisms/onboarding-wizard";
 import {
   DEFAULT_INVITE_MESSAGE,
   DEFAULT_MEETING_TYPES,

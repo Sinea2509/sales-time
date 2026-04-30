@@ -1,4 +1,4 @@
-import { OrgSettingsCoachForm } from "@/components/org-settings/org-settings-coach-form";
+import { OrgSettingsCoachForm } from "@/components/organisms/org-settings-coach-form";
 import { asStringArray } from "@/lib/as-string-array";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { makeApplicationDeps } from "@/src/adapters/composition";

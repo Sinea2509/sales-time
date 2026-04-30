@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { AdminAuditLog } from "@/components/admin/admin-audit-log";
+import { AdminAuditLog } from "@/components/organisms/admin-audit-log";
 
 export const dynamic = "force-dynamic";
 

@@ -7,7 +7,7 @@ import {
   OrgSettingsTeamList,
   type TeamInvitationRow,
   type TeamMemberRow,
-} from "@/components/org-settings/org-settings-team-list";
+} from "@/components/organisms/org-settings-team-list";
 
 export const dynamic = "force-dynamic";
 

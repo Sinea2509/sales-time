@@ -1,4 +1,4 @@
-import { OrgSettingsContexteForm } from "@/components/org-settings/org-settings-contexte-form";
+import { OrgSettingsContexteForm } from "@/components/organisms/org-settings-contexte-form";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { makeApplicationDeps } from "@/src/adapters/composition";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
