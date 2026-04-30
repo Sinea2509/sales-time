@@ -35,8 +35,9 @@ Super admin is an **app database** role (`SystemRole.SUPER_ADMIN`). **Clerk** st
 ### Vercel + Neon
 
 1. In Vercel, connect the [Neon](https://neon.tech) integration (or paste `DATABASE_URL` from the Neon console) into project **Environment Variables** for Production / Preview / Development as needed.
-2. Locally, copy the same `DATABASE_URL` into `.env` (or run `vercel env pull` if you use the Vercel CLI).
-3. Apply migrations: `npm run db:migrate` (deploy) or `npm run db:migrate:dev` (local).
+2. Add **`DIRECT_URL`** alongside `DATABASE_URL`: use Neon’s **direct** connection string (host **without** `-pooler`) for Prisma CLI (`migrate deploy`, seed, studio). Keep **`DATABASE_URL`** as the **pooled** string for the running app (`lib/prisma.ts`). Without `DIRECT_URL`, `npm run build` can fail with **P1002** (advisory lock timeout) because [`prisma migrate deploy`](https://pris.ly/d/migrate-advisory-locking) must not run through the pooler. See [Neon + Prisma](https://neon.com/docs/guides/prisma).
+3. Locally, copy the same variables into `.env` (or run `vercel env pull` if you use the Vercel CLI). [`.env.example`](.env.example) shows the split.
+4. Apply migrations: `npm run db:migrate` (deploy) or `npm run db:migrate:dev` (local).
 
 ### Grant the first super admin (e.g. `stephane@mytradeshow.ai`)
 
