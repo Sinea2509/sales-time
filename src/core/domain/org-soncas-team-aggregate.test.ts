@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@jest/globals";
 import { averageSoncasDriverScores } from "./org-soncas-team-aggregate";
 
 const driver = (score: number) => ({ score, evidence: [] as string[] });

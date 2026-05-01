@@ -1,82 +1,99 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "@jest/globals";
+import type { Mock } from "jest-mock";
 
-const revalidatePathMock = vi.hoisted(() => vi.fn());
-vi.mock("next/cache", () => ({
-  revalidatePath: revalidatePathMock,
-}));
+type AdminAppDepsMocks = {
+  getAuthenticatedPrincipalMock: Mock;
+  findByIdMock: Mock;
+  backofficeMock: Record<string, Mock>;
+};
 
-const backofficeMock = vi.hoisted(() => ({
-  findOrganizationBySlug: vi.fn(),
-  createOrganization: vi.fn(),
-  findOrganizationById: vi.fn(),
-  findOrganizationSlugConflict: vi.fn(),
-  updateOrganization: vi.fn(),
-  findOrganizationsByIds: vi.fn(),
-  deleteOrganizationsByIds: vi.fn(),
-  deleteOrganizationById: vi.fn(),
-  createSuperAdminAuditLog: vi.fn(),
-  createSuperAdminAuditLogsMany: vi.fn(),
-  findUsersByIdsForBulk: vi.fn(),
-  updateUsersStatusMany: vi.fn(),
-  findUserStatusById: vi.fn(),
-  updateUserStatus: vi.fn(),
-  findUserByIdExists: vi.fn(),
-  findUserEmailConflict: vi.fn(),
-  updateUserProfile: vi.fn(),
-  findUserForDelete: vi.fn(),
-  deleteUserById: vi.fn(),
-  findOrganizationNameById: vi.fn(),
-  findPendingOrganizationInvitation: vi.fn(),
-  createOrganizationInvitationAdmin: vi.fn(),
-  findUserWithSuperAdminByEmail: vi.fn(),
-  findPendingSuperAdminInvitationByEmail: vi.fn(),
-  createSuperAdminInvitation: vi.fn(),
-  findPendingSuperAdminInvitationById: vi.fn(),
-  revokeSuperAdminInvitation: vi.fn(),
-  findSuperAdminSystemRoleForUser: vi.fn(),
-  deleteSystemRole: vi.fn(),
-}));
+jest.mock("@/lib/application-deps", () => {
+  const mocks: AdminAppDepsMocks = {
+    getAuthenticatedPrincipalMock: jest.fn(),
+    findByIdMock: jest.fn(),
+    backofficeMock: {
+      findOrganizationBySlug: jest.fn(),
+      createOrganization: jest.fn(),
+      findOrganizationById: jest.fn(),
+      findOrganizationSlugConflict: jest.fn(),
+      updateOrganization: jest.fn(),
+      findOrganizationsByIds: jest.fn(),
+      deleteOrganizationsByIds: jest.fn(),
+      deleteOrganizationById: jest.fn(),
+      createSuperAdminAuditLog: jest.fn(),
+      createSuperAdminAuditLogsMany: jest.fn(),
+      findUsersByIdsForBulk: jest.fn(),
+      updateUsersStatusMany: jest.fn(),
+      findUserStatusById: jest.fn(),
+      updateUserStatus: jest.fn(),
+      findUserByIdExists: jest.fn(),
+      findUserEmailConflict: jest.fn(),
+      updateUserProfile: jest.fn(),
+      findUserForDelete: jest.fn(),
+      deleteUserById: jest.fn(),
+      findOrganizationNameById: jest.fn(),
+      findPendingOrganizationInvitation: jest.fn(),
+      createOrganizationInvitationAdmin: jest.fn(),
+      findUserWithSuperAdminByEmail: jest.fn(),
+      findPendingSuperAdminInvitationByEmail: jest.fn(),
+      createSuperAdminInvitation: jest.fn(),
+      findPendingSuperAdminInvitationById: jest.fn(),
+      revokeSuperAdminInvitation: jest.fn(),
+      findSuperAdminSystemRoleForUser: jest.fn(),
+      deleteSystemRole: jest.fn(),
+    },
+  };
+  const graph = {
+    auth: {
+      getAuthenticatedPrincipal: mocks.getAuthenticatedPrincipalMock,
+    },
+    users: {
+      findById: mocks.findByIdMock,
+    },
+    backoffice: mocks.backofficeMock,
+  };
+  (graph as { __adminTestMocks?: AdminAppDepsMocks }).__adminTestMocks = mocks;
+  return { getApplicationDeps: () => graph };
+});
 
-const sendTransactionalEmailMock = vi.hoisted(() =>
-  vi.fn().mockResolvedValue(undefined),
-);
-vi.mock("@/lib/email/mailer", () => ({
-  sendTransactionalEmail: sendTransactionalEmailMock,
-}));
+// eslint-disable-next-line no-var -- Jest mock factories run before `let` bindings exist
+var revalidatePathMock: Mock;
+jest.mock("next/cache", () => {
+  revalidatePathMock = jest.fn();
+  return { revalidatePath: revalidatePathMock };
+});
 
-const generateOpaqueTokenMock = vi.hoisted(() =>
-  vi.fn(() => "raw-invite-token"),
-);
-const hashTokenMock = vi.hoisted(() => vi.fn(() => "hashed-token"));
-vi.mock("@/lib/auth/tokens", () => ({
-  generateOpaqueToken: generateOpaqueTokenMock,
-  hashToken: hashTokenMock,
-}));
+// eslint-disable-next-line no-var
+var sendTransactionalEmailMock: Mock;
+jest.mock("@/lib/email/mailer", () => {
+  sendTransactionalEmailMock = jest.fn().mockResolvedValue(undefined);
+  return { sendTransactionalEmail: sendTransactionalEmailMock };
+});
 
-const publishGlobalPromptVersionMock = vi.hoisted(() => vi.fn());
-vi.mock("@/src/core/application/publish-global-prompt-version", () => ({
-  publishGlobalPromptVersion: publishGlobalPromptVersionMock,
-}));
+// eslint-disable-next-line no-var
+var generateOpaqueTokenMock: Mock;
+// eslint-disable-next-line no-var
+var hashTokenMock: Mock;
+jest.mock("@/lib/auth/tokens", () => {
+  generateOpaqueTokenMock = jest.fn(() => "raw-invite-token");
+  hashTokenMock = jest.fn(() => "hashed-token");
+  return {
+    generateOpaqueToken: generateOpaqueTokenMock,
+    hashToken: hashTokenMock,
+  };
+});
+
+// eslint-disable-next-line no-var
+var publishGlobalPromptVersionMock: Mock;
+jest.mock("@/src/core/application/publish-global-prompt-version", () => {
+  publishGlobalPromptVersionMock = jest.fn();
+  return { publishGlobalPromptVersion: publishGlobalPromptVersionMock };
+});
 
 const ACTOR_ID = "cjld2cjxh0000qzrmn831i7rn";
 const OTHER_USER_ID = "cmfq0w5vq0001s6z8v9x0y1z2";
 const ORG_ID = "clorg00000000000000000001";
 const INVITE_ID = "clinv00000000000000000001";
-
-const getAuthenticatedPrincipalMock = vi.hoisted(() => vi.fn());
-const findByIdMock = vi.hoisted(() => vi.fn());
-
-vi.mock("@/lib/application-deps", () => ({
-  getApplicationDeps: () => ({
-    auth: {
-      getAuthenticatedPrincipal: getAuthenticatedPrincipalMock,
-    },
-    users: {
-      findById: findByIdMock,
-    },
-    backoffice: backofficeMock,
-  }),
-}));
 
 import {
   bulkDeleteOrganizationsAction,
@@ -97,6 +114,14 @@ import {
   revokeSuperAdminRoleAction,
 } from "@/app/[locale]/admin/super-admins/actions";
 import { publishPromptAction } from "@/app/[locale]/admin/prompts/actions";
+import { getApplicationDeps } from "@/lib/application-deps";
+
+const {
+  getAuthenticatedPrincipalMock,
+  findByIdMock,
+  backofficeMock,
+} = (getApplicationDeps() as { __adminTestMocks: AdminAppDepsMocks })
+  .__adminTestMocks;
 
 function mockAuthenticatedSuperAdminPrincipal() {
   getAuthenticatedPrincipalMock.mockResolvedValue({ userId: ACTOR_ID });
@@ -108,7 +133,7 @@ function mockAuthenticatedSuperAdminPrincipal() {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  jest.clearAllMocks();
   getAuthenticatedPrincipalMock.mockReset();
   findByIdMock.mockReset();
   publishGlobalPromptVersionMock.mockReset();
@@ -120,7 +145,7 @@ beforeEach(() => {
   });
   for (const fn of Object.values(backofficeMock)) {
     if (typeof fn === "function" && "mockReset" in fn) {
-      (fn as ReturnType<typeof vi.fn>).mockReset();
+      (fn as ReturnType<typeof jest.fn>).mockReset();
     }
   }
   sendTransactionalEmailMock.mockResolvedValue(undefined);

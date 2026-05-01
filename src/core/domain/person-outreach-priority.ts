@@ -6,7 +6,8 @@ export function outreachPriorityScore(input: {
   meetingCount: number;
   now?: Date;
 }): number {
-  const now = input.now ?? new Date();
+  const now =
+    input.now !== undefined ? input.now : new Date();
   const daysIdle = Math.max(
     0,
     (now.getTime() - input.lastMeetingAt.getTime()) / 86_400_000,

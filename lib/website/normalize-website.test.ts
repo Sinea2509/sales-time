@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@jest/globals";
 import { tryNormalizeWebsiteForOrgKey } from "./normalize-website";
 
 describe("tryNormalizeWebsiteForOrgKey", () => {
@@ -31,6 +31,27 @@ describe("tryNormalizeWebsiteForOrgKey", () => {
 
   it("rejects invalid", () => {
     expect(tryNormalizeWebsiteForOrgKey("not a url")).toEqual({
+      ok: false,
+      error: "INVALID",
+    });
+  });
+
+  it("rejects data URLs (invalid for org key)", () => {
+    expect(tryNormalizeWebsiteForOrgKey("data:text/plain,hi")).toEqual({
+      ok: false,
+      error: "INVALID",
+    });
+  });
+
+  it("rejects empty hostname", () => {
+    expect(tryNormalizeWebsiteForOrgKey("https://")).toEqual({
+      ok: false,
+      error: "INVALID",
+    });
+  });
+
+  it("rejects host that is only www.", () => {
+    expect(tryNormalizeWebsiteForOrgKey("https://www.")).toEqual({
       ok: false,
       error: "INVALID",
     });

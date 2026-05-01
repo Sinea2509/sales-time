@@ -68,6 +68,7 @@ export const SONCAS_BAR_CLASS: Record<(typeof SONCAS_KEYS)[number], string> = {
 };
 
 function clampPct(n: number): number {
+  /* istanbul ignore if -- averages are finite for Zod-valid scores */
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, Math.round(n)));
 }

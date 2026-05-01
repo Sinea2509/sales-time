@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@jest/globals";
 import type { OrgDashboardHome } from "./get-org-dashboard-home";
 import {
   buildOrgAdminImprovementBullets,

@@ -1,78 +1,133 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "@jest/globals";
 
-const redirectMock = vi.fn<(url: string) => never>();
+// eslint-disable-next-line no-var
+var redirectMock: jest.Mock;
+jest.mock("next/navigation", () => {
+  redirectMock = jest.fn();
+  return {
+    redirect: (url: string) => {
+      redirectMock(url);
+      const err = new Error(`REDIRECT:${url}`);
+      throw err;
+    },
+  };
+});
 
-vi.mock("next/navigation", () => ({
-  redirect: (url: string) => {
-    redirectMock(url);
-    const err = new Error(`REDIRECT:${url}`);
-    throw err;
+jest.mock("@/lib/prisma", () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    organization: {
+      findUnique: jest.fn(),
+    },
+    onboardingProfile: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      upsert: jest.fn(),
+    },
+    passwordResetToken: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+    },
+    organizationInvitation: {
+      findFirst: jest.fn(),
+      update: jest.fn(),
+      create: jest.fn(),
+    },
+    organizationMembership: {
+      upsert: jest.fn(),
+    },
+    $transaction: jest.fn(),
   },
 }));
 
-const prismaMock = vi.hoisted(() => ({
-  user: {
-    findUnique: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-  },
-  organization: {
-    findUnique: vi.fn(),
-  },
-  onboardingProfile: {
-    findUnique: vi.fn(),
-    update: vi.fn(),
-    upsert: vi.fn(),
-  },
-  passwordResetToken: {
-    findFirst: vi.fn(),
-    create: vi.fn(),
-    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
-  },
-  organizationInvitation: {
-    findFirst: vi.fn(),
-    update: vi.fn(),
-    create: vi.fn(),
-  },
-  organizationMembership: {
-    upsert: vi.fn(),
-  },
-  $transaction: vi.fn(),
-}));
+// eslint-disable-next-line no-var
+var hashPasswordMock: jest.Mock;
+// eslint-disable-next-line no-var
+var verifyPasswordMock: jest.Mock;
+jest.mock("@/lib/auth/password", () => {
+  hashPasswordMock = jest.fn();
+  verifyPasswordMock = jest.fn();
+  return {
+    hashPassword: hashPasswordMock,
+    verifyPassword: verifyPasswordMock,
+  };
+});
 
-vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
+// eslint-disable-next-line no-var
+var createSessionRecordMock: jest.Mock;
+// eslint-disable-next-line no-var
+var setSessionCookieMock: jest.Mock;
+// eslint-disable-next-line no-var
+var setActiveOrganizationCookieMock: jest.Mock;
+jest.mock("@/lib/auth/session-cookie", () => {
+  createSessionRecordMock = jest.fn();
+  setSessionCookieMock = jest.fn();
+  setActiveOrganizationCookieMock = jest.fn();
+  return {
+    setSessionCookie: setSessionCookieMock,
+    setActiveOrganizationCookie: setActiveOrganizationCookieMock,
+  };
+});
 
-const hashPasswordMock = vi.hoisted(() => vi.fn());
-const verifyPasswordMock = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/auth/password", () => ({
-  hashPassword: hashPasswordMock,
-  verifyPassword: verifyPasswordMock,
-}));
+// eslint-disable-next-line no-var
+var sendTransactionalEmailMock: jest.Mock;
+jest.mock("@/lib/email/mailer", () => {
+  sendTransactionalEmailMock = jest.fn();
+  return { sendTransactionalEmail: sendTransactionalEmailMock };
+});
 
-const createSessionRecordMock = vi.hoisted(() => vi.fn());
-const setSessionCookieMock = vi.hoisted(() => vi.fn());
-const setActiveOrganizationCookieMock = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/auth/session-cookie", () => ({
-  setSessionCookie: setSessionCookieMock,
-  setActiveOrganizationCookie: setActiveOrganizationCookieMock,
-}));
+// eslint-disable-next-line no-var
+var getAuthenticatedPrincipalMock: jest.Mock;
+// eslint-disable-next-line no-var
+var findByIdMock: jest.Mock;
+// eslint-disable-next-line no-var
+var findRegisterGateByUserIdMock: jest.Mock;
+// eslint-disable-next-line no-var
+var completeRegisterProfileRepoMock: jest.Mock;
+// eslint-disable-next-line no-var
+var updateAfterStep1Mock: jest.Mock;
+// eslint-disable-next-line no-var
+var updateAfterStep2Mock: jest.Mock;
+// eslint-disable-next-line no-var
+var updateAfterStep3Mock: jest.Mock;
+// eslint-disable-next-line no-var
+var findUserWithOnboardingByUserIdMock: jest.Mock;
+// eslint-disable-next-line no-var
+var registrationRegisterNewUserMock: jest.Mock;
+// eslint-disable-next-line no-var
+var signInFindUserMock: jest.Mock;
+// eslint-disable-next-line no-var
+var passwordResetFindUserMock: jest.Mock;
+// eslint-disable-next-line no-var
+var passwordResetCreateTokenMock: jest.Mock;
+// eslint-disable-next-line no-var
+var passwordResetConsumeMock: jest.Mock;
+// eslint-disable-next-line no-var
+var organizationInvitationsAcceptMock: jest.Mock;
+// eslint-disable-next-line no-var
+var onboardingCompletionStep4Mock: jest.Mock;
 
-const sendTransactionalEmailMock = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/email/mailer", () => ({
-  sendTransactionalEmail: sendTransactionalEmailMock,
-}));
-
-const getAuthenticatedPrincipalMock = vi.hoisted(() => vi.fn());
-const findByIdMock = vi.hoisted(() => vi.fn());
-const findRegisterGateByUserIdMock = vi.hoisted(() => vi.fn());
-const completeRegisterProfileRepoMock = vi.hoisted(() => vi.fn());
-const updateAfterStep1Mock = vi.hoisted(() => vi.fn());
-const updateAfterStep2Mock = vi.hoisted(() => vi.fn());
-const updateAfterStep3Mock = vi.hoisted(() => vi.fn());
-const findUserWithOnboardingByUserIdMock = vi.hoisted(() => vi.fn());
-
-const registrationRegisterNewUserMock = vi.hoisted(() =>
-  vi.fn(
+jest.mock("@/lib/application-deps", () => {
+  getAuthenticatedPrincipalMock = jest.fn();
+  findByIdMock = jest.fn();
+  findRegisterGateByUserIdMock = jest.fn();
+  completeRegisterProfileRepoMock = jest.fn();
+  updateAfterStep1Mock = jest.fn();
+  updateAfterStep2Mock = jest.fn();
+  updateAfterStep3Mock = jest.fn();
+  findUserWithOnboardingByUserIdMock = jest.fn();
+  registrationRegisterNewUserMock = jest.fn(
     async (input: {
       email: string;
       firstName: string;
@@ -82,6 +137,7 @@ const registrationRegisterNewUserMock = vi.hoisted(() =>
       passwordHash: string;
       signupWebsiteNormalized: string;
     }) => {
+      const { prisma: prismaMock } = await import("@/lib/prisma");
       const existingOrg = await prismaMock.organization.findUnique({
         where: { websiteNormalized: input.signupWebsiteNormalized },
       });
@@ -110,11 +166,9 @@ const registrationRegisterNewUserMock = vi.hoisted(() =>
       });
       return { ok: true as const, userId: user.id };
     },
-  ),
-);
-
-const signInFindUserMock = vi.hoisted(() =>
-  vi.fn(async (email: string) => {
+  );
+  signInFindUserMock = jest.fn(async (email: string) => {
+    const { prisma: prismaMock } = await import("@/lib/prisma");
     const user = await prismaMock.user.findUnique({
       where: { email },
       select: {
@@ -135,23 +189,19 @@ const signInFindUserMock = vi.hoisted(() =>
       ),
       organizationMembershipCount: user.organizationMemberships.length,
     };
-  }),
-);
-
-const passwordResetFindUserMock = vi.hoisted(() =>
-  vi.fn(async (email: string) => {
+  });
+  passwordResetFindUserMock = jest.fn(async (email: string) => {
+    const { prisma: prismaMock } = await import("@/lib/prisma");
     const user = await prismaMock.user.findUnique({
       where: { email },
       select: { id: true, email: true, status: true },
     });
     if (!user || user.status === "DISABLED") return null;
     return { id: user.id, email: user.email };
-  }),
-);
-
-const passwordResetCreateTokenMock = vi.hoisted(() =>
-  vi.fn(
+  });
+  passwordResetCreateTokenMock = jest.fn(
     async (input: { userId: string; rawToken: string; expiresAt: Date }) => {
+      const { prisma: prismaMock } = await import("@/lib/prisma");
       const { hashToken } = await import("@/lib/auth/tokens");
       await prismaMock.passwordResetToken.create({
         data: {
@@ -161,42 +211,40 @@ const passwordResetCreateTokenMock = vi.hoisted(() =>
         },
       });
     },
-  ),
-);
-
-const passwordResetConsumeMock = vi.hoisted(() =>
-  vi.fn(async (input: { rawToken: string; passwordHash: string }) => {
-    const { hashToken } = await import("@/lib/auth/tokens");
-    const th = hashToken(input.rawToken);
-    const row = await prismaMock.passwordResetToken.findFirst({
-      where: {
-        tokenHash: th,
-        consumedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-    });
-    if (!row) return { ok: false as const };
-    await prismaMock.$transaction([
-      prismaMock.user.update({
-        where: { id: row.userId },
-        data: { passwordHash: input.passwordHash },
-      }),
-      prismaMock.passwordResetToken.updateMany({
-        where: { userId: row.userId },
-        data: { consumedAt: new Date() },
-      }),
-    ]);
-    return { ok: true as const };
-  }),
-);
-
-const organizationInvitationsAcceptMock = vi.hoisted(() =>
-  vi.fn(
+  );
+  passwordResetConsumeMock = jest.fn(
+    async (input: { rawToken: string; passwordHash: string }) => {
+      const { prisma: prismaMock } = await import("@/lib/prisma");
+      const { hashToken } = await import("@/lib/auth/tokens");
+      const th = hashToken(input.rawToken);
+      const row = await prismaMock.passwordResetToken.findFirst({
+        where: {
+          tokenHash: th,
+          consumedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+      });
+      if (!row) return { ok: false as const };
+      await prismaMock.$transaction([
+        prismaMock.user.update({
+          where: { id: row.userId },
+          data: { passwordHash: input.passwordHash },
+        }),
+        prismaMock.passwordResetToken.updateMany({
+          where: { userId: row.userId },
+          data: { consumedAt: new Date() },
+        }),
+      ]);
+      return { ok: true as const };
+    },
+  );
+  organizationInvitationsAcceptMock = jest.fn(
     async (input: {
       tokenPlaintext: string;
       userId: string;
       userEmail: string;
     }) => {
+      const { prisma: prismaMock } = await import("@/lib/prisma");
       const { hashToken } = await import("@/lib/auth/tokens");
       const th = hashToken(input.tokenPlaintext);
       const inv = await prismaMock.organizationInvitation.findFirst({
@@ -235,53 +283,52 @@ const organizationInvitationsAcceptMock = vi.hoisted(() =>
       ]);
       return { ok: true as const, organizationId: inv.organizationId };
     },
-  ),
-);
+  );
+  onboardingCompletionStep4Mock = jest.fn();
+  return {
+    getApplicationDeps: () => ({
+      auth: {
+        getAuthenticatedPrincipal: getAuthenticatedPrincipalMock,
+      },
+      users: {
+        findById: findByIdMock,
+        findRegisterGateByUserId: findRegisterGateByUserIdMock,
+        completeRegisterProfile: completeRegisterProfileRepoMock,
+        findUserWithOnboardingByUserId: findUserWithOnboardingByUserIdMock,
+      },
+      onboardingProfiles: {
+        updateAfterStep1: updateAfterStep1Mock,
+        updateAfterStep2: updateAfterStep2Mock,
+        updateAfterStep3: updateAfterStep3Mock,
+      },
+      session: {
+        createSessionRecord: createSessionRecordMock,
+      },
+      registration: {
+        registerNewUser: registrationRegisterNewUserMock,
+        registerFromOrganizationInvitation: jest
+          .fn()
+          .mockResolvedValue({ ok: false as const, error: "INVALID" as const }),
+      },
+      signInRead: {
+        findUserForPasswordSignIn: signInFindUserMock,
+      },
+      passwordReset: {
+        findActiveUserByEmail: passwordResetFindUserMock,
+        createResetToken: passwordResetCreateTokenMock,
+        resetPasswordWithToken: passwordResetConsumeMock,
+      },
+      organizationInvitations: {
+        acceptPendingInvitation: organizationInvitationsAcceptMock,
+      },
+      onboardingCompletion: {
+        completeStep4CreateOrganizationAndInvites: onboardingCompletionStep4Mock,
+      },
+    }),
+  };
+});
 
-const onboardingCompletionStep4Mock = vi.hoisted(() => vi.fn());
-
-vi.mock("@/lib/application-deps", () => ({
-  getApplicationDeps: () => ({
-    auth: {
-      getAuthenticatedPrincipal: getAuthenticatedPrincipalMock,
-    },
-    users: {
-      findById: findByIdMock,
-      findRegisterGateByUserId: findRegisterGateByUserIdMock,
-      completeRegisterProfile: completeRegisterProfileRepoMock,
-      findUserWithOnboardingByUserId: findUserWithOnboardingByUserIdMock,
-    },
-    onboardingProfiles: {
-      updateAfterStep1: updateAfterStep1Mock,
-      updateAfterStep2: updateAfterStep2Mock,
-      updateAfterStep3: updateAfterStep3Mock,
-    },
-    session: {
-      createSessionRecord: createSessionRecordMock,
-    },
-    registration: {
-      registerNewUser: registrationRegisterNewUserMock,
-      registerFromOrganizationInvitation: vi
-        .fn()
-        .mockResolvedValue({ ok: false as const, error: "INVALID" as const }),
-    },
-    signInRead: {
-      findUserForPasswordSignIn: signInFindUserMock,
-    },
-    passwordReset: {
-      findActiveUserByEmail: passwordResetFindUserMock,
-      createResetToken: passwordResetCreateTokenMock,
-      resetPasswordWithToken: passwordResetConsumeMock,
-    },
-    organizationInvitations: {
-      acceptPendingInvitation: organizationInvitationsAcceptMock,
-    },
-    onboardingCompletion: {
-      completeStep4CreateOrganizationAndInvites: onboardingCompletionStep4Mock,
-    },
-  }),
-}));
-
+import { prisma as prismaMock } from "@/lib/prisma";
 import { signUpAction } from "@/app/[locale]/sign-up/actions";
 import { signInAction } from "@/app/[locale]/sign-in/actions";
 import { forgotPasswordAction } from "@/app/[locale]/forgot-password/actions";
@@ -305,7 +352,7 @@ function form(entries: Record<string, string>): FormData {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  jest.clearAllMocks();
   prismaMock.organizationInvitation.update.mockReset();
   prismaMock.organizationInvitation.update.mockResolvedValue({});
   prismaMock.organizationMembership.upsert.mockReset();
@@ -333,7 +380,7 @@ describe("signUpAction", () => {
   beforeEach(() => {
     prismaMock.onboardingProfile.upsert.mockReset();
     prismaMock.onboardingProfile.upsert.mockResolvedValue({} as never);
-    globalThis.fetch = vi
+    globalThis.fetch = jest
       .fn()
       .mockResolvedValue(
         new Response("", { status: 200, statusText: "OK" }),
@@ -419,7 +466,7 @@ describe("signUpAction", () => {
   });
 
   it("returns error when website host is not reachable", async () => {
-    globalThis.fetch = vi
+    globalThis.fetch = jest
       .fn()
       .mockRejectedValue(new Error("network")) as typeof fetch;
     const r = await signUpAction(

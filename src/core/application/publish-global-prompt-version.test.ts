@@ -1,15 +1,38 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "@jest/globals";
 import { GLOBAL_PROMPT_AUDIT_ORG_ID } from "@/src/core/domain/global-audit-ids";
 import { publishGlobalPromptVersion } from "./publish-global-prompt-version";
 
 describe("publishGlobalPromptVersion", () => {
+  it("rejects when actor id is missing", async () => {
+    const prompts = {
+      getCurrentVersion: jest.fn(),
+      listVersions: jest.fn(),
+      publishNewVersion: jest.fn(),
+    };
+    const audit = { logSuperAdminAction: jest.fn() };
+
+    const result = await publishGlobalPromptVersion(
+      { prompts, audit },
+      {
+        actorInternalUserId: null,
+        isSuperAdmin: true,
+        kind: "SONCAS",
+        markdown: "# x",
+        auditAction: "PUBLISH_PROMPT",
+      },
+    );
+
+    expect(result).toEqual({ ok: false, error: "USER_NOT_SYNCED" });
+    expect(prompts.publishNewVersion).not.toHaveBeenCalled();
+  });
+
   it("rejects non–super admin", async () => {
     const prompts = {
-      getCurrentVersion: vi.fn(),
-      listVersions: vi.fn(),
-      publishNewVersion: vi.fn(),
+      getCurrentVersion: jest.fn(),
+      listVersions: jest.fn(),
+      publishNewVersion: jest.fn(),
     };
-    const audit = { logSuperAdminAction: vi.fn() };
+    const audit = { logSuperAdminAction: jest.fn() };
 
     const result = await publishGlobalPromptVersion(
       { prompts, audit },
@@ -28,9 +51,9 @@ describe("publishGlobalPromptVersion", () => {
 
   it("publishes version and audits", async () => {
     const prompts = {
-      getCurrentVersion: vi.fn(),
-      listVersions: vi.fn(),
-      publishNewVersion: vi.fn().mockResolvedValue({
+      getCurrentVersion: jest.fn(),
+      listVersions: jest.fn(),
+      publishNewVersion: jest.fn().mockResolvedValue({
         id: "v2",
         templateId: "t1",
         kind: "SONCAS" as const,
@@ -40,7 +63,7 @@ describe("publishGlobalPromptVersion", () => {
         createdAt: new Date(),
       }),
     };
-    const audit = { logSuperAdminAction: vi.fn().mockResolvedValue(undefined) };
+    const audit = { logSuperAdminAction: jest.fn().mockResolvedValue(undefined) };
 
     const result = await publishGlobalPromptVersion(
       { prompts, audit },
