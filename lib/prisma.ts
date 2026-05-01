@@ -6,9 +6,14 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = process.env.DATABASE_URL?.trim();
   if (!connectionString) {
-    throw new Error("DATABASE_URL is required to initialize Prisma");
+    throw new Error(
+      [
+        "DATABASE_URL is missing or empty.",
+        "Copy .env.example to .env and set DATABASE_URL (see comments in .env.example).",
+      ].join(" "),
+    );
   }
 
   const adapter = new PrismaNeon({ connectionString });
@@ -22,5 +27,24 @@ function createPrismaClient(): PrismaClient {
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-globalForPrisma.prisma = prisma;
+function getPrisma(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+  }
+  return globalForPrisma.prisma;
+}
+
+/**
+ * Lazily creates the client on first property access so `next dev` can boot
+ * without evaluating `DATABASE_URL` until the first DB-backed request.
+ */
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    const client = getPrisma();
+    const value = Reflect.get(client, prop, receiver) as unknown;
+    if (typeof value === "function") {
+      return (value as (...args: unknown[]) => unknown).bind(client);
+    }
+    return value;
+  },
+}) as PrismaClient;
