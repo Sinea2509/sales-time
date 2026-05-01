@@ -5,13 +5,22 @@ import { resetPasswordAction } from "@/app/[locale]/reset-password/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+
+const primaryCtaClass = cn(
+  "h-10 w-full shrink-0 rounded-md border-0 px-6 font-medium text-white shadow-sm",
+  "bg-brand hover:bg-brand-hover dark:bg-brand dark:hover:bg-brand-hover",
+);
 
 type Props = {
   token: string;
 };
 
 export function ResetPasswordForm({ token }: Props) {
-  const [state, formAction, pending] = useActionState(resetPasswordAction, null);
+  const [state, formAction, isPending] = useActionState(
+    resetPasswordAction,
+    null,
+  );
 
   return (
     <form action={formAction} className="space-y-4">
@@ -25,7 +34,7 @@ export function ResetPasswordForm({ token }: Props) {
           autoComplete="new-password"
           required
           minLength={8}
-          disabled={pending}
+          disabled={isPending}
         />
       </div>
       <div className="space-y-2">
@@ -36,7 +45,8 @@ export function ResetPasswordForm({ token }: Props) {
           type="password"
           autoComplete="new-password"
           required
-          disabled={pending}
+          minLength={8}
+          disabled={isPending}
         />
       </div>
       {state?.ok === false ? (
@@ -44,8 +54,8 @@ export function ResetPasswordForm({ token }: Props) {
           {state.message}
         </p>
       ) : null}
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Enregistrement…" : "Enregistrer"}
+      <Button type="submit" className={primaryCtaClass} disabled={isPending}>
+        {isPending ? "Enregistrement…" : "Enregistrer le mot de passe"}
       </Button>
     </form>
   );

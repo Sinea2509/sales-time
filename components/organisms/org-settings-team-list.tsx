@@ -102,7 +102,7 @@ export function OrgSettingsTeamList({
             <Label htmlFor="invite-role">Rôle</Label>
             <select
               id="invite-role"
-              className="border-input bg-background h-9 w-full min-w-[140px] rounded-md border px-2 text-sm"
+              className="border-input bg-background h-9 w-full min-w-[140px] rounded-md border py-1 pl-3 pr-10 text-sm outline-none focus-visible:border-input focus-visible:ring-0"
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as "ADMIN" | "MEMBER")}
             >
@@ -140,7 +140,7 @@ export function OrgSettingsTeamList({
                   <TableCell className="text-muted-foreground text-sm">{m.email}</TableCell>
                   <TableCell>
                     <select
-                      className="border-input bg-background h-8 rounded-md border px-2 text-xs"
+                      className="border-input bg-background h-8 rounded-md border py-1 pl-3 pr-8 text-xs outline-none focus-visible:border-input focus-visible:ring-0"
                       value={m.role}
                       disabled={pending || m.userId === currentUserId}
                       onChange={(e) => {

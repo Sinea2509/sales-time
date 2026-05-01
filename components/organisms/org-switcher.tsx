@@ -31,7 +31,7 @@ export function OrgSwitcher({ memberships, currentOrganizationId }: Props) {
     <label className="group-data-[collapsible=icon]:hidden block px-2">
       <span className="sr-only">Organisation active</span>
       <select
-        className="border-sidebar-border bg-sidebar-accent/30 text-sidebar-foreground w-full max-w-full rounded-lg border px-2 py-1.5 text-sm shadow-none"
+        className="border-sidebar-border bg-sidebar-accent/30 text-sidebar-foreground w-full max-w-full rounded-lg border py-1.5 pl-3 pr-10 text-sm shadow-none outline-none focus-visible:border-sidebar-border focus-visible:ring-0"
         disabled={pending}
         value={currentOrganizationId ?? ""}
         onChange={(e) => {

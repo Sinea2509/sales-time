@@ -126,59 +126,60 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
           </div>
         </SidebarHeader>
 
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Plateforme</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {platformNav.map((item) => {
-                  const Icon = item.icon;
-                  const active = navActive(pathname, item);
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        isActive={active}
-                        render={<Link href={item.href} />}
-                        tooltip={item.label}
-                      >
-                        <Icon />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <SidebarContent className="max-h-full min-h-0 flex-none overflow-y-auto overscroll-contain">
+            <SidebarGroup>
+              <SidebarGroupLabel>Plateforme</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {platformNav.map((item) => {
+                    const Icon = item.icon;
+                    const active = navActive(pathname, item);
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          isActive={active}
+                          render={<Link href={item.href} />}
+                          tooltip={item.label}
+                        >
+                          <Icon />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-          <SidebarSeparator />
+            <SidebarSeparator />
 
-          <SidebarGroup>
-            <SidebarGroupLabel>Configuration</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {configNav.map((item) => {
-                  const Icon = item.icon;
-                  const active = navActive(pathname, item);
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        isActive={active}
-                        render={<Link href={item.href} />}
-                        tooltip={item.label}
-                      >
-                        <Icon />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Configuration</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {configNav.map((item) => {
+                    const Icon = item.icon;
+                    const active = navActive(pathname, item);
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          isActive={active}
+                          render={<Link href={item.href} />}
+                          tooltip={item.label}
+                        >
+                          <Icon />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
 
-        <SidebarFooter className="border-t border-sidebar-border">
+          <SidebarFooter className="shrink-0 border-t border-sidebar-border">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -210,11 +211,12 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
             </span>
           </div>
         </SidebarFooter>
+        </div>
       </Sidebar>
 
       <AdminCommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
-      <SidebarInset className="min-h-svh bg-[var(--app-shell-surface)]">
-        <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 flex h-14 items-center gap-3 border-b px-4 backdrop-blur">
+      <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--app-shell-surface)]">
+        <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 z-50 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur">
           {isMobile ? (
             <SidebarTrigger className="-ml-1 shrink-0" />
           ) : null}
@@ -240,7 +242,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
             Super Admin
           </span>
         </header>
-        <div className="flex-1 p-6">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-6">
           <div className="mx-auto w-full max-w-7xl">{children}</div>
         </div>
       </SidebarInset>

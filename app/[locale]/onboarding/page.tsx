@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { OnboardingWizard } from "@/components/organisms/onboarding-wizard";
+import { coerceStoredInviteMessageToHtml } from "@/lib/invite-email-html";
 import {
-  DEFAULT_INVITE_MESSAGE,
   DEFAULT_MEETING_TYPES,
   DEFAULT_PIPELINE_STAGES,
 } from "@/lib/onboarding-defaults";
@@ -64,7 +64,7 @@ export default async function OnboardingPage() {
         ? asStringArray(p?.pipelineStages)
         : [...DEFAULT_PIPELINE_STAGES],
     invites: initialInviteRowsFromStored(parseStoredInviteRows(p?.inviteEmails)),
-    inviteMessage: p?.inviteMessage ?? DEFAULT_INVITE_MESSAGE,
+    inviteMessage: coerceStoredInviteMessageToHtml(p?.inviteMessage),
   };
 
   return <OnboardingWizard initial={initial} />;

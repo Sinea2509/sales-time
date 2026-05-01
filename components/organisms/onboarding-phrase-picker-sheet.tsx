@@ -242,7 +242,7 @@ export function OnboardingPhrasePickerSheet({
             disabled={selectedIds.size === 0}
             onClick={handleConfirm}
             className={cn(
-              "rounded-lg border-0 text-white shadow-sm",
+              "rounded-md border-0 text-white shadow-sm",
               "bg-brand hover:bg-brand-hover dark:bg-brand dark:hover:bg-brand-hover",
             )}
           >

@@ -98,6 +98,7 @@ export async function inviteMemberAction(
   });
 
   revalidatePath("/company/settings/equipe");
+  revalidatePath("/company");
   return { ok: true };
 }
 

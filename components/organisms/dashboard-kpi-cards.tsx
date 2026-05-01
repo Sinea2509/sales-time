@@ -1,18 +1,8 @@
-import { Banknote, Box, Clock, Wallet } from "lucide-react";
-import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
+import { Box, Clock, Wallet } from "lucide-react";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { KpiTile } from "@/components/molecules/kpi-tile";
-import {
-  TrendPercentPill,
-  TrendPointsPill,
-} from "@/components/molecules/trend-pill";
+import { KpiVsPreviousBadge } from "@/components/molecules/trend-pill";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
-
-const eurFormatter = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
   const heroIsDuration = home.avgDurationMin != null;
@@ -23,7 +13,7 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
     ? "down-good"
     : "up-good";
 
-  const HeroIcon = heroIsDuration ? Clock : Banknote;
+  const HeroIcon = Clock;
   const heroLabel = heroIsDuration ? "Temps moyen RDV" : "TAM cumulé";
 
   return (
@@ -32,34 +22,29 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
         icon={HeroIcon}
         label={heroLabel}
         trend={
-          <TrendPercentPill percent={heroTrend} mode={heroTrendMode} />
+          <KpiVsPreviousBadge delta={heroTrend} mode={heroTrendMode} />
         }
         footer={
           heroIsDuration ? (
             <>
-              TAM estimé :{" "}
+              TAM cumulé :{" "}
               <span className="text-foreground font-medium">
-                {eurFormatter.format(home.tamCumuleEur)}
+                {formatDurationHoursMinutes(home.tamCumuleMinutes)}
               </span>
             </>
-          ) : (
-            <>
-              {eurFormatter.format(ESTIMATED_TAM_EUR_PER_RDV)} / RDV ·{" "}
-              {home.statsWindowDays} jours
-            </>
-          )
+          ) : undefined
         }
       >
         {heroIsDuration
           ? formatDurationHoursMinutes(home.avgDurationMin!)
-          : eurFormatter.format(home.tamCumuleEur)}
+          : formatDurationHoursMinutes(home.tamCumuleMinutes)}
       </KpiTile>
 
       <KpiTile
         icon={Box}
         label="Nb de rdvs"
         trend={
-          <TrendPercentPill percent={home.nbRdvsTrendPercent} mode="up-good" />
+          <KpiVsPreviousBadge delta={home.nbRdvsTrendPercent} mode="up-good" />
         }
       >
         {home.nbRdvs}
@@ -67,8 +52,14 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
 
       <KpiTile
         icon={Wallet}
-        label="TUC optimisé"
-        trend={<TrendPointsPill points={home.tucTrendPoints} />}
+        label="TUC optimisé (%)"
+        trend={
+          <KpiVsPreviousBadge
+            delta={home.tucTrendPoints}
+            mode="up-good"
+            deltaDisplay="percentagePoints"
+          />
+        }
       >
         {home.tucOptimisePercent === null ? "—" : `${home.tucOptimisePercent}%`}
       </KpiTile>

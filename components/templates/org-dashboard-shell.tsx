@@ -19,7 +19,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -29,7 +28,10 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { buttonVariants } from "@/components/ui/button";
-import { DashboardHeader } from "@/components/organisms/dashboard-header";
+import {
+  DashboardHeader,
+  type SessionUserMenuInfo,
+} from "@/components/organisms/dashboard-header";
 import {
   OrgSwitcher,
   type OrgSwitcherMembership,
@@ -53,6 +55,7 @@ type OrgDashboardShellProps = {
   workspaceRoleMode: WorkspaceRoleMode | null;
   analysesUsed: number;
   organizationSwitcherMemberships: OrgSwitcherMembership[];
+  sessionUser: SessionUserMenuInfo;
 };
 
 function navActive(pathname: string, item: NavItem) {
@@ -71,6 +74,7 @@ export function OrgDashboardShell({
   workspaceRoleMode,
   analysesUsed,
   organizationSwitcherMemberships,
+  sessionUser,
 }: OrgDashboardShellProps) {
   const pathname = usePathname();
   const isMobile = useIsMobile();
@@ -156,95 +160,42 @@ export function OrgDashboardShell({
           </div>
         </SidebarHeader>
 
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {mainNav.map((item) => {
-                  const Icon = item.icon;
-                  const active = navActive(pathname, item);
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        isActive={active}
-                        render={<Link href={item.href} />}
-                      >
-                        <Icon />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <SidebarContent className="max-h-full min-h-0 flex-none overflow-y-auto overscroll-contain">
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {[...mainNav, ...orgProductNav, ...orgAdminNav].map((item) => {
+                    const Icon = item.icon;
+                    const active = navActive(pathname, item);
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          isActive={active}
+                          render={<Link href={item.href} />}
+                        >
+                          <Icon />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-          <SidebarSeparator />
+            {!activeOrganizationId ? (
+              <>
+                <SidebarSeparator />
+                <p className="text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden px-4 pb-2 text-xs leading-snug">
+                  Choisissez une organisation pour accéder aux rendez-vous et à
+                  l’analyse.
+                </p>
+              </>
+            ) : null}
+          </SidebarContent>
 
-          <SidebarGroup>
-            <SidebarGroupLabel>Espace commercial</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {orgProductNav.map((item) => {
-                  const Icon = item.icon;
-                  const active = navActive(pathname, item);
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        isActive={active}
-                        render={<Link href={item.href} />}
-                      >
-                        <Icon />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          {orgAdminNav.length > 0 ? (
-            <>
-              <SidebarSeparator />
-              <SidebarGroup>
-                <SidebarGroupLabel>Organisation</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {orgAdminNav.map((item) => {
-                      const Icon = item.icon;
-                      const active = navActive(pathname, item);
-                      return (
-                        <SidebarMenuItem key={item.href}>
-                          <SidebarMenuButton
-                            isActive={active}
-                            render={<Link href={item.href} />}
-                          >
-                            <Icon />
-                            <span>{item.label}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </>
-          ) : null}
-
-          {!activeOrganizationId ? (
-            <>
-              <SidebarSeparator />
-              <p className="text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden px-4 pb-2 text-xs leading-snug">
-                Choisissez une organisation pour accéder aux rendez-vous et à
-                l’analyse.
-              </p>
-            </>
-          ) : null}
-        </SidebarContent>
-
-        <SidebarFooter className="border-t border-sidebar-border">
+          <SidebarFooter className="shrink-0 border-t border-sidebar-border">
           {footerNav.length > 0 ? (
             <SidebarMenu>
               {footerNav.map((item) => {
@@ -299,6 +250,7 @@ export function OrgDashboardShell({
             </div>
           </div>
         </SidebarFooter>
+        </div>
       </Sidebar>
 
       {showQuotaPopup ? (
@@ -349,7 +301,7 @@ export function OrgDashboardShell({
         </div>
       ) : null}
 
-      <SidebarInset className="bg-[var(--app-shell-surface)] min-h-svh">
+      <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--app-shell-surface)]">
         <DashboardHeader
           showSuperAdminNav={showSuperAdminNav}
           isElevatedSuperAdmin={isElevatedSuperAdmin}
@@ -357,8 +309,10 @@ export function OrgDashboardShell({
           showSidebarTrigger={isMobile}
           showOrganizationSwitcher={false}
           showHeaderNavLinks={false}
+          sessionUser={sessionUser}
+          stickyTop={false}
         />
-        <div className="flex-1 p-6">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-6">
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </div>
       </SidebarInset>

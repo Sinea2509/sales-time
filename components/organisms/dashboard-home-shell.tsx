@@ -5,18 +5,12 @@ import { RendezVousMeetingRowActions } from "@/components/molecules/rendez-vous-
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
+import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { meetingEtapeLabel, meetingEtapePillClass } from "@/lib/meeting-etape-pill";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { cn } from "@/lib/utils";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { PersonOutreachSummaryRow } from "@/src/core/ports/meeting-repository-port";
-
-const eurCompact = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -33,20 +27,22 @@ export function DashboardHomeShell({
 }) {
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-foreground text-lg font-medium tracking-tight">
-          Mes KPI opérationnels
-        </h2>
-        <Suspense
-          fallback={
-            <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
-          }
-        >
-          <DashboardStatsPeriodSelect value={home.statsWindowDays} />
-        </Suspense>
-      </div>
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-foreground text-lg font-medium tracking-tight">
+            Mes KPI opérationnels
+          </h2>
+          <Suspense
+            fallback={
+              <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
+            }
+          >
+            <DashboardStatsPeriodSelect value={home.statsWindowDays} />
+          </Suspense>
+        </div>
 
-      <DashboardKpiCards home={home} />
+        <DashboardKpiCards home={home} />
+      </div>
 
       {personOutreach.length > 0 ? (
         <section className="space-y-3">
@@ -127,14 +123,14 @@ export function DashboardHomeShell({
         <BrandCtaLink
           href="/company/rendez-vous/nouveau"
           variant="outline"
-          className="h-10 rounded-lg"
+          className="h-10 rounded-md"
         >
           Préparer un RDV
         </BrandCtaLink>
         <BrandCtaLink
           href="/company/analyse"
           variant="primary"
-          className="h-10 gap-1 rounded-lg"
+          className="h-10 gap-1 rounded-md"
         >
           <span className="text-lg leading-none">+</span>
           Analyser un nouveau RDV
@@ -154,9 +150,9 @@ export function DashboardHomeShell({
                   <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
                     Prospect
                   </DataTableHead>
-                  <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-500">
-                    Potentiel
-                  </DataTableHead>
+                    <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-500">
+                      TAM
+                    </DataTableHead>
                   <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
                     Date du RDV
                   </DataTableHead>
@@ -203,7 +199,7 @@ export function DashboardHomeShell({
                         </div>
                       </td>
                       <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell dark:text-zinc-400">
-                        {eurCompact.format(ESTIMATED_TAM_EUR_PER_RDV)}
+                        {formatDurationHoursMinutes(home.tamMinutesPerRdv)}
                       </td>
                       <td className="text-muted-foreground whitespace-nowrap px-4 py-3.5 align-middle tabular-nums dark:text-zinc-400">
                         {dateShort.format(new Date(m.meetingAt))}

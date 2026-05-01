@@ -32,16 +32,12 @@ export default async function RegisterProfilePage() {
       <section className="flex items-center justify-center bg-white px-6 py-10 sm:px-10">
         <div className="w-full max-w-md space-y-6">
           <header className="space-y-1">
-            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-              Étape 2 sur 3
-            </p>
             <h1 className="text-2xl font-semibold tracking-tight">
-              Votre profil
+              Compléter votre profil
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Vérifiez votre nom tel qu&apos;il apparaîtra dans l&apos;équipe,
-              puis choisissez votre rôle métier pour continuer vers
-              l&apos;onboarding.
+              puis choisissez votre rôle métier pour accéder à l&apos;onboarding.
             </p>
           </header>
 

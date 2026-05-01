@@ -50,12 +50,27 @@ export default async function InvitationPage({ params }: Props) {
             </p>
           )
         ) : (
-          <p className="text-muted-foreground text-sm">
-            <Link href={`/sign-in?next=/invitations/${encodeURIComponent(token)}`} className="text-primary underline">
-              Connectez-vous
-            </Link>{" "}
-            avec {inv.email} pour rejoindre l&apos;organisation.
-          </p>
+          <div className="text-muted-foreground space-y-3 text-sm">
+            <p>
+              <Link
+                href={`/sign-in?next=/invitations/${encodeURIComponent(token)}`}
+                className="text-primary underline"
+              >
+                Connectez-vous
+              </Link>{" "}
+              avec {inv.email} pour rejoindre l&apos;organisation.
+            </p>
+            <p>
+              <Link
+                href={`/invitations/${encodeURIComponent(token)}/join`}
+                className="text-primary font-medium underline"
+              >
+                Créer un compte
+              </Link>{" "}
+              (inscription sans parcours d&apos;onboarding — vous rejoignez
+              directement l&apos;équipe).
+            </p>
+          </div>
         )}
       </div>
     </div>

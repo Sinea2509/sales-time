@@ -3,6 +3,8 @@
     "appName": "Sales Time",
     "toggleSidebar": "Afficher ou masquer le menu latéral",
     "account": "Compte",
+    "userSettings": "Paramètres",
+    "signOut": "Déconnexion",
     "superAdmin": "Super admin",
     "exitSuperAdminOrg": "Quitter l'org super admin"
   },
@@ -13,7 +15,7 @@
     "analyseTeam": "Analyse (équipe)",
     "analyseMine": "Mon analyse",
     "contacts": "Contacts",
-    "orgSettings": "Paramètres org.",
+    "orgSettings": "Paramètres",
     "superAdmin": "Super admin"
   },
   "elevated": {

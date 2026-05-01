@@ -35,6 +35,11 @@ export function AuthenticatedAppShell({
         workspaceRoleMode={actor.workspaceRoleMode}
         analysesUsed={analysesUsed}
         organizationSwitcherMemberships={organizationSwitcherMemberships}
+        sessionUser={{
+          firstName: actor.firstName,
+          lastName: actor.lastName,
+          email: actor.email,
+        }}
       >
         {children}
       </OrgDashboardShell>
@@ -47,6 +52,7 @@ export function AuthenticatedAppShell({
         showSuperAdminNav={showSuperAdminNav}
         isElevatedSuperAdmin={isElevatedSuperAdmin}
         elevatedOrganizationId={superAdminOrgCookie}
+        sessionUser={null}
       />
       <main className="mx-auto w-full max-w-6xl flex-1 p-6">{children}</main>
     </div>

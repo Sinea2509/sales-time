@@ -32,6 +32,12 @@ export function LandingSiteFooter() {
             >
               Plan produit
             </Link>
+            <a
+              href="#faq"
+              className="text-foreground/90 hover:text-brand font-medium underline-offset-4 hover:underline"
+            >
+              FAQ
+            </a>
           </div>
           <p className="text-muted-foreground text-xs">
             Données hébergées de façon sécurisée. Rôles commercial, manager et

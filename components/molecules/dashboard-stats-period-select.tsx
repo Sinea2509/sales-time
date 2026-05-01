@@ -10,9 +10,9 @@ import {
 import { cn } from "@/lib/utils";
 
 const LABELS: Record<StatsWindowDays, string> = {
-  7: "7j",
-  30: "30j",
-  90: "90j",
+  7: "7 jours",
+  30: "30 jours",
+  90: "90 jours",
 };
 
 export function DashboardStatsPeriodSelect(props: {
@@ -37,8 +37,8 @@ export function DashboardStatsPeriodSelect(props: {
       <select
         aria-label="Période des statistiques (jours glissants)"
         className={cn(
-          "h-8 appearance-none bg-transparent pr-5 pl-1 text-sm font-medium outline-none",
-          "focus-visible:ring-[0] disabled:opacity-60",
+          "h-8 appearance-none bg-transparent pr-5 pl-1 text-sm font-normal outline-none",
+          "focus-visible:ring-0 disabled:opacity-60",
           dark
             ? "text-zinc-200"
             : "text-foreground",

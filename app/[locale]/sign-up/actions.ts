@@ -7,13 +7,23 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { generateOpaqueToken } from "@/lib/auth/tokens";
 import { setSessionCookie } from "@/lib/auth/session-cookie";
 import { tryNormalizeWebsiteForOrgKey } from "@/lib/website/normalize-website";
+import { verifyWebsiteReachable } from "@/lib/website/verify-website-reachable";
+import { USER_PROFILE_ROLES } from "@/src/core/domain/user-profile-role";
+
+const profileRoleSchema = z.enum(USER_PROFILE_ROLES);
 
 const schema = z
   .object({
     firstName: z.string().trim().min(1, "Le prénom est requis").max(80),
     lastName: z.string().trim().min(1, "Le nom est requis").max(80),
+    companyName: z
+      .string()
+      .trim()
+      .min(1, "Le nom de l'entreprise est requis.")
+      .max(200),
     email: z.string().trim().email().transform((e) => e.toLowerCase()),
     website: z.string().trim().min(1, "Le site web est requis.").max(500),
+    profileRole: profileRoleSchema,
     password: z.string().min(8, "Au moins 8 caractères.").max(200),
     confirmPassword: z.string().min(1).max(200),
   })
@@ -31,8 +41,10 @@ export async function signUpAction(
   const parsed = schema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
+    companyName: formData.get("companyName"),
     email: formData.get("email"),
     website: formData.get("website"),
+    profileRole: formData.get("profileRole"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
   });
@@ -41,6 +53,8 @@ export async function signUpAction(
     const msg =
       flat.fieldErrors.firstName?.[0] ??
       flat.fieldErrors.lastName?.[0] ??
+      flat.fieldErrors.companyName?.[0] ??
+      flat.fieldErrors.profileRole?.[0] ??
       flat.fieldErrors.website?.[0] ??
       flat.fieldErrors.password?.[0] ??
       flat.fieldErrors.confirmPassword?.[0] ??
@@ -58,12 +72,23 @@ export async function signUpAction(
     return { ok: false, message: hint };
   }
 
+  const reachable = await verifyWebsiteReachable(websiteNorm.value);
+  if (!reachable.ok) {
+    return {
+      ok: false,
+      message:
+        "Nous n'avons pas pu joindre ce site web. Vérifiez l'adresse ou réessayez plus tard.",
+    };
+  }
+
   const deps = getApplicationDeps();
   const passwordHash = await hashPassword(parsed.data.password);
   const reg = await deps.registration.registerNewUser({
     email: parsed.data.email,
     firstName: parsed.data.firstName,
     lastName: parsed.data.lastName,
+    companyName: parsed.data.companyName,
+    profileRole: parsed.data.profileRole,
     passwordHash,
     signupWebsiteNormalized: websiteNorm.value,
   });
@@ -90,5 +115,5 @@ export async function signUpAction(
   });
   await setSessionCookie(raw);
 
-  redirect("/register/profile");
+  redirect("/onboarding");
 }

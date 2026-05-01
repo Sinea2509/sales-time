@@ -3,9 +3,12 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { signUpAction } from "@/app/[locale]/sign-up/actions";
+import { orgSettingsSelectClassName } from "@/components/organisms/org-settings-select-class";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { REGISTER_PROFILE_ROLE_OPTIONS } from "@/lib/register-profile-options";
+import { cn } from "@/lib/utils";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -56,6 +59,38 @@ export function SignUpForm() {
         />
       </div>
       <div className="space-y-2">
+        <Label htmlFor="profileRole">Votre rôle</Label>
+        <select
+          id="profileRole"
+          name="profileRole"
+          required
+          className={cn(orgSettingsSelectClassName, "h-10")}
+          defaultValue=""
+          disabled={pending}
+        >
+          <option value="" disabled>
+            Sélectionnez un rôle
+          </option>
+          {REGISTER_PROFILE_ROLE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="companyName">Nom de l&apos;entreprise</Label>
+        <Input
+          id="companyName"
+          name="companyName"
+          required
+          autoComplete="organization"
+          maxLength={200}
+          disabled={pending}
+          className="h-10"
+        />
+      </div>
+      <div className="space-y-2">
         <Label htmlFor="email">E-mail professionnel</Label>
         <Input
           id="email"
@@ -80,10 +115,6 @@ export function SignUpForm() {
           disabled={pending}
           className="h-10"
         />
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          Une seule organisation par domaine (normalisé sans www, en
-          minuscules).
-        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Mot de passe</Label>

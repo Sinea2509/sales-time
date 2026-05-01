@@ -5,6 +5,15 @@ import type {
 } from "@/src/core/domain/analysis-result-zod";
 import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod";
 
+/** Agrégats KISS équipe (tableau de bord admin) pour synthèse texte. */
+export type OrgKissRollupForSummary = {
+  kissMeetingsCount: number;
+  keepBullets: number;
+  improveBullets: number;
+  stopBullets: number;
+  startBullets: number;
+};
+
 export interface AnalysisPort {
   analyzeSoncas(input: {
     systemMarkdown: string;
@@ -35,4 +44,10 @@ export interface AnalysisPort {
     userContent: string;
     model: string;
   }): Promise<{ result: FollowUpEmailResult; rawText?: string }>;
+
+  /** Un paragraphe court (axes d’amélioration d’équipe) à partir des totaux KISS agrégés. */
+  summarizeOrgKissRollup(input: {
+    rollup: OrgKissRollupForSummary;
+    model: string;
+  }): Promise<string>;
 }

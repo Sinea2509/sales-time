@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Building2,
   ClipboardList,
@@ -60,13 +61,14 @@ function subNavActive(pathname: string, href: string, match: "exact" | "prefix")
 
 export function OrgSettingsShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const tNav = useTranslations("nav");
 
   return (
     <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
       <aside className="lg:w-56 lg:shrink-0">
         <div className="bg-card rounded-xl border p-3 lg:sticky lg:top-20">
           <p className="text-muted-foreground px-2 pb-2 text-xs font-medium tracking-wide uppercase">
-            Paramètres org.
+            {tNav("orgSettings")}
           </p>
           <nav className="flex flex-col gap-0.5" aria-label="Sections paramètres">
             {SETTINGS_NAV.map(({ href, label, icon: Icon, match }) => {

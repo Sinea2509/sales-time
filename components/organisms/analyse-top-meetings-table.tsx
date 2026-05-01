@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { buttonVariants } from "@/components/ui/button";
+import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { meetingEtapeLabel, meetingEtapePillClass } from "@/lib/meeting-etape-pill";
 import { prospectInitials } from "@/lib/prospect-initials";
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
@@ -23,18 +24,9 @@ export type AnalyseTopMeetingRow = {
   meetingAt: string;
   salesScore: number;
   outcome: MeetingOutcome;
-  potentialEur: number;
+  /** Minutes de TAM / RDV (paramètres org, identique pour chaque ligne). */
+  tamMinutesPerRdv: number;
 };
-
-type PotentialBucket = "ALL" | "LT_10K" | "10K_50K" | "50K_100K" | "GT_100K";
-
-const POTENTIAL_OPTIONS: Array<{ value: PotentialBucket; label: string }> = [
-  { value: "ALL", label: "Tous" },
-  { value: "LT_10K", label: "< 10 000 €" },
-  { value: "10K_50K", label: "10 000 - 50 000 €" },
-  { value: "50K_100K", label: "50 000 - 100 000 €" },
-  { value: "GT_100K", label: "> 100 000 €" },
-];
 
 const OPPORTUNITY_OPTIONS: Array<{ value: MeetingOutcome | "ALL"; label: string }> = [
   { value: "ALL", label: "Toutes" },
@@ -45,35 +37,13 @@ const OPPORTUNITY_OPTIONS: Array<{ value: MeetingOutcome | "ALL"; label: string 
   { value: "NO_SHOW", label: "Absent" },
 ];
 
-const eurFormatter = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
-
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
 });
 
-function matchesPotential(value: number, bucket: PotentialBucket): boolean {
-  switch (bucket) {
-    case "ALL":
-      return true;
-    case "LT_10K":
-      return value < 10_000;
-    case "10K_50K":
-      return value >= 10_000 && value < 50_000;
-    case "50K_100K":
-      return value >= 50_000 && value < 100_000;
-    case "GT_100K":
-      return value >= 100_000;
-  }
-}
-
 export function AnalyseTopMeetingsTable({ rows }: { rows: AnalyseTopMeetingRow[] }) {
-  const [potentialFilter, setPotentialFilter] = useState<PotentialBucket>("ALL");
   const [opportunityFilter, setOpportunityFilter] = useState<MeetingOutcome | "ALL">(
     "ALL",
   );
@@ -81,11 +51,10 @@ export function AnalyseTopMeetingsTable({ rows }: { rows: AnalyseTopMeetingRow[]
   const filtered = useMemo(
     () =>
       rows.filter((r) => {
-        if (!matchesPotential(r.potentialEur, potentialFilter)) return false;
         if (opportunityFilter !== "ALL" && r.outcome !== opportunityFilter) return false;
         return true;
       }),
-    [rows, potentialFilter, opportunityFilter],
+    [rows, opportunityFilter],
   );
 
   if (rows.length === 0) {
@@ -102,34 +71,7 @@ export function AnalyseTopMeetingsTable({ rows }: { rows: AnalyseTopMeetingRow[]
         <thead>
           <tr className="border-b border-neutral-200 bg-neutral-50/80 dark:border-neutral-800 dark:bg-neutral-900/50">
             <DataTableHead className="px-3 py-2.5">Prospect</DataTableHead>
-            <DataTableHead className="px-3 py-2.5">
-              <div className="flex items-center gap-1">
-                <span>Potentiel</span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    className={cn(
-                      buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                      "size-6 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100",
-                    )}
-                    aria-label="Filtrer potentiel"
-                  >
-                    <Filter className="size-3.5" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuRadioGroup
-                      value={potentialFilter}
-                      onValueChange={(v) => setPotentialFilter(v as PotentialBucket)}
-                    >
-                      {POTENTIAL_OPTIONS.map((o) => (
-                        <DropdownMenuRadioItem key={o.value} value={o.value}>
-                          {o.label}
-                        </DropdownMenuRadioItem>
-                      ))}
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </DataTableHead>
+            <DataTableHead className="px-3 py-2.5">TAM</DataTableHead>
             <DataTableHead className="px-3 py-2.5">
               <div className="flex items-center gap-1">
                 <span>Opportunity</span>
@@ -183,7 +125,9 @@ export function AnalyseTopMeetingsTable({ rows }: { rows: AnalyseTopMeetingRow[]
                     <span className="truncate font-semibold">{m.prospectName}</span>
                   </div>
                 </td>
-                <td className="px-3 py-2.5 tabular-nums">{eurFormatter.format(m.potentialEur)}</td>
+                <td className="px-3 py-2.5 tabular-nums">
+                  {formatDurationHoursMinutes(m.tamMinutesPerRdv)}
+                </td>
                 <td className="px-3 py-2.5">
                   <span
                     className={cn(

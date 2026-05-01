@@ -6,6 +6,7 @@ import {
   meetingEtapeLabel,
   meetingEtapePillClass,
 } from "@/lib/meeting-etape-pill";
+import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { cn } from "@/lib/utils";
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 
@@ -13,7 +14,8 @@ export type MeetingMatrixPoint = {
   id: string;
   prospectName: string;
   salesScore: number | null;
-  potentialEur: number;
+  /** TAM estimé (minutes / RDV) selon paramètres org. */
+  tamMinutes: number;
   outcome: MeetingOutcome;
 };
 
@@ -34,13 +36,6 @@ const OUTCOME_COLOR: Record<MeetingOutcome, string> = {
   NO_SHOW: "#f59e0b",
 };
 
-const eurCompact = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-  notation: "compact",
-});
-
 export function MeetingMatrixScatter({
   points,
   height = 320,
@@ -56,7 +51,7 @@ export function MeetingMatrixScatter({
         data: rows.map((p) => ({
           id: p.id,
           x: p.salesScore ?? 0,
-          y: p.potentialEur,
+          y: p.tamMinutes,
         })),
         color: OUTCOME_COLOR[outcome],
         markerSize: 6,
@@ -91,8 +86,8 @@ export function MeetingMatrixScatter({
         ]}
         yAxis={[
           {
-            label: "Potentiel (€)",
-            valueFormatter: (v: number) => eurCompact.format(v),
+            label: "TAM (min / RDV)",
+            valueFormatter: (v: number) => formatDurationHoursMinutes(v),
           },
         ]}
         grid={{ vertical: true, horizontal: true }}

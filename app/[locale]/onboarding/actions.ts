@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { setActiveOrganizationCookie } from "@/lib/auth/session-cookie";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
+import { buildInvitationEmailHtml } from "@/lib/invite-email-html";
+import { sanitizeInviteMessageHtml } from "@/lib/invite-message-sanitize";
 import { getApplicationDeps } from "@/lib/application-deps";
 import type { DomainUser } from "@/src/core/ports/user-repository-port";
 
@@ -21,7 +23,6 @@ async function requireUser(): Promise<DomainUser> {
 }
 
 const step1Schema = z.object({
-  companyName: z.string().min(1, "Le nom de l’entreprise est requis").max(200),
   industrySector: z.string().max(200).optional().nullable(),
   commercialTeamSize: z.string().max(120).optional().nullable(),
   averageSalesCycle: z.string().max(120).optional().nullable(),
@@ -49,7 +50,7 @@ const step4Schema = z.object({
       }),
     )
     .max(50),
-  inviteMessage: z.string().max(2000).optional().nullable(),
+  inviteMessage: z.string().max(16000).optional().nullable(),
 });
 
 export type ActionResult<T = void> =
@@ -72,8 +73,24 @@ export async function submitOnboardingStep1(
     };
   }
   const deps = getApplicationDeps();
+  const row = await deps.users.findUserWithOnboardingByUserId(user.id);
+  if (!row?.onboardingProfile) {
+    return {
+      ok: false,
+      message:
+        "Profil d’onboarding introuvable. Rechargez la page ou reconnectez-vous.",
+    };
+  }
+  const companyName = row.onboardingProfile.companyName?.trim() ?? "";
+  if (!companyName) {
+    return {
+      ok: false,
+      message:
+        "Le nom de l’entreprise est manquant. Complétez d’abord l’inscription avec le nom de votre entreprise.",
+    };
+  }
   await deps.onboardingProfiles.updateAfterStep1(user.id, {
-    companyName: parsed.data.companyName,
+    companyName,
     industrySector: parsed.data.industrySector ?? null,
     commercialTeamSize: parsed.data.commercialTeamSize ?? null,
     averageSalesCycle: parsed.data.averageSalesCycle ?? null,
@@ -156,10 +173,15 @@ export async function submitOnboardingStep4(
   }
 
   const deps = getApplicationDeps();
+  const inviteMessageRaw = parsed.data.inviteMessage?.trim();
+  const inviteMessageSanitized = inviteMessageRaw
+    ? sanitizeInviteMessageHtml(inviteMessageRaw)
+    : null;
+
   const result = await deps.onboardingCompletion.completeStep4CreateOrganizationAndInvites({
     userId: user.id,
     userEmail: user.email.toLowerCase(),
-    inviteMessage: parsed.data.inviteMessage ?? null,
+    inviteMessage: inviteMessageSanitized,
     inviteEmailsJson: parsed.data.invites as object,
     invites: [...deduped.values()],
   });
@@ -195,7 +217,11 @@ export async function submitOnboardingStep4(
     await sendTransactionalEmail({
       to: m.to,
       subject: `Invitation — ${orgName}`,
-      html: `<p>Vous êtes invité à rejoindre <strong>${orgName}</strong> sur Sales Time.</p><p><a href="${m.link}">Accepter l’invitation</a></p>`,
+      html: buildInvitationEmailHtml({
+        organizationName: orgName,
+        inviteLink: m.link,
+        bodyHtml: inviteMessageSanitized ?? "",
+      }),
     });
   }
 

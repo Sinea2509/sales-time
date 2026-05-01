@@ -6,8 +6,9 @@ export function parseStatsWindowDays(
   raw: string | string[] | undefined,
 ): StatsWindowDays {
   const v = Array.isArray(raw) ? raw[0] : raw;
-  if (v === "7" || v === "90") {
-    return Number(v) as StatsWindowDays;
+  const s = v != null ? String(v) : "";
+  if (s === "7" || s === "30" || s === "90") {
+    return Number(s) as StatsWindowDays;
   }
   return 30;
 }

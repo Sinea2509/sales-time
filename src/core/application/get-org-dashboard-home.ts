@@ -1,4 +1,6 @@
-import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
+import {
+  tamMinutesSavedPerMeetingFromSettings,
+} from "@/src/core/domain/dashboard-estimates";
 import { percentChangeVsPrevious } from "@/src/core/domain/dashboard-trend";
 import {
   meetingAtSinceForStatsWindow,
@@ -9,16 +11,21 @@ import type {
   MeetingRepositoryPort,
   RecentMeetingListRow,
 } from "@/src/core/ports/meeting-repository-port";
+import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
 
 export type OrgDashboardHome = {
   statsWindowDays: StatsWindowDays;
-  tamCumuleEur: number;
+  /** Temps utile cumulé (minutes) sur la fenêtre : nb RDV × minutes/RDV (paramètres org). */
+  tamCumuleMinutes: number;
+  /** Minutes de TAM estimées par RDV selon les paramètres organisation. */
+  tamMinutesPerRdv: number;
   nbRdvs: number;
   tucOptimisePercent: number | null;
   /** Moyenne durée RDV (min) sur la fenêtre, si renseignée. */
   avgDurationMin: number | null;
   tamTrendPercent: number | null;
   nbRdvsTrendPercent: number | null;
+  /** Écart en points de pourcentage du TUC vs période précédente (TUC est déjà un %). */
   tucTrendPoints: number | null;
   avgDurationTrendPercent: number | null;
   /** Note globale /5 (moyenne SalesScore /100 ÷ 20, arrondi 0.1), null si aucune analyse. */
@@ -47,7 +54,10 @@ function noteGlobaleOn5ForMeetings(
 }
 
 export async function getOrgDashboardHome(
-  deps: { meetings: MeetingRepositoryPort },
+  deps: {
+    meetings: MeetingRepositoryPort;
+    organizationSettings: OrganizationSettingsRepositoryPort;
+  },
   input: {
     organizationId: string | null;
     statsWindowDays: StatsWindowDays;
@@ -56,6 +66,11 @@ export async function getOrgDashboardHome(
   },
 ): Promise<OrgDashboardHome | null> {
   if (!input.organizationId) return null;
+
+  const orgSettings =
+    await deps.organizationSettings.findByOrganizationId(input.organizationId);
+  const tamMinutesPerRdv =
+    tamMinutesSavedPerMeetingFromSettings(orgSettings);
 
   const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
   const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays);
@@ -114,8 +129,8 @@ export async function getOrgDashboardHome(
     }),
   ]);
 
-  const tamCumuleEur = nbRdvs * ESTIMATED_TAM_EUR_PER_RDV;
-  const tamPrevEur = nbRdvsPrev * ESTIMATED_TAM_EUR_PER_RDV;
+  const tamCumuleMinutes = nbRdvs * tamMinutesPerRdv;
+  const tamPrevMinutes = nbRdvsPrev * tamMinutesPerRdv;
 
   const tucOptimisePercent = tucPercentForMeetings(kpiMeetingsCurrent);
   const tucPrevPercent = tucPercentForMeetings(kpiMeetingsPrev);
@@ -124,7 +139,10 @@ export async function getOrgDashboardHome(
   const noteGlobalePrevOn5 = noteGlobaleOn5ForMeetings(kpiMeetingsPrev);
 
   const nbRdvsTrendPercent = percentChangeVsPrevious(nbRdvs, nbRdvsPrev);
-  const tamTrendPercent = percentChangeVsPrevious(tamCumuleEur, tamPrevEur);
+  const tamTrendPercent = percentChangeVsPrevious(
+    tamCumuleMinutes,
+    tamPrevMinutes,
+  );
 
   const tucTrendPoints =
     tucOptimisePercent != null && tucPrevPercent != null
@@ -143,7 +161,8 @@ export async function getOrgDashboardHome(
 
   return {
     statsWindowDays: input.statsWindowDays,
-    tamCumuleEur,
+    tamCumuleMinutes,
+    tamMinutesPerRdv,
     nbRdvs,
     tucOptimisePercent,
     avgDurationMin,

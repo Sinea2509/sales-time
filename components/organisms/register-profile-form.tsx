@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +35,7 @@ export function RegisterProfileForm({
   defaultFirstName,
   defaultLastName,
 }: RegisterProfileFormProps) {
-  const [state, formAction] = useFormState<
+  const [state, formAction] = useActionState<
     CompleteRegisterProfileResult | undefined,
     FormData
   >(completeRegisterProfile, undefined);

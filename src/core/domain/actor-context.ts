@@ -10,6 +10,8 @@ export type ActorContext =
       userId: string;
       internalUserId: string;
       email: string;
+      firstName: string | null;
+      lastName: string | null;
       /** Org id from membership cookie (may be invalid if tampered). */
       sessionOrganizationId: string | null;
       /** Role in `sessionOrganizationId` when it matches a membership. */

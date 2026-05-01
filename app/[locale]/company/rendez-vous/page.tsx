@@ -1,5 +1,5 @@
 import { RendezVousMeetingsShell } from "@/components/organisms/rendez-vous-meetings-shell";
-import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
+import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
@@ -23,11 +23,16 @@ export default async function RendezVousPage() {
     redirect("/company");
   }
 
-  const meetings = await deps.meetings.listRecentMeetingsForDashboard({
-    organizationId: actor.activeOrganizationId,
-    limit: 200,
-    sellerUserId: sellerScope,
-  });
+  const [meetings, orgSettings] = await Promise.all([
+    deps.meetings.listRecentMeetingsForDashboard({
+      organizationId: actor.activeOrganizationId,
+      limit: 200,
+      sellerUserId: sellerScope,
+    }),
+    deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
+  ]);
+  const tamMinutesPerRdv =
+    tamMinutesSavedPerMeetingFromSettings(orgSettings);
 
   const rows = meetings.map((m) => ({
     id: m.id,
@@ -37,7 +42,7 @@ export default async function RendezVousPage() {
     durationMin: m.durationMin,
     sellerEmail: m.sellerEmail,
     salesScore: m.salesScore,
-    potentialEur: ESTIMATED_TAM_EUR_PER_RDV,
+    tamMinutesPerRdv,
   }));
 
   return (

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const redirectMock = vi.fn<(url: string) => never>();
 
@@ -22,6 +22,7 @@ const prismaMock = vi.hoisted(() => ({
   onboardingProfile: {
     findUnique: vi.fn(),
     update: vi.fn(),
+    upsert: vi.fn(),
   },
   passwordResetToken: {
     findFirst: vi.fn(),
@@ -68,12 +69,15 @@ const completeRegisterProfileRepoMock = vi.hoisted(() => vi.fn());
 const updateAfterStep1Mock = vi.hoisted(() => vi.fn());
 const updateAfterStep2Mock = vi.hoisted(() => vi.fn());
 const updateAfterStep3Mock = vi.hoisted(() => vi.fn());
+const findUserWithOnboardingByUserIdMock = vi.hoisted(() => vi.fn());
 
 const registrationRegisterNewUserMock = vi.hoisted(() =>
   vi.fn(async (input: {
     email: string;
     firstName: string;
     lastName: string;
+    companyName: string;
+    profileRole: string;
     passwordHash: string;
     signupWebsiteNormalized: string;
   }) => {
@@ -92,7 +96,14 @@ const registrationRegisterNewUserMock = vi.hoisted(() =>
         signupWebsiteNormalized: input.signupWebsiteNormalized,
         firstName: input.firstName,
         lastName: input.lastName,
+        profileRole: input.profileRole,
+        registerProfileCompletedAt: new Date(),
       },
+    });
+    await prismaMock.onboardingProfile.upsert({
+      where: { userId: user.id },
+      create: { userId: user.id, companyName: input.companyName },
+      update: { companyName: input.companyName },
     });
     return { ok: true as const, userId: user.id };
   }),
@@ -226,6 +237,7 @@ vi.mock("@/lib/application-deps", () => ({
       findById: findByIdMock,
       findRegisterGateByUserId: findRegisterGateByUserIdMock,
       completeRegisterProfile: completeRegisterProfileRepoMock,
+      findUserWithOnboardingByUserId: findUserWithOnboardingByUserIdMock,
     },
     onboardingProfiles: {
       updateAfterStep1: updateAfterStep1Mock,
@@ -237,6 +249,9 @@ vi.mock("@/lib/application-deps", () => ({
     },
     registration: {
       registerNewUser: registrationRegisterNewUserMock,
+      registerFromOrganizationInvitation: vi
+        .fn()
+        .mockResolvedValue({ ok: false as const, error: "INVALID" as const }),
     },
     signInRead: {
       findUserForPasswordSignIn: signInFindUserMock,
@@ -301,12 +316,28 @@ beforeEach(() => {
 });
 
 describe("signUpAction", () => {
+  const originalFetch = globalThis.fetch;
+
+  beforeEach(() => {
+    prismaMock.onboardingProfile.upsert.mockReset();
+    prismaMock.onboardingProfile.upsert.mockResolvedValue({} as never);
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response("", { status: 200, statusText: "OK" }),
+    ) as typeof fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
   it("returns validation error for invalid email", async () => {
     const r = await signUpAction(
       null,
       form({
         firstName: "Ada",
         lastName: "Lovelace",
+        companyName: "Analytical Engines Ltd",
+        profileRole: "COMMERCIAL",
         email: "nope",
         website: "https://example.com",
         password: "password12",
@@ -323,6 +354,8 @@ describe("signUpAction", () => {
       form({
         firstName: "Ada",
         lastName: "Lovelace",
+        companyName: "Analytical Engines Ltd",
+        profileRole: "COMMERCIAL",
         email: "a@b.co",
         website: "https://example.com",
         password: "password12",
@@ -341,6 +374,8 @@ describe("signUpAction", () => {
       form({
         firstName: "Ada",
         lastName: "Lovelace",
+        companyName: "Analytical Engines Ltd",
+        profileRole: "COMMERCIAL",
         email: "a@b.co",
         website: "@@@",
         password: "password12",
@@ -349,6 +384,46 @@ describe("signUpAction", () => {
     );
     expect(r?.ok).toBe(false);
     expect(r?.message).toContain("invalide");
+  });
+
+  it("returns error when company name is empty", async () => {
+    const r = await signUpAction(
+      null,
+      form({
+        firstName: "Ada",
+        lastName: "Lovelace",
+        companyName: "   ",
+        profileRole: "COMMERCIAL",
+        email: "a@b.co",
+        website: "https://example.com",
+        password: "password12",
+        confirmPassword: "password12",
+      }),
+    );
+    expect(r?.ok).toBe(false);
+    expect(r?.message).toContain("entreprise");
+  });
+
+  it("returns error when website host is not reachable", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockRejectedValue(new Error("network")) as typeof fetch;
+    const r = await signUpAction(
+      null,
+      form({
+        firstName: "Ada",
+        lastName: "Lovelace",
+        companyName: "Analytical Engines Ltd",
+        profileRole: "COMMERCIAL",
+        email: "a@b.co",
+        website: "https://example.com",
+        password: "password12",
+        confirmPassword: "password12",
+      }),
+    );
+    expect(r?.ok).toBe(false);
+    expect(r?.message).toMatch(/joindre|site web/i);
+    expect(prismaMock.user.create).not.toHaveBeenCalled();
   });
 
   it("returns error when organization already exists for hostname", async () => {
@@ -365,6 +440,8 @@ describe("signUpAction", () => {
       form({
         firstName: "Ada",
         lastName: "Lovelace",
+        companyName: "Analytical Engines Ltd",
+        profileRole: "COMMERCIAL",
         email: "new@b.co",
         website: "https://acme.com",
         password: "password12",
@@ -384,6 +461,8 @@ describe("signUpAction", () => {
       form({
         firstName: "Ada",
         lastName: "Lovelace",
+        companyName: "Analytical Engines Ltd",
+        profileRole: "COMMERCIAL",
         email: "exists@b.co",
         website: "https://newco.io",
         password: "password12",
@@ -396,7 +475,7 @@ describe("signUpAction", () => {
     });
   });
 
-  it("creates user, session, and redirects to register profile", async () => {
+  it("creates user, session, and redirects to onboarding", async () => {
     prismaMock.organization.findUnique.mockResolvedValue(null);
     prismaMock.user.findUnique.mockResolvedValue(null);
     prismaMock.user.create.mockResolvedValue({
@@ -413,13 +492,15 @@ describe("signUpAction", () => {
         form({
           firstName: "Jane",
           lastName: "Doe",
+          companyName: "Example Inc",
+          profileRole: "SALES_MANAGER",
           email: "Hi@B.co",
           website: "WWW.Example.COM/path",
           password: "password12",
           confirmPassword: "password12",
         }),
       ),
-    ).rejects.toThrow("REDIRECT:/register/profile");
+    ).rejects.toThrow("REDIRECT:/onboarding");
 
     expect(prismaMock.user.create).toHaveBeenCalledWith({
       data: {
@@ -428,7 +509,14 @@ describe("signUpAction", () => {
         signupWebsiteNormalized: "example.com",
         firstName: "Jane",
         lastName: "Doe",
+        profileRole: "SALES_MANAGER",
+        registerProfileCompletedAt: expect.any(Date),
       },
+    });
+    expect(prismaMock.onboardingProfile.upsert).toHaveBeenCalledWith({
+      where: { userId: "user-new" },
+      create: { userId: "user-new", companyName: "Example Inc" },
+      update: { companyName: "Example Inc" },
     });
     expect(createSessionRecordMock).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "user-new" }),
@@ -817,19 +905,73 @@ describe("onboarding steps", () => {
       email: "a@b.co",
     });
     findByIdMock.mockResolvedValue(domainUser);
+    findUserWithOnboardingByUserIdMock.mockReset();
+    findUserWithOnboardingByUserIdMock.mockResolvedValue({
+      ...domainUser,
+      registerProfileCompletedAt: new Date(),
+      onboardingProfile: {
+        id: "op1",
+        userId: "u1",
+        currentStep: 1,
+        completedAt: null,
+        companyName: "Acme SAS",
+        industrySector: null,
+        commercialTeamSize: null,
+        averageSalesCycle: null,
+        averageDealSize: null,
+        companyPitch: null,
+        objections: null,
+        keyArguments: null,
+        industryVocabulary: null,
+        meetingTypes: null,
+        pipelineStages: null,
+        inviteEmails: null,
+        inviteMessage: null,
+      },
+    });
   });
 
-  it("submitOnboardingStep1 returns field errors when company name empty", async () => {
-    const r = await submitOnboardingStep1({ companyName: "" });
+  it("submitOnboardingStep1 fails when profile has no company name", async () => {
+    findUserWithOnboardingByUserIdMock.mockResolvedValue({
+      ...domainUser,
+      registerProfileCompletedAt: new Date(),
+      onboardingProfile: {
+        id: "op1",
+        userId: "u1",
+        currentStep: 1,
+        completedAt: null,
+        companyName: null,
+        industrySector: null,
+        commercialTeamSize: null,
+        averageSalesCycle: null,
+        averageDealSize: null,
+        companyPitch: null,
+        objections: null,
+        keyArguments: null,
+        industryVocabulary: null,
+        meetingTypes: null,
+        pipelineStages: null,
+        inviteEmails: null,
+        inviteMessage: null,
+      },
+    });
+    const r = await submitOnboardingStep1({
+      industrySector: null,
+      commercialTeamSize: null,
+      averageSalesCycle: null,
+      averageDealSize: null,
+    });
     expect(r.ok).toBe(false);
-    expect(r.ok === false && r.fieldErrors?.companyName).toBeTruthy();
+    expect(r.ok === false && r.message).toMatch(/entreprise|inscription/i);
   });
 
-  it("submitOnboardingStep1 persists via repository", async () => {
+  it("submitOnboardingStep1 persists via repository using stored company name", async () => {
     updateAfterStep1Mock.mockResolvedValue(undefined);
     const r = await submitOnboardingStep1({
-      companyName: "Acme SAS",
       industrySector: "IT",
+      commercialTeamSize: null,
+      averageSalesCycle: null,
+      averageDealSize: null,
     });
     expect(r).toEqual({ ok: true });
     expect(updateAfterStep1Mock).toHaveBeenCalledWith("u1", {
@@ -929,7 +1071,12 @@ describe("submitOnboardingStep1 when session missing", () => {
   it("redirects to sign-in", async () => {
     getAuthenticatedPrincipalMock.mockResolvedValue(null);
     await expect(
-      submitOnboardingStep1({ companyName: "X" }),
+      submitOnboardingStep1({
+        industrySector: null,
+        commercialTeamSize: null,
+        averageSalesCycle: null,
+        averageDealSize: null,
+      }),
     ).rejects.toThrow("REDIRECT:/sign-in");
   });
 });

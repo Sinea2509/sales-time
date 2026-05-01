@@ -8,7 +8,8 @@ import {
 function baseHome(over: Partial<OrgDashboardHome> = {}): OrgDashboardHome {
   return {
     statsWindowDays: 30,
-    tamCumuleEur: 100,
+    tamCumuleMinutes: 100,
+    tamMinutesPerRdv: 50,
     nbRdvs: 2,
     tucOptimisePercent: 50,
     avgDurationMin: null,

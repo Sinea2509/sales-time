@@ -1,11 +1,14 @@
-import { generateObject } from "ai";
+import { generateObject, generateText } from "ai";
 import {
   discResultSchema,
   kissResultSchema,
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
-import type { AnalysisPort } from "@/src/core/ports/analysis-port";
+import type {
+  AnalysisPort,
+  OrgKissRollupForSummary,
+} from "@/src/core/ports/analysis-port";
 import { buildDelimitedMeetingUserContent } from "./meeting-text-for-ai-prompt";
 
 const SYSTEM_DATA_ONLY_PREFIX =
@@ -111,5 +114,34 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       prompt: input.userContent,
     });
     return { result: object };
+  }
+
+  async summarizeOrgKissRollup(input: {
+    rollup: OrgKissRollupForSummary;
+    model: string;
+  }): Promise<string> {
+    const system = withDataScopeSystemPrompt(
+      [
+        "Tu es un coach commercial B2B.",
+        "À partir du JSON d’agrégats KISS d’une équipe (période déjà filtrée côté produit), rédige UN seul paragraphe en français (3 à 5 phrases maximum).",
+        "Ton : professionnel, chaleureux, orienté manager.",
+        "Concentre-toi sur ce que l’équipe peut améliorer : lecture des volumes Keep / Improve / Start / Stop et du nombre de réunions coachées, priorités actionnables pour le manager.",
+        "Synthétise : ne liste pas mécaniquement chaque chiffre ; donne une lecture utile.",
+        "Si kissMeetingsCount vaut 0, indique qu’il n’y a pas encore de données KISS sur la période, en une ou deux phrases.",
+        "N’invente pas de chiffres hors du JSON. Pas de titre ni de liste à puces, uniquement du texte continu.",
+      ].join("\n"),
+    );
+    const userContent = [
+      "Agrégats KISS (JSON) :",
+      JSON.stringify(input.rollup, null, 2),
+    ].join("\n");
+
+    const { text } = await generateText({
+      model: input.model,
+      system,
+      prompt: userContent,
+      maxOutputTokens: 450,
+    });
+    return text.trim();
   }
 }

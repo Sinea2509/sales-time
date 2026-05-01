@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +41,81 @@ function resolveIntent(
   if (good) return "good";
   if (bad) return "bad";
   return "neutral";
+}
+
+const kpiVsPreviousVariants = cva(basePill, {
+  variants: {
+    intent: {
+      good:
+        "border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:border-emerald-500/35 dark:bg-emerald-500/15 dark:text-emerald-100",
+      bad: "border-rose-500/40 bg-rose-500/10 text-rose-800 dark:border-rose-500/35 dark:bg-rose-500/15 dark:text-rose-100",
+      neutral:
+        "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
+    },
+  },
+  defaultVariants: { intent: "neutral" },
+});
+
+export type KpiVsPreviousBadgeProps = {
+  /** Variation brute (positif = hausse). Bon/mauvais selon `mode`. */
+  delta: number | null;
+  mode: TrendDirectionMode;
+  /**
+   * `percent` = variation relative (suffixe %).
+   * `percentagePoints` = écart entre deux pourcentages, ex. TUC déjà en % (suffixe pts).
+   */
+  deltaDisplay?: "percent" | "percentagePoints";
+  className?: string;
+};
+
+/**
+ * Badge « vs période précédente » : valeur absolue sans signe + couleur/icône (favorable / défavorable).
+ */
+export function KpiVsPreviousBadge({
+  delta,
+  mode,
+  deltaDisplay = "percent",
+  className,
+}: KpiVsPreviousBadgeProps) {
+  if (delta === null || Number.isNaN(delta)) return null;
+  const intent = resolveIntent(delta, mode);
+  const Icon =
+    delta === 0 ? Minus : delta > 0 ? TrendingUp : TrendingDown;
+  const absVal = Math.abs(delta);
+  const textRaw =
+    Math.abs(absVal % 1) < 0.001
+      ? String(Math.round(absVal))
+      : String(Math.round(absVal * 10) / 10);
+  const textFr = textRaw.replace(".", ",");
+  const isPp = deltaDisplay === "percentagePoints";
+  const periodHint = isPp
+    ? "Écart vs la période précédente (même durée), en points de pourcentage du TUC"
+    : "Variation vs la période précédente (même durée que la sélection)";
+  const ariaLabel =
+    delta === 0
+      ? isPp
+        ? `${periodHint} — stable (0 point).`
+        : `${periodHint} — stable (0 %).`
+      : delta > 0
+        ? isPp
+          ? `${periodHint} — hausse de ${textFr} points.`
+          : `${periodHint} — hausse de ${textFr} %.`
+        : isPp
+          ? `${periodHint} — baisse de ${textFr} points.`
+          : `${periodHint} — baisse de ${textFr} %.`;
+  return (
+    <span
+      className={cn(kpiVsPreviousVariants({ intent }), className)}
+      title={periodHint}
+      aria-label={ariaLabel}
+    >
+      <Icon className="size-3.5 shrink-0" aria-hidden />
+      <span className="tabular-nums" aria-hidden>
+        {textFr}
+        {isPp ? " pts" : "%"}
+      </span>
+    </span>
+  );
 }
 
 export type TrendPercentPillProps = {

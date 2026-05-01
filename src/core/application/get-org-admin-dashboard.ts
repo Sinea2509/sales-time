@@ -1,10 +1,15 @@
-import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
 import {
-  averageSoncasDriverScores,
-  type SoncasDriverAverages,
-} from "@/src/core/domain/org-soncas-team-aggregate";
-import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
-import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
+  discResultSchema,
+  soncasResultSchema,
+} from "@/src/core/domain/analysis-result-zod";
+import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
+import type { SoncasDriverAverages } from "@/src/core/domain/org-soncas-team-aggregate";
+import type {
+  MeetingRepositoryPort,
+  RecentMeetingListRow,
+} from "@/src/core/ports/meeting-repository-port";
+import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
+import type { OrganizationTeamRepositoryPort } from "@/src/core/ports/organization-team-repository-port";
 import { meetingAtSinceForStatsWindow, type StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getOrgDashboardHome, type OrgDashboardHome } from "./get-org-dashboard-home";
 import { getOrgDashboardKpis, type OrgDashboardKpis } from "./get-org-dashboard-kpis";
@@ -12,103 +17,279 @@ import { getOrgDashboardKpis, type OrgDashboardKpis } from "./get-org-dashboard-
 /** Limite de RDV chargés pour agrégations équipe (perf). */
 export const ORG_ADMIN_DASHBOARD_MEETING_CAP = 5000;
 
-export type OrgAdminTeamMemberRow = {
-  sellerUserId: string;
-  sellerEmail: string | null;
+export const ORG_ADMIN_MON_EQUIPE_PAGE_SIZE = 10;
+
+export type OrgAdminMonEquipeRow = {
+  userId: string;
+  membershipId: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
   nbRdvs: number;
-  tamEstimeEur: number;
-  wonCount: number;
-  winRatePercent: number | null;
-  avgSalesScore: number | null;
-  tucOptimisePercent: number | null;
+  /** Nombre de RDV avec au moins une analyse KISS sur la période. */
+  coachesCount: number;
+  /** Temps utile cumulé (minutes) sur la période pour ce membre. */
+  tamMinutesCumule: number;
+  /** Levier SONCAS dominant le plus fréquent sur les RDV analysés (SONCAS) du membre. */
+  postureLabel: string | null;
+};
+
+export type OrgAdminMonEquipePage = {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  rows: OrgAdminMonEquipeRow[];
+};
+
+export type OrgAdminPieSlice = {
+  id: string;
+  label: string;
+  value: number;
+  color: string;
+};
+
+export type OrgAdminDistributionPie = {
+  /** RDV avec au moins une analyse valide pour ce graphique. */
+  analyzedMeetings: number;
+  slices: OrgAdminPieSlice[];
+};
+
+export type OrgAdminKissTeamRollup = {
+  /** Nombre de RDV avec analyse KISS valide sur la période. */
+  kissMeetingsCount: number;
+  keepBullets: number;
+  improveBullets: number;
+  stopBullets: number;
+  startBullets: number;
 };
 
 export type OrgAdminDashboard = {
   statsWindowDays: StatsWindowDays;
   home: OrgDashboardHome;
   kpis: OrgDashboardKpis;
-  teamMembers: OrgAdminTeamMemberRow[];
   /** Moyenne SalesScore (0–100) sur les RDV analysés dans la fenêtre. */
   avgSalesScoreInWindow: number | null;
   /** Nombre de commerciaux ayant au moins un RDV dans la fenêtre. */
   activeCommercialsCount: number;
-  /** Moyennes SONCAS sur tous les RDV de la fenêtre (dernière analyse par RDV déjà dans les lignes). */
-  orgSoncasAverages: SoncasDriverAverages;
-  progressBullets: string[];
-  improvementBullets: string[];
-  /** Échantillon RDV pour la matrice (perf UI). */
-  scatterMatrixPoints: Array<{
-    id: string;
-    prospectName: string;
-    salesScore: number | null;
-    potentialEur: number;
-    outcome: MeetingOutcome;
-  }>;
+  monEquipe: OrgAdminMonEquipePage;
+  discPie: OrgAdminDistributionPie;
+  soncasPie: OrgAdminDistributionPie;
+  kissTeamRollup: OrgAdminKissTeamRollup;
 };
 
-function aggregateTeamMembers(
-  meetings: Array<{
-    sellerUserId: string;
-    sellerEmail: string | null;
-    outcome: MeetingOutcome;
-    salesScore: number | null;
-    hasSoncas: boolean;
-    hasDisc: boolean;
-    hasKiss?: boolean;
-  }>,
-): OrgAdminTeamMemberRow[] {
-  const bySeller = new Map<
+const DRIVER_LABEL_FR: Record<
+  keyof SoncasDriverAverages,
+  string
+> = {
+  securite: "Sécurité",
+  orgueil: "Orgueil",
+  nouveaute: "Nouveauté",
+  confort: "Confort",
+  argent: "Argent",
+  sympathie: "Sympathie",
+};
+
+function aggregateSellerWindowStats(
+  meetings: RecentMeetingListRow[],
+): Map<
+  string,
+  { nbRdvs: number; coachesCount: number; soncasDominants: string[] }
+> {
+  const map = new Map<
     string,
-    {
-      sellerEmail: string | null;
-      nb: number;
-      won: number;
-      scores: number[];
-      withBoth: number;
-    }
+    { nbRdvs: number; coachesCount: number; soncasDominants: string[] }
   >();
-
-  for (const m of meetings) {
-    const cur = bySeller.get(m.sellerUserId) ?? {
-      sellerEmail: m.sellerEmail,
-      nb: 0,
-      won: 0,
-      scores: [] as number[],
-      withBoth: 0,
+  for (const row of meetings) {
+    const cur = map.get(row.sellerUserId) ?? {
+      nbRdvs: 0,
+      coachesCount: 0,
+      soncasDominants: [] as string[],
     };
-    cur.nb += 1;
-    if (m.sellerEmail) cur.sellerEmail = m.sellerEmail;
-    if (m.outcome === "WON") cur.won += 1;
-    if (m.salesScore != null) cur.scores.push(m.salesScore);
-    if (m.hasSoncas && m.hasDisc) cur.withBoth += 1;
-    bySeller.set(m.sellerUserId, cur);
+    cur.nbRdvs += 1;
+    if (row.hasKiss) cur.coachesCount += 1;
+    const parsed = soncasResultSchema.safeParse(row.latestSoncasResult);
+    if (parsed.success) cur.soncasDominants.push(parsed.data.dominant);
+    map.set(row.sellerUserId, cur);
   }
+  return map;
+}
 
-  const rows: OrgAdminTeamMemberRow[] = [];
-  for (const [sellerUserId, v] of bySeller) {
-    const winRatePercent =
-      v.nb === 0 ? null : Math.round((100 * v.won) / v.nb);
-    const avgSalesScore =
-      v.scores.length === 0
-        ? null
-        : Math.round(
-            (v.scores.reduce((a, b) => a + b, 0) / v.scores.length) * 10,
-          ) / 10;
-    const tucOptimisePercent =
-      v.nb === 0 ? null : Math.round((100 * v.withBoth) / v.nb);
-    rows.push({
-      sellerUserId,
-      sellerEmail: v.sellerEmail,
-      nbRdvs: v.nb,
-      tamEstimeEur: v.nb * ESTIMATED_TAM_EUR_PER_RDV,
-      wonCount: v.won,
-      winRatePercent,
-      avgSalesScore,
-      tucOptimisePercent,
-    });
+function modeSoncasDominantLabel(dominants: string[]): string | null {
+  if (dominants.length === 0) return null;
+  const counts = new Map<string, number>();
+  for (const d of dominants) {
+    counts.set(d, (counts.get(d) ?? 0) + 1);
   }
-  rows.sort((a, b) => b.nbRdvs - a.nbRdvs);
-  return rows;
+  let bestKey = dominants[0]!;
+  let bestCount = -1;
+  for (const [k, n] of counts) {
+    if (n > bestCount || (n === bestCount && k.localeCompare(bestKey, "fr") < 0)) {
+      bestCount = n;
+      bestKey = k;
+    }
+  }
+  const label =
+    DRIVER_LABEL_FR[bestKey as keyof typeof DRIVER_LABEL_FR] ?? bestKey;
+  return label;
+}
+
+function buildMonEquipePage(input: {
+  tamMinutesPerRdv: number;
+  members: Array<{
+    membershipId: string;
+    userId: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+  }>;
+  meetings: RecentMeetingListRow[];
+  page: number;
+}): OrgAdminMonEquipePage {
+  const bySeller = aggregateSellerWindowStats(input.meetings);
+  const rowsFull: OrgAdminMonEquipeRow[] = input.members.map((mem) => {
+    const s = bySeller.get(mem.userId) ?? {
+      nbRdvs: 0,
+      coachesCount: 0,
+      soncasDominants: [] as string[],
+    };
+    return {
+      userId: mem.userId,
+      membershipId: mem.membershipId,
+      firstName: mem.firstName,
+      lastName: mem.lastName,
+      email: mem.email,
+      nbRdvs: s.nbRdvs,
+      coachesCount: s.coachesCount,
+      tamMinutesCumule: s.nbRdvs * input.tamMinutesPerRdv,
+      postureLabel: modeSoncasDominantLabel(s.soncasDominants),
+    };
+  });
+
+  rowsFull.sort((a, b) => {
+    if (b.nbRdvs !== a.nbRdvs) return b.nbRdvs - a.nbRdvs;
+    const nameA =
+      `${a.lastName ?? ""} ${a.firstName ?? ""}`.trim().toLocaleLowerCase("fr") ||
+      a.email.toLocaleLowerCase("fr");
+    const nameB =
+      `${b.lastName ?? ""} ${b.firstName ?? ""}`.trim().toLocaleLowerCase("fr") ||
+      b.email.toLocaleLowerCase("fr");
+    return nameA.localeCompare(nameB, "fr");
+  });
+
+  const totalCount = rowsFull.length;
+  const lastPage = Math.max(1, Math.ceil(totalCount / ORG_ADMIN_MON_EQUIPE_PAGE_SIZE));
+  const page = Math.min(lastPage, Math.max(1, input.page));
+  const start = (page - 1) * ORG_ADMIN_MON_EQUIPE_PAGE_SIZE;
+  const rows = rowsFull.slice(start, start + ORG_ADMIN_MON_EQUIPE_PAGE_SIZE);
+
+  return {
+    page,
+    pageSize: ORG_ADMIN_MON_EQUIPE_PAGE_SIZE,
+    totalCount,
+    rows,
+  };
+}
+
+const DISC_PIE_ORDER = ["D", "I", "S", "C"] as const;
+const DISC_PIE_COLORS: Record<(typeof DISC_PIE_ORDER)[number], string> = {
+  D: "#ef4444",
+  I: "#3b82f6",
+  S: "#22c55e",
+  C: "#7c3aed",
+};
+const DISC_PIE_LABELS: Record<(typeof DISC_PIE_ORDER)[number], string> = {
+  D: "Dominant D",
+  I: "Dominant I",
+  S: "Dominant S",
+  C: "Dominant C",
+};
+
+const SONCAS_PIE_ORDER = [
+  "securite",
+  "orgueil",
+  "nouveaute",
+  "confort",
+  "argent",
+  "sympathie",
+] as const;
+
+const SONCAS_PIE_COLORS: Record<(typeof SONCAS_PIE_ORDER)[number], string> = {
+  securite: "#6366f1",
+  orgueil: "#ec4899",
+  nouveaute: "#f97316",
+  confort: "#14b8a6",
+  argent: "#eab308",
+  sympathie: "#06b6d4",
+};
+
+function buildDiscPie(meetings: RecentMeetingListRow[]): OrgAdminDistributionPie {
+  let analyzedMeetings = 0;
+  const counts = new Map<string, number>();
+  for (const m of meetings) {
+    const p = discResultSchema.safeParse(m.latestDiscResult);
+    if (!p.success) continue;
+    analyzedMeetings += 1;
+    const d = p.data.dominant;
+    counts.set(d, (counts.get(d) ?? 0) + 1);
+  }
+  const slices: OrgAdminPieSlice[] = DISC_PIE_ORDER.filter(
+    (key) => (counts.get(key) ?? 0) > 0,
+  ).map((key) => ({
+    id: key,
+    label: DISC_PIE_LABELS[key],
+    value: counts.get(key) ?? 0,
+    color: DISC_PIE_COLORS[key],
+  }));
+  return { analyzedMeetings, slices };
+}
+
+function buildSoncasDominantPie(
+  meetings: RecentMeetingListRow[],
+): OrgAdminDistributionPie {
+  let analyzedMeetings = 0;
+  const counts = new Map<string, number>();
+  for (const m of meetings) {
+    const p = soncasResultSchema.safeParse(m.latestSoncasResult);
+    if (!p.success) continue;
+    analyzedMeetings += 1;
+    const d = p.data.dominant;
+    counts.set(d, (counts.get(d) ?? 0) + 1);
+  }
+  const slices: OrgAdminPieSlice[] = SONCAS_PIE_ORDER.filter(
+    (key) => (counts.get(key) ?? 0) > 0,
+  ).map((key) => ({
+    id: key,
+    label: DRIVER_LABEL_FR[key],
+    value: counts.get(key) ?? 0,
+    color: SONCAS_PIE_COLORS[key],
+  }));
+  return { analyzedMeetings, slices };
+}
+
+function buildKissTeamRollup(
+  meetings: RecentMeetingListRow[],
+): OrgAdminKissTeamRollup {
+  let kissMeetingsCount = 0;
+  let keepBullets = 0;
+  let improveBullets = 0;
+  let stopBullets = 0;
+  let startBullets = 0;
+  for (const m of meetings) {
+    const p = kissResultSchema.safeParse(m.latestKissResult);
+    if (!p.success) continue;
+    kissMeetingsCount += 1;
+    keepBullets += p.data.keep.length;
+    improveBullets += p.data.improve.length;
+    stopBullets += p.data.stop.length;
+    startBullets += p.data.start.length;
+  }
+  return {
+    kissMeetingsCount,
+    keepBullets,
+    improveBullets,
+    stopBullets,
+    startBullets,
+  };
 }
 
 export function buildOrgAdminProgressBullets(home: OrgDashboardHome): string[] {
@@ -141,18 +322,6 @@ export function buildOrgAdminProgressBullets(home: OrgDashboardHome): string[] {
   return out.slice(0, 5);
 }
 
-const DRIVER_LABEL_FR: Record<
-  keyof SoncasDriverAverages,
-  string
-> = {
-  securite: "Sécurité",
-  orgueil: "Orgueil",
-  nouveaute: "Nouveauté",
-  confort: "Confort",
-  argent: "Argent",
-  sympathie: "Sympathie",
-};
-
 export function buildOrgAdminImprovementBullets(
   averages: SoncasDriverAverages,
 ): string[] {
@@ -184,17 +353,23 @@ export function buildOrgAdminImprovementBullets(
 }
 
 export async function getOrgAdminDashboard(
-  deps: { meetings: MeetingRepositoryPort },
+  deps: {
+    meetings: MeetingRepositoryPort;
+    organizationTeam: OrganizationTeamRepositoryPort;
+    organizationSettings: OrganizationSettingsRepositoryPort;
+  },
   input: {
     organizationId: string | null;
     statsWindowDays: StatsWindowDays;
+    /** Pagination 1-based pour la section Mon équipe (10 par page). */
+    monEquipePage?: number;
   },
 ): Promise<OrgAdminDashboard | null> {
   if (!input.organizationId) return null;
 
   const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
 
-  const [home, kpis, meetings] = await Promise.all([
+  const [home, kpis, meetings, teamList] = await Promise.all([
     getOrgDashboardHome(deps, {
       organizationId: input.organizationId,
       statsWindowDays: input.statsWindowDays,
@@ -208,17 +383,17 @@ export async function getOrgAdminDashboard(
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
       meetingAtSince: sinceCurrent,
       includeLatestSoncasResult: true,
+      includeLatestDiscResult: true,
+      includeLatestKissResult: true,
     }),
+    deps.organizationTeam.listMembersAndPendingInvitations(input.organizationId),
   ]);
 
   if (!home || !kpis) return null;
 
-  const teamMembers = aggregateTeamMembers(meetings);
-  const soncasResults = meetings
-    .map((m) => m.latestSoncasResult)
-    .filter((r): r is NonNullable<typeof r> => r != null);
-  const orgSoncasAverages = averageSoncasDriverScores(soncasResults);
-
+  const activeCommercialsCount = new Set(
+    meetings.map((m) => m.sellerUserId),
+  ).size;
   const scoreVals = meetings
     .map((m) => m.salesScore)
     .filter((s): s is number => s != null);
@@ -229,26 +404,26 @@ export async function getOrgAdminDashboard(
           (scoreVals.reduce((a, b) => a + b, 0) / scoreVals.length) * 10,
         ) / 10;
 
-  const scatterMatrixPoints = meetings
-    .slice(0, 200)
-    .map((m) => ({
-      id: m.id,
-      prospectName: m.prospectName,
-      salesScore: m.salesScore,
-      potentialEur: ESTIMATED_TAM_EUR_PER_RDV,
-      outcome: m.outcome,
-    }));
+  const monEquipe = buildMonEquipePage({
+    tamMinutesPerRdv: home.tamMinutesPerRdv,
+    members: teamList.members,
+    meetings,
+    page: input.monEquipePage ?? 1,
+  });
+
+  const discPie = buildDiscPie(meetings);
+  const soncasPie = buildSoncasDominantPie(meetings);
+  const kissTeamRollup = buildKissTeamRollup(meetings);
 
   return {
     statsWindowDays: input.statsWindowDays,
     home,
     kpis,
-    teamMembers,
     avgSalesScoreInWindow,
-    activeCommercialsCount: teamMembers.length,
-    orgSoncasAverages,
-    progressBullets: buildOrgAdminProgressBullets(home),
-    improvementBullets: buildOrgAdminImprovementBullets(orgSoncasAverages),
-    scatterMatrixPoints,
+    activeCommercialsCount,
+    monEquipe,
+    discPie,
+    soncasPie,
+    kissTeamRollup,
   };
 }

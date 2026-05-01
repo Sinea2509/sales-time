@@ -41,6 +41,10 @@ export type RecentMeetingListRow = MeetingRow & {
   salesScore: number | null;
   /** Dernier résultat SONCAS brut (agrégations admin / radar équipe). */
   latestSoncasResult?: unknown | null;
+  /** Dernier résultat DISC brut (répartition admin). */
+  latestDiscResult?: unknown | null;
+  /** Dernier résultat KISS brut (agrégations coaching équipe). */
+  latestKissResult?: unknown | null;
 };
 
 /** Per-person rollup for outreach / Person360 lists. */
@@ -167,6 +171,10 @@ export interface MeetingRepositoryPort {
     meetingAtBefore?: Date;
     /** Inclut `latestSoncasResult` pour agrégations (radar SONCAS équipe). */
     includeLatestSoncasResult?: boolean;
+    /** Inclut `latestDiscResult` (camembert DISC équipe). */
+    includeLatestDiscResult?: boolean;
+    /** Inclut `latestKissResult` (coaching KISS agrégé). */
+    includeLatestKissResult?: boolean;
     /** Scope to one seller (member role). */
     sellerUserId?: string;
   }): Promise<RecentMeetingListRow[]>;

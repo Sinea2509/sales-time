@@ -7,7 +7,9 @@ import {
 } from "@/components/ui/card";
 import { DashboardAdminShell } from "@/components/organisms/dashboard-admin-shell";
 import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell";
+import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
+import { getEnv } from "@/lib/env";
 import { parseStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
@@ -17,8 +19,14 @@ import { listPersonOutreachPriorities } from "@/src/core/application/get-person-
 export const dynamic = "force-dynamic";
 
 type DashboardPageProps = {
-  searchParams?: Promise<{ jours?: string }>;
+  searchParams?: Promise<{ jours?: string; equipePage?: string }>;
 };
+
+function parseEquipePage(raw: string | undefined): number {
+  const n = Number.parseInt(raw ?? "1", 10);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return n;
+}
 
 export default async function DashboardHomePage({
   searchParams,
@@ -30,6 +38,7 @@ export default async function DashboardHomePage({
 
   const sp = searchParams != null ? await searchParams : {};
   const statsWindowDays = parseStatsWindowDays(sp.jours);
+  const monEquipePage = parseEquipePage(sp.equipePage);
   const deps = getApplicationDeps();
 
   if (!actor.activeOrganizationId) {
@@ -51,10 +60,29 @@ export default async function DashboardHomePage({
     const admin = await getOrgAdminDashboard(deps, {
       organizationId: actor.activeOrganizationId,
       statsWindowDays,
+      monEquipePage,
     });
+    let kissTeamStrengthsNarrative: string | null = null;
+    if (admin && getEnv().AI_GATEWAY_API_KEY) {
+      try {
+        kissTeamStrengthsNarrative = await deps.analysis.summarizeOrgKissRollup(
+          {
+            rollup: admin.kissTeamRollup,
+            model: ANALYSIS_GATEWAY_MODEL,
+          },
+        );
+      } catch {
+        kissTeamStrengthsNarrative = null;
+      }
+    }
     return (
       <div className="space-y-6">
-        {!admin ? null : <DashboardAdminShell admin={admin} />}
+        {!admin ? null : (
+          <DashboardAdminShell
+            admin={admin}
+            kissTeamStrengthsNarrative={kissTeamStrengthsNarrative}
+          />
+        )}
       </div>
     );
   }

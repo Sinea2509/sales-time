@@ -18,7 +18,7 @@ const outcomes = [
 ] as const;
 
 const selectClassName =
-  "border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none";
+  "border-input bg-background flex h-9 w-full rounded-md border py-1 pl-3 pr-10 text-sm outline-none focus-visible:border-input focus-visible:ring-0";
 
 export function MeetingCreateForm({
   meetingTypeOptions,

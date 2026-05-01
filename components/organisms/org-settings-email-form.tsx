@@ -51,7 +51,7 @@ export function OrgSettingsEmailForm({
         <Label htmlFor="email-tone">Ton des e-mails</Label>
         <select
           id="email-tone"
-          className="border-input bg-background h-9 w-full max-w-md rounded-md border px-2 text-sm"
+          className="border-input bg-background h-9 w-full max-w-md rounded-md border py-1 pl-3 pr-10 text-sm outline-none focus-visible:border-input focus-visible:ring-0"
           value={tone}
           onChange={(e) => setTone(e.target.value as "formal" | "informal")}
         >

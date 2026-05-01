@@ -64,6 +64,8 @@ export async function getCurrentActorContext(
     userId: principal.userId,
     internalUserId: principal.userId,
     email: principal.email,
+    firstName: principal.firstName,
+    lastName: principal.lastName,
     sessionOrganizationId: principal.activeOrganizationIdFromCookie,
     organizationMembershipRole: membershipRoleForOrg(
       principal.memberships,

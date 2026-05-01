@@ -13,7 +13,7 @@ import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/molecules/rendez-vous-meeting-row-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ESTIMATED_TAM_EUR_PER_RDV } from "@/src/core/domain/dashboard-estimates";
+import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import {
   meetingEtapeLabel,
   meetingEtapePillClass,
@@ -31,7 +31,7 @@ export type RendezVousMeetingRow = {
   durationMin: number | null;
   sellerEmail: string | null;
   salesScore: number | null;
-  potentialEur: number;
+  tamMinutesPerRdv: number;
 };
 
 const ETAPE_FILTER_OPTIONS: ReadonlyArray<{
@@ -45,43 +45,6 @@ const ETAPE_FILTER_OPTIONS: ReadonlyArray<{
   { value: "LOST", label: "Négociation" },
   { value: "NO_SHOW", label: "Absent" },
 ];
-
-type PotentialBucket = "ALL" | "LT_10K" | "10K_50K" | "50K_100K" | "GT_100K";
-
-const POTENTIAL_FILTER_OPTIONS: ReadonlyArray<{
-  value: PotentialBucket;
-  label: string;
-}> = [
-  { value: "ALL", label: "Tous les potentiels" },
-  { value: "LT_10K", label: "< 10 000 €" },
-  { value: "10K_50K", label: "10 000 – 50 000 €" },
-  { value: "50K_100K", label: "50 000 – 100 000 €" },
-  { value: "GT_100K", label: "> 100 000 €" },
-];
-
-function matchesPotentialBucket(
-  amountEur: number,
-  bucket: PotentialBucket,
-): boolean {
-  switch (bucket) {
-    case "ALL":
-      return true;
-    case "LT_10K":
-      return amountEur < 10_000;
-    case "10K_50K":
-      return amountEur >= 10_000 && amountEur < 50_000;
-    case "50K_100K":
-      return amountEur >= 50_000 && amountEur < 100_000;
-    case "GT_100K":
-      return amountEur >= 100_000;
-  }
-}
-
-const eurCompact = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -99,7 +62,7 @@ function escapeCsvCell(value: string): string {
 function downloadMeetingsCsv(meetings: RendezVousMeetingRow[]) {
   const headers = [
     "Prospect",
-    "Potentiel (EUR)",
+    "TAM (min / RDV)",
     "Date du rendez-vous",
     "Étape",
     "SalesScore",
@@ -111,7 +74,7 @@ function downloadMeetingsCsv(meetings: RendezVousMeetingRow[]) {
     ...meetings.map((m) =>
       [
         escapeCsvCell(m.prospectName),
-        String(ESTIMATED_TAM_EUR_PER_RDV),
+        String(m.tamMinutesPerRdv),
         escapeCsvCell(m.meetingAt),
         escapeCsvCell(meetingOutcomeLabel(m.outcome)),
         m.salesScore != null ? String(m.salesScore) : "",
@@ -162,9 +125,6 @@ export function RendezVousMeetingsShell({
   const [etapeFilter, setEtapeFilter] = useState<MeetingOutcome | "ALL">(
     "ALL",
   );
-  const [potentialFilter, setPotentialFilter] = useState<PotentialBucket>(
-    "ALL",
-  );
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -173,10 +133,9 @@ export function RendezVousMeetingsShell({
     return meetings.filter((m) => {
       if (q && !m.prospectName.toLowerCase().includes(q)) return false;
       if (etapeFilter !== "ALL" && m.outcome !== etapeFilter) return false;
-      if (!matchesPotentialBucket(m.potentialEur, potentialFilter)) return false;
       return true;
     });
-  }, [meetings, query, etapeFilter, potentialFilter]);
+  }, [meetings, query, etapeFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
@@ -184,11 +143,6 @@ export function RendezVousMeetingsShell({
 
   const setQueryAndResetPage = useCallback((value: string) => {
     setQuery(value);
-    setPage(1);
-  }, []);
-
-  const setPotentialFilterAndResetPage = useCallback((value: PotentialBucket) => {
-    setPotentialFilter(value);
     setPage(1);
   }, []);
 
@@ -230,7 +184,7 @@ export function RendezVousMeetingsShell({
   };
 
   const filterSelectClass =
-    "h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm shadow-none outline-none focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/30 dark:border-neutral-800 dark:bg-neutral-950";
+    "h-10 rounded-lg border border-neutral-200 bg-white py-1 pl-3 pr-10 text-sm shadow-none outline-none focus-visible:border-neutral-200 focus-visible:ring-0 dark:border-neutral-800 dark:bg-neutral-950 dark:focus-visible:border-neutral-800";
 
   return (
     <div className="space-y-4">
@@ -246,23 +200,6 @@ export function RendezVousMeetingsShell({
               className="h-10 rounded-xl border-neutral-200 bg-white pl-9 shadow-none dark:border-neutral-800 dark:bg-neutral-950"
             />
           </div>
-          <label className="sr-only" htmlFor="filter-potentiel">
-            Potentiel
-          </label>
-          <select
-            id="filter-potentiel"
-            value={potentialFilter}
-            onChange={(e) =>
-              setPotentialFilterAndResetPage(e.target.value as PotentialBucket)
-            }
-            className={filterSelectClass}
-          >
-            {POTENTIAL_FILTER_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
           <label className="sr-only" htmlFor="filter-etape">
             Étape
           </label>
@@ -288,7 +225,7 @@ export function RendezVousMeetingsShell({
             type="button"
             variant="outline"
             size="sm"
-            className="h-10 rounded-lg border-brand/25 bg-brand/10 text-brand-hover hover:bg-brand/15 dark:text-brand-muted"
+            className="h-10 rounded-md border-brand/25 bg-brand/10 text-brand-hover hover:bg-brand/15 dark:text-brand-muted"
             onClick={() => downloadMeetingsCsv(filtered)}
           >
             <Download className="size-4" />
@@ -297,7 +234,7 @@ export function RendezVousMeetingsShell({
           <BrandCtaLink
             href="/company/rendez-vous/nouveau"
             variant="primary"
-            className="h-10 gap-1.5 rounded-lg"
+            className="h-10 gap-1.5 rounded-md"
           >
             <Plus className="size-4" />
             Nouveau rendez-vous
@@ -329,7 +266,7 @@ export function RendezVousMeetingsShell({
                   </DataTableHead>
                 ) : null}
                 <DataTableHead className="hidden px-4 py-3.5 sm:table-cell">
-                  Potentiel
+                  TAM
                 </DataTableHead>
                 <DataTableHead className="px-4 py-3.5">Date du RDV</DataTableHead>
                 <DataTableHead className="px-4 py-3.5">Étape</DataTableHead>
@@ -394,7 +331,7 @@ export function RendezVousMeetingsShell({
                         </td>
                       ) : null}
                       <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell">
-                        {eurCompact.format(ESTIMATED_TAM_EUR_PER_RDV)}
+                        {formatDurationHoursMinutes(m.tamMinutesPerRdv)}
                       </td>
                       <td className="text-muted-foreground whitespace-nowrap px-4 py-3.5 align-middle tabular-nums">
                         {dateShort.format(new Date(m.meetingAt))}
