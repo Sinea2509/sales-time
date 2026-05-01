@@ -6,8 +6,12 @@ import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-sta
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
-import { meetingEtapeLabel, meetingEtapePillClass } from "@/lib/meeting-etape-pill";
+import {
+  meetingEtapeLabel,
+  meetingEtapePillClass,
+} from "@/lib/meeting-etape-pill";
 import { prospectInitials } from "@/lib/prospect-initials";
+import { sectionHeadingClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { PersonOutreachSummaryRow } from "@/src/core/ports/meeting-repository-port";
@@ -29,9 +33,7 @@ export function DashboardHomeShell({
     <div className="space-y-8">
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-foreground text-lg font-medium tracking-tight">
-            Mes KPI opérationnels
-          </h2>
+          <h2 className={sectionHeadingClass}>Mes KPI opérationnels</h2>
           <Suspense
             fallback={
               <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
@@ -47,9 +49,7 @@ export function DashboardHomeShell({
       {personOutreach.length > 0 ? (
         <section className="space-y-3">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <h2 className="text-foreground text-lg font-medium tracking-tight">
-              Contacts à prioriser
-            </h2>
+            <h2 className={sectionHeadingClass}>Contacts à prioriser</h2>
             <p className="text-muted-foreground max-w-xl text-xs dark:text-zinc-500">
               Regroupement par personne : nombre de RDV, dernière interaction et
               score de relance (plus élevé = relancer en priorité).
@@ -62,12 +62,18 @@ export function DashboardHomeShell({
                   <tr className="border-b border-brand/10 bg-white/60 dark:border-zinc-800 dark:bg-zinc-950/60">
                     <DataTableHead className="px-4 py-3">Contact</DataTableHead>
                     <DataTableHead className="px-4 py-3">RDV</DataTableHead>
-                    <DataTableHead className="px-4 py-3">Dernier RDV</DataTableHead>
+                    <DataTableHead className="px-4 py-3">
+                      Dernier RDV
+                    </DataTableHead>
                     <DataTableHead className="hidden px-4 py-3 sm:table-cell">
                       Durée moy.
                     </DataTableHead>
-                    <DataTableHead className="px-4 py-3">Priorité</DataTableHead>
-                    <DataTableHead className="px-4 py-3">Dernière étape</DataTableHead>
+                    <DataTableHead className="px-4 py-3">
+                      Priorité
+                    </DataTableHead>
+                    <DataTableHead className="px-4 py-3">
+                      Dernière étape
+                    </DataTableHead>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -93,7 +99,9 @@ export function DashboardHomeShell({
                         {dateShort.format(new Date(p.lastMeetingAt))}
                       </td>
                       <td className="text-muted-foreground hidden px-4 py-3 tabular-nums sm:table-cell dark:text-zinc-400">
-                        {p.avgDurationMin != null ? `${p.avgDurationMin} min` : "—"}
+                        {p.avgDurationMin != null
+                          ? `${p.avgDurationMin} min`
+                          : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-brand/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-brand-hover dark:text-brand-muted">
@@ -138,9 +146,7 @@ export function DashboardHomeShell({
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-foreground text-lg font-medium tracking-tight">
-          Mes rendez-vous
-        </h2>
+        <h2 className={sectionHeadingClass}>Mes rendez-vous</h2>
 
         <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
           <div className="overflow-x-auto">
@@ -150,9 +156,9 @@ export function DashboardHomeShell({
                   <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
                     Prospect
                   </DataTableHead>
-                    <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-500">
-                      TAM
-                    </DataTableHead>
+                  <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-500">
+                    TAM
+                  </DataTableHead>
                   <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
                     Date du RDV
                   </DataTableHead>

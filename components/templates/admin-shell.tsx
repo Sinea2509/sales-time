@@ -7,10 +7,10 @@ import {
   LayoutDashboard,
   Building2,
   Users,
-  FileText,
+  FileCode2,
   ShieldCheck,
-  ScrollText,
-  HeartPulse,
+  History,
+  Activity,
   ArrowLeft,
   LogOut,
   Search,
@@ -77,7 +77,7 @@ const configNav: NavItem[] = [
   {
     href: "/admin/prompts",
     label: "Prompts IA",
-    icon: FileText,
+    icon: FileCode2,
     match: "prefix",
   },
   {
@@ -89,13 +89,13 @@ const configNav: NavItem[] = [
   {
     href: "/admin/audit",
     label: "Journal d'audit",
-    icon: ScrollText,
+    icon: History,
     match: "prefix",
   },
   {
     href: "/admin/health",
     label: "Santé système",
-    icon: HeartPulse,
+    icon: Activity,
     match: "prefix",
   },
 ];
@@ -104,10 +104,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
   const pathname = usePathname();
   const isMobile = useIsMobile();
   const [commandOpen, setCommandOpen] = useState(false);
-  const initials = userEmail
-    .split("@")[0]
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = userEmail.split("@")[0].slice(0, 2).toUpperCase();
 
   return (
     <SidebarProvider defaultOpen>
@@ -118,7 +115,9 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
               <ShieldCheck className="size-4" />
             </div>
             <div className="group-data-[collapsible=icon]:hidden flex flex-col">
-              <span className="text-sm font-semibold leading-tight">Sales Time</span>
+              <span className="text-sm font-semibold leading-tight">
+                Sales Time
+              </span>
               <span className="text-[11px] leading-tight text-sidebar-foreground/60">
                 Administration
               </span>
@@ -180,46 +179,44 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
           </SidebarContent>
 
           <SidebarFooter className="shrink-0 border-t border-sidebar-border">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                render={<Link href="/company" />}
-                tooltip={"Retour à l'app"}
-              >
-                <ArrowLeft />
-                <span>{"Retour à l'app"}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <form action="/sign-out" method="POST" className="w-full">
-                <SidebarMenuButton type="submit" tooltip="Déconnexion">
-                  <LogOut />
-                  <span>Déconnexion</span>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={<Link href="/company" />}
+                  tooltip={"Retour à l'app"}
+                >
+                  <ArrowLeft />
+                  <span>{"Retour à l'app"}</span>
                 </SidebarMenuButton>
-              </form>
-            </SidebarMenuItem>
-          </SidebarMenu>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <form action="/sign-out" method="POST" className="w-full">
+                  <SidebarMenuButton type="submit" tooltip="Déconnexion">
+                    <LogOut />
+                    <span>Déconnexion</span>
+                  </SidebarMenuButton>
+                </form>
+              </SidebarMenuItem>
+            </SidebarMenu>
 
-          <div className="group-data-[collapsible=icon]:hidden flex items-center gap-2 px-2 pb-1">
-            <Avatar className="size-6">
-              <AvatarFallback className="bg-zinc-200 text-[10px] font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <span className="truncate text-xs text-sidebar-foreground/60">
-              {userEmail}
-            </span>
-          </div>
-        </SidebarFooter>
+            <div className="group-data-[collapsible=icon]:hidden flex items-center gap-2 px-2 pb-1">
+              <Avatar className="size-6">
+                <AvatarFallback className="bg-zinc-200 text-[10px] font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate text-xs text-sidebar-foreground/60">
+                {userEmail}
+              </span>
+            </div>
+          </SidebarFooter>
         </div>
       </Sidebar>
 
       <AdminCommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
       <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--app-shell-surface)]">
-        <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 z-50 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur">
-          {isMobile ? (
-            <SidebarTrigger className="-ml-1 shrink-0" />
-          ) : null}
+        <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 z-50 flex h-16 shrink-0 items-center gap-3 border-b px-4 backdrop-blur">
+          {isMobile ? <SidebarTrigger className="-ml-1 shrink-0" /> : null}
           <button
             onClick={() => setCommandOpen(true)}
             className={cn(
@@ -234,10 +231,12 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
             </kbd>
           </button>
           <div className="flex-1" />
-          <span className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
-            "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200",
-          )}>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+              "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200",
+            )}
+          >
             <ShieldCheck className="size-3" />
             Super Admin
           </span>

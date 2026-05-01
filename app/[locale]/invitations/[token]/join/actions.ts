@@ -50,7 +50,10 @@ export async function registerFromInvitationAction(
   const preview =
     await deps.organizationInvitations.findPendingByTokenForPreview(token);
   if (!preview) {
-    return { ok: false, message: "Ce lien d’invitation est invalide ou a expiré." };
+    return {
+      ok: false,
+      message: "Ce lien d’invitation est invalide ou a expiré.",
+    };
   }
 
   const principal = await deps.auth.getAuthenticatedPrincipal();
@@ -84,7 +87,10 @@ export async function registerFromInvitationAction(
           "Un compte existe déjà avec cet e-mail. Connectez-vous puis acceptez l’invitation depuis le lien reçu.",
       };
     }
-    return { ok: false, message: "Ce lien d’invitation est invalide ou a expiré." };
+    return {
+      ok: false,
+      message: "Ce lien d’invitation est invalide ou a expiré.",
+    };
   }
 
   const raw = generateOpaqueToken();

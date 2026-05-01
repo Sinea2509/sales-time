@@ -7,6 +7,8 @@ import { inviteMemberAction } from "@/app/[locale]/company/settings/equipe/actio
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { nativeSelectClassName } from "@/components/ui/native-select-class";
+import { cn } from "@/lib/utils";
 
 /** Même style que « Voir tous les plans » (sidebar) : brand + texte blanc. */
 const triggerClass =
@@ -94,7 +96,10 @@ export function DashboardAddMemberPopover() {
               <Label htmlFor="dash-invite-role">Rôle</Label>
               <select
                 id="dash-invite-role"
-                className="border-input bg-background h-9 w-full rounded-md border px-3 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                className={cn(
+                  nativeSelectClassName,
+                  "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50",
+                )}
                 value={inviteRole}
                 onChange={(e) =>
                   setInviteRole(e.target.value as "ADMIN" | "MEMBER")

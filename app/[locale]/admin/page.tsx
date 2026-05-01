@@ -1,14 +1,15 @@
 import {
   Users,
   Building2,
-  CalendarDays,
-  BarChart3,
+  Calendar,
+  LineChart,
   TrendingUp,
   TrendingDown,
   Activity,
   Zap,
 } from "lucide-react";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { pageTitleClass } from "@/lib/page-typography";
 import { AdminKpiCard } from "@/components/molecules/admin-kpi-card";
 import { AdminActivityChart } from "@/components/organisms/admin-activity-chart";
 import { AdminOrgGrowthChart } from "@/components/organisms/admin-org-growth-chart";
@@ -71,9 +72,10 @@ export default async function AdminDashboardPage(props: {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard plateforme</h1>
+          <h1 className={pageTitleClass}>Dashboard plateforme</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Vue d&apos;ensemble de l&apos;activité et des KPIs SaaS de Sales Time.
+            Vue d&apos;ensemble de l&apos;activité et des KPIs SaaS de Sales
+            Time.
           </p>
         </div>
         <AdminDateRangePicker />
@@ -96,14 +98,14 @@ export default async function AdminDashboardPage(props: {
           accent="violet"
         />
         <AdminKpiCard
-          icon={CalendarDays}
+          icon={Calendar}
           label="Rendez-vous totaux"
           value={totalMeetings}
           footer={`${avgMeetingsPerOrg} moy. / org`}
           accent="emerald"
         />
         <AdminKpiCard
-          icon={BarChart3}
+          icon={LineChart}
           label="Analyses totales"
           value={totalAnalyses}
           footer={`${avgAnalysesPerMeeting} moy. / RDV`}
@@ -148,7 +150,7 @@ export default async function AdminDashboardPage(props: {
       {/* Activity Row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <AdminKpiCard
-          icon={CalendarDays}
+          icon={Calendar}
           label={`RDV (${rangeDays} jours)`}
           value={meetings30d}
           trend={meetingsTrend}
@@ -156,7 +158,7 @@ export default async function AdminDashboardPage(props: {
           accent="emerald"
         />
         <AdminKpiCard
-          icon={BarChart3}
+          icon={LineChart}
           label={`Analyses (${rangeDays} jours)`}
           value={analyses30d}
           footer="Sur la période glissante"
@@ -182,11 +184,16 @@ export default async function AdminDashboardPage(props: {
         {/* Recent Users */}
         <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
-            <h3 className="text-sm font-semibold">Derniers utilisateurs inscrits</h3>
+            <h3 className="text-sm font-semibold">
+              Derniers utilisateurs inscrits
+            </h3>
           </div>
           <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {recentUsers.map((u) => (
-              <div key={u.id} className="flex items-center justify-between px-5 py-3">
+              <div
+                key={u.id}
+                className="flex items-center justify-between px-5 py-3"
+              >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {u.firstName && u.lastName
@@ -230,7 +237,8 @@ export default async function AdminDashboardPage(props: {
                     {org.name}
                   </p>
                   <p className="truncate text-xs text-zinc-500">
-                    {org.slug} · {org.memberCount} membre(s) · {org.meetingCount} RDV
+                    {org.slug} · {org.memberCount} membre(s) ·{" "}
+                    {org.meetingCount} RDV
                   </p>
                 </div>
                 <span className="whitespace-nowrap text-xs text-zinc-400">

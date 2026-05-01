@@ -1,4 +1,4 @@
-import { Box, Clock, Wallet } from "lucide-react";
+import { BadgePercent, Clock, LayoutList } from "lucide-react";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { KpiTile } from "@/components/molecules/kpi-tile";
 import { KpiVsPreviousBadge } from "@/components/molecules/trend-pill";
@@ -21,9 +21,7 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
       <KpiTile
         icon={HeroIcon}
         label={heroLabel}
-        trend={
-          <KpiVsPreviousBadge delta={heroTrend} mode={heroTrendMode} />
-        }
+        trend={<KpiVsPreviousBadge delta={heroTrend} mode={heroTrendMode} />}
         footer={
           heroIsDuration ? (
             <>
@@ -41,7 +39,7 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
       </KpiTile>
 
       <KpiTile
-        icon={Box}
+        icon={LayoutList}
         label="Nb de rdvs"
         trend={
           <KpiVsPreviousBadge delta={home.nbRdvsTrendPercent} mode="up-good" />
@@ -51,7 +49,7 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
       </KpiTile>
 
       <KpiTile
-        icon={Wallet}
+        icon={BadgePercent}
         label="TUC optimisé (%)"
         trend={
           <KpiVsPreviousBadge

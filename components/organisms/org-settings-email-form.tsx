@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { nativeSelectClassName } from "@/components/ui/native-select-class";
 
 export function OrgSettingsEmailForm({
   initialTone,
@@ -51,7 +52,7 @@ export function OrgSettingsEmailForm({
         <Label htmlFor="email-tone">Ton des e-mails</Label>
         <select
           id="email-tone"
-          className="border-input bg-background h-9 w-full max-w-md rounded-md border py-1 pl-3 pr-10 text-sm outline-none focus-visible:border-input focus-visible:ring-0"
+          className={cn(nativeSelectClassName, "max-w-md")}
           value={tone}
           onChange={(e) => setTone(e.target.value as "formal" | "informal")}
         >
@@ -83,13 +84,20 @@ export function OrgSettingsEmailForm({
       </div>
       {msg ? (
         <p
-          className={cn("text-sm", msg.ok ? "text-green-700 dark:text-green-400" : "text-destructive")}
+          className={cn(
+            "text-sm",
+            msg.ok ? "text-green-700 dark:text-green-400" : "text-destructive",
+          )}
           role="status"
         >
           {msg.text}
         </p>
       ) : null}
-      <Button type="submit" disabled={pending} className="bg-brand text-white hover:bg-brand-hover">
+      <Button
+        type="submit"
+        disabled={pending}
+        className="bg-brand text-white hover:bg-brand-hover"
+      >
         Enregistrer
       </Button>
     </form>

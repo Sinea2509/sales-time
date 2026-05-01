@@ -7,6 +7,7 @@ import { forgotPasswordAction } from "@/app/[locale]/forgot-password/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { pageTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 
 const primaryCtaClass = cn(
@@ -41,11 +42,10 @@ export function ForgotPasswordForm() {
     return (
       <div className="flex flex-col gap-6">
         <div className="space-y-3 text-center">
-          <h2 className="text-foreground text-2xl font-semibold tracking-tight">
-            Vérifiez votre e-mail
-          </h2>
+          <h2 className={pageTitleClass}>Vérifiez votre e-mail</h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Nous vous avons envoyé un lien pour réinitialiser votre mot de passe.
+            Nous vous avons envoyé un lien pour réinitialiser votre mot de
+            passe.
           </p>
         </div>
         <Link

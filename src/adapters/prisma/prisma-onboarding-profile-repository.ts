@@ -1,9 +1,7 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
 import type { OnboardingProfileRepositoryPort } from "@/src/core/ports/onboarding-profile-repository-port";
 
-export class PrismaOnboardingProfileRepository
-  implements OnboardingProfileRepositoryPort
-{
+export class PrismaOnboardingProfileRepository implements OnboardingProfileRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
   async getOrCreateProfileForUserId(

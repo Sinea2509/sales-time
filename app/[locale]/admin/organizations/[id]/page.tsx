@@ -11,6 +11,8 @@ import {
   Clock,
 } from "lucide-react";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { cardTitleClass, pageTitleClass } from "@/lib/page-typography";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -80,7 +82,7 @@ export default async function AdminOrganizationDetailPage({
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">{org.name}</h1>
+            <h1 className={pageTitleClass}>{org.name}</h1>
             <Badge variant="secondary" className="font-mono text-xs">
               {org.slug}
             </Badge>
@@ -102,10 +104,30 @@ export default async function AdminOrganizationDetailPage({
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Users} label="Membres" value={org.counts.memberships} accent="blue" />
-        <StatCard icon={CalendarDays} label="Rendez-vous" value={org.counts.meetings} accent="emerald" />
-        <StatCard icon={BarChart3} label="Analyses" value={analysesCount} accent="violet" />
-        <StatCard icon={Mail} label="Invitations" value={org.counts.invitations} accent="amber" />
+        <StatCard
+          icon={Users}
+          label="Membres"
+          value={org.counts.memberships}
+          accent="blue"
+        />
+        <StatCard
+          icon={CalendarDays}
+          label="Rendez-vous"
+          value={org.counts.meetings}
+          accent="emerald"
+        />
+        <StatCard
+          icon={BarChart3}
+          label="Analyses"
+          value={analysesCount}
+          accent="violet"
+        />
+        <StatCard
+          icon={Mail}
+          label="Invitations"
+          value={org.counts.invitations}
+          accent="amber"
+        />
       </div>
 
       {/* Members */}
@@ -125,22 +147,36 @@ export default async function AdminOrganizationDetailPage({
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Utilisateur</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">E-mail</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Rôle</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Rejoint le</th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Utilisateur
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      E-mail
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Rôle
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Rejoint le
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {org.memberships.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-zinc-400">
+                      <td
+                        colSpan={4}
+                        className="px-4 py-8 text-center text-zinc-400"
+                      >
                         Aucun membre.
                       </td>
                     </tr>
                   ) : (
                     org.memberships.map((m) => (
-                      <tr key={m.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40">
+                      <tr
+                        key={m.id}
+                        className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                      >
                         <td className="px-4 py-2.5 font-medium text-zinc-900 dark:text-zinc-100">
                           <Link
                             href={`/admin/users/${m.userId}`}
@@ -151,10 +187,14 @@ export default async function AdminOrganizationDetailPage({
                               : m.user.email}
                           </Link>
                         </td>
-                        <td className="px-4 py-2.5 text-zinc-500">{m.user.email}</td>
+                        <td className="px-4 py-2.5 text-zinc-500">
+                          {m.user.email}
+                        </td>
                         <td className="px-4 py-2.5">
                           <Badge
-                            variant={m.role === "ADMIN" ? "default" : "secondary"}
+                            variant={
+                              m.role === "ADMIN" ? "default" : "secondary"
+                            }
                             className="text-xs"
                           >
                             {m.role === "ADMIN" ? "Admin" : "Membre"}
@@ -176,7 +216,7 @@ export default async function AdminOrganizationDetailPage({
       {/* Recent Meetings */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
             <CalendarDays className="size-4 text-zinc-500" />
             Derniers rendez-vous
           </CardTitle>
@@ -190,24 +230,39 @@ export default async function AdminOrganizationDetailPage({
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Prospect</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Date</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Résultat</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Vendeur</th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Prospect
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Date
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Résultat
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Vendeur
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {org.meetings.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-zinc-400">
+                      <td
+                        colSpan={4}
+                        className="px-4 py-8 text-center text-zinc-400"
+                      >
                         Aucun rendez-vous.
                       </td>
                     </tr>
                   ) : (
                     org.meetings.map((m) => {
-                      const oc = outcomeConfig[m.outcome] ?? outcomeConfig.OTHER;
+                      const oc =
+                        outcomeConfig[m.outcome] ?? outcomeConfig.OTHER;
                       return (
-                        <tr key={m.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40">
+                        <tr
+                          key={m.id}
+                          className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                        >
                           <td className="px-4 py-2.5 font-medium text-zinc-900 dark:text-zinc-100">
                             {m.prospectName}
                           </td>
@@ -238,7 +293,7 @@ export default async function AdminOrganizationDetailPage({
       {/* Audit Trail */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
             <Shield className="size-4 text-zinc-500" />
             Journal d&apos;audit
           </CardTitle>
@@ -252,25 +307,42 @@ export default async function AdminOrganizationDetailPage({
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Date</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Acteur</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Action</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Raison</th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Date
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Acteur
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Action
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Raison
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {auditLogs.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-zinc-400">
+                      <td
+                        colSpan={4}
+                        className="px-4 py-8 text-center text-zinc-400"
+                      >
                         Aucune entrée d&apos;audit.
                       </td>
                     </tr>
                   ) : (
                     auditLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40">
+                      <tr
+                        key={log.id}
+                        className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                      >
                         <td className="whitespace-nowrap px-4 py-2.5 text-zinc-500">
                           {log.createdAt.toLocaleDateString("fr-FR")}{" "}
-                          {log.createdAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                          {log.createdAt.toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </td>
                         <td className="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">
                           {log.actor.email}
@@ -308,16 +380,30 @@ function StatCard({
   accent: "blue" | "emerald" | "violet" | "amber";
 }) {
   const accentMap = {
-    blue: { bg: "bg-blue-50 dark:bg-blue-950/40", icon: "text-blue-600 dark:text-blue-400" },
-    emerald: { bg: "bg-emerald-50 dark:bg-emerald-950/40", icon: "text-emerald-600 dark:text-emerald-400" },
-    violet: { bg: "bg-violet-50 dark:bg-violet-950/40", icon: "text-violet-600 dark:text-violet-400" },
-    amber: { bg: "bg-amber-50 dark:bg-amber-950/40", icon: "text-amber-600 dark:text-amber-400" },
+    blue: {
+      bg: "bg-blue-50 dark:bg-blue-950/40",
+      icon: "text-blue-600 dark:text-blue-400",
+    },
+    emerald: {
+      bg: "bg-emerald-50 dark:bg-emerald-950/40",
+      icon: "text-emerald-600 dark:text-emerald-400",
+    },
+    violet: {
+      bg: "bg-violet-50 dark:bg-violet-950/40",
+      icon: "text-violet-600 dark:text-violet-400",
+    },
+    amber: {
+      bg: "bg-amber-50 dark:bg-amber-950/40",
+      icon: "text-amber-600 dark:text-amber-400",
+    },
   };
   const colors = accentMap[accent];
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <div className={`flex size-10 items-center justify-center rounded-lg ${colors.bg}`}>
+      <div
+        className={`flex size-10 items-center justify-center rounded-lg ${colors.bg}`}
+      >
         <Icon className={`size-5 ${colors.icon}`} />
       </div>
       <div className="mt-3">

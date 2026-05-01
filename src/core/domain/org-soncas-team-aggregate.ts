@@ -54,8 +54,7 @@ export function averageSoncasDriverScores(
     sympathie: null,
   };
   for (const k of DRIVER_KEYS) {
-    out[k] =
-      counts[k] > 0 ? Math.round(sums[k] / counts[k]) : null;
+    out[k] = counts[k] > 0 ? Math.round(sums[k] / counts[k]) : null;
   }
   return out;
 }

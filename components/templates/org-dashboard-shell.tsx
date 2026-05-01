@@ -5,13 +5,13 @@ import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslations } from "next-intl";
 import {
-  BarChart3,
-  BookUser,
-  CalendarDays,
+  Calendar,
+  ContactRound,
   LayoutDashboard,
-  Settings2,
+  LineChart,
+  Settings,
+  ShieldUser,
   X,
-  Shield,
 } from "lucide-react";
 import {
   Sidebar,
@@ -92,17 +92,17 @@ export function OrgDashboardShell({
     {
       href: "/company/rendez-vous",
       label: isAdmin ? tNav("meetingsTeam") : tNav("meetingsMine"),
-      icon: CalendarDays,
+      icon: Calendar,
     },
     {
       href: "/company/contacts",
       label: tNav("contacts"),
-      icon: BookUser,
+      icon: ContactRound,
     },
     {
       href: "/company/analyse",
       label: isAdmin ? tNav("analyseTeam") : tNav("analyseMine"),
-      icon: BarChart3,
+      icon: LineChart,
     },
   ];
   const orgAdminNav: NavItem[] =
@@ -111,7 +111,7 @@ export function OrgDashboardShell({
           {
             href: "/company/settings",
             label: tNav("orgSettings"),
-            icon: Settings2,
+            icon: Settings,
             match: "prefix",
           },
         ]
@@ -121,7 +121,7 @@ export function OrgDashboardShell({
         {
           href: "/admin",
           label: tNav("superAdmin"),
-          icon: Shield,
+          icon: ShieldUser,
         },
       ]
     : [];
@@ -161,25 +161,27 @@ export function OrgDashboardShell({
         </SidebarHeader>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <SidebarContent className="max-h-full min-h-0 flex-none overflow-y-auto overscroll-contain">
+          <SidebarContent className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {[...mainNav, ...orgProductNav, ...orgAdminNav].map((item) => {
-                    const Icon = item.icon;
-                    const active = navActive(pathname, item);
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          isActive={active}
-                          render={<Link href={item.href} />}
-                        >
-                          <Icon />
-                          <span>{item.label}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
+                  {[...mainNav, ...orgProductNav, ...orgAdminNav].map(
+                    (item) => {
+                      const Icon = item.icon;
+                      const active = navActive(pathname, item);
+                      return (
+                        <SidebarMenuItem key={item.href}>
+                          <SidebarMenuButton
+                            isActive={active}
+                            render={<Link href={item.href} />}
+                          >
+                            <Icon />
+                            <span>{item.label}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    },
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -195,61 +197,61 @@ export function OrgDashboardShell({
             ) : null}
           </SidebarContent>
 
-          <SidebarFooter className="shrink-0 border-t border-sidebar-border">
-          {footerNav.length > 0 ? (
-            <SidebarMenu>
-              {footerNav.map((item) => {
-                const Icon = item.icon;
-                const active = navActive(pathname, item);
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      isActive={active}
-                      render={<Link href={item.href} />}
-                    >
-                      <Icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          ) : null}
+          <SidebarFooter className="shrink-0">
+            {footerNav.length > 0 ? (
+              <SidebarMenu>
+                {footerNav.map((item) => {
+                  const Icon = item.icon;
+                  const active = navActive(pathname, item);
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        isActive={active}
+                        render={<Link href={item.href} />}
+                      >
+                        <Icon />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            ) : null}
 
-          <div
-            className={cn(
-              "group-data-[collapsible=icon]:hidden px-2 pb-3",
-              footerNav.length > 0 ? "pt-1" : "pt-2",
-            )}
-          >
-            <div className="rounded-xl border border-[#404040]/20 bg-[#F5F5F5] p-3">
-              <p className="text-sm font-semibold text-[#171717]">
-                Essai gratuit
-              </p>
-              <p className="mt-1 text-xs leading-snug text-[#404040]">
-                Plus que 5 analyses — passez au plan pour continuer
-              </p>
-              <div className="mt-3">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#171717]/20">
-                  <div
-                    className="h-full rounded-full bg-brand"
-                    style={{ width: `${progressPercent}%` }}
-                    aria-hidden
-                  />
+            <div
+              className={cn(
+                "group-data-[collapsible=icon]:hidden px-2 pb-3",
+                footerNav.length > 0 ? "pt-1" : "pt-2",
+              )}
+            >
+              <div className="rounded-xl border border-[#404040]/20 bg-[#F5F5F5] p-3">
+                <p className="text-sm font-semibold text-[#171717]">
+                  Essai gratuit
+                </p>
+                <p className="mt-1 text-xs leading-snug text-[#404040]">
+                  Plus que 5 analyses — passez au plan pour continuer
+                </p>
+                <div className="mt-3">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#171717]/20">
+                    <div
+                      className="h-full rounded-full bg-brand"
+                      style={{ width: `${progressPercent}%` }}
+                      aria-hidden
+                    />
+                  </div>
                 </div>
+                <Link
+                  href="/company/plan"
+                  className={cn(
+                    buttonVariants({ size: "sm" }),
+                    "mt-3 h-8 w-full rounded-md bg-brand px-3 text-xs text-white hover:bg-brand-hover",
+                  )}
+                >
+                  Voir tous les plans
+                </Link>
               </div>
-              <Link
-                href="/company/plan"
-                className={cn(
-                  buttonVariants({ size: "sm" }),
-                  "mt-3 h-8 w-full rounded-md bg-brand px-3 text-xs text-white hover:bg-brand-hover",
-                )}
-              >
-                Voir tous les plans
-              </Link>
             </div>
-          </div>
-        </SidebarFooter>
+          </SidebarFooter>
         </div>
       </Sidebar>
 

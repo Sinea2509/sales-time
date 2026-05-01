@@ -5,9 +5,7 @@ import type {
   PromptTemplateVersionRow,
 } from "@/src/core/ports/prompt-template-repository-port";
 
-export class PrismaPromptTemplateRepository
-  implements PromptTemplateRepositoryPort
-{
+export class PrismaPromptTemplateRepository implements PromptTemplateRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
   async getCurrentVersion(input: {

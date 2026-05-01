@@ -30,6 +30,8 @@ export async function runMeetingAnalysis(
     meetingId: string;
     kind: AnalysisKindToRun;
     model: string;
+    /** Suffixe markdown (paramètres org.) concaténé au prompt KISS global. */
+    kissSystemMarkdownAppendix?: string | null;
   },
 ): Promise<RunMeetingAnalysisResult> {
   if (!input.organizationId) {
@@ -99,8 +101,14 @@ export async function runMeetingAnalysis(
       }),
     ]);
 
+    const appendix = input.kissSystemMarkdownAppendix?.trim();
+    const kissSystemMarkdown =
+      appendix && appendix.length > 0
+        ? `${promptVersion.markdown}\n\n---\n\n## Consignes KISS (plateforme)\n\n${appendix}`
+        : promptVersion.markdown;
+
     const { result } = await deps.analysis.analyzeKiss({
-      systemMarkdown: promptVersion.markdown,
+      systemMarkdown: kissSystemMarkdown,
       transcript: meeting.transcript,
       notes: meeting.notes,
       model: input.model,

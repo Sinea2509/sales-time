@@ -8,7 +8,11 @@ import { setSessionCookie } from "@/lib/auth/session-cookie";
 import { verifyPassword } from "@/lib/auth/password";
 
 const schema = z.object({
-  email: z.string().trim().email().transform((e) => e.toLowerCase()),
+  email: z
+    .string()
+    .trim()
+    .email()
+    .transform((e) => e.toLowerCase()),
   password: z.string().min(1).max(200),
   next: z.string().max(2000).optional().nullable(),
 });

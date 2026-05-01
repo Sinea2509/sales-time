@@ -63,7 +63,9 @@ export default async function OnboardingPage() {
       asStringArray(p?.pipelineStages).length > 0
         ? asStringArray(p?.pipelineStages)
         : [...DEFAULT_PIPELINE_STAGES],
-    invites: initialInviteRowsFromStored(parseStoredInviteRows(p?.inviteEmails)),
+    invites: initialInviteRowsFromStored(
+      parseStoredInviteRows(p?.inviteEmails),
+    ),
     inviteMessage: coerceStoredInviteMessageToHtml(p?.inviteMessage),
   };
 

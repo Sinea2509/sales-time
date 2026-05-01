@@ -252,16 +252,20 @@ export interface BackofficeRepositoryPort {
     }>,
   ): Promise<void>;
 
-  findUsersByIdsForBulk(ids: string[]): Promise<Array<{ id: string; email: string }>>;
+  findUsersByIdsForBulk(
+    ids: string[],
+  ): Promise<Array<{ id: string; email: string }>>;
 
   updateUsersStatusMany(
     userIds: string[],
     status: "ACTIVE" | "DISABLED",
   ): Promise<void>;
 
-  findUserStatusById(
-    userId: string,
-  ): Promise<{ id: string; status: "ACTIVE" | "DISABLED"; email: string } | null>;
+  findUserStatusById(userId: string): Promise<{
+    id: string;
+    status: "ACTIVE" | "DISABLED";
+    email: string;
+  } | null>;
 
   updateUserStatus(
     userId: string,

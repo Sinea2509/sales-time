@@ -22,6 +22,7 @@ import { meetingOutcomeLabel } from "@/lib/meeting-outcome-labels";
 import { prospectInitials } from "@/lib/prospect-initials";
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import { cn } from "@/lib/utils";
+import { nativeSelectChevronClasses } from "@/components/ui/native-select-class";
 
 export type RendezVousMeetingRow = {
   id: string;
@@ -97,10 +98,7 @@ function downloadMeetingsCsv(meetings: RendezVousMeetingRow[]) {
 const PAGE_SIZE = 10;
 const MAX_PAGE_BUTTONS = 4;
 
-function paginationWindow(
-  currentPage: number,
-  totalPages: number,
-): number[] {
+function paginationWindow(currentPage: number, totalPages: number): number[] {
   if (totalPages <= MAX_PAGE_BUTTONS) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
@@ -122,9 +120,7 @@ export function RendezVousMeetingsShell({
   showSellerColumn?: boolean;
 }) {
   const [query, setQuery] = useState("");
-  const [etapeFilter, setEtapeFilter] = useState<MeetingOutcome | "ALL">(
-    "ALL",
-  );
+  const [etapeFilter, setEtapeFilter] = useState<MeetingOutcome | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -183,8 +179,10 @@ export function RendezVousMeetingsShell({
     });
   };
 
-  const filterSelectClass =
-    "h-10 rounded-lg border border-neutral-200 bg-white py-1 pl-3 pr-10 text-sm shadow-none outline-none focus-visible:border-neutral-200 focus-visible:ring-0 dark:border-neutral-800 dark:bg-neutral-950 dark:focus-visible:border-neutral-800";
+  const filterSelectClass = cn(
+    "h-10 rounded-lg border border-neutral-200 bg-white py-1 pl-3 pr-10 text-sm shadow-none outline-none focus-visible:border-neutral-200 focus-visible:ring-0 dark:border-neutral-800 dark:bg-neutral-950 dark:focus-visible:border-neutral-800",
+    nativeSelectChevronClasses,
+  );
 
   return (
     <div className="space-y-4">
@@ -268,7 +266,9 @@ export function RendezVousMeetingsShell({
                 <DataTableHead className="hidden px-4 py-3.5 sm:table-cell">
                   TAM
                 </DataTableHead>
-                <DataTableHead className="px-4 py-3.5">Date du RDV</DataTableHead>
+                <DataTableHead className="px-4 py-3.5">
+                  Date du RDV
+                </DataTableHead>
                 <DataTableHead className="px-4 py-3.5">Étape</DataTableHead>
                 <DataTableHead className="hidden px-4 py-3.5 md:table-cell">
                   SalesScore
@@ -279,7 +279,7 @@ export function RendezVousMeetingsShell({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                {filtered.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={showSellerColumn ? 8 : 7}
@@ -304,9 +304,7 @@ export function RendezVousMeetingsShell({
                           type="checkbox"
                           aria-label={`Sélectionner ${m.prospectName}`}
                           checked={checked}
-                          onChange={(e) =>
-                            toggleRow(m.id, e.target.checked)
-                          }
+                          onChange={(e) => toggleRow(m.id, e.target.checked)}
                           className="size-4 cursor-pointer rounded border border-neutral-300 accent-brand dark:border-neutral-600"
                         />
                       </td>
@@ -371,21 +369,24 @@ export function RendezVousMeetingsShell({
 
         <div className="flex flex-col gap-3 border-t border-neutral-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-neutral-800">
           <p className="text-muted-foreground text-sm">
-            Affichage de <span className="text-foreground font-medium">{rangeStart}</span>{" "}
-            à <span className="text-foreground font-medium">{rangeEnd}</span> sur{" "}
-            <span className="text-foreground font-medium">{filtered.length}</span>{" "}
+            Affichage de{" "}
+            <span className="text-foreground font-medium">{rangeStart}</span> à{" "}
+            <span className="text-foreground font-medium">{rangeEnd}</span> sur{" "}
+            <span className="text-foreground font-medium">
+              {filtered.length}
+            </span>{" "}
             entrée{filtered.length > 1 ? "s" : ""}
             {selectedIds.size > 0 ? (
               <span className="text-muted-foreground ml-2">
-                · <span className="text-foreground font-medium">{selectedIds.size}</span>{" "}
+                ·{" "}
+                <span className="text-foreground font-medium">
+                  {selectedIds.size}
+                </span>{" "}
                 sélectionné{selectedIds.size > 1 ? "s" : ""}
               </span>
             ) : null}
           </p>
-          <nav
-            aria-label="Pagination"
-            className="flex items-center gap-1"
-          >
+          <nav aria-label="Pagination" className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}

@@ -72,10 +72,7 @@ export function LandingTestimonialSlider({
           aria-live="polite"
         >
           <div className="mb-4 flex items-center justify-between gap-3">
-            <Quote
-              className="text-brand/40 size-9 shrink-0"
-              aria-hidden
-            />
+            <Quote className="text-brand/40 size-9 shrink-0" aria-hidden />
             <StarRow />
           </div>
           <blockquote>

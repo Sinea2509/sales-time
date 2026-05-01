@@ -1,6 +1,12 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,20 +19,20 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  createOnboardingSharedPhrase,
-  listOnboardingSharedPhrases,
-  type SharedPhraseRow,
-} from "@/app/[locale]/onboarding/shared-phrases-actions";
+  createCoachSharedPhrase,
+  listCoachSharedPhrases,
+  type CoachSharedPhraseRow,
+} from "@/app/[locale]/company/coach-shared-phrases-actions";
 import { normalizePhraseKey } from "@/lib/onboarding-shared-default-phrases";
 import { cn } from "@/lib/utils";
 
-export type PhrasePickerKind = "OBJECTION" | "ARGUMENT";
+export type CoachPhrasePickerKind = "OBJECTION" | "ARGUMENT";
 
 const secondaryGreyClass =
   "border border-neutral-200 bg-[#F5F5F5] text-foreground shadow-none hover:bg-[#EBEBEB] dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700";
 
 type Props = {
-  kind: PhrasePickerKind;
+  kind: CoachPhrasePickerKind;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -36,7 +42,7 @@ type Props = {
   onAddToList: (texts: string[]) => void;
 };
 
-export function OnboardingPhrasePickerSheet({
+export function CoachSharedPhrasePickerSheet({
   kind,
   open,
   onOpenChange,
@@ -45,7 +51,7 @@ export function OnboardingPhrasePickerSheet({
   alreadyChosen,
   onAddToList,
 }: Props) {
-  const [phrases, setPhrases] = useState<SharedPhraseRow[]>([]);
+  const [phrases, setPhrases] = useState<CoachSharedPhraseRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
@@ -62,7 +68,7 @@ export function OnboardingPhrasePickerSheet({
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
-    const r = await listOnboardingSharedPhrases(kind);
+    const r = await listCoachSharedPhrases(kind);
     setLoading(false);
     if (!r.ok) {
       setLoadError(r.message);
@@ -133,7 +139,7 @@ export function OnboardingPhrasePickerSheet({
     }
     setCreateError(null);
     setCreating(true);
-    const r = await createOnboardingSharedPhrase({ kind, text: t });
+    const r = await createCoachSharedPhrase({ kind, text: t });
     setCreating(false);
     if (!r.ok) {
       setCreateError(r.message);
@@ -191,7 +197,7 @@ export function OnboardingPhrasePickerSheet({
                 />
                 <PhraseBlock
                   heading="Collection partagée"
-                  sub="Proposé par d’autres organisations — vous pouvez en ajouter de nouvelles ci-dessous."
+                  sub="Enrichie depuis l’onboarding et les réglages Coach IA — vous pouvez proposer de nouvelles formulations ci-dessous."
                   items={community}
                   selectedIds={selectedIds}
                   onToggle={toggle}
@@ -201,9 +207,11 @@ export function OnboardingPhrasePickerSheet({
           </div>
 
           <div className="border-border space-y-2 rounded-xl border bg-muted/20 p-3">
-            <Label htmlFor="new-phrase">Créer une nouvelle option (partagée)</Label>
+            <Label htmlFor="new-phrase">
+              Créer une nouvelle option (partagée)
+            </Label>
             <p className="text-muted-foreground text-xs">
-              Visible par tous pour enrichir les prochains onboardings.
+              Visible pour toutes les organisations (onboarding et Coach IA).
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
@@ -264,7 +272,7 @@ function PhraseBlock({
 }: {
   heading: string;
   sub?: string;
-  items: SharedPhraseRow[];
+  items: CoachSharedPhraseRow[];
   selectedIds: Set<string>;
   onToggle: (id: string) => void;
 }) {

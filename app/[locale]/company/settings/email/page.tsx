@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { OrgSettingsEmailForm } from "@/components/organisms/org-settings-email-form";
+import { pageTitleClass } from "@/lib/page-typography";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function OrgSettingsEmailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">E-mail de suivi</h1>
+        <h1 className={pageTitleClass}>E-mail de suivi</h1>
         <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
           Paramètres utilisés pour la génération du mail de relance (ton,
           vouvoiement, signature).

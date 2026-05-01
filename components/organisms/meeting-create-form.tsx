@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { nativeSelectClassName } from "@/components/ui/native-select-class";
 
 const outcomes = [
   { value: "WON", label: "Gagné" },
@@ -16,9 +17,6 @@ const outcomes = [
   { value: "NO_SHOW", label: "Absent" },
   { value: "OTHER", label: "Autre" },
 ] as const;
-
-const selectClassName =
-  "border-input bg-background flex h-9 w-full rounded-md border py-1 pl-3 pr-10 text-sm outline-none focus-visible:border-input focus-visible:ring-0";
 
 export function MeetingCreateForm({
   meetingTypeOptions,
@@ -78,7 +76,11 @@ export function MeetingCreateForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="meetingType">Type de rendez-vous</Label>
-          <select id="meetingType" name="meetingType" className={selectClassName}>
+          <select
+            id="meetingType"
+            name="meetingType"
+            className={nativeSelectClassName}
+          >
             <option value="">—</option>
             {meetingTypeOptions.map((t) => (
               <option key={t} value={t}>
@@ -89,7 +91,11 @@ export function MeetingCreateForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="pipelineStage">Étape pipeline</Label>
-          <select id="pipelineStage" name="pipelineStage" className={selectClassName}>
+          <select
+            id="pipelineStage"
+            name="pipelineStage"
+            className={nativeSelectClassName}
+          >
             <option value="">—</option>
             {pipelineStageOptions.map((t) => (
               <option key={t} value={t}>
@@ -114,7 +120,7 @@ export function MeetingCreateForm({
           <select
             id="outcome"
             name="outcome"
-            className={selectClassName}
+            className={nativeSelectClassName}
             defaultValue="FOLLOW_UP"
             required
           >

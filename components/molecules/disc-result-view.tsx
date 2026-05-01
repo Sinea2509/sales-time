@@ -1,9 +1,5 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cardTitleClass } from "@/lib/page-typography";
 import type { DiscAnalysisResult } from "@/src/core/domain/analysis-result-zod";
 
 type Props = { result: DiscAnalysisResult };
@@ -12,7 +8,7 @@ export function DiscResultView({ result }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">DISC (prospect)</CardTitle>
+        <CardTitle className={cardTitleClass}>DISC (prospect)</CardTitle>
         <p className="text-muted-foreground text-sm">
           Style dominant : <strong>{result.dominant}</strong>
         </p>

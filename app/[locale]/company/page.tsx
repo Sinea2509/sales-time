@@ -10,8 +10,10 @@ import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell"
 import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
+import { cardTitleClass } from "@/lib/page-typography";
 import { parseStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import { listPersonOutreachPriorities } from "@/src/core/application/get-person-outreach-priorities";
@@ -46,7 +48,7 @@ export default async function DashboardHomePage({
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Organisation</CardTitle>
+            <CardTitle className={cardTitleClass}>Organisation</CardTitle>
             <CardDescription>
               Sélectionnez une organisation pour afficher les indicateurs.
             </CardDescription>
@@ -57,11 +59,14 @@ export default async function DashboardHomePage({
   }
 
   if (actor.workspaceRoleMode === "admin") {
-    const admin = await getOrgAdminDashboard(deps, {
-      organizationId: actor.activeOrganizationId,
-      statsWindowDays,
-      monEquipePage,
-    });
+    const [admin, globalKissJson] = await Promise.all([
+      getOrgAdminDashboard(deps, {
+        organizationId: actor.activeOrganizationId,
+        statsWindowDays,
+        monEquipePage,
+      }),
+      deps.globalKissCoachingPrompts.getPrompts(),
+    ]);
     let kissTeamStrengthsNarrative: string | null = null;
     if (admin && getEnv().AI_GATEWAY_API_KEY) {
       try {
@@ -69,6 +74,10 @@ export default async function DashboardHomePage({
           {
             rollup: admin.kissTeamRollup,
             model: ANALYSIS_GATEWAY_MODEL,
+            organizationKissPromptAppendix: kissMarkdownAppendixForAudience(
+              globalKissJson,
+              "manager",
+            ),
           },
         );
       } catch {
@@ -92,10 +101,10 @@ export default async function DashboardHomePage({
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Compte</CardTitle>
+            <CardTitle className={cardTitleClass}>Compte</CardTitle>
             <CardDescription>
-              Votre profil utilisateur n’est pas encore synchronisé. Rechargez la
-              page ou contactez un administrateur.
+              Votre profil utilisateur n’est pas encore synchronisé. Rechargez
+              la page ou contactez un administrateur.
             </CardDescription>
           </CardHeader>
         </Card>

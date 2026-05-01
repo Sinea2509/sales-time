@@ -4,6 +4,7 @@ import {
   DEFAULT_MEETING_TYPES,
   DEFAULT_PIPELINE_STAGES,
 } from "@/lib/onboarding-defaults";
+import { pageTitleClass } from "@/lib/page-typography";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
@@ -11,9 +12,12 @@ import { getCurrentActorContext } from "@/src/core/application/get-current-actor
 export default async function OrganizationSettingsProcessPage() {
   const superAdminOrgCookie = await readSuperAdminOrgCookie();
   const deps = getApplicationDeps();
-  const actor = await getCurrentActorContext({ auth: deps.auth }, {
-    superAdminElevatedOrganizationId: superAdminOrgCookie,
-  });
+  const actor = await getCurrentActorContext(
+    { auth: deps.auth },
+    {
+      superAdminElevatedOrganizationId: superAdminOrgCookie,
+    },
+  );
   const orgId =
     actor.kind === "authenticated" ? actor.activeOrganizationId : null;
 
@@ -27,12 +31,7 @@ export default async function OrganizationSettingsProcessPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Process</h1>
-        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-          Types de rendez-vous et étapes du pipeline — une valeur par ligne.
-        </p>
-      </div>
+      <h1 className={pageTitleClass}>Process</h1>
       <OrgSettingsProcessForm
         initial={{
           meetingTypes:

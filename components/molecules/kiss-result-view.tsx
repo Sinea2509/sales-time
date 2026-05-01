@@ -7,12 +7,33 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cardTitleClass } from "@/lib/page-typography";
 
 const blocks = [
-  { key: "keep" as const, title: "Keep", className: "border-emerald-200/80 bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30" },
-  { key: "improve" as const, title: "Improve", className: "border-amber-200/80 bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/30" },
-  { key: "stop" as const, title: "Stop", className: "border-rose-200/80 bg-rose-50/80 dark:border-rose-900/40 dark:bg-rose-950/30" },
-  { key: "start" as const, title: "Start", className: "border-sky-200/80 bg-sky-50/80 dark:border-sky-900/40 dark:bg-sky-950/30" },
+  {
+    key: "keep" as const,
+    title: "Keep",
+    className:
+      "border-emerald-200/80 bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30",
+  },
+  {
+    key: "improve" as const,
+    title: "Improve",
+    className:
+      "border-amber-200/80 bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/30",
+  },
+  {
+    key: "stop" as const,
+    title: "Stop",
+    className:
+      "border-rose-200/80 bg-rose-50/80 dark:border-rose-900/40 dark:bg-rose-950/30",
+  },
+  {
+    key: "start" as const,
+    title: "Start",
+    className:
+      "border-sky-200/80 bg-sky-50/80 dark:border-sky-900/40 dark:bg-sky-950/30",
+  },
 ] as const;
 
 export function KissResultView({
@@ -34,19 +55,23 @@ export function KissResultView({
       ) : null}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Synthèse</CardTitle>
+          <CardTitle className={cardTitleClass}>Synthèse</CardTitle>
           <CardDescription>{result.summary}</CardDescription>
         </CardHeader>
         {showCoachingScore ? (
           <CardContent className="space-y-2 text-sm">
-            <p className="text-muted-foreground font-medium">Justification du score</p>
-            <p className="leading-relaxed">{result.coachingScoreJustification}</p>
+            <p className="text-muted-foreground font-medium">
+              Justification du score
+            </p>
+            <p className="leading-relaxed">
+              {result.coachingScoreJustification}
+            </p>
           </CardContent>
         ) : null}
       </Card>
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Golden question</CardTitle>
+          <CardTitle className={cardTitleClass}>Golden question</CardTitle>
           <CardDescription className="text-foreground font-medium">
             {result.goldenQuestion}
           </CardDescription>

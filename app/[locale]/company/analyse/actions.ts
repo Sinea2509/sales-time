@@ -7,6 +7,7 @@ import { requireAiGatewayApiKey } from "@/lib/env";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { runMeetingAnalysis } from "@/src/core/application/run-meeting-analysis";
 
 const meetingIdSchema = z.string().trim().min(1).max(64);
@@ -114,11 +115,19 @@ export async function runKissAnalysisAction(meetingId: string) {
     return { ok: false as const, error: "NO_ORG" };
   }
 
+  const orgId = ctx.activeOrganizationId;
+  const globalKissJson = await deps.globalKissCoachingPrompts.getPrompts();
+  const kissAppendix = kissMarkdownAppendixForAudience(
+    globalKissJson,
+    "commercial",
+  );
+
   const result = await runMeetingAnalysis(deps, {
-    organizationId: ctx.activeOrganizationId,
+    organizationId: orgId,
     meetingId: parsedId.data,
     kind: "KISS",
     model: ANALYSIS_GATEWAY_MODEL,
+    kissSystemMarkdownAppendix: kissAppendix,
   });
 
   if (!result.ok) {

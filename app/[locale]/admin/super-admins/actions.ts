@@ -12,7 +12,11 @@ export type SuperAdminInviteActionResult =
   | { ok: false; message: string };
 
 const inviteSchema = z.object({
-  email: z.string().trim().email().transform((e) => e.toLowerCase()),
+  email: z
+    .string()
+    .trim()
+    .email()
+    .transform((e) => e.toLowerCase()),
 });
 
 export async function inviteSuperAdminAction(
@@ -29,7 +33,8 @@ export async function inviteSuperAdminAction(
 
   const email = parsed.data.email;
 
-  const existingRole = await deps.backoffice.findUserWithSuperAdminByEmail(email);
+  const existingRole =
+    await deps.backoffice.findUserWithSuperAdminByEmail(email);
   if (existingRole) {
     return {
       ok: false,
@@ -37,7 +42,8 @@ export async function inviteSuperAdminAction(
     };
   }
 
-  const pending = await deps.backoffice.findPendingSuperAdminInvitationByEmail(email);
+  const pending =
+    await deps.backoffice.findPendingSuperAdminInvitationByEmail(email);
   if (pending) {
     return {
       ok: false,
@@ -81,7 +87,9 @@ export async function revokeSuperAdminInvitationAction(
     return { ok: false, message: "Identifiant invalide." };
   }
 
-  const inv = await deps.backoffice.findPendingSuperAdminInvitationById(idParsed.data);
+  const inv = await deps.backoffice.findPendingSuperAdminInvitationById(
+    idParsed.data,
+  );
   if (!inv) {
     return { ok: false, message: "Invitation introuvable ou déjà traitée." };
   }
@@ -111,7 +119,9 @@ export async function revokeSuperAdminRoleAction(
     return { ok: false, message: "Identifiant invalide." };
   }
 
-  const role = await deps.backoffice.findSuperAdminSystemRoleForUser(idParsed.data);
+  const role = await deps.backoffice.findSuperAdminSystemRoleForUser(
+    idParsed.data,
+  );
   if (!role) {
     return { ok: false, message: "Ce rôle est introuvable." };
   }

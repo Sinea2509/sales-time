@@ -43,16 +43,13 @@ export async function getCurrentActorContext(
     memberships: principal.memberships,
   });
 
-  const {
-    activeOrganizationId,
-    canManageOrganization,
-    isElevatedSuperAdmin,
-  } = resolveActorAuthorization({
-    sessionActiveOrganizationId: sessionOrganizationId,
-    superAdminElevatedOrganizationId: params.superAdminElevatedOrganizationId,
-    memberships: principal.memberships,
-    isSuperAdmin: principal.systemRoles.includes("SUPER_ADMIN"),
-  });
+  const { activeOrganizationId, canManageOrganization, isElevatedSuperAdmin } =
+    resolveActorAuthorization({
+      sessionActiveOrganizationId: sessionOrganizationId,
+      superAdminElevatedOrganizationId: params.superAdminElevatedOrganizationId,
+      memberships: principal.memberships,
+      isSuperAdmin: principal.systemRoles.includes("SUPER_ADMIN"),
+    });
 
   const workspaceRoleMode = resolveWorkspaceRoleMode({
     activeOrganizationId,

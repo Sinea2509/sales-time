@@ -4,6 +4,7 @@ import { SuperAdminInvitesPanel } from "@/components/organisms/super-admin-invit
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { pageTitleClass } from "@/lib/page-typography";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,10 @@ export default async function SuperAdminInvitesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">{t("description")}</p>
+          <h1 className={pageTitleClass}>{t("title")}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {t("description")}
+          </p>
         </div>
         <Link
           href="/admin"

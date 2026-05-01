@@ -21,7 +21,9 @@ function escapePlainToParagraphs(text: string): string {
 }
 
 /** Anciens brouillons texte brut → HTML affichable dans l’éditeur. */
-export function coerceStoredInviteMessageToHtml(raw: string | null | undefined): string {
+export function coerceStoredInviteMessageToHtml(
+  raw: string | null | undefined,
+): string {
   const s = raw?.trim() ?? "";
   if (!s) return DEFAULT_INVITE_MESSAGE_HTML;
   if (s.includes("<")) return s;

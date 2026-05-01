@@ -39,8 +39,8 @@ export function resolveActorAuthorization(input: {
 
   const isElevatedSuperAdmin = Boolean(
     isSuperAdmin &&
-      superAdminElevatedOrganizationId &&
-      superAdminElevatedOrganizationId === activeOrganizationId,
+    superAdminElevatedOrganizationId &&
+    superAdminElevatedOrganizationId === activeOrganizationId,
   );
 
   const membership = activeOrganizationId

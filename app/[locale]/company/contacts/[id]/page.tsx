@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { pageTitleClass, sectionHeadingClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -50,23 +51,26 @@ export default async function ContactDetailPage({ params }: Props) {
       <div>
         <Link
           href="/company/contacts"
-          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "mb-2 -ml-2")}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "mb-2 -ml-2",
+          )}
         >
           ← Contacts
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">{contact.displayName}</h1>
+        <h1 className={pageTitleClass}>{contact.displayName}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Fiche contact et historique des rendez-vous.
         </p>
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Informations</h2>
+        <h2 className={sectionHeadingClass}>Informations</h2>
         <ContactEditForm contact={contact} />
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Rendez-vous</h2>
+        <h2 className={sectionHeadingClass}>Rendez-vous</h2>
         <div className="rounded-xl border">
           <Table>
             <TableHeader>

@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cardTitleClass } from "@/lib/page-typography";
 import type { OrgAdminDistributionPie } from "@/src/core/application/get-org-admin-dashboard";
 
 function conicGradientStops(slices: OrgAdminDistributionPie["slices"]) {
@@ -35,7 +36,7 @@ export function OrgAdminDonutDistributionCard({
   return (
     <Card className="border-neutral-200 shadow-sm dark:border-neutral-800">
       <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
+        <CardTitle className={cardTitleClass}>{title}</CardTitle>
         <CardDescription>Sur {rdvCount} RDV</CardDescription>
       </CardHeader>
       <CardContent>
@@ -77,8 +78,7 @@ export function OrgAdminDonutDistributionCard({
                   <span className="shrink-0 tabular-nums text-zinc-600 dark:text-zinc-400">
                     {s.value}{" "}
                     <span className="text-muted-foreground text-xs">
-                      (
-                      {Math.round((100 * s.value) / total)}%)
+                      ({Math.round((100 * s.value) / total)}%)
                     </span>
                   </span>
                 </li>

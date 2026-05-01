@@ -31,7 +31,9 @@ export function MeetingOneClickAnalyze({ meetingId }: { meetingId: string }) {
           });
         }}
       >
-        {pending ? "Analyse en cours…" : "Analyser ce RDV (SONCAS + DISC + KISS)"}
+        {pending
+          ? "Analyse en cours…"
+          : "Analyser ce RDV (SONCAS + DISC + KISS)"}
       </Button>
       {msg ? (
         <p className="text-destructive text-sm" role="alert">

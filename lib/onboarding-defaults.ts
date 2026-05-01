@@ -17,6 +17,4 @@ export const DEFAULT_PIPELINE_STAGES = [
   "Gagné",
 ] as const;
 
-export {
-  DEFAULT_INVITE_MESSAGE_HTML as DEFAULT_INVITE_MESSAGE,
-} from "@/lib/invite-email-html";
+export { DEFAULT_INVITE_MESSAGE_HTML as DEFAULT_INVITE_MESSAGE } from "@/lib/invite-email-html";

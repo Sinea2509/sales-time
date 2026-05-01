@@ -213,6 +213,8 @@ model OrganizationSettings {
   objections         Json?
   keyArguments       Json?
   industryVocabulary String? @db.Text
+  /** Consignes optionnelles par quadrant KISS (global / manager / commercial), Coach IA. */
+  kissCoachingPrompts Json?
 
   meetingTypes   Json?
   pipelineStages Json?
@@ -366,4 +368,11 @@ model PromptTemplateVersion {
   analyses     MeetingAnalysis[]
 
   @@unique([templateId, version])
+}
+
+/// Singleton (id = `default`) : consignes KISS par quadrant, éditées en super admin.
+model GlobalKissCoachingPrompts {
+  id        String   @id
+  prompts   Json?
+  updatedAt DateTime @updatedAt
 }

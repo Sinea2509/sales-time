@@ -21,7 +21,8 @@ export async function bulkToggleUserStatusAction(
 
   const users = await deps.backoffice.findUsersByIdsForBulk(userIds);
 
-  if (users.length === 0) return { ok: false, message: "Aucun utilisateur trouvé." };
+  if (users.length === 0)
+    return { ok: false, message: "Aucun utilisateur trouvé." };
 
   await deps.backoffice.updateUsersStatusMany(userIds, status);
 
@@ -67,7 +68,11 @@ const updateUserSchema = z.object({
   id: z.string().min(1),
   firstName: z.string().trim().max(100).nullable(),
   lastName: z.string().trim().max(100).nullable(),
-  email: z.string().trim().email().transform((e) => e.toLowerCase()),
+  email: z
+    .string()
+    .trim()
+    .email()
+    .transform((e) => e.toLowerCase()),
 });
 
 export async function updateUserAction(
@@ -133,7 +138,11 @@ export async function deleteUserAction(userId: string): Promise<ActionResult> {
 }
 
 const inviteToOrgSchema = z.object({
-  email: z.string().trim().email().transform((e) => e.toLowerCase()),
+  email: z
+    .string()
+    .trim()
+    .email()
+    .transform((e) => e.toLowerCase()),
   organizationId: z.string().min(1),
   role: z.enum(["ADMIN", "MEMBER"]),
 });
@@ -150,7 +159,9 @@ export async function inviteUserToOrgAction(
     return { ok: false, message: parsed.error.issues[0].message };
   }
 
-  const org = await deps.backoffice.findOrganizationNameById(parsed.data.organizationId);
+  const org = await deps.backoffice.findOrganizationNameById(
+    parsed.data.organizationId,
+  );
   if (!org) return { ok: false, message: "Organisation introuvable." };
 
   const existing = await deps.backoffice.findPendingOrganizationInvitation(
@@ -158,7 +169,10 @@ export async function inviteUserToOrgAction(
     parsed.data.organizationId,
   );
   if (existing) {
-    return { ok: false, message: "Une invitation est déjà en cours pour cette adresse." };
+    return {
+      ok: false,
+      message: "Une invitation est déjà en cours pour cette adresse.",
+    };
   }
 
   const rawToken = generateOpaqueToken(32);

@@ -16,14 +16,24 @@ const meetingOutcomeSchema = z.enum([
 ]);
 
 const createMeetingSchema = z.object({
-  personId: z.preprocess((v) => {
-    if (v == null || v === "") return null;
-    return typeof v === "string" ? v.trim() : v;
-  }, z.union([z.null(), z.string().cuid()])),
+  personId: z.preprocess(
+    (v) => {
+      if (v == null || v === "") return null;
+      return typeof v === "string" ? v.trim() : v;
+    },
+    z.union([z.null(), z.string().cuid()]),
+  ),
   prospectName: z.string().trim().min(1).max(200),
   meetingAt: z.coerce.date(),
   durationMin: z
-    .union([z.literal(""), z.coerce.number().int().min(0).max(24 * 60)])
+    .union([
+      z.literal(""),
+      z.coerce
+        .number()
+        .int()
+        .min(0)
+        .max(24 * 60),
+    ])
     .transform((v) => (v === "" ? null : v))
     .nullable(),
   transcript: z.string().trim().min(1).max(200_000),
@@ -41,11 +51,14 @@ const createMeetingSchema = z.object({
     (v) => (v == null || v === "" ? null : v),
     z.union([z.null(), z.string().trim().max(120)]),
   ),
-  potentialAmount: z.preprocess((v) => {
-    if (v == null || v === "") return null;
-    const n = typeof v === "string" ? Number(v) : Number(v);
-    return Number.isFinite(n) ? n : null;
-  }, z.union([z.null(), z.number().min(0).max(1e12)])),
+  potentialAmount: z.preprocess(
+    (v) => {
+      if (v == null || v === "") return null;
+      const n = typeof v === "string" ? Number(v) : Number(v);
+      return Number.isFinite(n) ? n : null;
+    },
+    z.union([z.null(), z.number().min(0).max(1e12)]),
+  ),
   outcome: meetingOutcomeSchema,
 });
 

@@ -9,14 +9,13 @@ function mapRole(r: string): "ADMIN" | "MEMBER" {
   return r === "ADMIN" ? "ADMIN" : "MEMBER";
 }
 
-export class PrismaOrganizationTeamRepository
-  implements OrganizationTeamRepositoryPort
-{
+export class PrismaOrganizationTeamRepository implements OrganizationTeamRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
-  async listMembersAndPendingInvitations(
-    organizationId: string,
-  ): Promise<{ members: OrgTeamMemberRow[]; invitations: OrgTeamInvitationRow[] }> {
+  async listMembersAndPendingInvitations(organizationId: string): Promise<{
+    members: OrgTeamMemberRow[];
+    invitations: OrgTeamInvitationRow[];
+  }> {
     const [memberships, invitations] = await Promise.all([
       this.db.organizationMembership.findMany({
         where: { organizationId },

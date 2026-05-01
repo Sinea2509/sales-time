@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 
 export type SuperAdminRow = {
@@ -50,7 +51,11 @@ type Props = {
   invitations: SuperAdminInviteRow[];
 };
 
-function getInitials(firstName: string | null, lastName: string | null, email: string): string {
+function getInitials(
+  firstName: string | null,
+  lastName: string | null,
+  email: string,
+): string {
   if (firstName && lastName) {
     return `${firstName[0]}${lastName[0]}`.toUpperCase();
   }
@@ -58,14 +63,21 @@ function getInitials(firstName: string | null, lastName: string | null, email: s
   return email[0].toUpperCase();
 }
 
-function getFullName(firstName: string | null, lastName: string | null): string | null {
+function getFullName(
+  firstName: string | null,
+  lastName: string | null,
+): string | null {
   if (firstName && lastName) return `${firstName} ${lastName}`;
   if (firstName) return firstName;
   if (lastName) return lastName;
   return null;
 }
 
-export function SuperAdminInvitesPanel({ currentUserId, superAdmins, invitations }: Props) {
+export function SuperAdminInvitesPanel({
+  currentUserId,
+  superAdmins,
+  invitations,
+}: Props) {
   const router = useRouter();
   const [revokeTarget, setRevokeTarget] = useState<SuperAdminRow | null>(null);
   const [revokeRolePending, startRevokeRole] = useTransition();
@@ -110,14 +122,18 @@ export function SuperAdminInvitesPanel({ currentUserId, superAdmins, invitations
       {/* Current super admins */}
       <Card>
         <CardHeader>
-          <CardTitle>Super administrateurs actuels</CardTitle>
+          <CardTitle className={cardTitleClass}>
+            Super administrateurs actuels
+          </CardTitle>
           <CardDescription>
             Utilisateurs disposant de l&apos;accès plateforme complet.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {superAdmins.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucun super administrateur.</p>
+            <p className="text-muted-foreground text-sm">
+              Aucun super administrateur.
+            </p>
           ) : (
             <ul className="divide-y divide-border">
               {superAdmins.map((admin) => {
@@ -137,7 +153,11 @@ export function SuperAdminInvitesPanel({ currentUserId, superAdmins, invitations
                             : "bg-muted text-muted-foreground",
                         )}
                       >
-                        {getInitials(admin.firstName, admin.lastName, admin.email)}
+                        {getInitials(
+                          admin.firstName,
+                          admin.lastName,
+                          admin.email,
+                        )}
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">
@@ -198,11 +218,13 @@ export function SuperAdminInvitesPanel({ currentUserId, superAdmins, invitations
       {/* Invite form */}
       <Card>
         <CardHeader>
-          <CardTitle>Inviter un super administrateur</CardTitle>
+          <CardTitle className={cardTitleClass}>
+            Inviter un super administrateur
+          </CardTitle>
           <CardDescription>
-            Envoi d&apos;un lien par e-mail. Réservé à l&apos;espace plateforme (
-            <span className="font-mono text-xs">/admin</span>) — les invitations
-            d&apos;organisation restent dans Paramètres → Équipe.
+            Envoi d&apos;un lien par e-mail. Réservé à l&apos;espace plateforme
+            (<span className="font-mono text-xs">/admin</span>) — les
+            invitations d&apos;organisation restent dans Paramètres → Équipe.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -225,7 +247,10 @@ export function SuperAdminInvitesPanel({ currentUserId, superAdmins, invitations
               </p>
             )}
             {inviteState?.ok === true && (
-              <p className="text-sm text-green-700 dark:text-green-400" role="status">
+              <p
+                className="text-sm text-green-700 dark:text-green-400"
+                role="status"
+              >
                 Invitation envoyée.
               </p>
             )}
@@ -239,14 +264,18 @@ export function SuperAdminInvitesPanel({ currentUserId, superAdmins, invitations
       {/* Pending invitations */}
       <Card>
         <CardHeader>
-          <CardTitle>Invitations en attente</CardTitle>
+          <CardTitle className={cardTitleClass}>
+            Invitations en attente
+          </CardTitle>
           <CardDescription>
             Invitations envoyées mais pas encore acceptées.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {invitations.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucune invitation en attente.</p>
+            <p className="text-muted-foreground text-sm">
+              Aucune invitation en attente.
+            </p>
           ) : (
             <ul className="divide-y divide-border">
               {invitations.map((inv) => (
@@ -271,7 +300,9 @@ export function SuperAdminInvitesPanel({ currentUserId, superAdmins, invitations
                     disabled={revokeInvPending}
                     onClick={() => {
                       startRevokeInv(async () => {
-                        const r = await revokeSuperAdminInvitationAction(inv.id);
+                        const r = await revokeSuperAdminInvitationAction(
+                          inv.id,
+                        );
                         if (r.ok) router.refresh();
                       });
                     }}
@@ -302,8 +333,10 @@ export function SuperAdminInvitesPanel({ currentUserId, superAdmins, invitations
               Êtes-vous sûr de vouloir retirer le rôle super administrateur à{" "}
               <strong>
                 {revokeTarget
-                  ? getFullName(revokeTarget.firstName, revokeTarget.lastName) ??
-                    revokeTarget.email
+                  ? (getFullName(
+                      revokeTarget.firstName,
+                      revokeTarget.lastName,
+                    ) ?? revokeTarget.email)
                   : ""}
               </strong>{" "}
               ? Cette action est immédiate.

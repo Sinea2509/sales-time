@@ -14,7 +14,10 @@ const createOrgSchema = z.object({
     .trim()
     .min(1, "Le slug est requis.")
     .max(100)
-    .regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des minuscules, chiffres et tirets."),
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Le slug ne peut contenir que des minuscules, chiffres et tirets.",
+    ),
 });
 
 export async function createOrganizationAction(
@@ -29,7 +32,9 @@ export async function createOrganizationAction(
     return { ok: false, message: parsed.error.issues[0].message };
   }
 
-  const existing = await deps.backoffice.findOrganizationBySlug(parsed.data.slug);
+  const existing = await deps.backoffice.findOrganizationBySlug(
+    parsed.data.slug,
+  );
   if (existing) {
     return { ok: false, message: "Ce slug est déjà utilisé." };
   }
@@ -58,7 +63,10 @@ const updateOrgSchema = z.object({
     .trim()
     .min(1, "Le slug est requis.")
     .max(100)
-    .regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des minuscules, chiffres et tirets."),
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Le slug ne peut contenir que des minuscules, chiffres et tirets.",
+    ),
 });
 
 export async function updateOrganizationAction(
@@ -81,7 +89,10 @@ export async function updateOrganizationAction(
     parsed.data.id,
   );
   if (slugConflict) {
-    return { ok: false, message: "Ce slug est déjà utilisé par une autre organisation." };
+    return {
+      ok: false,
+      message: "Ce slug est déjà utilisé par une autre organisation.",
+    };
   }
 
   await deps.backoffice.updateOrganization(parsed.data.id, {
@@ -111,7 +122,8 @@ export async function bulkDeleteOrganizationsAction(
 
   const orgs = await deps.backoffice.findOrganizationsByIds(ids);
 
-  if (orgs.length === 0) return { ok: false, message: "Aucune organisation trouvée." };
+  if (orgs.length === 0)
+    return { ok: false, message: "Aucune organisation trouvée." };
 
   await deps.backoffice.createSuperAdminAuditLogsMany(
     orgs.map((org) => ({

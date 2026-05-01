@@ -1,6 +1,4 @@
-import {
-  tamMinutesSavedPerMeetingFromSettings,
-} from "@/src/core/domain/dashboard-estimates";
+import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
 import { percentChangeVsPrevious } from "@/src/core/domain/dashboard-trend";
 import {
   meetingAtSinceForStatsWindow,
@@ -36,7 +34,9 @@ export type OrgDashboardHome = {
 
 const RECENT_LIMIT = 8;
 
-function tucPercentForMeetings(meetings: RecentMeetingListRow[]): number | null {
+function tucPercentForMeetings(
+  meetings: RecentMeetingListRow[],
+): number | null {
   if (meetings.length === 0) return null;
   const withBoth = meetings.filter((m) => m.hasSoncas && m.hasDisc).length;
   return Math.round((100 * withBoth) / meetings.length);
@@ -67,10 +67,10 @@ export async function getOrgDashboardHome(
 ): Promise<OrgDashboardHome | null> {
   if (!input.organizationId) return null;
 
-  const orgSettings =
-    await deps.organizationSettings.findByOrganizationId(input.organizationId);
-  const tamMinutesPerRdv =
-    tamMinutesSavedPerMeetingFromSettings(orgSettings);
+  const orgSettings = await deps.organizationSettings.findByOrganizationId(
+    input.organizationId,
+  );
+  const tamMinutesPerRdv = tamMinutesSavedPerMeetingFromSettings(orgSettings);
 
   const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
   const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays);

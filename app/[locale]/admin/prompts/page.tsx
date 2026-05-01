@@ -1,8 +1,16 @@
-import { FileCode2 } from "lucide-react";
+import { FileCode2, Sparkles } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { SuperAdminPromptsEditor } from "@/components/organisms/super-admin-prompts-editor";
+import { Link } from "@/i18n/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { cardTitleClass, pageTitleClass } from "@/lib/page-typography";
 import type { AnalysisKindSlug } from "@/src/core/ports/prompt-template-repository-port";
 
 export const dynamic = "force-dynamic";
@@ -22,8 +30,7 @@ async function loadPromptTab(kind: AnalysisKindSlug) {
   );
 
   const initialMarkdown =
-    current?.markdown ??
-    "(Aucun prompt — exécutez `npx prisma db seed`.)";
+    current?.markdown ?? "(Aucun prompt — exécutez `npx prisma db seed`.)";
 
   return {
     initialMarkdown,
@@ -69,19 +76,46 @@ export default async function SuperAdminPromptsPage() {
             <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
               Super admin
             </p>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Éditeur de prompts
-            </h1>
+            <h1 className={pageTitleClass}>Éditeur de prompts</h1>
           </div>
         </div>
       </div>
+
+      <Card className="border-brand/25 bg-brand/5">
+        <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+          <div className="bg-background/80 flex size-10 shrink-0 items-center justify-center rounded-lg border">
+            <Sparkles className="text-brand size-5" aria-hidden />
+          </div>
+          <div className="min-w-0 flex-1 space-y-1">
+            <CardTitle className={cardTitleClass}>
+              Consignes KISS par quadrant
+            </CardTitle>
+            <CardDescription className="text-pretty">
+              Textes optionnels global / manager / commercial pour enrichir
+              l’analyse KISS des RDV et les synthèses manager — distincts des
+              prompts SONCAS / DISC / KISS ci-dessous.
+            </CardDescription>
+            <p className="pt-2">
+              <Link
+                href="/admin/prompts/kiss-consignes"
+                className="text-brand text-sm font-medium underline underline-offset-2"
+              >
+                Ouvrir l’éditeur →
+              </Link>
+            </p>
+          </div>
+        </CardHeader>
+      </Card>
 
       <Tabs defaultValue="SONCAS" className="gap-6">
         <TabsList className="grid h-auto w-full min-w-0 grid-cols-3 gap-1 p-1 sm:inline-flex sm:w-auto sm:max-w-md">
           {tabs.map(({ kind, data }) => (
             <TabsTrigger key={kind} value={kind} className="px-3 py-2">
               <span className="truncate">{TAB_META[kind].label}</span>
-              <Badge variant="secondary" className="ml-1.5 shrink-0 tabular-nums sm:ml-2">
+              <Badge
+                variant="secondary"
+                className="ml-1.5 shrink-0 tabular-nums sm:ml-2"
+              >
                 {data.versionCount}
               </Badge>
             </TabsTrigger>

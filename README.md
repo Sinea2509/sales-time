@@ -46,13 +46,13 @@ Override email/password with `SEED_SUPER_ADMIN_EMAIL` and `SEED_SUPER_ADMIN_PASS
 
 ## Scripts
 
-| Script            | Description                          |
-| ----------------- | ------------------------------------ |
-| `npm run dev`     | Next dev server                      |
-| `npm run build`   | Production build (needs env as above)|
-| `npm test`        | Vitest unit tests                    |
-| `npm run e2e`     | Playwright (start dev server first)  |
-| `npm run db:*`    | Prisma generate / migrate / studio   |
+| Script          | Description                           |
+| --------------- | ------------------------------------- |
+| `npm run dev`   | Next dev server                       |
+| `npm run build` | Production build (needs env as above) |
+| `npm test`      | Vitest unit tests                     |
+| `npm run e2e`   | Playwright (start dev server first)   |
+| `npm run db:*`  | Prisma generate / migrate / studio    |
 
 ## Before you open a PR
 

@@ -277,7 +277,9 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     return rows.map(mapAnalysis);
   }
 
-  async countMeetingsForOrg(input: { organizationId: string }): Promise<number> {
+  async countMeetingsForOrg(input: {
+    organizationId: string;
+  }): Promise<number> {
     return this.db.meeting.count({
       where: { organizationId: input.organizationId },
     });
@@ -371,9 +373,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
         hasSoncas: kinds.has("SONCAS"),
         hasDisc: kinds.has("DISC"),
         hasKiss: kinds.has("KISS"),
-        salesScore: soncas
-          ? salesScoreFromSoncasResult(soncas.result)
-          : null,
+        salesScore: soncas ? salesScoreFromSoncasResult(soncas.result) : null,
       };
       if (input.includeLatestSoncasResult === true) {
         out.latestSoncasResult = soncas?.result ?? null;
@@ -440,8 +440,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       const latest = latestByPerson.get(g.personId)!;
       const meetingCount = g._count._all;
       const avgRaw = g._avg.durationMin;
-      const avgDurationMin =
-        avgRaw == null ? null : Math.round(Number(avgRaw));
+      const avgDurationMin = avgRaw == null ? null : Math.round(Number(avgRaw));
       return {
         personId: g.personId,
         displayName: nameById.get(g.personId) ?? "—",

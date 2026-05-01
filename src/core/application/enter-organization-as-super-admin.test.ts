@@ -6,7 +6,10 @@ describe("enterOrganizationAsSuperAdmin", () => {
     const auth = {
       getAuthenticatedPrincipal: vi.fn().mockResolvedValue(null),
     };
-    const orgDirectory = { getOrganizationById: vi.fn(), listOrganizations: vi.fn() };
+    const orgDirectory = {
+      getOrganizationById: vi.fn(),
+      listOrganizations: vi.fn(),
+    };
     const audit = { logSuperAdminAction: vi.fn().mockResolvedValue(undefined) };
 
     const result = await enterOrganizationAsSuperAdmin(
@@ -33,7 +36,12 @@ describe("enterOrganizationAsSuperAdmin", () => {
       }),
     };
     const orgDirectory = {
-      getOrganizationById: vi.fn().mockResolvedValue({ id: "org_1", name: "X", slug: "x" }),
+      getOrganizationById: vi.fn().mockResolvedValue({
+        id: "org_1",
+        name: "X",
+        slug: "x",
+        logoUrl: null,
+      }),
       listOrganizations: vi.fn(),
     };
     const audit = { logSuperAdminAction: vi.fn().mockResolvedValue(undefined) };
@@ -95,6 +103,7 @@ describe("enterOrganizationAsSuperAdmin", () => {
         id: "org_2",
         name: "Acme",
         slug: "acme",
+        logoUrl: null,
       }),
       listOrganizations: vi.fn(),
     };

@@ -15,6 +15,7 @@ import { PrismaOnboardingProfileRepository } from "@/src/adapters/prisma/prisma-
 import { PrismaOnboardingSharedPhraseRepository } from "@/src/adapters/prisma/prisma-onboarding-shared-phrase-repository";
 import { PrismaOrganizationSettingsRepository } from "@/src/adapters/prisma/prisma-organization-settings-repository";
 import { PrismaRegistrationRepository } from "@/src/adapters/prisma/prisma-registration-repository";
+import { PrismaGlobalKissCoachingPromptsRepository } from "@/src/adapters/prisma/prisma-global-kiss-coaching-prompts-repository";
 import { PrismaPromptTemplateRepository } from "@/src/adapters/prisma/prisma-prompt-template-repository";
 import { PrismaSignInReadRepository } from "@/src/adapters/prisma/prisma-sign-in-read-repository";
 import { PrismaOrganizationInvitationRepository } from "@/src/adapters/prisma/prisma-organization-invitation-repository";
@@ -43,6 +44,7 @@ import type { SignInReadPort } from "@/src/core/ports/sign-in-read-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 import type { SessionRepositoryPort } from "@/src/core/ports/session-repository-port";
 import type { BackofficeRepositoryPort } from "@/src/core/ports/backoffice-repository-port";
+import type { GlobalKissCoachingPromptsRepositoryPort } from "@/src/core/ports/global-kiss-coaching-prompts-repository-port";
 
 export type ApplicationDeps = {
   auth: AuthSessionPort;
@@ -67,6 +69,7 @@ export type ApplicationDeps = {
   adminSearch: AdminSearchRepositoryPort;
   organizationTeam: OrganizationTeamRepositoryPort;
   backoffice: BackofficeRepositoryPort;
+  globalKissCoachingPrompts: GlobalKissCoachingPromptsRepositoryPort;
 };
 
 export function makeApplicationDeps(): ApplicationDeps {
@@ -94,5 +97,8 @@ export function makeApplicationDeps(): ApplicationDeps {
     adminSearch: new PrismaAdminSearchRepository(prisma),
     organizationTeam: new PrismaOrganizationTeamRepository(prisma),
     backoffice: new PrismaBackofficeRepository(prisma),
+    globalKissCoachingPrompts: new PrismaGlobalKissCoachingPromptsRepository(
+      prisma,
+    ),
   };
 }

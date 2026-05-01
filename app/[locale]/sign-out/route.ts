@@ -1,4 +1,7 @@
-import { clearActiveOrganizationCookie, clearSessionCookie } from "@/lib/auth/session-cookie";
+import {
+  clearActiveOrganizationCookie,
+  clearSessionCookie,
+} from "@/lib/auth/session-cookie";
 import { NextResponse } from "next/server";
 
 /**

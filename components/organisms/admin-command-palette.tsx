@@ -16,6 +16,7 @@ import {
   ScrollText,
   Search,
   ShieldCheck,
+  Sparkles,
   Users,
   Activity,
 } from "lucide-react";
@@ -44,20 +45,74 @@ type ResultItem = {
 };
 
 const PAGES: ResultItem[] = [
-  { id: "p-dashboard", icon: LayoutDashboard, label: "Dashboard", href: "/admin", section: "Pages" },
-  { id: "p-orgs", icon: Building2, label: "Organisations", href: "/admin/organizations", section: "Pages" },
-  { id: "p-users", icon: Users, label: "Utilisateurs", href: "/admin/users", section: "Pages" },
-  { id: "p-prompts", icon: FileText, label: "Prompts IA", href: "/admin/prompts", section: "Pages" },
-  { id: "p-admins", icon: ShieldCheck, label: "Super admins", href: "/admin/super-admins", section: "Pages" },
-  { id: "p-audit", icon: ScrollText, label: "Journal d'audit", href: "/admin/audit", section: "Pages" },
-  { id: "p-health", icon: Activity, label: "Santé système", href: "/admin/health", section: "Pages" },
+  {
+    id: "p-dashboard",
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    href: "/admin",
+    section: "Pages",
+  },
+  {
+    id: "p-orgs",
+    icon: Building2,
+    label: "Organisations",
+    href: "/admin/organizations",
+    section: "Pages",
+  },
+  {
+    id: "p-users",
+    icon: Users,
+    label: "Utilisateurs",
+    href: "/admin/users",
+    section: "Pages",
+  },
+  {
+    id: "p-prompts",
+    icon: FileText,
+    label: "Prompts IA",
+    href: "/admin/prompts",
+    section: "Pages",
+  },
+  {
+    id: "p-kiss-consignes",
+    icon: Sparkles,
+    label: "Consignes KISS (quadrants)",
+    href: "/admin/prompts/kiss-consignes",
+    section: "Pages",
+  },
+  {
+    id: "p-admins",
+    icon: ShieldCheck,
+    label: "Super admins",
+    href: "/admin/super-admins",
+    section: "Pages",
+  },
+  {
+    id: "p-audit",
+    icon: ScrollText,
+    label: "Journal d'audit",
+    href: "/admin/audit",
+    section: "Pages",
+  },
+  {
+    id: "p-health",
+    icon: Activity,
+    label: "Santé système",
+    href: "/admin/health",
+    section: "Pages",
+  },
 ];
 
 export function AdminCommandPalette({ open, onOpenChange }: Props) {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [searchResults, setSearchResults] = useState<{
-    users: { id: string; email: string; firstName: string | null; lastName: string | null }[];
+    users: {
+      id: string;
+      email: string;
+      firstName: string | null;
+      lastName: string | null;
+    }[];
     organizations: { id: string; name: string; slug: string | null }[];
   }>({ users: [], organizations: [] });
   const [, startTransition] = useTransition();
@@ -121,7 +176,8 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
     const users: ResultItem[] = merged.users.map((u) => ({
       id: `user-${u.id}`,
       icon: Users,
-      label: u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.email,
+      label:
+        u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.email,
       subtitle: u.email,
       href: `/admin/users`,
       section: "Utilisateurs",

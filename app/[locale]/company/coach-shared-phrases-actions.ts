@@ -10,7 +10,7 @@ import {
 import { getApplicationDeps } from "@/lib/application-deps";
 import type { OnboardingSharedPhraseKindSlug } from "@/src/core/ports/onboarding-shared-phrase-repository-port";
 
-export type SharedPhraseRow = {
+export type CoachSharedPhraseRow = {
   id: string;
   text: string;
   source: "builtin" | "community";
@@ -35,13 +35,14 @@ function builtinsForKind(
     : DEFAULT_ARGUMENT_PHRASES;
 }
 
-export type ListSharedPhrasesResult =
-  | { ok: true; phrases: SharedPhraseRow[] }
+export type ListCoachSharedPhrasesResult =
+  | { ok: true; phrases: CoachSharedPhraseRow[] }
   | { ok: false; message: string };
 
-export async function listOnboardingSharedPhrases(
+/** Liste intégrée + collection partagée (onboarding & réglages Coach IA). */
+export async function listCoachSharedPhrases(
   rawKind: string,
-): Promise<ListSharedPhrasesResult> {
+): Promise<ListCoachSharedPhrasesResult> {
   const kindParsed = kindSchema.safeParse(rawKind);
   if (!kindParsed.success) {
     return { ok: false, message: "Type invalide." };
@@ -52,11 +53,13 @@ export async function listOnboardingSharedPhrases(
     builtinsForKind(kind).map((t) => normalizePhraseKey(t)),
   );
 
-  const builtIns: SharedPhraseRow[] = builtinsForKind(kind).map((text, i) => ({
-    id: `builtin:${kind}:${i}`,
-    text,
-    source: "builtin" as const,
-  }));
+  const builtIns: CoachSharedPhraseRow[] = builtinsForKind(kind).map(
+    (text, i) => ({
+      id: `builtin:${kind}:${i}`,
+      text,
+      source: "builtin" as const,
+    }),
+  );
 
   const deps = getApplicationDeps();
   const dbRows = await deps.onboardingSharedPhrases.listByKind({
@@ -64,7 +67,7 @@ export async function listOnboardingSharedPhrases(
     take: 150,
   });
 
-  const community: SharedPhraseRow[] = [];
+  const community: CoachSharedPhraseRow[] = [];
   for (const row of dbRows) {
     if (builtInSet.has(row.normalizedText)) continue;
     community.push({
@@ -77,13 +80,13 @@ export async function listOnboardingSharedPhrases(
   return { ok: true, phrases: [...builtIns, ...community] };
 }
 
-export type CreateSharedPhraseResult =
-  | { ok: true; phrase: SharedPhraseRow }
+export type CreateCoachSharedPhraseResult =
+  | { ok: true; phrase: CoachSharedPhraseRow }
   | { ok: false; message: string };
 
-export async function createOnboardingSharedPhrase(
+export async function createCoachSharedPhrase(
   raw: z.input<typeof createPhraseSchema>,
-): Promise<CreateSharedPhraseResult> {
+): Promise<CreateCoachSharedPhraseResult> {
   const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) {

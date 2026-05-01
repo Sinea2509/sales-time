@@ -65,7 +65,9 @@ type Props = {
 
 export function AdminUserTable({ users, organizations }: Props) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "ACTIVE" | "DISABLED">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "ACTIVE" | "DISABLED"
+  >("all");
   const [editUser, setEditUser] = useState<UserRow | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
   const [inviteUser, setInviteUser] = useState<UserRow | null>(null);
@@ -188,7 +190,9 @@ export function AdminUserTable({ users, organizations }: Props) {
         </div>
         <Select
           value={statusFilter}
-          onValueChange={(v: string | null) => { if (v) setStatusFilter(v as "all" | "ACTIVE" | "DISABLED"); }}
+          onValueChange={(v: string | null) => {
+            if (v) setStatusFilter(v as "all" | "ACTIVE" | "DISABLED");
+          }}
         >
           <SelectTrigger className="w-[140px]">
             <SelectValue />
@@ -212,7 +216,14 @@ export function AdminUserTable({ users, organizations }: Props) {
             { key: "createdAt", label: "Inscrit le" },
           ]}
         />
-        <Button onClick={() => { setError(null); setInviteOrgId(""); setInviteRole("MEMBER"); setInviteUser({} as UserRow); }}>
+        <Button
+          onClick={() => {
+            setError(null);
+            setInviteOrgId("");
+            setInviteRole("MEMBER");
+            setInviteUser({} as UserRow);
+          }}
+        >
           <UserPlus className="mr-1.5 size-4" />
           Inviter dans une org
         </Button>
@@ -254,7 +265,10 @@ export function AdminUserTable({ users, organizations }: Props) {
                 <th className="w-10 px-4 py-3">
                   <input
                     type="checkbox"
-                    checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                    checked={
+                      filtered.length > 0 &&
+                      selectedIds.size === filtered.length
+                    }
                     onChange={toggleSelectAll}
                     className="size-4 rounded border-zinc-300 dark:border-zinc-600"
                   />
@@ -282,7 +296,10 @@ export function AdminUserTable({ users, organizations }: Props) {
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-zinc-400">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-12 text-center text-zinc-400"
+                  >
                     Aucun utilisateur trouvé.
                   </td>
                 </tr>
@@ -341,7 +358,11 @@ export function AdminUserTable({ users, organizations }: Props) {
                           <span className="text-xs text-zinc-400">Aucune</span>
                         ) : (
                           user.memberships.slice(0, 2).map((m) => (
-                            <Badge key={m.orgId} variant="outline" className="text-xs">
+                            <Badge
+                              key={m.orgId}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               <Building2 className="mr-1 size-3" />
                               {m.orgName}
                             </Badge>
@@ -467,7 +488,11 @@ export function AdminUserTable({ users, organizations }: Props) {
                   <Label>Organisations</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {editUser.memberships.map((m) => (
-                      <Badge key={m.orgId} variant="outline" className="text-xs">
+                      <Badge
+                        key={m.orgId}
+                        variant="outline"
+                        className="text-xs"
+                      >
                         {m.orgName} ({m.role})
                       </Badge>
                     ))}
@@ -475,7 +500,9 @@ export function AdminUserTable({ users, organizations }: Props) {
                 </div>
               )}
               {error && (
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {error}
+                </p>
               )}
               <DialogFooter>
                 <Button
@@ -513,14 +540,17 @@ export function AdminUserTable({ users, organizations }: Props) {
                   {deleteUser.memberships.length > 0 && (
                     <>
                       {" "}
-                      (membre de {deleteUser.memberships.length} organisation(s))
+                      (membre de {deleteUser.memberships.length}{" "}
+                      organisation(s))
                     </>
                   )}
                   .
                 </p>
               </div>
               {error && (
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {error}
+                </p>
               )}
               <DialogFooter>
                 <Button
@@ -567,7 +597,10 @@ export function AdminUserTable({ users, organizations }: Props) {
             </div>
             <div className="space-y-2">
               <Label>Organisation</Label>
-              <Select value={inviteOrgId} onValueChange={(v: string | null) => setInviteOrgId(v ?? "")}>
+              <Select
+                value={inviteOrgId}
+                onValueChange={(v: string | null) => setInviteOrgId(v ?? "")}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choisir une organisation" />
                 </SelectTrigger>
@@ -582,7 +615,12 @@ export function AdminUserTable({ users, organizations }: Props) {
             </div>
             <div className="space-y-2">
               <Label>Rôle</Label>
-              <Select value={inviteRole} onValueChange={(v: string | null) => { if (v) setInviteRole(v as "ADMIN" | "MEMBER"); }}>
+              <Select
+                value={inviteRole}
+                onValueChange={(v: string | null) => {
+                  if (v) setInviteRole(v as "ADMIN" | "MEMBER");
+                }}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>

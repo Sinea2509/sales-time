@@ -29,7 +29,9 @@ export function ContactEditForm({ contact }: { contact: ContactSummaryRow }) {
             notes: String(fd.get("notes") ?? "") || null,
           });
           if (!r.ok) {
-            setMessage("Enregistrement impossible. Vérifiez les champs ou le nom dupliqué.");
+            setMessage(
+              "Enregistrement impossible. Vérifiez les champs ou le nom dupliqué.",
+            );
             return;
           }
           setMessage("Enregistré.");
@@ -108,7 +110,11 @@ export function ContactEditForm({ contact }: { contact: ContactSummaryRow }) {
           {message}
         </p>
       ) : null}
-      <Button type="submit" disabled={pending} className="bg-brand text-white hover:bg-brand-hover">
+      <Button
+        type="submit"
+        disabled={pending}
+        className="bg-brand text-white hover:bg-brand-hover"
+      >
         {pending ? "Enregistrement…" : "Mettre à jour"}
       </Button>
     </form>

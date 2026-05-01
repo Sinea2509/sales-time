@@ -4,6 +4,7 @@ import { RegisterProfileForm } from "@/components/organisms/register-profile-for
 import { SignupFlowIllustration } from "@/components/molecules/signup-flow-illustration";
 import { needsRegisterProfile } from "@/lib/register-profile-gate";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { pageTitleClass } from "@/lib/page-typography";
 
 export const dynamic = "force-dynamic";
 
@@ -32,12 +33,11 @@ export default async function RegisterProfilePage() {
       <section className="flex items-center justify-center bg-white px-6 py-10 sm:px-10">
         <div className="w-full max-w-md space-y-6">
           <header className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Compléter votre profil
-            </h1>
+            <h1 className={pageTitleClass}>Compléter votre profil</h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Vérifiez votre nom tel qu&apos;il apparaîtra dans l&apos;équipe,
-              puis choisissez votre rôle métier pour accéder à l&apos;onboarding.
+              puis choisissez votre rôle métier pour accéder à
+              l&apos;onboarding.
             </p>
           </header>
 

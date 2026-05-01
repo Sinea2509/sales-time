@@ -22,11 +22,5 @@ export default async function AdminLayout({
     redirect("/company");
   }
 
-  return (
-    <AdminShell
-      userEmail={user.email}
-    >
-      {children}
-    </AdminShell>
-  );
+  return <AdminShell userEmail={user.email}>{children}</AdminShell>;
 }

@@ -53,6 +53,7 @@ export default async function DashboardLayout({
         organizationId: m.organizationId,
         name: org?.name ?? m.organizationId,
         role: m.role,
+        logoUrl: org?.logoUrl ?? null,
       };
     }),
   );

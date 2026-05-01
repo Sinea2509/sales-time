@@ -11,6 +11,8 @@ export type OrganizationSettingsRow = {
   objections: unknown;
   keyArguments: unknown;
   industryVocabulary: string | null;
+  /** Donnée historique ; les consignes KISS actives sont globales (super admin). */
+  kissCoachingPrompts: unknown;
   meetingTypes: unknown;
   pipelineStages: unknown;
   emailTone: string | null;
@@ -46,6 +48,8 @@ export interface OrganizationSettingsRepositoryPort {
       objections: unknown;
       keyArguments: unknown;
       industryVocabulary: string | null;
+      /** Absent : ne pas modifier la colonne (rétrocompat). */
+      kissCoachingPrompts?: unknown | null;
     },
   ): Promise<void>;
 

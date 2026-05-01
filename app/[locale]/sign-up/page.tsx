@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SignUpForm } from "@/components/organisms/sign-up-form";
+import { pageTitleClass } from "@/lib/page-typography";
 import { SignupFlowIllustration } from "@/components/molecules/signup-flow-illustration";
 
 export default function SignUpPage() {
@@ -12,9 +13,7 @@ export default function SignUpPage() {
       <section className="flex items-center justify-center bg-white px-6 py-10 sm:px-10">
         <div className="w-full max-w-md space-y-6">
           <header className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Créer un compte
-            </h1>
+            <h1 className={pageTitleClass}>Créer un compte</h1>
           </header>
 
           <SignUpForm />

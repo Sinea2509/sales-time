@@ -1,0 +1,14 @@
+.next
+out
+build
+node_modules
+coverage
+.vercel
+*.lock
+package-lock.json
+pnpm-lock.yaml
+public
+prisma/migrations
+.turbo
+playwright-report
+test-results

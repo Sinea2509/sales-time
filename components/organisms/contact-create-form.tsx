@@ -29,7 +29,9 @@ export function ContactCreateForm() {
           });
           if (!r.ok) {
             if (r.error === "DUPLICATE") {
-              setError("Un contact avec ce nom existe déjà dans votre organisation.");
+              setError(
+                "Un contact avec ce nom existe déjà dans votre organisation.",
+              );
             } else {
               setError("Impossible d’enregistrer. Vérifiez les champs.");
             }
@@ -71,7 +73,11 @@ export function ContactCreateForm() {
           {error}
         </p>
       ) : null}
-      <Button type="submit" disabled={pending} className="bg-brand text-white hover:bg-brand-hover">
+      <Button
+        type="submit"
+        disabled={pending}
+        className="bg-brand text-white hover:bg-brand-hover"
+      >
         {pending ? "Enregistrement…" : "Créer le contact"}
       </Button>
     </form>

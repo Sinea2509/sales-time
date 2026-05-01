@@ -45,7 +45,10 @@ const step4Schema = z.object({
   invites: z
     .array(
       z.object({
-        email: z.string().email().transform((e) => e.toLowerCase()),
+        email: z
+          .string()
+          .email()
+          .transform((e) => e.toLowerCase()),
         role: z.enum(["ADMIN", "MEMBER"]),
       }),
     )
@@ -178,13 +181,14 @@ export async function submitOnboardingStep4(
     ? sanitizeInviteMessageHtml(inviteMessageRaw)
     : null;
 
-  const result = await deps.onboardingCompletion.completeStep4CreateOrganizationAndInvites({
-    userId: user.id,
-    userEmail: user.email.toLowerCase(),
-    inviteMessage: inviteMessageSanitized,
-    inviteEmailsJson: parsed.data.invites as object,
-    invites: [...deduped.values()],
-  });
+  const result =
+    await deps.onboardingCompletion.completeStep4CreateOrganizationAndInvites({
+      userId: user.id,
+      userEmail: user.email.toLowerCase(),
+      inviteMessage: inviteMessageSanitized,
+      inviteEmailsJson: parsed.data.invites as object,
+      invites: [...deduped.values()],
+    });
 
   if (!result.ok) {
     if (result.error === "PROFILE_INCOMPLETE") {

@@ -91,9 +91,7 @@ export class PrismaUserRepository implements UserRepositoryPort {
     };
   }
 
-  async findRegisterGateByUserId(
-    userId: string,
-  ): Promise<{
+  async findRegisterGateByUserId(userId: string): Promise<{
     id: string;
     firstName: string | null;
     lastName: string | null;

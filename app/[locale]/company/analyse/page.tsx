@@ -1,11 +1,6 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import {
-  Lightbulb,
-  Sparkles,
-  Target,
-  TrendingUp,
-} from "lucide-react";
+import { ArrowUpRight, Sparkle, Sparkles, Target } from "lucide-react";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import {
@@ -22,6 +17,11 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
+import {
+  cardTitleClass,
+  pageTitleClass,
+  sectionHeadingClass,
+} from "@/lib/page-typography";
 import {
   meetingAtSinceForStatsWindow,
   parseStatsWindowDays,
@@ -45,10 +45,10 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   if (actor.workspaceRoleMode === "member" && !actor.internalUserId) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Analyse</h1>
+        <h1 className={pageTitleClass}>Analyse</h1>
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Compte</CardTitle>
+            <CardTitle className={cardTitleClass}>Compte</CardTitle>
             <CardDescription>
               Profil utilisateur non synchronisé — impossible de charger votre
               analyse personnelle.
@@ -88,10 +88,10 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   if (!home) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Analyse</h1>
+        <h1 className={pageTitleClass}>Analyse</h1>
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Organisation</CardTitle>
+            <CardTitle className={cardTitleClass}>Organisation</CardTitle>
             <CardDescription>
               Sélectionnez une organisation pour afficher les statistiques.
             </CardDescription>
@@ -118,8 +118,8 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     <div className="space-y-8">
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {isOrgAdmin ? "Analyse (équipe)" : "Mon analyse"}
+          <h1 className={pageTitleClass}>
+            {isOrgAdmin ? "Analyse" : "Mon analyse"}
           </h1>
           <Suspense
             fallback={
@@ -134,13 +134,13 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       </div>
 
       <section className="space-y-4">
-        <h2 className="text-foreground text-lg font-medium tracking-tight">
-          Statistiques globales
-        </h2>
+        <h2 className={sectionHeadingClass}>Statistiques globales</h2>
 
         <Card className="border-neutral-200 shadow-sm dark:border-neutral-800">
           <CardHeader>
-            <CardTitle className="text-base">Top 10 des rendez-vous</CardTitle>
+            <CardTitle className={cardTitleClass}>
+              Top 10 des rendez-vous
+            </CardTitle>
             <CardDescription>Classés par SalesScore</CardDescription>
           </CardHeader>
           <CardContent>
@@ -151,9 +151,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
 
       {!isOrgAdmin ? (
         <section className="space-y-4">
-          <h2 className="text-foreground text-lg font-medium tracking-tight">
-            Mes recommandations
-          </h2>
+          <h2 className={sectionHeadingClass}>Mes recommandations</h2>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Card className="border-neutral-200 shadow-sm dark:border-neutral-800">
@@ -163,7 +161,9 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
                     <Sparkles className="size-4 text-violet-600 dark:text-violet-300" />
                   </div>
                   <div className="min-w-0">
-                    <CardTitle className="text-base">Mon profil de vente</CardTitle>
+                    <CardTitle className={cardTitleClass}>
+                      Mon profil de vente
+                    </CardTitle>
                     <CardDescription>
                       Synthèse DISC / SONCAS récurrente
                     </CardDescription>
@@ -189,10 +189,12 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/20">
-                      <TrendingUp className="size-4 text-emerald-600 dark:text-emerald-300" />
+                      <ArrowUpRight className="size-4 text-emerald-600 dark:text-emerald-300" />
                     </div>
                     <div className="min-w-0">
-                      <CardTitle className="text-base">Mes progrès</CardTitle>
+                      <CardTitle className={cardTitleClass}>
+                        Mes progrès
+                      </CardTitle>
                       <CardDescription>
                         Évolution sur les derniers rendez-vous
                       </CardDescription>
@@ -225,10 +227,12 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
                       <Target className="size-4 text-amber-600 dark:text-amber-300" />
                     </div>
                     <div className="min-w-0">
-                      <CardTitle className="text-base">
+                      <CardTitle className={cardTitleClass}>
                         Mes axes d’amélioration
                       </CardTitle>
-                      <CardDescription>Pistes concrètes à travailler</CardDescription>
+                      <CardDescription>
+                        Pistes concrètes à travailler
+                      </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -240,7 +244,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
                       "Anticiper les signaux « Sécurité » sur les prospects profil C.",
                     ].map((line) => (
                       <li key={line} className="flex items-start gap-2">
-                        <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" />
+                        <Sparkle className="mt-0.5 size-4 shrink-0 text-amber-500" />
                         <span>{line}</span>
                       </li>
                     ))}

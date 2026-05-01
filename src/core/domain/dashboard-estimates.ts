@@ -4,10 +4,7 @@ import type { OrganizationSettingsRow } from "@/src/core/ports/organization-sett
 export function tamMinutesSavedPerMeetingFromSettings(
   settings: Pick<
     OrganizationSettingsRow,
-    | "tamCrMinutes"
-    | "tamCrmMinutes"
-    | "tamEmailMinutes"
-    | "tamResidualMinutes"
+    "tamCrMinutes" | "tamCrmMinutes" | "tamEmailMinutes" | "tamResidualMinutes"
   > | null,
 ): number {
   const cr = settings?.tamCrMinutes ?? 15;

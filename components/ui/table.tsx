@@ -12,17 +12,26 @@ function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
   );
 }
 
-function TableHeader({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+function TableHeader({
+  className,
+  ...props
+}: HTMLAttributes<HTMLTableSectionElement>) {
   return <thead className={cn("[&_tr]:border-b", className)} {...props} />;
 }
 
-function TableBody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+function TableBody({
+  className,
+  ...props
+}: HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <tbody className={cn("[&_tr:last-child]:border-0", className)} {...props} />
   );
 }
 
-function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
+function TableRow({
+  className,
+  ...props
+}: HTMLAttributes<HTMLTableRowElement>) {
   return (
     <tr
       className={cn(
@@ -34,7 +43,10 @@ function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) 
   );
 }
 
-function TableHead({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
+function TableHead({
+  className,
+  ...props
+}: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
       className={cn(
@@ -46,7 +58,10 @@ function TableHead({ className, ...props }: ThHTMLAttributes<HTMLTableCellElemen
   );
 }
 
-function TableCell({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
+function TableCell({
+  className,
+  ...props
+}: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td
       className={cn(

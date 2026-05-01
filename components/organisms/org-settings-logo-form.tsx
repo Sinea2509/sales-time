@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
+import { ImagePlus, Loader2 } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   removeOrganizationLogo,
   uploadOrganizationLogo,
@@ -16,7 +16,7 @@ export function OrgSettingsLogoForm({
   initialLogoUrl: string | null;
 }) {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<{
     type: "ok" | "err";
@@ -55,14 +55,7 @@ export function OrgSettingsLogoForm({
   }
 
   return (
-    <div className="border-border bg-card space-y-3 rounded-lg border p-4">
-      <div>
-        <Label>Logo de l&apos;organisation</Label>
-        <p className="text-muted-foreground mt-1 text-xs">
-          PNG, JPEG, WebP ou GIF — max. 2 Mo. Nécessite Vercel Blob
-          (BLOB_READ_WRITE_TOKEN).
-        </p>
-      </div>
+    <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto">
       {message ? (
         <p
           className={cn(
@@ -76,46 +69,61 @@ export function OrgSettingsLogoForm({
           {message.text}
         </p>
       ) : null}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="bg-muted border-border flex size-20 items-center justify-center overflow-hidden rounded-lg border">
+      <div className="flex flex-col items-start gap-2">
+        <input
+          id={inputId}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          className="peer sr-only"
+          aria-label="Téléverser ou remplacer le logo de l’entreprise"
+          disabled={pending}
+          onChange={onFileChange}
+        />
+        <label
+          htmlFor={inputId}
+          className={cn(
+            "relative flex size-40 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border transition-[opacity,box-shadow,background-color] sm:size-44",
+            initialLogoUrl
+              ? "border-border bg-muted hover:bg-muted/80"
+              : "border-muted-foreground/20 border-dashed bg-muted/20 hover:border-muted-foreground/35 hover:bg-muted/40",
+            pending && "pointer-events-none opacity-60",
+            "peer-focus-visible:ring-ring peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background",
+          )}
+        >
+          {pending ? (
+            <span className="bg-background/80 absolute inset-0 flex items-center justify-center rounded-[inherit]">
+              <Loader2 className="text-muted-foreground size-7 animate-spin" />
+            </span>
+          ) : null}
           {initialLogoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- remote blob URL
             <img
               src={initialLogoUrl}
               alt=""
-              className="max-h-full max-w-full object-contain"
+              className="max-h-full max-w-full object-contain p-1.5"
             />
           ) : (
-            <span className="text-muted-foreground text-xs">Aucun</span>
+            <span className="text-muted-foreground flex flex-col items-center gap-2 px-3 text-center text-xs leading-tight">
+              <ImagePlus className="size-9 opacity-70" aria-hidden />
+              <span>Cliquer pour téléverser</span>
+            </span>
           )}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            className="sr-only"
-            onChange={onFileChange}
-          />
+        </label>
+        {initialLogoUrl ? (
           <Button
             type="button"
-            variant="secondary"
+            variant="link"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive h-auto px-0 py-0 text-xs"
             disabled={pending}
-            onClick={() => inputRef.current?.click()}
+            onClick={(e) => {
+              e.preventDefault();
+              onRemove();
+            }}
           >
-            {initialLogoUrl ? "Remplacer…" : "Ajouter un logo…"}
+            Supprimer le logo
           </Button>
-          {initialLogoUrl ? (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pending}
-              onClick={onRemove}
-            >
-              Supprimer
-            </Button>
-          ) : null}
-        </div>
+        ) : null}
       </div>
     </div>
   );

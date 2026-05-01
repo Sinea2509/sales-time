@@ -58,7 +58,9 @@ export function ContactPicker() {
     const r = await createContactInlineAction({ displayName: name });
     if (!r.ok) {
       if (r.error === "DUPLICATE") {
-        setError("Ce nom correspond déjà à un contact. Choisissez-le dans la liste.");
+        setError(
+          "Ce nom correspond déjà à un contact. Choisissez-le dans la liste.",
+        );
       } else {
         setError("Création impossible.");
       }
@@ -106,7 +108,9 @@ export function ContactPicker() {
             role="listbox"
           >
             {loading ? (
-              <div className="text-muted-foreground px-3 py-2 text-sm">Recherche…</div>
+              <div className="text-muted-foreground px-3 py-2 text-sm">
+                Recherche…
+              </div>
             ) : null}
             {!loading &&
               hits.map((h) => (
@@ -121,7 +125,9 @@ export function ContactPicker() {
                 >
                   <span className="font-medium">{h.displayName}</span>
                   {h.company ? (
-                    <span className="text-muted-foreground text-xs">{h.company}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {h.company}
+                    </span>
                   ) : null}
                 </button>
               ))}

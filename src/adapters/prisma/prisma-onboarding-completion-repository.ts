@@ -8,9 +8,7 @@ import type {
   OnboardingCompletionRepositoryPort,
 } from "@/src/core/ports/onboarding-completion-repository-port";
 
-export class PrismaOnboardingCompletionRepository
-  implements OnboardingCompletionRepositoryPort
-{
+export class PrismaOnboardingCompletionRepository implements OnboardingCompletionRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
   async completeStep4CreateOrganizationAndInvites(

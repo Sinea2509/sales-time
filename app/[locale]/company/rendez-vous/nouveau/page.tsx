@@ -12,6 +12,7 @@ import { MeetingCreateForm } from "@/components/organisms/meeting-create-form";
 import { stringArrayFromOrgJson } from "@/lib/org-settings-json";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { cardTitleClass, pageTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -32,20 +33,16 @@ export default async function NouveauRendezVousPage() {
     "Proposition",
     "Négociation",
   ]);
-  const pipelineStageOptions = stringArrayFromOrgJson(settings?.pipelineStages, [
-    "Lead",
-    "Qualifié",
-    "Proposition",
-    "Gagné",
-  ]);
+  const pipelineStageOptions = stringArrayFromOrgJson(
+    settings?.pipelineStages,
+    ["Lead", "Qualifié", "Proposition", "Gagné"],
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-neutral-950 text-2xl font-semibold tracking-tight dark:text-neutral-50">
-            Nouveau rendez-vous
-          </h1>
+          <h1 className={pageTitleClass}>Nouveau rendez-vous</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
             Transcript manuel — idéal pour alimenter l’IA.
           </p>
@@ -60,7 +57,9 @@ export default async function NouveauRendezVousPage() {
 
       <Card className="border-neutral-200 shadow-sm dark:border-neutral-800">
         <CardHeader>
-          <CardTitle className="text-base">Détails du rendez-vous</CardTitle>
+          <CardTitle className={cardTitleClass}>
+            Détails du rendez-vous
+          </CardTitle>
           <CardDescription>
             Renseignez les informations puis enregistrez pour lancer l’analyse
             SONCAS / DISC.

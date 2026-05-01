@@ -1,5 +1,7 @@
 "use client";
 
+import { pageTitleClass } from "@/lib/page-typography";
+
 export default function GlobalError({
   error,
   reset,
@@ -15,7 +17,7 @@ export default function GlobalError({
   return (
     <html lang="fr">
       <body className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white p-6 text-center">
-        <h1 className="text-xl font-semibold">Impossible de charger la page</h1>
+        <h1 className={pageTitleClass}>Impossible de charger la page</h1>
         <p className="text-muted-foreground max-w-md text-sm">{detail}</p>
         {error.digest ? (
           <p className="text-muted-foreground font-mono text-xs">

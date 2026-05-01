@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { pageTitleClass } from "@/lib/page-typography";
 import { AcceptInvitationClient } from "@/components/organisms/accept-invitation-client";
 
 type Props = { params: Promise<{ token: string }> };
@@ -7,9 +8,8 @@ type Props = { params: Promise<{ token: string }> };
 export default async function InvitationPage({ params }: Props) {
   const { token } = await params;
   const deps = getApplicationDeps();
-  const inv = await deps.organizationInvitations.findPendingByTokenForPreview(
-    token,
-  );
+  const inv =
+    await deps.organizationInvitations.findPendingByTokenForPreview(token);
 
   if (!inv) {
     return (
@@ -29,9 +29,7 @@ export default async function InvitationPage({ params }: Props) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
       <div className="w-full max-w-md space-y-6 rounded-xl border border-border p-8 text-center shadow-sm">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Invitation — {inv.organizationName}
-        </h1>
+        <h1 className={pageTitleClass}>Invitation — {inv.organizationName}</h1>
         <p className="text-muted-foreground text-sm">
           Vous avez été invité en tant que{" "}
           <span className="font-medium text-foreground">

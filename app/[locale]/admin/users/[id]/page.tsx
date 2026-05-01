@@ -10,6 +10,8 @@ import {
   Mail,
 } from "lucide-react";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { cardTitleClass, pageTitleClass } from "@/lib/page-typography";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -83,9 +85,7 @@ export default async function AdminUserDetailPage({
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">
-              {fullName ?? user.email}
-            </h1>
+            <h1 className={pageTitleClass}>{fullName ?? user.email}</h1>
             <span
               className={
                 user.status === "ACTIVE"
@@ -121,16 +121,36 @@ export default async function AdminUserDetailPage({
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Building2} label="Organisations" value={user.organizationMemberships.length} accent="violet" />
-        <StatCard icon={CalendarDays} label="Rendez-vous" value={meetingCount} accent="emerald" />
-        <StatCard icon={BarChart3} label="Analyses" value={analysesCount} accent="blue" />
-        <StatCard icon={Monitor} label="Sessions" value={sessionCount} accent="amber" />
+        <StatCard
+          icon={Building2}
+          label="Organisations"
+          value={user.organizationMemberships.length}
+          accent="violet"
+        />
+        <StatCard
+          icon={CalendarDays}
+          label="Rendez-vous"
+          value={meetingCount}
+          accent="emerald"
+        />
+        <StatCard
+          icon={BarChart3}
+          label="Analyses"
+          value={analysesCount}
+          accent="blue"
+        />
+        <StatCard
+          icon={Monitor}
+          label="Sessions"
+          value={sessionCount}
+          accent="amber"
+        />
       </div>
 
       {/* Organizations */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
             <Building2 className="size-4 text-zinc-500" />
             Organisations
           </CardTitle>
@@ -144,21 +164,33 @@ export default async function AdminUserDetailPage({
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Organisation</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Rôle</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Rejoint le</th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Organisation
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Rôle
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Rejoint le
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {user.organizationMemberships.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-4 py-8 text-center text-zinc-400">
+                      <td
+                        colSpan={3}
+                        className="px-4 py-8 text-center text-zinc-400"
+                      >
                         Aucune organisation.
                       </td>
                     </tr>
                   ) : (
                     user.organizationMemberships.map((m) => (
-                      <tr key={m.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40">
+                      <tr
+                        key={m.id}
+                        className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                      >
                         <td className="px-4 py-2.5">
                           <Link
                             href={`/admin/organizations/${m.organization.id}`}
@@ -166,11 +198,15 @@ export default async function AdminUserDetailPage({
                           >
                             {m.organization.name}
                           </Link>
-                          <p className="text-xs text-zinc-400">{m.organization.slug}</p>
+                          <p className="text-xs text-zinc-400">
+                            {m.organization.slug}
+                          </p>
                         </td>
                         <td className="px-4 py-2.5">
                           <Badge
-                            variant={m.role === "ADMIN" ? "default" : "secondary"}
+                            variant={
+                              m.role === "ADMIN" ? "default" : "secondary"
+                            }
                             className="text-xs"
                           >
                             {m.role === "ADMIN" ? "Admin" : "Membre"}
@@ -192,7 +228,7 @@ export default async function AdminUserDetailPage({
       {/* Active Sessions */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
             <Monitor className="size-4 text-zinc-500" />
             Sessions actives
           </CardTitle>
@@ -206,26 +242,44 @@ export default async function AdminUserDetailPage({
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Dernière activité</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">User-Agent</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Créée le</th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Dernière activité
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      User-Agent
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Créée le
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {user.sessions.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-4 py-8 text-center text-zinc-400">
+                      <td
+                        colSpan={3}
+                        className="px-4 py-8 text-center text-zinc-400"
+                      >
                         Aucune session active.
                       </td>
                     </tr>
                   ) : (
                     user.sessions.map((s) => (
-                      <tr key={s.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40">
+                      <tr
+                        key={s.id}
+                        className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                      >
                         <td className="whitespace-nowrap px-4 py-2.5 text-zinc-700 dark:text-zinc-300">
                           {s.lastSeenAt.toLocaleDateString("fr-FR")}{" "}
-                          {s.lastSeenAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                          {s.lastSeenAt.toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </td>
-                        <td className="max-w-xs truncate px-4 py-2.5 text-zinc-500" title={s.userAgent ?? undefined}>
+                        <td
+                          className="max-w-xs truncate px-4 py-2.5 text-zinc-500"
+                          title={s.userAgent ?? undefined}
+                        >
                           {s.userAgent
                             ? s.userAgent.length > 80
                               ? `${s.userAgent.slice(0, 80)}…`
@@ -248,7 +302,7 @@ export default async function AdminUserDetailPage({
       {/* Recent Meetings */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
             <CalendarDays className="size-4 text-zinc-500" />
             Derniers rendez-vous
           </CardTitle>
@@ -262,24 +316,39 @@ export default async function AdminUserDetailPage({
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Prospect</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Date</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Résultat</th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">Organisation</th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Prospect
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Date
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Résultat
+                    </th>
+                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                      Organisation
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {user.meetingsAsSeller.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-zinc-400">
+                      <td
+                        colSpan={4}
+                        className="px-4 py-8 text-center text-zinc-400"
+                      >
                         Aucun rendez-vous.
                       </td>
                     </tr>
                   ) : (
                     user.meetingsAsSeller.map((m) => {
-                      const oc = outcomeConfig[m.outcome] ?? outcomeConfig.OTHER;
+                      const oc =
+                        outcomeConfig[m.outcome] ?? outcomeConfig.OTHER;
                       return (
-                        <tr key={m.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40">
+                        <tr
+                          key={m.id}
+                          className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                        >
                           <td className="px-4 py-2.5 font-medium text-zinc-900 dark:text-zinc-100">
                             {m.prospectName}
                           </td>
@@ -325,16 +394,30 @@ function StatCard({
   accent: "blue" | "emerald" | "violet" | "amber";
 }) {
   const accentMap = {
-    blue: { bg: "bg-blue-50 dark:bg-blue-950/40", icon: "text-blue-600 dark:text-blue-400" },
-    emerald: { bg: "bg-emerald-50 dark:bg-emerald-950/40", icon: "text-emerald-600 dark:text-emerald-400" },
-    violet: { bg: "bg-violet-50 dark:bg-violet-950/40", icon: "text-violet-600 dark:text-violet-400" },
-    amber: { bg: "bg-amber-50 dark:bg-amber-950/40", icon: "text-amber-600 dark:text-amber-400" },
+    blue: {
+      bg: "bg-blue-50 dark:bg-blue-950/40",
+      icon: "text-blue-600 dark:text-blue-400",
+    },
+    emerald: {
+      bg: "bg-emerald-50 dark:bg-emerald-950/40",
+      icon: "text-emerald-600 dark:text-emerald-400",
+    },
+    violet: {
+      bg: "bg-violet-50 dark:bg-violet-950/40",
+      icon: "text-violet-600 dark:text-violet-400",
+    },
+    amber: {
+      bg: "bg-amber-50 dark:bg-amber-950/40",
+      icon: "text-amber-600 dark:text-amber-400",
+    },
   };
   const colors = accentMap[accent];
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <div className={`flex size-10 items-center justify-center rounded-lg ${colors.bg}`}>
+      <div
+        className={`flex size-10 items-center justify-center rounded-lg ${colors.bg}`}
+      >
         <Icon className={`size-5 ${colors.icon}`} />
       </div>
       <div className="mt-3">

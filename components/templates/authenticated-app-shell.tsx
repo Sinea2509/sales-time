@@ -19,8 +19,7 @@ export function AuthenticatedAppShell({
   children,
 }: Props) {
   const showSuperAdminNav =
-    actor.kind === "authenticated" &&
-    actor.systemRoles.includes("SUPER_ADMIN");
+    actor.kind === "authenticated" && actor.systemRoles.includes("SUPER_ADMIN");
 
   const isElevatedSuperAdmin =
     actor.kind === "authenticated" && actor.isElevatedSuperAdmin;

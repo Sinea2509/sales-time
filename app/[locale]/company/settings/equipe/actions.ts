@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
+import { buildInvitationEmailHtml } from "@/lib/invite-email-html";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
@@ -11,7 +12,8 @@ import { getCurrentActorContext } from "@/src/core/application/get-current-actor
 async function requireOrgAdmin() {
   const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
+  if (!principal)
+    return { ok: false as const, error: "UNAUTHENTICATED" as const };
 
   const superAdminOrg = await readSuperAdminOrgCookie();
   const ctx = await getCurrentActorContext(
@@ -35,7 +37,11 @@ async function requireOrgAdmin() {
 export type TeamActionResult = { ok: true } | { ok: false; message: string };
 
 const inviteSchema = z.object({
-  email: z.string().trim().email().transform((e) => e.toLowerCase()),
+  email: z
+    .string()
+    .trim()
+    .email()
+    .transform((e) => e.toLowerCase()),
   role: z.enum(["ADMIN", "MEMBER"]),
 });
 
@@ -52,6 +58,11 @@ export async function inviteMemberAction(
 
   const deps = getApplicationDeps();
   const email = parsed.data.email.toLowerCase();
+  const actor = await deps.auth.getAuthenticatedPrincipal();
+  if (actor && email === actor.email.trim().toLowerCase()) {
+    return { ok: false, message: "Vous ne pouvez pas vous inviter vous-même." };
+  }
+
   const existingUserId = await deps.organizationTeam.findUserIdByEmail(email);
   if (existingUserId) {
     const already = await deps.organizationTeam.findMembership(
@@ -59,7 +70,10 @@ export async function inviteMemberAction(
       gate.organizationId,
     );
     if (already) {
-      return { ok: false, message: "Cet utilisateur est déjà membre de l’organisation." };
+      return {
+        ok: false,
+        message: "Cet utilisateur est déjà membre de l’organisation.",
+      };
     }
   }
 
@@ -68,7 +82,10 @@ export async function inviteMemberAction(
     email,
   );
   if (pending) {
-    return { ok: false, message: "Une invitation est déjà en cours pour cette adresse." };
+    return {
+      ok: false,
+      message: "Une invitation est déjà en cours pour cette adresse.",
+    };
   }
 
   const orgName =
@@ -94,7 +111,11 @@ export async function inviteMemberAction(
   await sendTransactionalEmail({
     to: email,
     subject: `Invitation — ${orgName}`,
-    html: `<p>Vous êtes invité à rejoindre <strong>${orgName}</strong> sur Sales Time.</p><p><a href="${link}">Accepter l’invitation</a></p>`,
+    html: buildInvitationEmailHtml({
+      organizationName: orgName,
+      inviteLink: link,
+      bodyHtml: "",
+    }),
   });
 
   revalidatePath("/company/settings/equipe");
@@ -130,7 +151,8 @@ export async function changeRoleAction(
     if (adminCount <= 1) {
       return {
         ok: false,
-        message: "Impossible de retirer le dernier administrateur de l’organisation.",
+        message:
+          "Impossible de retirer le dernier administrateur de l’organisation.",
       };
     }
   }
@@ -141,7 +163,9 @@ export async function changeRoleAction(
   return { ok: true };
 }
 
-export async function removeMemberAction(membershipId: string): Promise<TeamActionResult> {
+export async function removeMemberAction(
+  membershipId: string,
+): Promise<TeamActionResult> {
   const gate = await requireOrgAdmin();
   if (!gate.ok) return { ok: false, message: "Accès refusé." };
 
@@ -160,7 +184,10 @@ export async function removeMemberAction(membershipId: string): Promise<TeamActi
   }
 
   if (membership.userId === gate.actorUserId) {
-    return { ok: false, message: "Vous ne pouvez pas retirer votre propre accès." };
+    return {
+      ok: false,
+      message: "Vous ne pouvez pas retirer votre propre accès.",
+    };
   }
 
   if (membership.role === "ADMIN") {
@@ -181,7 +208,9 @@ export async function removeMemberAction(membershipId: string): Promise<TeamActi
   return { ok: true };
 }
 
-export async function revokeInvitationAction(invitationId: string): Promise<TeamActionResult> {
+export async function revokeInvitationAction(
+  invitationId: string,
+): Promise<TeamActionResult> {
   const gate = await requireOrgAdmin();
   if (!gate.ok) return { ok: false, message: "Accès refusé." };
 

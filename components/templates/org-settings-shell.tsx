@@ -3,23 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import {
-  Building2,
-  ClipboardList,
-  LayoutGrid,
-  Mail,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { Building2, Mail, Sparkles, UsersRound, Workflow } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SETTINGS_NAV = [
-  {
-    href: "/company/settings",
-    label: "Aperçu",
-    icon: LayoutGrid,
-    match: "exact" as const,
-  },
   {
     href: "/company/settings/contexte",
     label: "Contexte",
@@ -35,7 +22,7 @@ const SETTINGS_NAV = [
   {
     href: "/company/settings/process",
     label: "Process",
-    icon: ClipboardList,
+    icon: Workflow,
     match: "prefix" as const,
   },
   {
@@ -47,12 +34,16 @@ const SETTINGS_NAV = [
   {
     href: "/company/settings/equipe",
     label: "Équipe & accès",
-    icon: Users,
+    icon: UsersRound,
     match: "prefix" as const,
   },
 ];
 
-function subNavActive(pathname: string, href: string, match: "exact" | "prefix") {
+function subNavActive(
+  pathname: string,
+  href: string,
+  match: "exact" | "prefix",
+) {
   if (match === "exact") {
     return pathname === href;
   }
@@ -70,7 +61,10 @@ export function OrgSettingsShell({ children }: { children: React.ReactNode }) {
           <p className="text-muted-foreground px-2 pb-2 text-xs font-medium tracking-wide uppercase">
             {tNav("orgSettings")}
           </p>
-          <nav className="flex flex-col gap-0.5" aria-label="Sections paramètres">
+          <nav
+            className="flex flex-col gap-0.5"
+            aria-label="Sections paramètres"
+          >
             {SETTINGS_NAV.map(({ href, label, icon: Icon, match }) => {
               const active = subNavActive(pathname, href, match);
               return (

@@ -10,9 +10,9 @@
   },
   "nav": {
     "dashboard": "Tableau de bord",
-    "meetingsTeam": "Rendez-vous (équipe)",
+    "meetingsTeam": "Rendez-vous",
     "meetingsMine": "Mes rendez-vous",
-    "analyseTeam": "Analyse (équipe)",
+    "analyseTeam": "Analyse",
     "analyseMine": "Mon analyse",
     "contacts": "Contacts",
     "orgSettings": "Paramètres",

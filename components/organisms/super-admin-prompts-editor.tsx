@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 
 type VersionRow = {
@@ -75,7 +76,10 @@ function renderMarkdownToHtml(md: string): string {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/`([^`]+)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs font-mono">$1</code>')
+      .replace(
+        /`([^`]+)`/g,
+        '<code class="bg-muted px-1 py-0.5 rounded text-xs font-mono">$1</code>',
+      )
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.+?)\*/g, "<em>$1</em>");
 
@@ -92,7 +96,9 @@ function renderMarkdownToHtml(md: string): string {
     }
 
     if (inCodeBlock) {
-      codeBuffer.push(line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+      codeBuffer.push(
+        line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"),
+      );
       continue;
     }
 
@@ -105,7 +111,12 @@ function renderMarkdownToHtml(md: string): string {
     if (headingMatch) {
       flushList();
       const level = headingMatch[1].length;
-      const sizes = ["text-xl font-bold", "text-lg font-semibold", "text-base font-semibold", "text-sm font-semibold"];
+      const sizes = [
+        "text-xl font-bold",
+        "text-lg font-semibold",
+        "text-base font-semibold",
+        "text-sm font-semibold",
+      ];
       html += `<h${level} class="${sizes[level - 1]} mt-3 mb-1">${inlineFormat(headingMatch[2])}</h${level}>`;
       continue;
     }
@@ -198,7 +209,10 @@ function computeDiffOps(oldLines: string[], newLines: string[]): DiffOp[] {
 }
 
 /** Pair adjacent delete+insert into one side-by-side "replaced" row when possible */
-function opsToSideBySideRows(oldLines: string[], newLines: string[]): SideBySideDiffRow[] {
+function opsToSideBySideRows(
+  oldLines: string[],
+  newLines: string[],
+): SideBySideDiffRow[] {
   const ops = computeDiffOps(oldLines, newLines);
   const rows: SideBySideDiffRow[] = [];
   let k = 0;
@@ -246,7 +260,10 @@ function opsToSideBySideRows(oldLines: string[], newLines: string[]): SideBySide
   return rows;
 }
 
-function computeSideBySideDiff(oldText: string, newText: string): SideBySideDiffRow[] {
+function computeSideBySideDiff(
+  oldText: string,
+  newText: string,
+): SideBySideDiffRow[] {
   const oldLines = oldText.split("\n");
   const newLines = newText.split("\n");
   return opsToSideBySideRows(oldLines, newLines);
@@ -287,12 +304,18 @@ export function SuperAdminPromptsEditor({
   );
 
   const diffRows = useMemo(
-    () => (diffVersion ? computeSideBySideDiff(diffVersion.markdown, markdown) : null),
+    () =>
+      diffVersion
+        ? computeSideBySideDiff(diffVersion.markdown, markdown)
+        : null,
     [diffVersion, markdown],
   );
 
   const doPublish = useCallback(
-    (sourceMarkdown: string, auditAction: "PUBLISH_PROMPT" | "RESTORE_PROMPT") => {
+    (
+      sourceMarkdown: string,
+      auditAction: "PUBLISH_PROMPT" | "RESTORE_PROMPT",
+    ) => {
       setError(null);
       startTransition(async () => {
         const res = await publishPromptAction({
@@ -319,17 +342,19 @@ export function SuperAdminPromptsEditor({
         <CardHeader className="bg-muted/20 border-b pb-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
-              <CardTitle className="text-base font-semibold">
+              <CardTitle className={cardTitleClass}>
                 Brouillon — {kind}
               </CardTitle>
               <CardDescription>
-                Contenu utilisé pour les prochaines analyses jusqu&apos;à publication
-                d&apos;une nouvelle version.
+                Contenu utilisé pour les prochaines analyses jusqu&apos;à
+                publication d&apos;une nouvelle version.
               </CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {isDirty ? (
-                <Badge className="font-normal">Modifications non publiées</Badge>
+                <Badge className="font-normal">
+                  Modifications non publiées
+                </Badge>
               ) : latestVersion > 0 ? (
                 <Badge variant="secondary" className="font-normal">
                   Aligné sur v{latestVersion}
@@ -394,7 +419,9 @@ export function SuperAdminPromptsEditor({
               />
               <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                 <span>{charCount.toLocaleString("fr-FR")} caractères</span>
-                <span className="text-muted-foreground/30 hidden sm:inline">·</span>
+                <span className="text-muted-foreground/30 hidden sm:inline">
+                  ·
+                </span>
                 <span>{lineCount.toLocaleString("fr-FR")} lignes</span>
               </div>
             </div>
@@ -412,8 +439,8 @@ export function SuperAdminPromptsEditor({
         </CardContent>
         <CardFooter className="bg-muted/15 flex flex-col gap-3 border-t sm:flex-row sm:items-center sm:justify-between">
           <p className="text-muted-foreground max-w-xl text-xs leading-relaxed">
-            La publication enregistre une version immuable et met à jour le prompt
-            actif pour toutes les analyses {kind}.
+            La publication enregistre une version immuable et met à jour le
+            prompt actif pour toutes les analyses {kind}.
           </p>
           <Button
             type="button"
@@ -449,12 +476,16 @@ export function SuperAdminPromptsEditor({
           <DialogHeader>
             <DialogTitle>Confirmer la publication</DialogTitle>
             <DialogDescription>
-              Vous allez publier la version <strong>v{latestVersion + 1}</strong> du
-              prompt <strong>{kind}</strong>. Cette action est irréversible.
+              Vous allez publier la version{" "}
+              <strong>v{latestVersion + 1}</strong> du prompt{" "}
+              <strong>{kind}</strong>. Cette action est irréversible.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPublishDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setPublishDialogOpen(false)}
+            >
               Annuler
             </Button>
             <Button
@@ -476,12 +507,12 @@ export function SuperAdminPromptsEditor({
           <CardHeader className="pb-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-1">
-                <CardTitle className="text-base">
+                <CardTitle className={cardTitleClass}>
                   Comparaison v{diffVersion.version} → brouillon
                 </CardTitle>
                 <CardDescription>
-                  Gauche : version historique sélectionnée. Droite : contenu actuel
-                  de l&apos;éditeur.
+                  Gauche : version historique sélectionnée. Droite : contenu
+                  actuel de l&apos;éditeur.
                 </CardDescription>
               </div>
               <Button
@@ -511,89 +542,105 @@ export function SuperAdminPromptsEditor({
             </div>
           </CardHeader>
           <CardContent className="px-2 pb-4 sm:px-4">
-          <div className="overflow-hidden rounded-xl border bg-muted/20">
-            <div className="bg-muted/50 text-muted-foreground grid grid-cols-2 divide-x border-b text-[10px] font-medium tracking-wide uppercase">
-              <div className="flex min-h-9 items-center gap-2 px-3 py-2">
-                <span className="text-foreground/90 shrink-0">v{diffVersion.version}</span>
-                <span className="truncate font-normal normal-case">référence</span>
+            <div className="overflow-hidden rounded-xl border bg-muted/20">
+              <div className="bg-muted/50 text-muted-foreground grid grid-cols-2 divide-x border-b text-[10px] font-medium tracking-wide uppercase">
+                <div className="flex min-h-9 items-center gap-2 px-3 py-2">
+                  <span className="text-foreground/90 shrink-0">
+                    v{diffVersion.version}
+                  </span>
+                  <span className="truncate font-normal normal-case">
+                    référence
+                  </span>
+                </div>
+                <div className="flex min-h-9 items-center gap-2 px-3 py-2">
+                  <span className="text-foreground/90 shrink-0">Brouillon</span>
+                  <span className="truncate font-normal normal-case">
+                    éditeur
+                  </span>
+                </div>
               </div>
-              <div className="flex min-h-9 items-center gap-2 px-3 py-2">
-                <span className="text-foreground/90 shrink-0">Brouillon</span>
-                <span className="truncate font-normal normal-case">éditeur</span>
-              </div>
-            </div>
-            <div className="max-h-[min(70vh,520px)] overflow-auto">
-              <div className="divide-y divide-border/60">
-                {diffRows.map((row, i) => {
-                  const leftHighlight =
-                    row.rowKind === "removed-only" || row.rowKind === "replaced";
-                  const rightHighlight =
-                    row.rowKind === "added-only" || row.rowKind === "replaced";
-                  return (
-                    <div
-                      key={i}
-                      className="grid grid-cols-2 font-mono text-xs leading-snug"
-                    >
+              <div className="max-h-[min(70vh,520px)] overflow-auto">
+                <div className="divide-y divide-border/60">
+                  {diffRows.map((row, i) => {
+                    const leftHighlight =
+                      row.rowKind === "removed-only" ||
+                      row.rowKind === "replaced";
+                    const rightHighlight =
+                      row.rowKind === "added-only" ||
+                      row.rowKind === "replaced";
+                    return (
                       <div
-                        className={cn(
-                          "flex min-h-[1.375rem] min-w-0",
-                          leftHighlight &&
-                            "bg-rose-500/12 text-rose-950 dark:bg-rose-500/15 dark:text-rose-100",
-                          !leftHighlight && row.oldText !== null && "bg-background",
-                          row.oldText === null && "bg-muted/25",
-                        )}
+                        key={i}
+                        className="grid grid-cols-2 font-mono text-xs leading-snug"
                       >
                         <div
                           className={cn(
-                            "w-11 shrink-0 select-none border-r border-border/50 py-0.5 pr-1.5 text-right tabular-nums",
-                            leftHighlight
-                              ? "text-rose-700/90 dark:text-rose-300/90"
-                              : "text-muted-foreground",
+                            "flex min-h-[1.375rem] min-w-0",
+                            leftHighlight &&
+                              "bg-rose-500/12 text-rose-950 dark:bg-rose-500/15 dark:text-rose-100",
+                            !leftHighlight &&
+                              row.oldText !== null &&
+                              "bg-background",
+                            row.oldText === null && "bg-muted/25",
                           )}
                         >
-                          {row.oldLineNo ?? ""}
+                          <div
+                            className={cn(
+                              "w-11 shrink-0 select-none border-r border-border/50 py-0.5 pr-1.5 text-right tabular-nums",
+                              leftHighlight
+                                ? "text-rose-700/90 dark:text-rose-300/90"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            {row.oldLineNo ?? ""}
+                          </div>
+                          <div className="min-w-0 flex-1 whitespace-pre-wrap break-words px-2 py-0.5">
+                            {row.oldText === null ? (
+                              <span className="text-muted-foreground/35 select-none">
+                                ·
+                              </span>
+                            ) : (
+                              row.oldText || "\u00A0"
+                            )}
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1 whitespace-pre-wrap break-words px-2 py-0.5">
-                          {row.oldText === null ? (
-                            <span className="text-muted-foreground/35 select-none">·</span>
-                          ) : (
-                            row.oldText || "\u00A0"
-                          )}
-                        </div>
-                      </div>
-                      <div
-                        className={cn(
-                          "flex min-h-[1.375rem] min-w-0",
-                          rightHighlight &&
-                            "bg-emerald-500/12 text-emerald-950 dark:bg-emerald-500/15 dark:text-emerald-100",
-                          !rightHighlight && row.newText !== null && "bg-background",
-                          row.newText === null && "bg-muted/25",
-                        )}
-                      >
                         <div
                           className={cn(
-                            "w-11 shrink-0 select-none border-r border-border/50 py-0.5 pr-1.5 text-right tabular-nums",
-                            rightHighlight
-                              ? "text-emerald-800/90 dark:text-emerald-300/90"
-                              : "text-muted-foreground",
+                            "flex min-h-[1.375rem] min-w-0",
+                            rightHighlight &&
+                              "bg-emerald-500/12 text-emerald-950 dark:bg-emerald-500/15 dark:text-emerald-100",
+                            !rightHighlight &&
+                              row.newText !== null &&
+                              "bg-background",
+                            row.newText === null && "bg-muted/25",
                           )}
                         >
-                          {row.newLineNo ?? ""}
-                        </div>
-                        <div className="min-w-0 flex-1 whitespace-pre-wrap break-words px-2 py-0.5">
-                          {row.newText === null ? (
-                            <span className="text-muted-foreground/35 select-none">·</span>
-                          ) : (
-                            row.newText || "\u00A0"
-                          )}
+                          <div
+                            className={cn(
+                              "w-11 shrink-0 select-none border-r border-border/50 py-0.5 pr-1.5 text-right tabular-nums",
+                              rightHighlight
+                                ? "text-emerald-800/90 dark:text-emerald-300/90"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            {row.newLineNo ?? ""}
+                          </div>
+                          <div className="min-w-0 flex-1 whitespace-pre-wrap break-words px-2 py-0.5">
+                            {row.newText === null ? (
+                              <span className="text-muted-foreground/35 select-none">
+                                ·
+                              </span>
+                            ) : (
+                              row.newText || "\u00A0"
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
           </CardContent>
         </Card>
       )}
@@ -605,10 +652,12 @@ export function SuperAdminPromptsEditor({
               <History className="text-muted-foreground size-4" aria-hidden />
             </div>
             <div>
-              <CardTitle className="text-base">Historique des versions</CardTitle>
+              <CardTitle className={cardTitleClass}>
+                Historique des versions
+              </CardTitle>
               <CardDescription>
-                Jusqu&apos;à 30 dernières publications. Restaurer remplace le brouillon
-                (sans publier automatiquement).
+                Jusqu&apos;à 30 dernières publications. Restaurer remplace le
+                brouillon (sans publier automatiquement).
               </CardDescription>
             </div>
           </div>
@@ -635,7 +684,10 @@ export function SuperAdminPromptsEditor({
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary" className="tabular-nums text-xs">
+                        <Badge
+                          variant="secondary"
+                          className="tabular-nums text-xs"
+                        >
                           v{v.version}
                         </Badge>
                         <span className="text-foreground/90 max-w-[220px] truncate text-xs font-medium sm:max-w-xs">
@@ -681,11 +733,15 @@ export function SuperAdminPromptsEditor({
                         size="sm"
                         className="flex-1"
                         onClick={() =>
-                          setDiffVersion((prev) => (prev?.id === v.id ? null : v))
+                          setDiffVersion((prev) =>
+                            prev?.id === v.id ? null : v,
+                          )
                         }
                       >
                         <GitCompareArrows className="mr-1.5 size-3.5" />
-                        {isDiffTarget ? "Masquer le diff" : "Comparer au brouillon"}
+                        {isDiffTarget
+                          ? "Masquer le diff"
+                          : "Comparer au brouillon"}
                       </Button>
                     </div>
                   </li>

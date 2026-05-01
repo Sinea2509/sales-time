@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { updateOrganizationProcess } from "@/app/[locale]/company/settings/actions";
 import { cn } from "@/lib/utils";
-import { EditableStringList } from "@/components/molecules/editable-string-list";
+import {
+  ProcessStringListSection,
+  processItemsFromStrings,
+  type ProcessStringListItem,
+} from "@/components/molecules/process-string-list-section";
 
 export type OrgProcessFormInitial = {
   meetingTypes: string[];
@@ -19,19 +23,24 @@ export function OrgSettingsProcessForm({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(
-    null,
-  );
-  const [meetingTypes, setMeetingTypes] = useState(initial.meetingTypes);
-  const [pipelineStages, setPipelineStages] = useState(initial.pipelineStages);
+  const [message, setMessage] = useState<{
+    type: "ok" | "err";
+    text: string;
+  } | null>(null);
+  const [meetingTypeItems, setMeetingTypeItems] = useState<
+    ProcessStringListItem[]
+  >(() => processItemsFromStrings("mt", initial.meetingTypes));
+  const [pipelineStageItems, setPipelineStageItems] = useState<
+    ProcessStringListItem[]
+  >(() => processItemsFromStrings("pl", initial.pipelineStages));
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage(null);
     startTransition(async () => {
       const r = await updateOrganizationProcess({
-        meetingTypes,
-        pipelineStages,
+        meetingTypes: meetingTypeItems.map((x) => x.value).filter(Boolean),
+        pipelineStages: pipelineStageItems.map((x) => x.value).filter(Boolean),
       });
       if (!r.ok) {
         setMessage({ type: "err", text: r.message });
@@ -48,7 +57,9 @@ export function OrgSettingsProcessForm({
         <p
           className={cn(
             "text-sm",
-            message.type === "ok" ? "text-green-700 dark:text-green-400" : "text-destructive",
+            message.type === "ok"
+              ? "text-green-700 dark:text-green-400"
+              : "text-destructive",
           )}
           role="status"
         >
@@ -56,29 +67,31 @@ export function OrgSettingsProcessForm({
         </p>
       ) : null}
 
-      <EditableStringList
-        id="org-meeting-types"
-        title="Types de rendez-vous"
-        description="Ex. Découverte, démo, négociation — utilisés dans les formulaires et rapports."
-        items={meetingTypes}
-        onChange={setMeetingTypes}
+      <ProcessStringListSection
+        label="Type de RDV"
+        addButtonLabel="+ Ajouter un type"
+        draftPlaceholder="Nouveau type de RDV"
+        items={meetingTypeItems}
+        setItems={setMeetingTypeItems}
       />
 
-      <EditableStringList
-        id="org-pipeline-stages"
-        title="Étapes du pipeline"
-        description="Repères commerciaux alignés sur votre processus de vente."
-        items={pipelineStages}
-        onChange={setPipelineStages}
+      <ProcessStringListSection
+        label="Étapes du pipeline"
+        addButtonLabel="+ Ajouter une étape"
+        draftPlaceholder="Nouvelle étape"
+        items={pipelineStageItems}
+        setItems={setPipelineStageItems}
       />
 
-      <Button
-        type="submit"
-        disabled={pending}
-        className="bg-brand text-white hover:bg-brand-hover"
-      >
-        Enregistrer
-      </Button>
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          disabled={pending}
+          className="bg-brand text-white hover:bg-brand-hover"
+        >
+          Enregistrer
+        </Button>
+      </div>
     </form>
   );
 }

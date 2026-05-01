@@ -12,8 +12,8 @@ export default async function ResetPasswordPage({ params }: Props) {
       title="Nouveau mot de passe"
       description={
         <p>
-          Choisissez un mot de passe d&apos;au moins 8 caractères. Ce lien expire
-          au bout d&apos;une heure.
+          Choisissez un mot de passe d&apos;au moins 8 caractères. Ce lien
+          expire au bout d&apos;une heure.
         </p>
       }
     >

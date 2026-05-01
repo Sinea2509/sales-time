@@ -1,4 +1,10 @@
-import { ArrowDown, ArrowUp, Minus, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Minus,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -19,8 +25,7 @@ const dashboardVariants = cva(basePill, {
 const adminVariants = cva(basePill, {
   variants: {
     intent: {
-      good:
-        "border-emerald-500/35 bg-emerald-500/15 text-emerald-800 dark:text-emerald-100",
+      good: "border-emerald-500/35 bg-emerald-500/15 text-emerald-800 dark:text-emerald-100",
       bad: "border-rose-500/35 bg-rose-500/15 text-rose-800 dark:text-rose-100",
       neutral:
         "border-zinc-200 bg-zinc-50 text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
@@ -46,8 +51,7 @@ function resolveIntent(
 const kpiVsPreviousVariants = cva(basePill, {
   variants: {
     intent: {
-      good:
-        "border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:border-emerald-500/35 dark:bg-emerald-500/15 dark:text-emerald-100",
+      good: "border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:border-emerald-500/35 dark:bg-emerald-500/15 dark:text-emerald-100",
       bad: "border-rose-500/40 bg-rose-500/10 text-rose-800 dark:border-rose-500/35 dark:bg-rose-500/15 dark:text-rose-100",
       neutral:
         "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
@@ -79,8 +83,7 @@ export function KpiVsPreviousBadge({
 }: KpiVsPreviousBadgeProps) {
   if (delta === null || Number.isNaN(delta)) return null;
   const intent = resolveIntent(delta, mode);
-  const Icon =
-    delta === 0 ? Minus : delta > 0 ? TrendingUp : TrendingDown;
+  const Icon = delta === 0 ? Minus : delta > 0 ? TrendingUp : TrendingDown;
   const absVal = Math.abs(delta);
   const textRaw =
     Math.abs(absVal % 1) < 0.001
@@ -159,8 +162,7 @@ const pointsDashboardVariants = cva(basePill, {
 const pointsAdminVariants = cva(basePill, {
   variants: {
     intent: {
-      good:
-        "border-emerald-500/35 bg-emerald-500/15 text-emerald-800 dark:text-emerald-100",
+      good: "border-emerald-500/35 bg-emerald-500/15 text-emerald-800 dark:text-emerald-100",
       bad: "border-rose-500/35 bg-rose-500/15 text-rose-800 dark:text-rose-100",
       neutral:
         "border-zinc-200 bg-zinc-50 text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
@@ -189,7 +191,8 @@ export function TrendPointsPill({
   const Icon = points > 0 ? ArrowUp : ArrowDown;
   const text =
     Math.abs(points % 1) < 0.05 ? String(Math.round(points)) : String(points);
-  const variants = surface === "admin" ? pointsAdminVariants : pointsDashboardVariants;
+  const variants =
+    surface === "admin" ? pointsAdminVariants : pointsDashboardVariants;
   return (
     <span className={cn(variants({ intent }), className)}>
       <Icon className="size-3" />

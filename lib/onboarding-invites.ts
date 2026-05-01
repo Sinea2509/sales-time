@@ -9,8 +9,8 @@ export const ONBOARDING_INVITE_ROLE_OPTIONS: {
   value: OnboardingInviteRole;
   label: string;
 }[] = [
-  { value: "ADMIN", label: "Admin" },
-  { value: "MEMBER", label: "Member" },
+  { value: "ADMIN", label: "Administrateur" },
+  { value: "MEMBER", label: "Membre" },
 ];
 
 function normalizeRole(raw: unknown): OnboardingInviteRole {
@@ -31,9 +31,7 @@ export function parseStoredInviteRows(value: unknown): OnboardingInviteRow[] {
       continue;
     }
     if (item && typeof item === "object") {
-      const email = String(
-        (item as { email?: unknown }).email ?? "",
-      ).trim();
+      const email = String((item as { email?: unknown }).email ?? "").trim();
       if (email.length === 0) continue;
       out.push({
         email,

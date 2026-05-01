@@ -44,7 +44,9 @@ vi.mock("@/lib/email/mailer", () => ({
   sendTransactionalEmail: sendTransactionalEmailMock,
 }));
 
-const generateOpaqueTokenMock = vi.hoisted(() => vi.fn(() => "raw-invite-token"));
+const generateOpaqueTokenMock = vi.hoisted(() =>
+  vi.fn(() => "raw-invite-token"),
+);
 const hashTokenMock = vi.hoisted(() => vi.fn(() => "hashed-token"));
 vi.mock("@/lib/auth/tokens", () => ({
   generateOpaqueToken: generateOpaqueTokenMock,
@@ -140,7 +142,10 @@ describe("admin super-admin CRUD — organizations", () => {
     backofficeMock.createOrganization.mockResolvedValue(undefined);
     backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
 
-    const r = await createOrganizationAction({ name: "Acme", slug: "acme-new" });
+    const r = await createOrganizationAction({
+      name: "Acme",
+      slug: "acme-new",
+    });
     expect(r).toEqual({ ok: true });
     expect(backofficeMock.createOrganization).toHaveBeenCalledWith({
       name: "Acme",
@@ -213,7 +218,10 @@ describe("admin super-admin CRUD — organizations", () => {
     const r = await bulkDeleteOrganizationsAction(["a", "b"]);
     expect(r).toEqual({ ok: true });
     expect(backofficeMock.createSuperAdminAuditLogsMany).toHaveBeenCalled();
-    expect(backofficeMock.deleteOrganizationsByIds).toHaveBeenCalledWith(["a", "b"]);
+    expect(backofficeMock.deleteOrganizationsByIds).toHaveBeenCalledWith([
+      "a",
+      "b",
+    ]);
   });
 
   it("rejects bulk delete with empty ids", async () => {
@@ -328,7 +336,9 @@ describe("admin super-admin CRUD — users", () => {
       name: "Org",
     });
     backofficeMock.findPendingOrganizationInvitation.mockResolvedValue(null);
-    backofficeMock.createOrganizationInvitationAdmin.mockResolvedValue(undefined);
+    backofficeMock.createOrganizationInvitationAdmin.mockResolvedValue(
+      undefined,
+    );
     backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
 
     const r = await inviteUserToOrgAction({
@@ -354,7 +364,9 @@ describe("admin super-admin CRUD — users", () => {
       role: "ADMIN",
     });
     expect(r).toEqual({ ok: false, message: "Organisation introuvable." });
-    expect(backofficeMock.createOrganizationInvitationAdmin).not.toHaveBeenCalled();
+    expect(
+      backofficeMock.createOrganizationInvitationAdmin,
+    ).not.toHaveBeenCalled();
   });
 });
 
@@ -376,7 +388,9 @@ describe("admin super-admin — super-admins & prompts", () => {
   it("inviteSuperAdmin creates pending invitation and sends email", async () => {
     mockAuthenticatedSuperAdminPrincipal();
     backofficeMock.findUserWithSuperAdminByEmail.mockResolvedValueOnce(null);
-    backofficeMock.findPendingSuperAdminInvitationByEmail.mockResolvedValue(null);
+    backofficeMock.findPendingSuperAdminInvitationByEmail.mockResolvedValue(
+      null,
+    );
     backofficeMock.createSuperAdminInvitation.mockResolvedValue(undefined);
 
     const r = await inviteSuperAdminAction({ email: "newadmin@example.com" });
@@ -400,7 +414,9 @@ describe("admin super-admin — super-admins & prompts", () => {
 
     const r = await revokeSuperAdminInvitationAction(INVITE_ID);
     expect(r).toEqual({ ok: true });
-    expect(backofficeMock.revokeSuperAdminInvitation).toHaveBeenCalledWith(INVITE_ID);
+    expect(backofficeMock.revokeSuperAdminInvitation).toHaveBeenCalledWith(
+      INVITE_ID,
+    );
   });
 
   it("revokeSuperAdminRole rejects self-revoke", async () => {

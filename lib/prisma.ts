@@ -39,9 +39,11 @@ function getPrisma(): PrismaClient {
  * without evaluating `DATABASE_URL` until the first DB-backed request.
  */
 export const prisma = new Proxy({} as PrismaClient, {
-  get(_target, prop, receiver) {
+  get(_target, prop) {
     const client = getPrisma();
-    const value = Reflect.get(client, prop, receiver) as unknown;
+    // Use `client` as Reflect receiver so Prisma model getters see the real client
+    // as `this`. Passing the proxy breaks accessors on some Prisma delegates.
+    const value = Reflect.get(client, prop, client) as unknown;
     if (typeof value === "function") {
       return (value as (...args: unknown[]) => unknown).bind(client);
     }

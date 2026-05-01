@@ -16,10 +16,7 @@ function migrateSubcommandNeedsAdvisoryLock(): boolean {
   if (i === -1) return false;
   const sub = args[i + 1];
   return (
-    sub === "deploy" ||
-    sub === "dev" ||
-    sub === "reset" ||
-    sub === "resolve"
+    sub === "deploy" || sub === "dev" || sub === "reset" || sub === "resolve"
   );
 }
 
@@ -40,10 +37,10 @@ if (
 ) {
   throw new Error(
     [
-      "Prisma Migrate cannot use Neon's pooled connection (hostname contains \"-pooler\").",
+      'Prisma Migrate cannot use Neon\'s pooled connection (hostname contains "-pooler").',
       "It will time out acquiring pg_advisory_lock (P1002).",
       "Set DIRECT_URL or DATABASE_URL_UNPOOLED (Vercel Neon integration) to the direct Postgres URL",
-      "(host without \"-pooler\"). Keep DATABASE_URL as the pooled URL for the app.",
+      '(host without "-pooler"). Keep DATABASE_URL as the pooled URL for the app.',
       "See prisma.config.ts header and https://neon.com/docs/guides/prisma",
     ].join(" "),
   );

@@ -13,7 +13,5 @@ export function salesScoreFromSoncasResult(result: unknown): number | null {
     d.argent.score,
     d.sympathie.score,
   ];
-  return Math.round(
-    scores.reduce((a, b) => a + b, 0) / scores.length,
-  );
+  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
 }

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { pageTitleClass } from "@/lib/page-typography";
 import {
   OrgSettingsTeamList,
   type TeamInvitationRow,
@@ -54,17 +55,14 @@ export default async function OrganizationSettingsEquipePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Équipe & accès</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-          Membres de l’organisation, rôles (administrateur / membre) et invitations
-          par e-mail. Les invitations utilisent le même flux que l’onboarding.
-        </p>
+        <h1 className={pageTitleClass}>Équipe & accès</h1>
       </div>
 
       <OrgSettingsTeamList
         members={memberRows}
         invitations={invRows}
         currentUserId={principal.userId}
+        currentUserEmail={principal.email}
       />
     </div>
   );

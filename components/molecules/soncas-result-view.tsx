@@ -1,9 +1,5 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cardTitleClass } from "@/lib/page-typography";
 import type { SoncasAnalysisResult } from "@/src/core/domain/analysis-result-zod";
 
 const labels: Record<keyof SoncasAnalysisResult["drivers"], string> = {
@@ -30,10 +26,9 @@ export function SoncasResultView({ result }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">SONCAS</CardTitle>
+        <CardTitle className={cardTitleClass}>SONCAS</CardTitle>
         <p className="text-muted-foreground text-sm">
-          Dominant prospect :{" "}
-          <strong>{labels[result.dominant]}</strong>
+          Dominant prospect : <strong>{labels[result.dominant]}</strong>
         </p>
       </CardHeader>
       <CardContent className="space-y-4">

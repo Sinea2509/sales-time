@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { cardTitleClass, pageTitleClass } from "@/lib/page-typography";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import {
   discResultSchema,
@@ -64,9 +65,7 @@ export default async function RendezVousDetailPage({
           <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Fiche RDV
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {meeting.prospectName}
-          </h1>
+          <h1 className={pageTitleClass}>{meeting.prospectName}</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             {new Date(meeting.meetingAt).toLocaleString()} · {meeting.outcome}
             {meeting.meetingType ? ` · ${meeting.meetingType}` : ""}
@@ -90,7 +89,7 @@ export default async function RendezVousDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Analyse IA</CardTitle>
+          <CardTitle className={cardTitleClass}>Analyse IA</CardTitle>
           <CardDescription>
             Vercel AI Gateway — modèle configuré côté serveur. Nécessite{" "}
             <code className="text-xs">AI_GATEWAY_API_KEY</code>.
@@ -119,7 +118,9 @@ export default async function RendezVousDetailPage({
         </CardContent>
       </Card>
 
-      {soncasParsed?.success ? <SoncasResultView result={soncasParsed.data} /> : null}
+      {soncasParsed?.success ? (
+        <SoncasResultView result={soncasParsed.data} />
+      ) : null}
       {discParsed?.success ? <DiscResultView result={discParsed.data} /> : null}
       {kissParsed?.success ? (
         isSeller ? (
@@ -127,10 +128,10 @@ export default async function RendezVousDetailPage({
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Coaching KISS</CardTitle>
+              <CardTitle className={cardTitleClass}>Coaching KISS</CardTitle>
               <CardDescription>
-                Le détail KISS et le score de coaching sont visibles uniquement par
-                le commercial assigné à ce rendez-vous.
+                Le détail KISS et le score de coaching sont visibles uniquement
+                par le commercial assigné à ce rendez-vous.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -139,9 +140,10 @@ export default async function RendezVousDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Mail de suivi client</CardTitle>
+          <CardTitle className={cardTitleClass}>Mail de suivi client</CardTitle>
           <CardDescription>
-            Généré à partir du transcript et des analyses — à relire avant envoi.
+            Généré à partir du transcript et des analyses — à relire avant
+            envoi.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -154,7 +156,7 @@ export default async function RendezVousDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Transcript</CardTitle>
+          <CardTitle className={cardTitleClass}>Transcript</CardTitle>
         </CardHeader>
         <CardContent>
           <pre className="bg-muted max-h-[320px] overflow-auto rounded-lg p-4 text-xs whitespace-pre-wrap">
@@ -166,7 +168,7 @@ export default async function RendezVousDetailPage({
       {meeting.notes ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Notes</CardTitle>
+            <CardTitle className={cardTitleClass}>Notes</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm whitespace-pre-wrap">{meeting.notes}</p>

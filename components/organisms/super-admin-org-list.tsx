@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cardTitleClass, pageTitleClass } from "@/lib/page-typography";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -26,14 +27,14 @@ export function SuperAdminOrgList({ organizations }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+        <h1 className={pageTitleClass}>{t("title")}</h1>
         <p className="text-muted-foreground mt-1 text-sm">{t("description")}</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         {organizations.map((org) => (
           <Card key={org.id}>
             <CardHeader>
-              <CardTitle className="text-base">{org.name}</CardTitle>
+              <CardTitle className={cardTitleClass}>{org.name}</CardTitle>
               <CardDescription className="font-mono text-xs">
                 {org.id}
                 {org.slug ? ` · ${org.slug}` : ""}

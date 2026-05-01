@@ -8,6 +8,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  cardTitleClass,
+  pageTitleClass,
+  sectionHeadingClass,
+} from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -17,41 +22,78 @@ const contactHref =
 
 type Cell = string | "check";
 
-const comparisonRows: { label: string; starter: Cell; team: Cell; entreprise: Cell }[] =
-  [
-    { label: "Analyse de RDV", starter: "Illimité", team: "Illimité", entreprise: "Illimité" },
-    { label: "CR + mail de suivi", starter: "check", team: "check", entreprise: "check" },
-    { label: "Coaching", starter: "check", team: "check", entreprise: "check" },
-    { label: "Coaching KISS inclus", starter: "check", team: "check", entreprise: "check" },
-    { label: "SalesScore", starter: "check", team: "check", entreprise: "check" },
-    { label: "Préparation du RDV", starter: "Incluse", team: "Incluse", entreprise: "Incluse" },
-    { label: "Vue manager", starter: "—", team: "Incluse", entreprise: "Incluse" },
-    { label: "Dashboard manager", starter: "—", team: "Incluse", entreprise: "Incluse" },
-    {
-      label: "Calibrage coach",
-      starter: "—",
-      team: "Incluse",
-      entreprise: "Complet et personnalisable",
-    },
-    {
-      label: "KISS Management",
-      starter: "Basique",
-      team: "Incluse",
-      entreprise: "Complet et personnalisable",
-    },
-    {
-      label: "Sièges manager",
-      starter: "1 siège inclus",
-      team: "Sièges manager illimités",
-      entreprise: "Sur mesure",
-    },
-  ];
+const comparisonRows: {
+  label: string;
+  starter: Cell;
+  team: Cell;
+  entreprise: Cell;
+}[] = [
+  {
+    label: "Analyse de RDV",
+    starter: "Illimité",
+    team: "Illimité",
+    entreprise: "Illimité",
+  },
+  {
+    label: "CR + mail de suivi",
+    starter: "check",
+    team: "check",
+    entreprise: "check",
+  },
+  { label: "Coaching", starter: "check", team: "check", entreprise: "check" },
+  {
+    label: "Coaching KISS inclus",
+    starter: "check",
+    team: "check",
+    entreprise: "check",
+  },
+  { label: "SalesScore", starter: "check", team: "check", entreprise: "check" },
+  {
+    label: "Préparation du RDV",
+    starter: "Incluse",
+    team: "Incluse",
+    entreprise: "Incluse",
+  },
+  {
+    label: "Vue manager",
+    starter: "—",
+    team: "Incluse",
+    entreprise: "Incluse",
+  },
+  {
+    label: "Dashboard manager",
+    starter: "—",
+    team: "Incluse",
+    entreprise: "Incluse",
+  },
+  {
+    label: "Calibrage coach",
+    starter: "—",
+    team: "Incluse",
+    entreprise: "Complet et personnalisable",
+  },
+  {
+    label: "KISS Management",
+    starter: "Basique",
+    team: "Incluse",
+    entreprise: "Complet et personnalisable",
+  },
+  {
+    label: "Sièges manager",
+    starter: "1 siège inclus",
+    team: "Sièges manager illimités",
+    entreprise: "Sur mesure",
+  },
+];
 
 function CellValue({ value }: { value: Cell }) {
   if (value === "check") {
     return (
       <span className="inline-flex justify-center">
-        <Check className="size-4 text-emerald-600 dark:text-emerald-400" aria-label="Inclus" />
+        <Check
+          className="size-4 text-emerald-600 dark:text-emerald-400"
+          aria-label="Inclus"
+        />
       </span>
     );
   }
@@ -65,7 +107,7 @@ export default function CompanyPlanPage() {
   return (
     <div className="mx-auto w-full max-w-5xl space-y-10">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className={pageTitleClass}>
           Choisissez le forfait qui vous convient
         </h1>
         <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
@@ -78,13 +120,15 @@ export default function CompanyPlanPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-neutral-200 dark:border-neutral-800">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Starter</CardTitle>
+            <CardTitle className={cardTitleClass}>Starter</CardTitle>
             <CardDescription>Commercial solo</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <p className="text-3xl font-semibold tabular-nums">49&nbsp;€</p>
-              <p className="text-muted-foreground text-sm">par utilisateur / mois</p>
+              <p className="text-muted-foreground text-sm">
+                par utilisateur / mois
+              </p>
             </div>
             <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
               Max. 5 utilisateurs
@@ -114,7 +158,9 @@ export default function CompanyPlanPage() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-3xl font-semibold tabular-nums">79&nbsp;€</p>
-              <p className="text-muted-foreground text-sm">par utilisateur / mois</p>
+              <p className="text-muted-foreground text-sm">
+                par utilisateur / mois
+              </p>
             </div>
             <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
               Max. 50 utilisateurs
@@ -133,13 +179,15 @@ export default function CompanyPlanPage() {
 
         <Card className="border-neutral-200 dark:border-neutral-800">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Entreprise</CardTitle>
+            <CardTitle className={cardTitleClass}>Entreprise</CardTitle>
             <CardDescription>Grands comptes</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <p className="text-3xl font-semibold tabular-nums">Sur devis</p>
-              <p className="text-muted-foreground text-sm">Facturation sur mesure</p>
+              <p className="text-muted-foreground text-sm">
+                Facturation sur mesure
+              </p>
             </div>
             <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
               Plus de 50 utilisateurs
@@ -158,7 +206,7 @@ export default function CompanyPlanPage() {
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold tracking-tight">Comparatif détaillé</h2>
+        <h2 className={sectionHeadingClass}>Comparatif détaillé</h2>
         <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
           <table className="w-full min-w-[640px] border-collapse text-left text-sm">
             <thead>

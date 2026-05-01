@@ -42,7 +42,9 @@ export class PrismaSessionRepository implements SessionRepositoryPort {
     await this.db.session.deleteMany({ where: { userId } });
   }
 
-  async findSessionPrincipal(rawToken: string): Promise<SessionPrincipal | null> {
+  async findSessionPrincipal(
+    rawToken: string,
+  ): Promise<SessionPrincipal | null> {
     const tokenHash = hashToken(rawToken);
     const now = new Date();
     const row = await this.db.session.findFirst({

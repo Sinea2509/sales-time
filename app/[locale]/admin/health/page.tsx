@@ -12,6 +12,7 @@ import {
   MailPlus,
 } from "lucide-react";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { cardTitleClass, pageTitleClass } from "@/lib/page-typography";
 import { AdminKpiCard } from "@/components/molecules/admin-kpi-card";
 import { cn } from "@/lib/utils";
 import {
@@ -71,7 +72,8 @@ export default async function HealthPage() {
 
   const totalDbRows =
     userCount + orgCount + meetingCount + analysisCount + sessionCount;
-  const pendingInvitations = pendingOrgInvitations + pendingSuperAdminInvitations;
+  const pendingInvitations =
+    pendingOrgInvitations + pendingSuperAdminInvitations;
 
   const region = process.env.VERCEL_REGION ?? "local";
   const nodeEnv = process.env.NODE_ENV ?? "unknown";
@@ -80,7 +82,7 @@ export default async function HealthPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Santé système</h1>
+        <h1 className={pageTitleClass}>Santé système</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           État de l&apos;infrastructure et métriques de la base de données.
         </p>
@@ -89,7 +91,7 @@ export default async function HealthPage() {
       {/* Database Health */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
             <Database className="size-4" />
             Base de données
           </CardTitle>
@@ -107,7 +109,10 @@ export default async function HealthPage() {
                 )}
               >
                 <HeartPulse
-                  className={cn("size-5", dbStatusColor(dbHealth.ms, dbHealth.ok))}
+                  className={cn(
+                    "size-5",
+                    dbStatusColor(dbHealth.ms, dbHealth.ok),
+                  )}
                 />
               </div>
               <div>
@@ -138,7 +143,12 @@ export default async function HealthPage() {
           value={totalDbRows.toLocaleString("fr-FR")}
           accent="blue"
         />
-        <AdminKpiCard icon={Users} label="Utilisateurs" value={userCount} accent="blue" />
+        <AdminKpiCard
+          icon={Users}
+          label="Utilisateurs"
+          value={userCount}
+          accent="blue"
+        />
         <AdminKpiCard
           icon={Building2}
           label="Organisations"
@@ -193,11 +203,13 @@ export default async function HealthPage() {
       {/* Environment Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
             <Server className="size-4" />
             Environnement
           </CardTitle>
-          <CardDescription>Informations sur le runtime et le déploiement</CardDescription>
+          <CardDescription>
+            Informations sur le runtime et le déploiement
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <dl className="grid gap-4 sm:grid-cols-3">

@@ -3,6 +3,7 @@ import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboa
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { pageTitleClass } from "@/lib/page-typography";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +32,7 @@ export default async function RendezVousPage() {
     }),
     deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
   ]);
-  const tamMinutesPerRdv =
-    tamMinutesSavedPerMeetingFromSettings(orgSettings);
+  const tamMinutesPerRdv = tamMinutesSavedPerMeetingFromSettings(orgSettings);
 
   const rows = meetings.map((m) => ({
     id: m.id,
@@ -48,8 +48,8 @@ export default async function RendezVousPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-neutral-950 text-2xl font-semibold tracking-tight dark:text-neutral-50">
-          {isAdmin ? "Rendez-vous (équipe)" : "Mes rendez-vous"}
+        <h1 className={pageTitleClass}>
+          {isAdmin ? "Rendez-vous" : "Mes rendez-vous"}
         </h1>
       </div>
 

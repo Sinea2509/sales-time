@@ -92,7 +92,10 @@ export function verifySuperAdminOrgCookieValue(
     return null;
   }
   if (parsed.uid !== currentActorUserId) return null;
-  if (typeof parsed.exp !== "number" || parsed.exp <= Math.floor(Date.now() / 1000)) {
+  if (
+    typeof parsed.exp !== "number" ||
+    parsed.exp <= Math.floor(Date.now() / 1000)
+  ) {
     return null;
   }
 

@@ -72,41 +72,45 @@ const updateAfterStep3Mock = vi.hoisted(() => vi.fn());
 const findUserWithOnboardingByUserIdMock = vi.hoisted(() => vi.fn());
 
 const registrationRegisterNewUserMock = vi.hoisted(() =>
-  vi.fn(async (input: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    companyName: string;
-    profileRole: string;
-    passwordHash: string;
-    signupWebsiteNormalized: string;
-  }) => {
-    const existingOrg = await prismaMock.organization.findUnique({
-      where: { websiteNormalized: input.signupWebsiteNormalized },
-    });
-    if (existingOrg) return { ok: false as const, error: "WEBSITE_TAKEN" as const };
-    const existing = await prismaMock.user.findUnique({
-      where: { email: input.email },
-    });
-    if (existing) return { ok: false as const, error: "EMAIL_TAKEN" as const };
-    const user = await prismaMock.user.create({
-      data: {
-        email: input.email,
-        passwordHash: input.passwordHash,
-        signupWebsiteNormalized: input.signupWebsiteNormalized,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        profileRole: input.profileRole,
-        registerProfileCompletedAt: new Date(),
-      },
-    });
-    await prismaMock.onboardingProfile.upsert({
-      where: { userId: user.id },
-      create: { userId: user.id, companyName: input.companyName },
-      update: { companyName: input.companyName },
-    });
-    return { ok: true as const, userId: user.id };
-  }),
+  vi.fn(
+    async (input: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      companyName: string;
+      profileRole: string;
+      passwordHash: string;
+      signupWebsiteNormalized: string;
+    }) => {
+      const existingOrg = await prismaMock.organization.findUnique({
+        where: { websiteNormalized: input.signupWebsiteNormalized },
+      });
+      if (existingOrg)
+        return { ok: false as const, error: "WEBSITE_TAKEN" as const };
+      const existing = await prismaMock.user.findUnique({
+        where: { email: input.email },
+      });
+      if (existing)
+        return { ok: false as const, error: "EMAIL_TAKEN" as const };
+      const user = await prismaMock.user.create({
+        data: {
+          email: input.email,
+          passwordHash: input.passwordHash,
+          signupWebsiteNormalized: input.signupWebsiteNormalized,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          profileRole: input.profileRole,
+          registerProfileCompletedAt: new Date(),
+        },
+      });
+      await prismaMock.onboardingProfile.upsert({
+        where: { userId: user.id },
+        create: { userId: user.id, companyName: input.companyName },
+        update: { companyName: input.companyName },
+      });
+      return { ok: true as const, userId: user.id };
+    },
+  ),
 );
 
 const signInFindUserMock = vi.hoisted(() =>
@@ -146,16 +150,18 @@ const passwordResetFindUserMock = vi.hoisted(() =>
 );
 
 const passwordResetCreateTokenMock = vi.hoisted(() =>
-  vi.fn(async (input: { userId: string; rawToken: string; expiresAt: Date }) => {
-    const { hashToken } = await import("@/lib/auth/tokens");
-    await prismaMock.passwordResetToken.create({
-      data: {
-        userId: input.userId,
-        tokenHash: hashToken(input.rawToken),
-        expiresAt: input.expiresAt,
-      },
-    });
-  }),
+  vi.fn(
+    async (input: { userId: string; rawToken: string; expiresAt: Date }) => {
+      const { hashToken } = await import("@/lib/auth/tokens");
+      await prismaMock.passwordResetToken.create({
+        data: {
+          userId: input.userId,
+          tokenHash: hashToken(input.rawToken),
+          expiresAt: input.expiresAt,
+        },
+      });
+    },
+  ),
 );
 
 const passwordResetConsumeMock = vi.hoisted(() =>
@@ -185,45 +191,51 @@ const passwordResetConsumeMock = vi.hoisted(() =>
 );
 
 const organizationInvitationsAcceptMock = vi.hoisted(() =>
-  vi.fn(async (input: { tokenPlaintext: string; userId: string; userEmail: string }) => {
-    const { hashToken } = await import("@/lib/auth/tokens");
-    const th = hashToken(input.tokenPlaintext);
-    const inv = await prismaMock.organizationInvitation.findFirst({
-      where: {
-        tokenHash: th,
-        status: "PENDING",
-        expiresAt: { gt: new Date() },
-      },
-    });
-    if (!inv) return { ok: false as const, error: "INVALID" as const };
-    if (input.userEmail.toLowerCase() !== inv.email.toLowerCase()) {
-      return { ok: false as const, error: "EMAIL_MISMATCH" as const };
-    }
-    await prismaMock.$transaction([
-      prismaMock.organizationMembership.upsert({
+  vi.fn(
+    async (input: {
+      tokenPlaintext: string;
+      userId: string;
+      userEmail: string;
+    }) => {
+      const { hashToken } = await import("@/lib/auth/tokens");
+      const th = hashToken(input.tokenPlaintext);
+      const inv = await prismaMock.organizationInvitation.findFirst({
         where: {
-          userId_organizationId: {
+          tokenHash: th,
+          status: "PENDING",
+          expiresAt: { gt: new Date() },
+        },
+      });
+      if (!inv) return { ok: false as const, error: "INVALID" as const };
+      if (input.userEmail.toLowerCase() !== inv.email.toLowerCase()) {
+        return { ok: false as const, error: "EMAIL_MISMATCH" as const };
+      }
+      await prismaMock.$transaction([
+        prismaMock.organizationMembership.upsert({
+          where: {
+            userId_organizationId: {
+              userId: input.userId,
+              organizationId: inv.organizationId,
+            },
+          },
+          create: {
             userId: input.userId,
             organizationId: inv.organizationId,
+            role: inv.role,
           },
-        },
-        create: {
-          userId: input.userId,
-          organizationId: inv.organizationId,
-          role: inv.role,
-        },
-        update: { role: inv.role },
-      }),
-      prismaMock.organizationInvitation.update({
-        where: { id: inv.id },
-        data: {
-          status: "ACCEPTED",
-          acceptedByUserId: input.userId,
-        },
-      }),
-    ]);
-    return { ok: true as const, organizationId: inv.organizationId };
-  }),
+          update: { role: inv.role },
+        }),
+        prismaMock.organizationInvitation.update({
+          where: { id: inv.id },
+          data: {
+            status: "ACCEPTED",
+            acceptedByUserId: input.userId,
+          },
+        }),
+      ]);
+      return { ok: true as const, organizationId: inv.organizationId };
+    },
+  ),
 );
 
 const onboardingCompletionStep4Mock = vi.hoisted(() => vi.fn());
@@ -321,9 +333,11 @@ describe("signUpAction", () => {
   beforeEach(() => {
     prismaMock.onboardingProfile.upsert.mockReset();
     prismaMock.onboardingProfile.upsert.mockResolvedValue({} as never);
-    globalThis.fetch = vi.fn().mockResolvedValue(
-      new Response("", { status: 200, statusText: "OK" }),
-    ) as typeof fetch;
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response("", { status: 200, statusText: "OK" }),
+      ) as typeof fetch;
   });
 
   afterEach(() => {
@@ -531,7 +545,10 @@ describe("signInAction", () => {
       null,
       form({ email: "bad", password: "x", next: "" }),
     );
-    expect(r).toEqual({ ok: false, message: "E-mail ou mot de passe invalide." });
+    expect(r).toEqual({
+      ok: false,
+      message: "E-mail ou mot de passe invalide.",
+    });
   });
 
   it("returns error when user is unknown", async () => {
@@ -780,9 +797,9 @@ describe("acceptOrganizationInvitationAction", () => {
     setActiveOrganizationCookieMock.mockResolvedValue(undefined);
 
     const raw = "invite-secret-token";
-    await expect(
-      acceptOrganizationInvitationAction(raw),
-    ).rejects.toThrow("REDIRECT:/company");
+    await expect(acceptOrganizationInvitationAction(raw)).rejects.toThrow(
+      "REDIRECT:/company",
+    );
 
     expect(prismaMock.organizationInvitation.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({

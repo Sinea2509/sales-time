@@ -19,10 +19,7 @@ export function JoinInvitationForm({ token, inviteEmail }: Props) {
   const [state, formAction, isPending] = useActionState<
     RegisterFromInvitationState,
     FormData
-  >(
-    (_prev, fd) => registerFromInvitationAction(token, _prev, fd),
-    null,
-  );
+  >((_prev, fd) => registerFromInvitationAction(token, _prev, fd), null);
 
   return (
     <form action={formAction} className="mt-6 space-y-4 text-left">
@@ -35,7 +32,8 @@ export function JoinInvitationForm({ token, inviteEmail }: Props) {
         </p>
       ) : null}
       <p className="text-muted-foreground text-xs">
-        Compte pour <span className="font-mono text-foreground">{inviteEmail}</span>
+        Compte pour{" "}
+        <span className="font-mono text-foreground">{inviteEmail}</span>
       </p>
       <div className="space-y-2">
         <Label htmlFor="firstName">Prénom</Label>
@@ -85,7 +83,10 @@ export function JoinInvitationForm({ token, inviteEmail }: Props) {
         {isPending ? "Création du compte…" : "Créer mon compte et rejoindre"}
       </Button>
       <p className="text-muted-foreground text-center text-xs">
-        <Link href={`/sign-in?next=/invitations/${encodeURIComponent(token)}`} className="text-primary underline">
+        <Link
+          href={`/sign-in?next=/invitations/${encodeURIComponent(token)}`}
+          className="text-primary underline"
+        >
           J’ai déjà un compte
         </Link>
       </p>

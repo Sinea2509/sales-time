@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { pageTitleClass } from "@/lib/page-typography";
 import { JoinInvitationForm } from "./join-invitation-form";
 
 type Props = { params: Promise<{ token: string }> };
@@ -32,13 +33,11 @@ export default async function JoinInvitationPage({ params }: Props) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
         <div className="w-full max-w-md space-y-4 rounded-xl border border-border p-8 text-center shadow-sm">
-          <h1 className="text-xl font-semibold tracking-tight">
-            Autre compte connecté
-          </h1>
+          <h1 className={pageTitleClass}>Autre compte connecté</h1>
           <p className="text-muted-foreground text-sm">
             Vous êtes connecté en tant que{" "}
-            <span className="font-mono text-foreground">{principal.email}</span>.
-            Déconnectez-vous pour créer le compte associé à{" "}
+            <span className="font-mono text-foreground">{principal.email}</span>
+            . Déconnectez-vous pour créer le compte associé à{" "}
             <span className="font-mono text-foreground">{inv.email}</span>.
           </p>
           <form action="/sign-out" method="POST" className="pt-1">
@@ -57,11 +56,12 @@ export default async function JoinInvitationPage({ params }: Props) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
       <div className="w-full max-w-md space-y-2 rounded-xl border border-border p-8 text-center shadow-sm">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Créer votre compte
-        </h1>
+        <h1 className={pageTitleClass}>Créer votre compte</h1>
         <p className="text-muted-foreground text-sm">
-          Rejoignez <span className="font-medium text-foreground">{inv.organizationName}</span>{" "}
+          Rejoignez{" "}
+          <span className="font-medium text-foreground">
+            {inv.organizationName}
+          </span>{" "}
           en tant que{" "}
           <span className="font-medium text-foreground">
             {inv.role === "ADMIN" ? "administrateur" : "membre"}

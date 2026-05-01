@@ -39,9 +39,7 @@ export function DashboardStatsPeriodSelect(props: {
         className={cn(
           "h-8 appearance-none bg-transparent pr-5 pl-1 text-sm font-normal outline-none",
           "focus-visible:ring-0 disabled:opacity-60",
-          dark
-            ? "text-zinc-200"
-            : "text-foreground",
+          dark ? "text-zinc-200" : "text-foreground",
         )}
         value={String(props.value)}
         disabled={pending}

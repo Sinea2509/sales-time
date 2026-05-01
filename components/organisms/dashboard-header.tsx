@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -81,7 +82,11 @@ export function DashboardHeader({
         stickyTop ? "sticky top-0" : "shrink-0",
       )}
     >
-      <div className="mx-auto flex h-12 w-full max-w-6xl items-center gap-3 px-4 md:max-w-none">
+      {/*
+        Hauteur alignée sur `SidebarHeader` + zone OrgSwitcher (p-2 + py-1.5 + trigger h-10),
+        pour que la bordure inférieure coïncide avec celle sous le sélecteur d’organisation.
+      */}
+      <div className="mx-auto flex h-[4.25rem] w-full max-w-6xl items-center gap-3 px-4 md:max-w-none">
         {showSidebarTrigger ? (
           <SidebarTrigger className="-ml-1 shrink-0" />
         ) : (
@@ -153,31 +158,37 @@ export function DashboardHeader({
                   <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-56">
-                  <DropdownMenuLabel className="font-normal">
-                    <span className="truncate text-sm font-medium text-foreground">
-                      {userTriggerLabel(sessionUser)}
-                    </span>
-                    <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">
-                      {sessionUser.email}
-                    </span>
-                  </DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="font-normal">
+                      <span className="truncate text-sm font-medium text-foreground">
+                        {userTriggerLabel(sessionUser)}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">
+                        {sessionUser.email}
+                      </span>
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => router.push("/company/account")}
-                    className="cursor-pointer"
-                  >
-                    <Settings className="size-4" />
-                    {t("userSettings")}
-                  </DropdownMenuItem>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/company/account")}
+                      className="cursor-pointer"
+                    >
+                      <Settings className="size-4" />
+                      {t("userSettings")}
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    className="cursor-pointer"
-                    onClick={() => signOutFormRef.current?.submit()}
-                  >
-                    <LogOut className="size-4" />
-                    {t("signOut")}
-                  </DropdownMenuItem>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      className="cursor-pointer"
+                      onClick={() => signOutFormRef.current?.submit()}
+                    >
+                      <LogOut className="size-4" />
+                      {t("signOut")}
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>

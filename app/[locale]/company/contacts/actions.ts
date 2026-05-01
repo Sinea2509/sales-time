@@ -21,7 +21,8 @@ type RequireOrgContextResult =
 async function requireOrgContext(): Promise<RequireOrgContextResult> {
   const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
+  if (!principal)
+    return { ok: false as const, error: "UNAUTHENTICATED" as const };
 
   const superAdminOrg = await readSuperAdminOrgCookie();
   const ctx = await getCurrentActorContext(
@@ -101,7 +102,10 @@ export async function createContactInlineAction(raw: {
       displayName: row.displayName,
     };
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002"
+    ) {
       return { ok: false as const, error: "DUPLICATE" as const };
     }
     throw e;
@@ -134,7 +138,10 @@ export async function createContactAction(raw: z.input<typeof contactFields>) {
     revalidatePath("/company/contacts");
     return { ok: true as const, id: row.id };
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002"
+    ) {
       return { ok: false as const, error: "DUPLICATE" as const };
     }
     throw e;

@@ -10,12 +10,7 @@ export type OrgDashboardKpis = {
   meetingsInWindow: number;
   winRatePercent: number | null;
   soncasDominantCounts: Record<
-    | "securite"
-    | "orgueil"
-    | "nouveaute"
-    | "confort"
-    | "argent"
-    | "sympathie",
+    "securite" | "orgueil" | "nouveaute" | "confort" | "argent" | "sympathie",
     number
   >;
   discDominantCounts: Record<"D" | "I" | "S" | "C", number>;
@@ -63,8 +58,7 @@ export async function getOrgDashboardKpis(
     sellerUserId: seller,
   });
 
-  const winRatePercent =
-    total === 0 ? null : Math.round((100 * won) / total);
+  const winRatePercent = total === 0 ? null : Math.round((100 * won) / total);
 
   const analyses = await deps.meetings.listAnalysesForOrgMeetingsSince({
     organizationId: input.organizationId,

@@ -138,7 +138,9 @@ export function AdminAuditLog({ logs }: Props) {
           <SelectContent>
             {ACTION_OPTIONS.map((opt) => (
               <SelectItem key={opt} value={opt}>
-                {opt === "Tous" ? "Tous les types" : (ACTION_LABELS[opt] ?? opt)}
+                {opt === "Tous"
+                  ? "Tous les types"
+                  : (ACTION_LABELS[opt] ?? opt)}
               </SelectItem>
             ))}
           </SelectContent>

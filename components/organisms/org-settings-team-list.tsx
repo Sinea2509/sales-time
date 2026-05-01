@@ -9,8 +9,8 @@ import {
   revokeInvitationAction,
 } from "@/app/[locale]/company/settings/equipe/actions";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -19,6 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  nativeSelectChevronClasses,
+  nativeSelectCompactClassName,
+} from "@/components/ui/native-select-class";
+import { sectionHeadingClass } from "@/lib/page-typography";
+import { cn } from "@/lib/utils";
+
 export type TeamMemberRow = {
   membershipId: string;
   userId: string;
@@ -41,10 +48,12 @@ export function OrgSettingsTeamList({
   members,
   invitations,
   currentUserId,
+  currentUserEmail,
 }: {
   members: TeamMemberRow[];
   invitations: TeamInvitationRow[];
   currentUserId: string;
+  currentUserEmail: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -57,6 +66,33 @@ export function OrgSettingsTeamList({
     return n || m.email;
   }
 
+  function sendInvitation() {
+    setMsg(null);
+    startTransition(async () => {
+      const email = inviteEmail.trim().toLowerCase();
+      if (!email) {
+        setMsg("Saisissez une adresse e-mail.");
+        return;
+      }
+      if (email === currentUserEmail.trim().toLowerCase()) {
+        setMsg("Vous ne pouvez pas vous inviter vous-même.");
+        return;
+      }
+
+      const r = await inviteMemberAction({
+        email: inviteEmail.trim(),
+        role: inviteRole,
+      });
+      if (!r.ok) {
+        setMsg(r.message);
+        return;
+      }
+      setMsg("Invitation envoyée.");
+      setInviteEmail("");
+      router.refresh();
+    });
+  }
+
   return (
     <div className="space-y-10">
       {msg ? (
@@ -65,89 +101,96 @@ export function OrgSettingsTeamList({
         </p>
       ) : null}
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-medium">Inviter un membre</h2>
-        <form
-          className="flex max-w-xl flex-col gap-3 sm:flex-row sm:items-end"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setMsg(null);
-            startTransition(async () => {
-              const r = await inviteMemberAction({
-                email: inviteEmail,
-                role: inviteRole,
-              });
-              if (!r.ok) {
-                setMsg(r.message);
-                return;
-              }
-              setMsg("Invitation envoyée.");
-              setInviteEmail("");
-              router.refresh();
-            });
-          }}
-        >
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <Label htmlFor="invite-email">E-mail</Label>
-            <Input
-              id="invite-email"
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="collegue@entreprise.com"
-              required
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="invite-role">Rôle</Label>
-            <select
-              id="invite-role"
-              className="border-input bg-background h-9 w-full min-w-[140px] rounded-md border py-1 pl-3 pr-10 text-sm outline-none focus-visible:border-input focus-visible:ring-0"
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as "ADMIN" | "MEMBER")}
-            >
-              <option value="MEMBER">Membre</option>
-              <option value="ADMIN">Administrateur</option>
-            </select>
-          </div>
-          <Button
-            type="submit"
-            disabled={pending}
-            className="bg-brand shrink-0 text-white hover:bg-brand-hover"
-          >
-            Envoyer
-          </Button>
-        </form>
+      <section>
+        <Card className="w-full border-zinc-200 shadow-sm dark:border-zinc-800">
+          <CardHeader className="pb-3">
+            <CardTitle className={sectionHeadingClass}>
+              Inviter un membre
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex w-full flex-nowrap items-stretch overflow-hidden rounded-md border border-input bg-background">
+              <div className="flex min-w-0 flex-1 border-r border-input">
+                <Input
+                  id="equipe-invite-email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="collegue@entreprise.com"
+                  autoComplete="email"
+                  aria-label="Adresse e-mail du membre à inviter"
+                  className="h-10 min-w-0 flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:outline-none"
+                />
+              </div>
+              <div className="flex shrink-0 border-r border-input">
+                <select
+                  id="equipe-invite-role"
+                  value={inviteRole}
+                  aria-label="Rôle du membre invité"
+                  onChange={(e) =>
+                    setInviteRole(e.target.value as "ADMIN" | "MEMBER")
+                  }
+                  className={cn(
+                    nativeSelectChevronClasses,
+                    "h-10 min-w-[9.5rem] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-3 pr-10 text-sm outline-none",
+                    "focus-visible:ring-0",
+                    "dark:bg-transparent",
+                  )}
+                >
+                  <option value="MEMBER">Membre</option>
+                  <option value="ADMIN">Administrateur</option>
+                </select>
+              </div>
+              <Button
+                type="button"
+                disabled={pending}
+                onClick={sendInvitation}
+                className="h-10 shrink-0 rounded-none border-0 bg-brand px-5 text-white hover:bg-brand-hover focus-visible:ring-0"
+              >
+                {pending ? "Envoi…" : "Envoyer"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Membres</h2>
-        <div className="rounded-xl border">
+        <h2 className={sectionHeadingClass}>Membres</h2>
+        <div className="rounded-xl border px-3 sm:px-4">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Utilisateur</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Rôle</TableHead>
-                <TableHead className="hidden sm:table-cell">Rejoint le</TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  Rejoint le
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {members.map((m) => (
                 <TableRow key={m.membershipId}>
-                  <TableCell className="font-medium">{displayName(m)}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{m.email}</TableCell>
+                  <TableCell className="font-medium">
+                    {displayName(m)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {m.email}
+                  </TableCell>
                   <TableCell>
                     <select
-                      className="border-input bg-background h-8 rounded-md border py-1 pl-3 pr-8 text-xs outline-none focus-visible:border-input focus-visible:ring-0"
+                      className={nativeSelectCompactClassName}
                       value={m.role}
                       disabled={pending || m.userId === currentUserId}
                       onChange={(e) => {
                         const role = e.target.value as "ADMIN" | "MEMBER";
                         startTransition(async () => {
                           setMsg(null);
-                          const r = await changeRoleAction(m.membershipId, role);
+                          const r = await changeRoleAction(
+                            m.membershipId,
+                            role,
+                          );
                           if (!r.ok) {
                             setMsg(r.message);
                             e.target.value = m.role;
@@ -172,7 +215,8 @@ export function OrgSettingsTeamList({
                       className="text-destructive h-8"
                       disabled={pending || m.userId === currentUserId}
                       onClick={() => {
-                        if (!confirm(`Retirer ${m.email} de l’organisation ?`)) return;
+                        if (!confirm(`Retirer ${m.email} de l’organisation ?`))
+                          return;
                         startTransition(async () => {
                           setMsg(null);
                           const r = await removeMemberAction(m.membershipId);
@@ -192,21 +236,20 @@ export function OrgSettingsTeamList({
             </TableBody>
           </Table>
         </div>
-        <p className="text-muted-foreground text-xs">
-          Vous ne pouvez pas retirer votre propre compte ni retirer le dernier administrateur.
-        </p>
       </section>
 
       {invitations.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-lg font-medium">Invitations en attente</h2>
-          <div className="rounded-xl border">
+          <h2 className={sectionHeadingClass}>Invitations en attente</h2>
+          <div className="rounded-xl border px-3 sm:px-4">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>E-mail</TableHead>
                   <TableHead>Rôle</TableHead>
-                  <TableHead className="hidden sm:table-cell">Expire le</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    Expire le
+                  </TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -214,7 +257,9 @@ export function OrgSettingsTeamList({
                 {invitations.map((inv) => (
                   <TableRow key={inv.id}>
                     <TableCell>{inv.email}</TableCell>
-                    <TableCell>{inv.role === "ADMIN" ? "Administrateur" : "Membre"}</TableCell>
+                    <TableCell>
+                      {inv.role === "ADMIN" ? "Administrateur" : "Membre"}
+                    </TableCell>
                     <TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
                       {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}
                     </TableCell>

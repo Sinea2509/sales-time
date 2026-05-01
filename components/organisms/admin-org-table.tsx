@@ -161,7 +161,12 @@ export function AdminOrgTable({ organizations }: Props) {
             { key: "createdAt", label: "Créée le" },
           ]}
         />
-        <Button onClick={() => { setError(null); setCreateOpen(true); }}>
+        <Button
+          onClick={() => {
+            setError(null);
+            setCreateOpen(true);
+          }}
+        >
           <Plus className="mr-1.5 size-4" />
           Nouvelle organisation
         </Button>
@@ -194,7 +199,10 @@ export function AdminOrgTable({ organizations }: Props) {
                 <th className="w-10 px-4 py-3">
                   <input
                     type="checkbox"
-                    checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                    checked={
+                      filtered.length > 0 &&
+                      selectedIds.size === filtered.length
+                    }
                     onChange={toggleSelectAll}
                     className="size-4 rounded border-zinc-300 dark:border-zinc-600"
                   />
@@ -222,7 +230,10 @@ export function AdminOrgTable({ organizations }: Props) {
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-zinc-400">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-12 text-center text-zinc-400"
+                  >
                     Aucune organisation trouvée.
                   </td>
                 </tr>
@@ -331,7 +342,12 @@ export function AdminOrgTable({ organizations }: Props) {
           <form action={handleCreate} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="create-name">Nom</Label>
-              <Input id="create-name" name="name" required placeholder="Acme Corp" />
+              <Input
+                id="create-name"
+                name="name"
+                required
+                placeholder="Acme Corp"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="create-slug">Slug</Label>
@@ -350,7 +366,11 @@ export function AdminOrgTable({ organizations }: Props) {
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             )}
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateOpen(false)}
+              >
                 Annuler
               </Button>
               <Button type="submit" disabled={pending}>
@@ -392,7 +412,9 @@ export function AdminOrgTable({ organizations }: Props) {
                 />
               </div>
               {error && (
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {error}
+                </p>
               )}
               <DialogFooter>
                 <Button
@@ -431,7 +453,9 @@ export function AdminOrgTable({ organizations }: Props) {
                 </p>
               </div>
               {error && (
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {error}
+                </p>
               )}
               <DialogFooter>
                 <Button

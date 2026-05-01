@@ -10,9 +10,18 @@ import type {
 } from "@/src/core/ports/meeting-repository-port";
 import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
 import type { OrganizationTeamRepositoryPort } from "@/src/core/ports/organization-team-repository-port";
-import { meetingAtSinceForStatsWindow, type StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
-import { getOrgDashboardHome, type OrgDashboardHome } from "./get-org-dashboard-home";
-import { getOrgDashboardKpis, type OrgDashboardKpis } from "./get-org-dashboard-kpis";
+import {
+  meetingAtSinceForStatsWindow,
+  type StatsWindowDays,
+} from "@/src/core/domain/dashboard-stats-window";
+import {
+  getOrgDashboardHome,
+  type OrgDashboardHome,
+} from "./get-org-dashboard-home";
+import {
+  getOrgDashboardKpis,
+  type OrgDashboardKpis,
+} from "./get-org-dashboard-kpis";
 
 /** Limite de RDV chargés pour agrégations équipe (perf). */
 export const ORG_ADMIN_DASHBOARD_MEETING_CAP = 5000;
@@ -77,10 +86,7 @@ export type OrgAdminDashboard = {
   kissTeamRollup: OrgAdminKissTeamRollup;
 };
 
-const DRIVER_LABEL_FR: Record<
-  keyof SoncasDriverAverages,
-  string
-> = {
+const DRIVER_LABEL_FR: Record<keyof SoncasDriverAverages, string> = {
   securite: "Sécurité",
   orgueil: "Orgueil",
   nouveaute: "Nouveauté",
@@ -123,7 +129,10 @@ function modeSoncasDominantLabel(dominants: string[]): string | null {
   let bestKey = dominants[0]!;
   let bestCount = -1;
   for (const [k, n] of counts) {
-    if (n > bestCount || (n === bestCount && k.localeCompare(bestKey, "fr") < 0)) {
+    if (
+      n > bestCount ||
+      (n === bestCount && k.localeCompare(bestKey, "fr") < 0)
+    ) {
       bestCount = n;
       bestKey = k;
     }
@@ -168,16 +177,21 @@ function buildMonEquipePage(input: {
   rowsFull.sort((a, b) => {
     if (b.nbRdvs !== a.nbRdvs) return b.nbRdvs - a.nbRdvs;
     const nameA =
-      `${a.lastName ?? ""} ${a.firstName ?? ""}`.trim().toLocaleLowerCase("fr") ||
-      a.email.toLocaleLowerCase("fr");
+      `${a.lastName ?? ""} ${a.firstName ?? ""}`
+        .trim()
+        .toLocaleLowerCase("fr") || a.email.toLocaleLowerCase("fr");
     const nameB =
-      `${b.lastName ?? ""} ${b.firstName ?? ""}`.trim().toLocaleLowerCase("fr") ||
-      b.email.toLocaleLowerCase("fr");
+      `${b.lastName ?? ""} ${b.firstName ?? ""}`
+        .trim()
+        .toLocaleLowerCase("fr") || b.email.toLocaleLowerCase("fr");
     return nameA.localeCompare(nameB, "fr");
   });
 
   const totalCount = rowsFull.length;
-  const lastPage = Math.max(1, Math.ceil(totalCount / ORG_ADMIN_MON_EQUIPE_PAGE_SIZE));
+  const lastPage = Math.max(
+    1,
+    Math.ceil(totalCount / ORG_ADMIN_MON_EQUIPE_PAGE_SIZE),
+  );
   const page = Math.min(lastPage, Math.max(1, input.page));
   const start = (page - 1) * ORG_ADMIN_MON_EQUIPE_PAGE_SIZE;
   const rows = rowsFull.slice(start, start + ORG_ADMIN_MON_EQUIPE_PAGE_SIZE);
@@ -222,7 +236,9 @@ const SONCAS_PIE_COLORS: Record<(typeof SONCAS_PIE_ORDER)[number], string> = {
   sympathie: "#06b6d4",
 };
 
-function buildDiscPie(meetings: RecentMeetingListRow[]): OrgAdminDistributionPie {
+function buildDiscPie(
+  meetings: RecentMeetingListRow[],
+): OrgAdminDistributionPie {
   let analyzedMeetings = 0;
   const counts = new Map<string, number>();
   for (const m of meetings) {
@@ -266,7 +282,7 @@ function buildSoncasDominantPie(
   return { analyzedMeetings, slices };
 }
 
-function buildKissTeamRollup(
+export function buildKissTeamRollupFromMeetings(
   meetings: RecentMeetingListRow[],
 ): OrgAdminKissTeamRollup {
   let kissMeetingsCount = 0;
@@ -335,8 +351,7 @@ export function buildOrgAdminImprovementBullets(
       "Ajoutez des analyses SONCAS sur les rendez-vous pour obtenir des axes d’amélioration ciblés.",
     ];
   }
-  const mean =
-    entries.reduce((acc, [, v]) => acc + v, 0) / entries.length;
+  const mean = entries.reduce((acc, [, v]) => acc + v, 0) / entries.length;
   const weak = entries
     .filter(([, v]) => v < mean - 5 || v < 65)
     .sort((a, b) => a[1] - b[1])
@@ -386,14 +401,15 @@ export async function getOrgAdminDashboard(
       includeLatestDiscResult: true,
       includeLatestKissResult: true,
     }),
-    deps.organizationTeam.listMembersAndPendingInvitations(input.organizationId),
+    deps.organizationTeam.listMembersAndPendingInvitations(
+      input.organizationId,
+    ),
   ]);
 
   if (!home || !kpis) return null;
 
-  const activeCommercialsCount = new Set(
-    meetings.map((m) => m.sellerUserId),
-  ).size;
+  const activeCommercialsCount = new Set(meetings.map((m) => m.sellerUserId))
+    .size;
   const scoreVals = meetings
     .map((m) => m.salesScore)
     .filter((s): s is number => s != null);
@@ -413,7 +429,7 @@ export async function getOrgAdminDashboard(
 
   const discPie = buildDiscPie(meetings);
   const soncasPie = buildSoncasDominantPie(meetings);
-  const kissTeamRollup = buildKissTeamRollup(meetings);
+  const kissTeamRollup = buildKissTeamRollupFromMeetings(meetings);
 
   return {
     statsWindowDays: input.statsWindowDays,

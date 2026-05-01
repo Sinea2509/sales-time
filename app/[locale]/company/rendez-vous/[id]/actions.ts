@@ -8,17 +8,20 @@ import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { generateFollowUpEmailForMeeting } from "@/src/core/application/generate-follow-up-email";
+import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { runMeetingAnalysis } from "@/src/core/application/run-meeting-analysis";
 
 const meetingIdSchema = z.string().cuid();
 
 export async function runAllMeetingAnalysesAction(meetingId: string) {
   const parsed = meetingIdSchema.safeParse(meetingId);
-  if (!parsed.success) return { ok: false as const, error: "VALIDATION" as const };
+  if (!parsed.success)
+    return { ok: false as const, error: "VALIDATION" as const };
 
   const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
+  if (!principal)
+    return { ok: false as const, error: "UNAUTHENTICATED" as const };
   requireAiGatewayApiKey();
 
   const superAdminOrg = await readSuperAdminOrgCookie();
@@ -31,15 +34,26 @@ export async function runAllMeetingAnalysesAction(meetingId: string) {
   }
 
   const orgId = ctx.activeOrganizationId;
+  const globalKissJson = await deps.globalKissCoachingPrompts.getPrompts();
+  const kissAppendix = kissMarkdownAppendixForAudience(
+    globalKissJson,
+    "commercial",
+  );
   for (const kind of ["SONCAS", "DISC", "KISS"] as const) {
     const r = await runMeetingAnalysis(deps, {
       organizationId: orgId,
       meetingId: parsed.data,
       kind,
       model: ANALYSIS_GATEWAY_MODEL,
+      kissSystemMarkdownAppendix: kind === "KISS" ? kissAppendix : undefined,
     });
     if (!r.ok) {
-      return { ok: false as const, error: r.error, message: r.message, failedKind: kind };
+      return {
+        ok: false as const,
+        error: r.error,
+        message: r.message,
+        failedKind: kind,
+      };
     }
   }
 
@@ -51,11 +65,13 @@ export async function runAllMeetingAnalysesAction(meetingId: string) {
 
 export async function generateFollowUpEmailAction(meetingId: string) {
   const parsed = meetingIdSchema.safeParse(meetingId);
-  if (!parsed.success) return { ok: false as const, error: "VALIDATION" as const };
+  if (!parsed.success)
+    return { ok: false as const, error: "VALIDATION" as const };
 
   const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
+  if (!principal)
+    return { ok: false as const, error: "UNAUTHENTICATED" as const };
   requireAiGatewayApiKey();
 
   const superAdminOrg = await readSuperAdminOrgCookie();
@@ -80,7 +96,11 @@ export async function generateFollowUpEmailAction(meetingId: string) {
   try {
     const email = await generateFollowUpEmailForMeeting(
       { analysis: deps.analysis },
-      { meeting, organizationSettings: settings, model: ANALYSIS_GATEWAY_MODEL },
+      {
+        meeting,
+        organizationSettings: settings,
+        model: ANALYSIS_GATEWAY_MODEL,
+      },
     );
     const draft = [
       `Objet : ${email.subject}`,
@@ -110,13 +130,18 @@ export async function generateFollowUpEmailAction(meetingId: string) {
   }
 }
 
-export async function saveFollowUpEmailDraftAction(meetingId: string, draft: string) {
+export async function saveFollowUpEmailDraftAction(
+  meetingId: string,
+  draft: string,
+) {
   const parsed = meetingIdSchema.safeParse(meetingId);
-  if (!parsed.success) return { ok: false as const, error: "VALIDATION" as const };
+  if (!parsed.success)
+    return { ok: false as const, error: "VALIDATION" as const };
 
   const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
+  if (!principal)
+    return { ok: false as const, error: "UNAUTHENTICATED" as const };
 
   const superAdminOrg = await readSuperAdminOrgCookie();
   const ctx = await getCurrentActorContext(

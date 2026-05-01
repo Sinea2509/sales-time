@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { pageTitleClass } from "@/lib/page-typography";
 import { AcceptSuperAdminInvitationClient } from "@/components/organisms/accept-super-admin-invitation-client";
 
 type Props = { params: Promise<{ token: string }> };
@@ -7,15 +8,15 @@ type Props = { params: Promise<{ token: string }> };
 export default async function SuperAdminInvitationPage({ params }: Props) {
   const { token } = await params;
   const deps = getApplicationDeps();
-  const inv = await deps.superAdminInvitations.findPendingByTokenForPreview(
-    token,
-  );
+  const inv =
+    await deps.superAdminInvitations.findPendingByTokenForPreview(token);
 
   if (!inv) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-6">
         <p className="text-muted-foreground text-center text-sm">
-          Ce lien d&apos;invitation super administrateur est invalide ou a expiré.
+          Ce lien d&apos;invitation super administrateur est invalide ou a
+          expiré.
         </p>
         <Link href="/sign-in" className="mt-4 text-primary underline">
           Connexion
@@ -29,12 +30,12 @@ export default async function SuperAdminInvitationPage({ params }: Props) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
       <div className="w-full max-w-md space-y-6 rounded-xl border border-border p-8 text-center shadow-sm">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Invitation super administrateur
-        </h1>
+        <h1 className={pageTitleClass}>Invitation super administrateur</h1>
         <p className="text-muted-foreground text-sm">
           Vous êtes invité à recevoir les droits{" "}
-          <span className="font-medium text-foreground">super administrateur</span>{" "}
+          <span className="font-medium text-foreground">
+            super administrateur
+          </span>{" "}
           sur Sales Time (espace <span className="font-mono">/admin</span>) pour
           l&apos;adresse{" "}
           <span className="font-mono text-foreground">{inv.email}</span>.

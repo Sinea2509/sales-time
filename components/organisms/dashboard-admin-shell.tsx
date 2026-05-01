@@ -11,6 +11,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { prospectInitials } from "@/lib/prospect-initials";
+import { sectionHeadingClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import type {
   OrgAdminDashboard,
@@ -41,13 +42,7 @@ export function DashboardAdminShell({
   admin: OrgAdminDashboard;
   kissTeamStrengthsNarrative?: string | null;
 }) {
-  const {
-    home,
-    monEquipe,
-    discPie,
-    soncasPie,
-    kissTeamRollup,
-  } = admin;
+  const { home, monEquipe, discPie, soncasPie, kissTeamRollup } = admin;
   const jours = admin.statsWindowDays;
   const lastPage = Math.max(
     1,
@@ -58,9 +53,7 @@ export function DashboardAdminShell({
     <div className="space-y-8">
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-foreground text-lg font-medium tracking-tight">
-            Indicateurs détaillés
-          </h2>
+          <h2 className={sectionHeadingClass}>Indicateurs détaillés</h2>
           <Suspense
             fallback={
               <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
@@ -78,9 +71,7 @@ export function DashboardAdminShell({
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-foreground text-lg font-medium tracking-tight">
-          Mon équipe
-        </h2>
+        <h2 className={sectionHeadingClass}>Mon équipe</h2>
         <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
@@ -123,53 +114,63 @@ export function DashboardAdminShell({
                   monEquipe.rows.map((row) => {
                     const person = monEquipePersonLines(row);
                     return (
-                    <tr
-                      key={row.userId}
-                      className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/50"
-                    >
-                      <td className="px-4 py-3.5 align-middle">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                            {prospectInitials(person.initialsSource)}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="truncate font-medium text-zinc-950 dark:text-zinc-50">
-                              {person.primary}
-                            </p>
-                            {person.secondary ? (
-                              <p className="text-muted-foreground truncate text-xs dark:text-zinc-500">
-                                {person.secondary}
+                      <tr
+                        key={row.userId}
+                        className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/50"
+                      >
+                        <td className="px-4 py-3.5 align-middle">
+                          <Link
+                            href={
+                              jours === 30
+                                ? `/company/equipe/${row.userId}`
+                                : `/company/equipe/${row.userId}?jours=${jours}`
+                            }
+                            className="group flex min-w-0 items-center gap-3 rounded-lg py-0.5 pr-2 outline-none transition-colors hover:bg-zinc-100/90 focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:hover:bg-zinc-800/60 dark:focus-visible:ring-zinc-500/40"
+                            aria-label={`Fiche de ${person.primary}`}
+                          >
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                              {prospectInitials(person.initialsSource)}
+                            </span>
+                            <div className="min-w-0 text-left">
+                              <p className="truncate font-medium text-zinc-950 underline-offset-2 group-hover:underline dark:text-zinc-50">
+                                {person.primary}
                               </p>
-                            ) : null}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 tabular-nums">{row.nbRdvs}</td>
-                      <td className="px-4 py-3.5 tabular-nums">
-                        {row.coachesCount}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3.5 tabular-nums">
-                        {formatDurationHoursMinutes(row.tamMinutesCumule)}
-                      </td>
-                      <td className="text-muted-foreground max-w-[10rem] truncate px-4 py-3.5 dark:text-zinc-400">
-                        {row.postureLabel ?? "—"}
-                      </td>
-                      <td className="px-4 py-3.5 text-right align-middle">
-                        <Link
-                          href="/company/settings/equipe"
-                          className={cn(
-                            buttonVariants({
-                              variant: "outline",
-                              size: "icon-sm",
-                            }),
-                            "inline-flex",
-                          )}
-                          aria-label="Paramètres équipe et membres"
-                        >
-                          <MoreHorizontal className="size-4" aria-hidden />
-                        </Link>
-                      </td>
-                    </tr>
+                              {person.secondary ? (
+                                <p className="text-muted-foreground truncate text-xs dark:text-zinc-500">
+                                  {person.secondary}
+                                </p>
+                              ) : null}
+                            </div>
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3.5 tabular-nums">
+                          {row.nbRdvs}
+                        </td>
+                        <td className="px-4 py-3.5 tabular-nums">
+                          {row.coachesCount}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3.5 tabular-nums">
+                          {formatDurationHoursMinutes(row.tamMinutesCumule)}
+                        </td>
+                        <td className="text-muted-foreground max-w-[10rem] truncate px-4 py-3.5 dark:text-zinc-400">
+                          {row.postureLabel ?? "—"}
+                        </td>
+                        <td className="px-4 py-3.5 text-right align-middle">
+                          <Link
+                            href="/company/settings/equipe"
+                            className={cn(
+                              buttonVariants({
+                                variant: "outline",
+                                size: "icon-sm",
+                              }),
+                              "inline-flex",
+                            )}
+                            aria-label="Paramètres équipe et membres"
+                          >
+                            <MoreHorizontal className="size-4" aria-hidden />
+                          </Link>
+                        </td>
+                      </tr>
                     );
                   })
                 )}
@@ -213,9 +214,7 @@ export function DashboardAdminShell({
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-foreground text-lg font-medium tracking-tight">
-          Statistiques globales
-        </h2>
+        <h2 className={sectionHeadingClass}>Statistiques globales</h2>
         <div className="grid gap-4 lg:grid-cols-2">
           <OrgAdminDonutDistributionCard
             title="Répartition par DISC"
@@ -229,9 +228,7 @@ export function DashboardAdminShell({
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-foreground text-lg font-medium tracking-tight">
-          Coaching KISS
-        </h2>
+        <h2 className={sectionHeadingClass}>Coaching KISS</h2>
         {kissTeamStrengthsNarrative?.trim() ? (
           <p className="text-foreground max-w-3xl text-sm leading-relaxed">
             {kissTeamStrengthsNarrative.trim()}

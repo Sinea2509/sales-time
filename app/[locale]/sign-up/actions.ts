@@ -21,7 +21,11 @@ const schema = z
       .trim()
       .min(1, "Le nom de l'entreprise est requis.")
       .max(200),
-    email: z.string().trim().email().transform((e) => e.toLowerCase()),
+    email: z
+      .string()
+      .trim()
+      .email()
+      .transform((e) => e.toLowerCase()),
     website: z.string().trim().min(1, "Le site web est requis.").max(500),
     profileRole: profileRoleSchema,
     password: z.string().min(8, "Au moins 8 caractères.").max(200),

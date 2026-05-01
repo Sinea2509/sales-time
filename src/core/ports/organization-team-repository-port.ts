@@ -19,9 +19,10 @@ export type OrgTeamInvitationRow = {
 };
 
 export interface OrganizationTeamRepositoryPort {
-  listMembersAndPendingInvitations(
-    organizationId: string,
-  ): Promise<{ members: OrgTeamMemberRow[]; invitations: OrgTeamInvitationRow[] }>;
+  listMembersAndPendingInvitations(organizationId: string): Promise<{
+    members: OrgTeamMemberRow[];
+    invitations: OrgTeamInvitationRow[];
+  }>;
 
   findUserIdByEmail(email: string): Promise<string | null>;
 
@@ -51,14 +52,26 @@ export interface OrganizationTeamRepositoryPort {
   findMembershipWithUserEmail(
     membershipId: string,
     organizationId: string,
-  ): Promise<{ id: string; role: OrganizationMembershipRole; userId: string; userEmail: string } | null>;
+  ): Promise<{
+    id: string;
+    role: OrganizationMembershipRole;
+    userId: string;
+    userEmail: string;
+  } | null>;
 
-  updateMembershipRole(membershipId: string, role: OrganizationMembershipRole): Promise<void>;
+  updateMembershipRole(
+    membershipId: string,
+    role: OrganizationMembershipRole,
+  ): Promise<void>;
 
   findMembershipByIdForOrg(
     membershipId: string,
     organizationId: string,
-  ): Promise<{ id: string; userId: string; role: OrganizationMembershipRole } | null>;
+  ): Promise<{
+    id: string;
+    userId: string;
+    role: OrganizationMembershipRole;
+  } | null>;
 
   deleteMembership(membershipId: string): Promise<void>;
 

@@ -89,7 +89,9 @@ async function main() {
         passwordHash: await hashPassword(password),
       },
     });
-    console.log(`Created seed user ${email} (change password after first login).`);
+    console.log(
+      `Created seed user ${email} (change password after first login).`,
+    );
   } else if (
     process.env.SEED_SUPER_ADMIN_RESET_PASSWORD === "1" &&
     (process.env.NODE_ENV !== "production" ||
@@ -129,8 +131,7 @@ async function ensureTestTenant() {
     process.env.SEED_TEST_USER_EMAIL?.trim().toLowerCase() ??
     DEFAULT_TEST_USER_EMAIL;
   const testPassword =
-    process.env.SEED_TEST_USER_PASSWORD?.trim() ??
-    DEFAULT_TEST_USER_PASSWORD;
+    process.env.SEED_TEST_USER_PASSWORD?.trim() ?? DEFAULT_TEST_USER_PASSWORD;
   const orgSlug =
     process.env.SEED_TEST_ORG_SLUG?.trim().toLowerCase() ??
     DEFAULT_TEST_ORG_SLUG;

@@ -6,9 +6,7 @@ import type {
   SuperAdminInvitationRepositoryPort,
 } from "@/src/core/ports/super-admin-invitation-repository-port";
 
-export class PrismaSuperAdminInvitationRepository
-  implements SuperAdminInvitationRepositoryPort
-{
+export class PrismaSuperAdminInvitationRepository implements SuperAdminInvitationRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
   async findPendingByTokenForPreview(

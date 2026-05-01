@@ -6,7 +6,11 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 
 const schema = z.object({
-  email: z.string().trim().email().transform((e) => e.toLowerCase()),
+  email: z
+    .string()
+    .trim()
+    .email()
+    .transform((e) => e.toLowerCase()),
 });
 
 export type ForgotPasswordState = { ok: true } | { ok: false; message: string };
@@ -21,7 +25,9 @@ export async function forgotPasswordAction(
   }
 
   const deps = getApplicationDeps();
-  const user = await deps.passwordReset.findActiveUserByEmail(parsed.data.email);
+  const user = await deps.passwordReset.findActiveUserByEmail(
+    parsed.data.email,
+  );
   if (!user) {
     return { ok: true };
   }

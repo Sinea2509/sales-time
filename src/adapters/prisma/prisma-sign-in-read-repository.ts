@@ -7,7 +7,9 @@ import type {
 export class PrismaSignInReadRepository implements SignInReadPort {
   constructor(private readonly db: PrismaClient) {}
 
-  async findUserForPasswordSignIn(email: string): Promise<SignInUserLookup | null> {
+  async findUserForPasswordSignIn(
+    email: string,
+  ): Promise<SignInUserLookup | null> {
     const user = await this.db.user.findUnique({
       where: { email },
       select: {

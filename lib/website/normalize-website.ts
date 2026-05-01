@@ -6,7 +6,9 @@ export type NormalizeWebsiteResult =
   | { ok: true; value: string }
   | { ok: false; error: "EMPTY" | "INVALID" };
 
-export function tryNormalizeWebsiteForOrgKey(raw: string): NormalizeWebsiteResult {
+export function tryNormalizeWebsiteForOrgKey(
+  raw: string,
+): NormalizeWebsiteResult {
   const trimmed = raw.trim();
   if (!trimmed) {
     return { ok: false, error: "EMPTY" };

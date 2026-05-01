@@ -10,9 +10,9 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "meetingsTeam": "Meetings (team)",
+    "meetingsTeam": "Meetings",
     "meetingsMine": "My meetings",
-    "analyseTeam": "Analysis (team)",
+    "analyseTeam": "Analysis",
     "analyseMine": "My analysis",
     "contacts": "Contacts",
     "orgSettings": "Settings",

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SignInForm } from "@/components/organisms/sign-in-form";
 import { buttonVariants } from "@/components/ui/button";
+import { pageTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 
 type Search = { next?: string | string[] };
@@ -18,7 +19,7 @@ export default async function SignInPage({
     <div className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
       <div className="w-full max-w-md space-y-8 rounded-xl border border-border p-8 shadow-sm">
         <div className="space-y-1 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Connexion</h1>
+          <h1 className={pageTitleClass}>Connexion</h1>
           <p className="text-muted-foreground text-sm">
             Accédez à votre espace Sales Time.
           </p>

@@ -1,16 +1,16 @@
 import Link from "next/link";
 import {
-  BarChart3,
-  ClipboardList,
+  FileText,
   ImageIcon,
   LayoutDashboard,
+  LineChart,
   Mail,
   Sparkles,
   Target,
-  TrendingUp,
   Users,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { cardTitleClass, pageTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -50,7 +50,7 @@ const personas = [
     subtitle: "Mesurez le ROI",
     description:
       "Indicateurs consolidés : TUC, TAM, volume de RDV analysés et thématiques récurrentes. Un argument ROI clair pour piloter l’investissement commercial.",
-    icon: BarChart3,
+    icon: LineChart,
     cover: "from-zinc-200 to-zinc-500 dark:from-zinc-700 dark:to-zinc-900",
     iconBg: "bg-brand/10 text-brand",
   },
@@ -79,7 +79,7 @@ const featureCards = [
     title: "Fiche RDV analysée",
     description:
       "Métadonnées, synthèse du contexte et des enjeux, pistes de solution — prêt à partager ou à archiver.",
-    icon: ClipboardList,
+    icon: FileText,
   },
   {
     title: "Coaching KISS personnalisé",
@@ -97,7 +97,7 @@ const featureCards = [
     title: "Dashboard manager",
     description:
       "Vue équipe : volumes, TAM agrégé, répartition des types de RDV et thématiques KISS — sans exposer les notes individuelles.",
-    icon: TrendingUp,
+    icon: LayoutDashboard,
   },
 ] as const;
 
@@ -238,7 +238,10 @@ function LandingTeamPlaceholder() {
 export function SalesTimeLanding() {
   return (
     <div className="bg-background text-foreground relative flex min-h-screen flex-col">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        aria-hidden
+      >
         <div
           className="absolute inset-0 opacity-50 dark:opacity-30"
           style={{
@@ -291,7 +294,8 @@ export function SalesTimeLanding() {
                 </Link>
               </div>
               <p className="text-muted-foreground mt-6 text-xs sm:text-sm">
-                Essai gratuit · Pas de carte bancaire pour démarrer · Équipes B2B
+                Essai gratuit · Pas de carte bancaire pour démarrer · Équipes
+                B2B
               </p>
             </div>
             <div className="mx-auto w-full max-w-lg lg:max-w-none">
@@ -333,10 +337,7 @@ export function SalesTimeLanding() {
         >
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2
-                id="references-heading"
-                className="text-2xl font-semibold tracking-tight sm:text-3xl"
-              >
+              <h2 id="references-heading" className={pageTitleClass}>
                 Conçu pour les équipes qui vivent du terrain
               </h2>
               <p className="text-muted-foreground mt-3 text-sm sm:text-base">
@@ -373,10 +374,7 @@ export function SalesTimeLanding() {
           aria-labelledby="personas-heading"
         >
           <div className="mx-auto max-w-2xl text-center">
-            <h2
-              id="personas-heading"
-              className="text-2xl font-semibold tracking-tight sm:text-3xl"
-            >
+            <h2 id="personas-heading" className={pageTitleClass}>
               Une plateforme, trois regards
             </h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
@@ -419,7 +417,7 @@ export function SalesTimeLanding() {
                     <p className="text-brand text-xs font-semibold tracking-wide uppercase">
                       {subtitle}
                     </p>
-                    <CardTitle className="text-lg">{title}</CardTitle>
+                    <CardTitle className={cardTitleClass}>{title}</CardTitle>
                     <CardDescription className="text-sm leading-relaxed">
                       {description}
                     </CardDescription>
@@ -438,7 +436,7 @@ export function SalesTimeLanding() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <h2
               id="steps-heading"
-              className="text-center text-2xl font-semibold tracking-tight sm:text-3xl"
+              className={cn(pageTitleClass, "text-center")}
             >
               Comment ça marche
             </h2>
@@ -474,7 +472,7 @@ export function SalesTimeLanding() {
         >
           <h2
             id="features-heading"
-            className="text-center text-2xl font-semibold tracking-tight sm:text-3xl"
+            className={cn(pageTitleClass, "text-center")}
           >
             Fonctionnalités clés
           </h2>
@@ -493,7 +491,7 @@ export function SalesTimeLanding() {
                     <Icon className="size-5" aria-hidden />
                   </div>
                   <div className="min-w-0 space-y-2">
-                    <CardTitle className="text-lg">{title}</CardTitle>
+                    <CardTitle className={cardTitleClass}>{title}</CardTitle>
                     <CardDescription className="text-sm leading-relaxed">
                       {description}
                     </CardDescription>
@@ -511,10 +509,7 @@ export function SalesTimeLanding() {
         >
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2
-                id="temoignages-heading"
-                className="text-2xl font-semibold tracking-tight sm:text-3xl"
-              >
+              <h2 id="temoignages-heading" className={pageTitleClass}>
                 Ce qu’en disent les équipes
               </h2>
               <p className="text-muted-foreground mt-3 text-sm sm:text-base">
@@ -533,10 +528,7 @@ export function SalesTimeLanding() {
           className="mx-auto max-w-6xl scroll-mt-24 px-4 py-16 sm:px-6 sm:py-20"
           aria-labelledby="faq-heading"
         >
-          <h2
-            id="faq-heading"
-            className="text-center text-2xl font-semibold tracking-tight sm:text-3xl"
-          >
+          <h2 id="faq-heading" className={cn(pageTitleClass, "text-center")}>
             Questions fréquentes
           </h2>
           <p className="text-muted-foreground mx-auto mt-3 max-w-xl text-center text-sm">
@@ -576,7 +568,9 @@ export function SalesTimeLanding() {
         >
           <div className="text-muted-foreground mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 text-center text-sm sm:px-6 sm:flex-row sm:justify-center sm:gap-12">
             <p className="max-w-xs rounded-xl border border-border/60 bg-card px-4 py-3">
-              <span className="text-foreground font-medium">Hébergement UE</span>{" "}
+              <span className="text-foreground font-medium">
+                Hébergement UE
+              </span>{" "}
               — infrastructure adaptée aux exigences des équipes commerciales.
             </p>
             <p className="max-w-xs rounded-xl border border-border/60 bg-card px-4 py-3">
@@ -588,9 +582,7 @@ export function SalesTimeLanding() {
 
         <section className="border-border/60 border-t bg-muted/30 py-16 sm:py-20">
           <div className="relative mx-auto max-w-2xl px-4 text-center sm:px-6">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Prêt à transformer vos RDV ?
-            </h2>
+            <h2 className={pageTitleClass}>Prêt à transformer vos RDV ?</h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
               Créez votre espace, invitez votre équipe et lancez la première
               analyse en quelques minutes.

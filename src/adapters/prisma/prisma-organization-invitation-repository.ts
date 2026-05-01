@@ -6,9 +6,7 @@ import type {
   OrganizationInvitationRepositoryPort,
 } from "@/src/core/ports/organization-invitation-repository-port";
 
-export class PrismaOrganizationInvitationRepository
-  implements OrganizationInvitationRepositoryPort
-{
+export class PrismaOrganizationInvitationRepository implements OrganizationInvitationRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
   async findPendingByTokenForPreview(

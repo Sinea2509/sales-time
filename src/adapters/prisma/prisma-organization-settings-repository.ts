@@ -1,4 +1,5 @@
-import type { Prisma, PrismaClient } from "@/lib/generated/prisma/client";
+import { Prisma } from "@/lib/generated/prisma/client";
+import type { PrismaClient } from "@/lib/generated/prisma/client";
 import type {
   OrganizationSettingsRepositoryPort,
   OrganizationSettingsRow,
@@ -17,6 +18,7 @@ function mapRow(row: {
   objections: unknown;
   keyArguments: unknown;
   industryVocabulary: string | null;
+  kissCoachingPrompts: unknown | null;
   meetingTypes: unknown;
   pipelineStages: unknown;
   emailTone: string | null;
@@ -41,6 +43,7 @@ function mapRow(row: {
     objections: row.objections,
     keyArguments: row.keyArguments,
     industryVocabulary: row.industryVocabulary,
+    kissCoachingPrompts: row.kissCoachingPrompts ?? null,
     meetingTypes: row.meetingTypes,
     pipelineStages: row.pipelineStages,
     emailTone: row.emailTone,
@@ -54,9 +57,7 @@ function mapRow(row: {
   };
 }
 
-export class PrismaOrganizationSettingsRepository
-  implements OrganizationSettingsRepositoryPort
-{
+export class PrismaOrganizationSettingsRepository implements OrganizationSettingsRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
   async findByOrganizationId(
@@ -92,18 +93,32 @@ export class PrismaOrganizationSettingsRepository
       objections: unknown;
       keyArguments: unknown;
       industryVocabulary: string | null;
+      kissCoachingPrompts?: unknown | null;
     },
   ): Promise<void> {
-    const jsonFields = {
+    const base = {
       companyPitch: fields.companyPitch,
       objections: fields.objections as Prisma.InputJsonValue,
       keyArguments: fields.keyArguments as Prisma.InputJsonValue,
       industryVocabulary: fields.industryVocabulary,
     };
+    const kissUpdate =
+      fields.kissCoachingPrompts === undefined
+        ? {}
+        : {
+            kissCoachingPrompts:
+              fields.kissCoachingPrompts === null
+                ? Prisma.DbNull
+                : (fields.kissCoachingPrompts as Prisma.InputJsonValue),
+          };
     await this.db.organizationSettings.upsert({
       where: { organizationId },
-      create: { organizationId, ...jsonFields },
-      update: jsonFields,
+      create: {
+        organizationId,
+        ...base,
+        ...kissUpdate,
+      },
+      update: { ...base, ...kissUpdate },
     });
   }
 

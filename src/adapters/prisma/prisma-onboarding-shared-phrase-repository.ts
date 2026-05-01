@@ -5,9 +5,7 @@ import type {
   OnboardingSharedPhraseRepositoryPort,
 } from "@/src/core/ports/onboarding-shared-phrase-repository-port";
 
-export class PrismaOnboardingSharedPhraseRepository
-  implements OnboardingSharedPhraseRepositoryPort
-{
+export class PrismaOnboardingSharedPhraseRepository implements OnboardingSharedPhraseRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
   async listByKind(input: {

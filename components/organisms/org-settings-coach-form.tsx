@@ -6,18 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateOrganizationCoach } from "@/app/[locale]/company/settings/actions";
+import { CoachSharedPhrasePickerSheet } from "@/components/organisms/coach-shared-phrase-picker-sheet";
 import { cn } from "@/lib/utils";
-
-function linesToArray(s: string, max: number, maxLineLen: number): string[] {
-  const out: string[] = [];
-  for (const line of s.split("\n")) {
-    const t = line.trim();
-    if (!t) continue;
-    out.push(t.slice(0, maxLineLen));
-    if (out.length >= max) break;
-  }
-  return out;
-}
+import { coachListAddSecondaryButtonClass } from "@/lib/coach-list-add-button-class";
+import { mergeUniqueCoachPhrases } from "@/lib/coach-shared-phrases-merge";
+import { Link } from "@/i18n/navigation";
 
 export type OrgCoachFormInitial = {
   companyPitch: string;
@@ -26,34 +19,54 @@ export type OrgCoachFormInitial = {
   industryVocabulary: string;
 };
 
-export function OrgSettingsCoachForm({ initial }: { initial: OrgCoachFormInitial }) {
+function sanitizeObjections(list: string[]): string[] {
+  return list
+    .map((o) => o.trim().slice(0, 300))
+    .filter(Boolean)
+    .slice(0, 30);
+}
+
+function sanitizeKeyArguments(list: string[]): string[] {
+  return list
+    .map((o) => o.trim().slice(0, 400))
+    .filter(Boolean)
+    .slice(0, 30);
+}
+
+export function OrgSettingsCoachForm({
+  initial,
+}: {
+  initial: OrgCoachFormInitial;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(
-    null,
-  );
+  const [message, setMessage] = useState<{
+    type: "ok" | "err";
+    text: string;
+  } | null>(null);
 
   const [companyPitch, setCompanyPitch] = useState(initial.companyPitch);
-  const [objectionsText, setObjectionsText] = useState(
-    initial.objections.join("\n"),
-  );
-  const [argumentsText, setArgumentsText] = useState(
-    initial.keyArguments.join("\n"),
-  );
+  const [objections, setObjections] = useState<string[]>(() => [
+    ...initial.objections,
+  ]);
+  const [keyArguments, setKeyArguments] = useState<string[]>(() => [
+    ...initial.keyArguments,
+  ]);
   const [industryVocabulary, setIndustryVocabulary] = useState(
     initial.industryVocabulary,
   );
+
+  const [objectionPickerOpen, setObjectionPickerOpen] = useState(false);
+  const [argumentPickerOpen, setArgumentPickerOpen] = useState(false);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage(null);
     startTransition(async () => {
-      const objections = linesToArray(objectionsText, 30, 300);
-      const keyArguments = linesToArray(argumentsText, 30, 400);
       const r = await updateOrganizationCoach({
         companyPitch: companyPitch.trim() || null,
-        objections,
-        keyArguments,
+        objections: sanitizeObjections(objections),
+        keyArguments: sanitizeKeyArguments(keyArguments),
         industryVocabulary: industryVocabulary.trim() || null,
       });
       if (!r.ok) {
@@ -71,7 +84,9 @@ export function OrgSettingsCoachForm({ initial }: { initial: OrgCoachFormInitial
         <p
           className={cn(
             "text-sm",
-            message.type === "ok" ? "text-green-700 dark:text-green-400" : "text-destructive",
+            message.type === "ok"
+              ? "text-green-700 dark:text-green-400"
+              : "text-destructive",
           )}
           role="status"
         >
@@ -94,25 +109,68 @@ export function OrgSettingsCoachForm({ initial }: { initial: OrgCoachFormInitial
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="org-obj">Objections (une par ligne)</Label>
-        <Textarea
-          id="org-obj"
-          value={objectionsText}
-          onChange={(e) => setObjectionsText(e.target.value)}
-          rows={5}
-          placeholder={"Prix trop élevé\nPas le bon moment"}
-        />
+      <div className="space-y-3">
+        <Label className="text-base">Objections principales</Label>
+        <ul className="space-y-2">
+          {objections.map((o, i) => (
+            <li key={`${i}-${o.slice(0, 12)}`} className="flex gap-2 text-sm">
+              <span className="border-border flex-1 rounded-md border px-3 py-2">
+                {o}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setObjections((xs) => xs.filter((_, j) => j !== i))
+                }
+              >
+                Retirer
+              </Button>
+            </li>
+          ))}
+        </ul>
+        <Button
+          type="button"
+          variant="secondary"
+          className={coachListAddSecondaryButtonClass}
+          onClick={() => setObjectionPickerOpen(true)}
+        >
+          + Ajouter une objection
+        </Button>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="org-args">Arguments clés (un par ligne)</Label>
-        <Textarea
-          id="org-args"
-          value={argumentsText}
-          onChange={(e) => setArgumentsText(e.target.value)}
-          rows={5}
-        />
+      <div className="space-y-3">
+        <Label className="text-base">
+          Arguments clés &amp; différenciateurs
+        </Label>
+        <ul className="space-y-2">
+          {keyArguments.map((o, i) => (
+            <li key={`${i}-${o.slice(0, 12)}`} className="flex gap-2 text-sm">
+              <span className="border-border flex-1 rounded-md border px-3 py-2">
+                {o}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setKeyArguments((xs) => xs.filter((_, j) => j !== i))
+                }
+              >
+                Retirer
+              </Button>
+            </li>
+          ))}
+        </ul>
+        <Button
+          type="button"
+          variant="secondary"
+          className={coachListAddSecondaryButtonClass}
+          onClick={() => setArgumentPickerOpen(true)}
+        >
+          + Ajouter un argument
+        </Button>
       </div>
 
       <div className="space-y-2">
@@ -125,12 +183,22 @@ export function OrgSettingsCoachForm({ initial }: { initial: OrgCoachFormInitial
         <Textarea
           id="org-vocab"
           value={industryVocabulary}
-          onChange={(e) =>
-            setIndustryVocabulary(e.target.value.slice(0, 500))
-          }
+          onChange={(e) => setIndustryVocabulary(e.target.value.slice(0, 500))}
           rows={3}
         />
       </div>
+
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        Les consignes KISS par quadrant (global / manager / commercial) sont
+        gérées au niveau plateforme par un super administrateur :{" "}
+        <Link
+          href="/admin/prompts/kiss-consignes"
+          className="text-brand font-medium underline underline-offset-2"
+        >
+          Consignes KISS par quadrant
+        </Link>
+        .
+      </p>
 
       <Button
         type="submit"
@@ -139,6 +207,29 @@ export function OrgSettingsCoachForm({ initial }: { initial: OrgCoachFormInitial
       >
         Enregistrer
       </Button>
+
+      <CoachSharedPhrasePickerSheet
+        kind="OBJECTION"
+        open={objectionPickerOpen}
+        onOpenChange={setObjectionPickerOpen}
+        title="Objections — collection partagée"
+        description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
+        alreadyChosen={objections}
+        onAddToList={(texts) =>
+          setObjections((xs) => mergeUniqueCoachPhrases(xs, texts))
+        }
+      />
+      <CoachSharedPhrasePickerSheet
+        kind="ARGUMENT"
+        open={argumentPickerOpen}
+        onOpenChange={setArgumentPickerOpen}
+        title="Arguments — collection partagée"
+        description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
+        alreadyChosen={keyArguments}
+        onAddToList={(texts) =>
+          setKeyArguments((xs) => mergeUniqueCoachPhrases(xs, texts))
+        }
+      />
     </form>
   );
 }

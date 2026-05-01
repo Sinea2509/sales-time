@@ -4,7 +4,12 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { requireSuperAdminActor } from "@/src/core/application/require-super-admin";
 
 type SearchResult = {
-  users: { id: string; email: string; firstName: string | null; lastName: string | null }[];
+  users: {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+  }[];
   organizations: { id: string; name: string; slug: string | null }[];
 };
 

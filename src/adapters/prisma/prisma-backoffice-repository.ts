@@ -90,7 +90,9 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
       this.db.meeting.count({
         where: { createdAt: { gte: prevMonthStart, lt: monthAgo } },
       }),
-      this.db.meetingAnalysis.count({ where: { createdAt: { gte: monthAgo } } }),
+      this.db.meetingAnalysis.count({
+        where: { createdAt: { gte: monthAgo } },
+      }),
       this.db.meeting
         .groupBy({
           by: ["organizationId"],
@@ -124,7 +126,9 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
       }),
       Promise.all(
         Array.from({ length: 14 }, (_, i) => {
-          const dayStart = new Date(now.getTime() - (13 - i) * 24 * 60 * 60 * 1000);
+          const dayStart = new Date(
+            now.getTime() - (13 - i) * 24 * 60 * 60 * 1000,
+          );
           dayStart.setHours(0, 0, 0, 0);
           const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
           return this.db.session
@@ -247,7 +251,9 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
             meetingAt: true,
             outcome: true,
             sellerUserId: true,
-            seller: { select: { email: true, firstName: true, lastName: true } },
+            seller: {
+              select: { email: true, firstName: true, lastName: true },
+            },
           },
         },
         _count: {
@@ -262,13 +268,15 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
 
     if (!org) return null;
 
-    const memberships: AdminOrgDetailMembership[] = org.memberships.map((m) => ({
-      id: m.id,
-      userId: m.userId,
-      role: mapMembershipRole(m.role),
-      createdAt: m.createdAt,
-      user: m.user,
-    }));
+    const memberships: AdminOrgDetailMembership[] = org.memberships.map(
+      (m) => ({
+        id: m.id,
+        userId: m.userId,
+        role: mapMembershipRole(m.role),
+        createdAt: m.createdAt,
+        user: m.user,
+      }),
+    );
 
     const meetings: AdminOrgDetailMeeting[] = org.meetings.map((m) => ({
       id: m.id,
@@ -509,7 +517,9 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
     }));
   }
 
-  async listPendingSuperAdminInvitations(): Promise<SuperAdminPendingInviteRow[]> {
+  async listPendingSuperAdminInvitations(): Promise<
+    SuperAdminPendingInviteRow[]
+  > {
     const rows = await this.db.superAdminInvitation.findMany({
       where: {
         status: "PENDING",
@@ -534,7 +544,10 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
     });
   }
 
-  async createOrganization(input: { name: string; slug: string }): Promise<void> {
+  async createOrganization(input: {
+    name: string;
+    slug: string;
+  }): Promise<void> {
     await this.db.organization.create({
       data: { name: input.name, slug: input.slug },
     });
@@ -641,9 +654,11 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
     });
   }
 
-  async findUserStatusById(
-    userId: string,
-  ): Promise<{ id: string; status: "ACTIVE" | "DISABLED"; email: string } | null> {
+  async findUserStatusById(userId: string): Promise<{
+    id: string;
+    status: "ACTIVE" | "DISABLED";
+    email: string;
+  } | null> {
     const user = await this.db.user.findUnique({
       where: { id: userId },
       select: { id: true, status: true, email: true },

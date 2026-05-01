@@ -172,4 +172,8 @@
   html {
     @apply font-sans;
   }
+  /* Lucide default stroke is 2; slightly finer reads sharper at 16–20px */
+  svg.lucide {
+    stroke-width: 1.65;
+  }
 }
