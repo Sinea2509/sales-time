@@ -1,78 +1,64 @@
+"use client";
+
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { SalesTimeLogoMark } from "@/components/atoms/sales-time-logo-mark";
+import { landingNavLinks } from "@/lib/landing-content";
 import { cn } from "@/lib/utils";
 
-const anchorClass =
-  "text-muted-foreground hover:text-foreground hidden text-sm font-medium transition-colors md:inline";
-
 export function LandingSiteHeader() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="border-border/80 bg-background/90 supports-[backdrop-filter]:bg-background/75 sticky top-0 z-50 border-b backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link
-          href="/"
-          className="text-foreground group flex shrink-0 items-center gap-2.5 font-semibold tracking-tight"
-        >
-          <span className="bg-brand text-primary-foreground flex size-8 items-center justify-center rounded-lg text-sm font-bold shadow-sm transition-transform group-hover:scale-[1.03]">
-            S
-          </span>
-          <span className="hidden sm:inline">Sales Time</span>
+    <header
+      className={cn(
+        "fixed inset-x-0 top-0 z-[100] flex h-[60px] items-center border-b border-white/6 backdrop-blur-[20px] transition-colors",
+        scrolled ? "bg-[#06060A]/88" : "bg-[#06060A]/70",
+      )}
+    >
+      <div className="mx-auto flex w-full max-w-[1160px] items-center gap-0 px-6 sm:px-10">
+        <Link href="/" className="flex shrink-0 items-center gap-2.25">
+          <SalesTimeLogoMark />
+          <span className="text-[15px] font-bold tracking-tight text-white">Sales Time</span>
         </Link>
 
         <nav
-          className="text-muted-foreground hidden items-center gap-6 md:flex"
+          className="ml-8 hidden flex-1 items-center gap-0.5 md:flex"
           aria-label="Sur cette page"
         >
-          <a href="#references" className={anchorClass}>
-            Références
-          </a>
-          <a href="#temoignages" className={anchorClass}>
-            Témoignages
-          </a>
-          <a href="#fonctionnalites" className={anchorClass}>
-            Fonctionnalités
-          </a>
-          <a href="#faq" className={anchorClass}>
-            FAQ
-          </a>
-          <Link
-            href="/company/plan"
-            className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
-          >
-            Tarifs
-          </Link>
+          {landingNavLinks.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="rounded-[7px] px-3 py-1.25 text-[13.5px] whitespace-nowrap text-white/50 transition-colors hover:bg-white/6 hover:text-white/85"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
 
         <nav
-          className="flex shrink-0 items-center gap-2 sm:gap-3"
+          className="ml-auto flex shrink-0 items-center gap-2"
           aria-label="Navigation principale"
         >
           <Link
             href="/sign-in"
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "sm" }),
-              "hidden sm:inline-flex",
-            )}
+            className="rounded-lg px-3.5 py-1.5 text-[13.5px] font-medium whitespace-nowrap text-white/55 transition-colors hover:text-white"
           >
             Connexion
           </Link>
           <Link
             href="/sign-up"
-            className={cn(
-              buttonVariants({ size: "sm" }),
-              "border-0 bg-brand text-white shadow-sm hover:bg-brand-hover",
-            )}
+            className="rounded-lg bg-brand px-4 py-1.75 text-[13.5px] font-semibold whitespace-nowrap text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(108,77,255,0.35)] transition-[filter] hover:brightness-110"
           >
             Commencer
-          </Link>
-          <Link
-            href="/sign-in"
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "sm" }),
-              "sm:hidden",
-            )}
-          >
-            Connexion
           </Link>
         </nav>
       </div>

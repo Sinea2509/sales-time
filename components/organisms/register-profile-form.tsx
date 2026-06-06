@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { REGISTER_PROFILE_ROLE_OPTIONS } from "@/lib/register-profile-options";
-import { orgSettingsSelectClassName } from "@/components/organisms/org-settings-select-class";
+import { nativeSelectClassName } from "@/components/ui/native-select-class";
 import {
   completeRegisterProfile,
   type CompleteRegisterProfileResult,
@@ -78,7 +78,7 @@ export function RegisterProfileForm({
           id="profileRole"
           name="profileRole"
           required
-          className={cn(orgSettingsSelectClassName, "h-10")}
+          className={cn(nativeSelectClassName, "h-10")}
           defaultValue=""
         >
           <option value="" disabled>

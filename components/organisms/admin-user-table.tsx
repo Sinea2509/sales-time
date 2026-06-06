@@ -38,6 +38,7 @@ import {
   inviteUserToOrgAction,
   bulkToggleUserStatusAction,
 } from "@/app/[locale]/admin/users/actions";
+import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { AdminExportButton } from "@/components/molecules/admin-export-button";
 
 type UserRow = {
@@ -295,14 +296,11 @@ export function AdminUserTable({ users, organizations }: Props) {
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {filtered.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-12 text-center text-zinc-400"
-                  >
-                    Aucun utilisateur trouvé.
-                  </td>
-                </tr>
+                <TableEmptyRow
+                  colSpan={7}
+                  message="Aucun utilisateur trouvé."
+                  size="large"
+                />
               ) : (
                 filtered.map((user) => (
                   <tr

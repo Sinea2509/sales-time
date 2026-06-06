@@ -1,4 +1,25 @@
-export type AnalysisKindSlug = "SONCAS" | "DISC" | "KISS";
+export type AnalysisKindSlug =
+  | "SONCAS"
+  | "DISC"
+  | "KISS"
+  | "FOLLOW_UP_EMAIL"
+  | "MEETING_BRIEFING"
+  | "SELLER_PERFORMANCE"
+  | "SELLER_AFFINITY"
+  | "ORG_KISS_ROLLUP"
+  | "TEAM_COACHING";
+
+export const ANALYSIS_KIND_SLUGS = [
+  "SONCAS",
+  "DISC",
+  "KISS",
+  "FOLLOW_UP_EMAIL",
+  "MEETING_BRIEFING",
+  "SELLER_PERFORMANCE",
+  "SELLER_AFFINITY",
+  "ORG_KISS_ROLLUP",
+  "TEAM_COACHING",
+] as const satisfies readonly AnalysisKindSlug[];
 
 export type PromptTemplateVersionRow = {
   id: string;

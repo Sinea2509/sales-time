@@ -1,5 +1,5 @@
 import { OrgSettingsContexteForm } from "@/components/organisms/org-settings-contexte-form";
-import { pageTitleClass } from "@/lib/page-typography";
+import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
@@ -23,9 +23,7 @@ export default async function OrganizationSettingsContextePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className={pageTitleClass}>Contexte</h1>
-      </div>
+      <PageHeaderSimple title="Contexte" />
       <OrgSettingsContexteForm
         initialLogoUrl={row?.logoUrl ?? null}
         initial={{

@@ -1,6 +1,10 @@
+import {
+  loadAnalysisPromptMarkdown,
+} from "@/lib/load-analysis-prompt";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { ContactRepositoryPort } from "@/src/core/ports/contact-repository-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
+import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { discResultSchema, soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
 
@@ -9,6 +13,7 @@ export async function prepareMeetingBriefing(
     meetings: MeetingRepositoryPort;
     contacts: ContactRepositoryPort;
     analysis: AnalysisPort;
+    prompts: PromptTemplateRepositoryPort;
   },
   input: {
     organizationId: string;
@@ -58,7 +63,12 @@ export async function prepareMeetingBriefing(
   );
 
   const hasHistory = enriched.length > 0;
+  const systemMarkdown = await loadAnalysisPromptMarkdown(
+    deps.prompts,
+    "MEETING_BRIEFING",
+  );
   const { result } = await deps.analysis.prepareMeetingBriefing({
+    systemMarkdown,
     model: input.model,
     targetStage: input.targetStage,
     prospectCompany: person.company ?? person.displayName,

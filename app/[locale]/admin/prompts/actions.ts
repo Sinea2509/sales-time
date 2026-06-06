@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { publishGlobalPromptVersion } from "@/src/core/application/publish-global-prompt-version";
+import { ANALYSIS_KIND_SLUGS } from "@/src/core/ports/prompt-template-repository-port";
 
 const publishPromptSchema = z.object({
-  kind: z.enum(["SONCAS", "DISC", "KISS"]),
+  kind: z.enum(ANALYSIS_KIND_SLUGS),
   markdown: z.string().min(1).max(200_000),
   auditAction: z.enum(["PUBLISH_PROMPT", "RESTORE_PROMPT"]),
 });

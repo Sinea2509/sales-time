@@ -1,4 +1,8 @@
 import type { ComponentType, ReactNode } from "react";
+import {
+  statAccentStyles,
+  type StatAccent,
+} from "@/lib/stat-accent-styles";
 import { cn } from "@/lib/utils";
 
 export type KpiTileProps = {
@@ -8,6 +12,8 @@ export type KpiTileProps = {
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
+  /** When set, icon tile uses admin accent colors instead of brand. */
+  accent?: StatAccent;
 };
 
 export function KpiTile({
@@ -17,7 +23,10 @@ export function KpiTile({
   children,
   footer,
   className,
+  accent,
 }: KpiTileProps) {
+  const accentColors = accent ? statAccentStyles[accent] : null;
+
   return (
     <div
       className={cn(
@@ -26,8 +35,22 @@ export function KpiTile({
       )}
     >
       <div className="flex min-w-0 items-center gap-2.5">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20">
-          <Icon className="size-4 text-brand dark:text-brand-muted" />
+        <div
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-full",
+            accentColors
+              ? cn("rounded-lg", accentColors.bg)
+              : "bg-brand/10 dark:bg-brand/20",
+          )}
+        >
+          <Icon
+            className={cn(
+              "size-4",
+              accentColors
+                ? accentColors.icon
+                : "text-brand dark:text-brand-muted",
+            )}
+          />
         </div>
         <p className="text-muted-foreground truncate text-sm font-medium dark:text-zinc-400">
           {label}

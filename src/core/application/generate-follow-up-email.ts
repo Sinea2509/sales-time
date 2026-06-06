@@ -1,5 +1,8 @@
-import { DEFAULT_FOLLOW_UP_EMAIL_SYSTEM } from "@/lib/default-analysis-prompts";
+import {
+  loadAnalysisPromptMarkdown,
+} from "@/lib/load-analysis-prompt";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
+import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { MeetingDetailWithAnalyses } from "@/src/core/ports/meeting-repository-port";
 import type { OrganizationSettingsRow } from "@/src/core/ports/organization-settings-repository-port";
 
@@ -8,7 +11,10 @@ function xml(tag: string, body: string) {
 }
 
 export async function generateFollowUpEmailForMeeting(
-  deps: { analysis: AnalysisPort },
+  deps: {
+    analysis: AnalysisPort;
+    prompts: PromptTemplateRepositoryPort;
+  },
   input: {
     meeting: MeetingDetailWithAnalyses;
     organizationSettings: OrganizationSettingsRow | null;
@@ -36,8 +42,13 @@ export async function generateFollowUpEmailForMeeting(
     .filter(Boolean)
     .join("\n\n");
 
+  const systemMarkdown = await loadAnalysisPromptMarkdown(
+    deps.prompts,
+    "FOLLOW_UP_EMAIL",
+  );
+
   const { result } = await deps.analysis.generateFollowUpEmail({
-    systemMarkdown: DEFAULT_FOLLOW_UP_EMAIL_SYSTEM,
+    systemMarkdown,
     userContent: prefs,
     model: input.model,
   });

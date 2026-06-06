@@ -12,8 +12,9 @@ import {
 } from "lucide-react";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getPlatformAiKpis } from "@/src/core/application/get-platform-ai-kpis";
-import { pageTitleClass } from "@/lib/page-typography";
+import { AdminRecentActivitySection } from "@/components/organisms/admin-recent-activity-section";
 import { AdminKpiCard } from "@/components/molecules/admin-kpi-card";
+import { PageHeader } from "@/components/molecules/page-header";
 import { AdminActivityChart } from "@/components/organisms/admin-activity-chart";
 import { AdminOrgGrowthChart } from "@/components/organisms/admin-org-growth-chart";
 import { AdminDateRangePicker } from "@/components/molecules/admin-date-range-picker";
@@ -78,16 +79,11 @@ export default async function AdminDashboardPage(props: {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className={pageTitleClass}>Dashboard plateforme</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Vue d&apos;ensemble de l&apos;activité et des KPIs SaaS de Sales
-            Time.
-          </p>
-        </div>
-        <AdminDateRangePicker />
-      </div>
+      <PageHeader
+        title="Dashboard plateforme"
+        description="Vue d'ensemble de l'activité et des KPIs SaaS de Sales Time."
+        actions={<AdminDateRangePicker />}
+      />
 
       {/* Hero KPI Row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -209,76 +205,10 @@ export default async function AdminDashboardPage(props: {
         <AdminOrgGrowthChart data={orgGrowthData} />
       </div>
 
-      {/* Recent Activity Tables */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Users */}
-        <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
-            <h3 className="text-sm font-semibold">
-              Derniers utilisateurs inscrits
-            </h3>
-          </div>
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {recentUsers.map((u) => (
-              <div
-                key={u.id}
-                className="flex items-center justify-between px-5 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {u.firstName && u.lastName
-                      ? `${u.firstName} ${u.lastName}`
-                      : u.email}
-                  </p>
-                  <p className="truncate text-xs text-zinc-500">{u.email}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={
-                      u.status === "ACTIVE"
-                        ? "inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                        : "inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950 dark:text-red-300"
-                    }
-                  >
-                    {u.status === "ACTIVE" ? "Actif" : "Bloqué"}
-                  </span>
-                  <span className="whitespace-nowrap text-xs text-zinc-400">
-                    {u.createdAt.toLocaleDateString("fr-FR")}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Orgs */}
-        <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
-            <h3 className="text-sm font-semibold">Dernières organisations</h3>
-          </div>
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {recentOrgs.map((org) => (
-              <div
-                key={org.id}
-                className="flex items-center justify-between px-5 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {org.name}
-                  </p>
-                  <p className="truncate text-xs text-zinc-500">
-                    {org.slug} · {org.memberCount} membre(s) ·{" "}
-                    {org.meetingCount} RDV
-                  </p>
-                </div>
-                <span className="whitespace-nowrap text-xs text-zinc-400">
-                  {org.createdAt.toLocaleDateString("fr-FR")}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <AdminRecentActivitySection
+        recentUsers={recentUsers}
+        recentOrgs={recentOrgs}
+      />
     </div>
   );
 }

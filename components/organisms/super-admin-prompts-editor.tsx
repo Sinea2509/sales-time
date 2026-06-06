@@ -38,6 +38,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
+import { MarkdownPreview } from "@/components/atoms/markdown-preview";
 
 type VersionRow = {
   id: string;
@@ -53,107 +54,6 @@ type Props = {
   initialMarkdown: string;
   versions: VersionRow[];
 };
-
-// ---------------------------------------------------------------------------
-// Lightweight markdown → HTML (no external dependency)
-// ---------------------------------------------------------------------------
-function renderMarkdownToHtml(md: string): string {
-  let html = "";
-  const lines = md.split("\n");
-  let inCodeBlock = false;
-  let codeBuffer: string[] = [];
-  let inList: "ul" | "ol" | null = null;
-
-  const flushList = () => {
-    if (inList) {
-      html += inList === "ul" ? "</ul>" : "</ol>";
-      inList = null;
-    }
-  };
-
-  const inlineFormat = (text: string): string =>
-    text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(
-        /`([^`]+)`/g,
-        '<code class="bg-muted px-1 py-0.5 rounded text-xs font-mono">$1</code>',
-      )
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.+?)\*/g, "<em>$1</em>");
-
-  for (const raw of lines) {
-    const line = raw;
-
-    if (line.startsWith("```")) {
-      if (inCodeBlock) {
-        html += `<pre class="bg-muted rounded-md p-3 text-xs font-mono overflow-x-auto my-2"><code>${codeBuffer.join("\n")}</code></pre>`;
-        codeBuffer = [];
-      }
-      inCodeBlock = !inCodeBlock;
-      continue;
-    }
-
-    if (inCodeBlock) {
-      codeBuffer.push(
-        line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"),
-      );
-      continue;
-    }
-
-    if (line.trim() === "") {
-      flushList();
-      continue;
-    }
-
-    const headingMatch = line.match(/^(#{1,4})\s+(.+)/);
-    if (headingMatch) {
-      flushList();
-      const level = headingMatch[1].length;
-      const sizes = [
-        "text-xl font-bold",
-        "text-lg font-semibold",
-        "text-base font-semibold",
-        "text-sm font-semibold",
-      ];
-      html += `<h${level} class="${sizes[level - 1]} mt-3 mb-1">${inlineFormat(headingMatch[2])}</h${level}>`;
-      continue;
-    }
-
-    const ulMatch = line.match(/^[-*]\s+(.+)/);
-    if (ulMatch) {
-      if (inList !== "ul") {
-        flushList();
-        html += '<ul class="list-disc pl-5 space-y-0.5">';
-        inList = "ul";
-      }
-      html += `<li>${inlineFormat(ulMatch[1])}</li>`;
-      continue;
-    }
-
-    const olMatch = line.match(/^\d+\.\s+(.+)/);
-    if (olMatch) {
-      if (inList !== "ol") {
-        flushList();
-        html += '<ol class="list-decimal pl-5 space-y-0.5">';
-        inList = "ol";
-      }
-      html += `<li>${inlineFormat(olMatch[1])}</li>`;
-      continue;
-    }
-
-    flushList();
-    html += `<p class="my-1">${inlineFormat(line)}</p>`;
-  }
-
-  flushList();
-  if (inCodeBlock && codeBuffer.length > 0) {
-    html += `<pre class="bg-muted rounded-md p-3 text-xs font-mono overflow-x-auto my-2"><code>${codeBuffer.join("\n")}</code></pre>`;
-  }
-
-  return html;
-}
 
 // ---------------------------------------------------------------------------
 // Line diff (LCS) + side-by-side rows
@@ -298,11 +198,6 @@ export function SuperAdminPromptsEditor({
   /** First publication when no history row exists yet */
   const canPublish = isDirty || sorted.length === 0;
 
-  const previewHtml = useMemo(
-    () => (showPreview ? renderMarkdownToHtml(markdown) : ""),
-    [showPreview, markdown],
-  );
-
   const diffRows = useMemo(
     () =>
       diffVersion
@@ -429,9 +324,9 @@ export function SuperAdminPromptsEditor({
             {showPreview && (
               <div className="flex min-h-0 flex-col space-y-2">
                 <Label className="text-sm font-medium">Aperçu</Label>
-                <div
-                  className="prose prose-sm dark:prose-invert border-border/80 bg-card/50 max-h-[min(28rem,70vh)] min-h-[12rem] overflow-y-auto rounded-xl border p-4 text-sm shadow-inner"
-                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                <MarkdownPreview
+                  markdown={markdown}
+                  className="border-border/80 bg-card/50 max-h-[min(28rem,70vh)] min-h-[12rem] overflow-y-auto rounded-xl border p-4 shadow-inner"
                 />
               </div>
             )}

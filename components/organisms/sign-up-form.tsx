@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { signUpAction } from "@/app/[locale]/sign-up/actions";
-import { orgSettingsSelectClassName } from "@/components/organisms/org-settings-select-class";
+import { nativeSelectClassName } from "@/components/ui/native-select-class";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,7 +64,7 @@ export function SignUpForm() {
           id="profileRole"
           name="profileRole"
           required
-          className={cn(orgSettingsSelectClassName, "h-10")}
+          className={cn(nativeSelectClassName, "h-10")}
           defaultValue=""
           disabled={pending}
         >

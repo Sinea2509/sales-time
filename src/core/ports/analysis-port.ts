@@ -74,10 +74,9 @@ export interface AnalysisPort {
 
   /** Un paragraphe court (axes d’amélioration d’équipe) à partir des totaux KISS agrégés. */
   summarizeOrgKissRollup(input: {
+    systemMarkdown: string;
     rollup: OrgKissRollupForSummary;
     model: string;
-    /** Consignes organisation (axes manager) depuis Coach IA — optionnel. */
-    organizationKissPromptAppendix?: string | null;
   }): Promise<string>;
 
   /**
@@ -85,6 +84,7 @@ export interface AnalysisPort {
    * à partir d’extraits de transcriptions et d’analyses SONCAS/DISC/KISS déjà produites.
    */
   summarizeSellerCommercialPerformance(input: {
+    systemMarkdown: string;
     sellerDisplayName: string;
     meetings: SellerCommercialMeetingDigestForSummary[];
     model: string;
@@ -95,12 +95,14 @@ export interface AnalysisPort {
    * puis via les leviers SONCAS — à partir des transcriptions et des JSON d’analyse déjà produits.
    */
   summarizeSellerRelationalAffinity(input: {
+    systemMarkdown: string;
     sellerDisplayName: string;
     meetings: SellerCommercialMeetingDigestForSummary[];
     model: string;
   }): Promise<SellerRelationalAffinitySummary>;
 
   prepareMeetingBriefing(input: {
+    systemMarkdown: string;
     model: string;
     targetStage: string;
     prospectCompany: string;
@@ -113,6 +115,7 @@ export interface AnalysisPort {
    * à partir des RDV, du profil de vente et de l’agrégat KISS sur la période.
    */
   summarizeTeamCoachingRecommendations(input: {
+    systemMarkdown: string;
     model: string;
     statsWindowDays: StatsWindowDays;
     audience: "manager" | "commercial";
@@ -120,6 +123,5 @@ export interface AnalysisPort {
     salesProfile: SalesProfileScores | null;
     previousSalesProfile: SalesProfileScores | null;
     kissRollup: OrgKissRollupForSummary;
-    organizationKissPromptAppendix?: string | null;
   }): Promise<TeamCoachingRecommendations>;
 }

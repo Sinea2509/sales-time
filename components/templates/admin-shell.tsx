@@ -17,7 +17,6 @@ import {
   MessageSquare,
   CreditCard,
   Bot,
-  BarChart3,
 } from "lucide-react";
 import { AdminCommandPalette } from "@/components/organisms/admin-command-palette";
 import {
@@ -69,12 +68,6 @@ const adminNavSections: NavSection[] = [
         label: "Dashboard",
         icon: LayoutDashboard,
         match: "exact",
-      },
-      {
-        href: "/admin/analytics",
-        label: "Analytics",
-        icon: BarChart3,
-        match: "prefix",
       },
       {
         href: "/admin/organizations",

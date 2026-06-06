@@ -95,7 +95,7 @@ export async function generateFollowUpEmailAction(meetingId: string) {
 
   try {
     const email = await generateFollowUpEmailForMeeting(
-      { analysis: deps.analysis },
+      { analysis: deps.analysis, prompts: deps.prompts },
       {
         meeting,
         organizationSettings: settings,

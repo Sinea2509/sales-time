@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { DashboardAddMemberPopover } from "@/components/molecules/dashboard-add-member-popover";
+import { DashboardAddMemberPopover } from "@/components/organisms/dashboard-add-member-popover";
+import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
@@ -102,14 +103,11 @@ export function DashboardAdminShell({
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {monEquipe.rows.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="text-muted-foreground px-4 py-12 text-center dark:text-zinc-500"
-                    >
-                      Aucun membre dans cette organisation.
-                    </td>
-                  </tr>
+                  <TableEmptyRow
+                    colSpan={5}
+                    message="Aucun membre dans cette organisation."
+                    size="large"
+                  />
                 ) : (
                   monEquipe.rows.map((row) => {
                     const person = monEquipePersonLines(row);

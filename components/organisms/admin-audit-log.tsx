@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { AdminExportButton } from "@/components/molecules/admin-export-button";
 
 type AuditRow = {
@@ -172,17 +173,12 @@ export function AdminAuditLog({ logs }: Props) {
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {filtered.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-16 text-center text-zinc-400"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <ScrollText className="size-8 text-zinc-300 dark:text-zinc-600" />
-                      <p>Aucune entrée trouvée.</p>
-                    </div>
-                  </td>
-                </tr>
+                <TableEmptyRow
+                  colSpan={5}
+                  message="Aucune entrée trouvée."
+                  size="hero"
+                  icon={ScrollText}
+                />
               ) : (
                 filtered.map((log) => (
                   <tr

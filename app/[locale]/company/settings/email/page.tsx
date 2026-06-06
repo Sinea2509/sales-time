@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { OrgSettingsEmailForm } from "@/components/organisms/org-settings-email-form";
-import { pageTitleClass } from "@/lib/page-typography";
+import { PageHeaderSimple } from "@/components/molecules/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +28,10 @@ export default async function OrgSettingsEmailPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className={pageTitleClass}>E-mail de suivi</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-          Paramètres utilisés pour la génération du mail de relance (ton,
-          vouvoiement, signature).
-        </p>
-      </div>
+      <PageHeaderSimple
+        title="E-mail de suivi"
+        description="Paramètres utilisés pour la génération du mail de relance (ton, vouvoiement, signature)."
+      />
       <OrgSettingsEmailForm
         initialTone={tone}
         initialVouvoiement={row?.emailVouvoiement ?? true}

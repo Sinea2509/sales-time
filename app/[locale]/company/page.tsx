@@ -1,19 +1,17 @@
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { InfoCard } from "@/components/molecules/info-card";
 import { DashboardAdminShell } from "@/components/organisms/dashboard-admin-shell";
 import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell";
 import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
-import { cardTitleClass } from "@/lib/page-typography";
 import { parseStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
+import {
+  appendOrganizationKissPromptAppendix,
+  loadAnalysisPromptMarkdown,
+} from "@/lib/load-analysis-prompt";
 import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
@@ -47,14 +45,10 @@ export default async function DashboardHomePage({
   if (!actor.activeOrganizationId) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className={cardTitleClass}>Organisation</CardTitle>
-            <CardDescription>
-              Sélectionnez une organisation pour afficher les indicateurs.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <InfoCard
+          title="Organisation"
+          description="Sélectionnez une organisation pour afficher les indicateurs."
+        />
       </div>
     );
   }
@@ -76,16 +70,19 @@ export default async function DashboardHomePage({
     let kissTeamStrengthsNarrative: string | null = null;
     if (admin && getEnv().AI_GATEWAY_API_KEY) {
       try {
-        kissTeamStrengthsNarrative = await deps.analysis.summarizeOrgKissRollup(
-          {
-            rollup: admin.kissTeamRollup,
-            model: ANALYSIS_GATEWAY_MODEL,
-            organizationKissPromptAppendix: kissMarkdownAppendixForAudience(
-              globalKissJson,
-              "manager",
-            ),
-          },
+        const basePrompt = await loadAnalysisPromptMarkdown(
+          deps.prompts,
+          "ORG_KISS_ROLLUP",
         );
+        const systemMarkdown = appendOrganizationKissPromptAppendix(
+          basePrompt,
+          kissMarkdownAppendixForAudience(globalKissJson, "manager"),
+        );
+        kissTeamStrengthsNarrative = await deps.analysis.summarizeOrgKissRollup({
+          systemMarkdown,
+          rollup: admin.kissTeamRollup,
+          model: ANALYSIS_GATEWAY_MODEL,
+        });
       } catch {
         kissTeamStrengthsNarrative = null;
       }
@@ -105,15 +102,10 @@ export default async function DashboardHomePage({
   if (actor.workspaceRoleMode === "member" && !actor.internalUserId) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className={cardTitleClass}>Compte</CardTitle>
-            <CardDescription>
-              Votre profil utilisateur n’est pas encore synchronisé. Rechargez
-              la page ou contactez un administrateur.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <InfoCard
+          title="Compte"
+          description="Votre profil utilisateur n’est pas encore synchronisé. Rechargez la page ou contactez un administrateur."
+        />
       </div>
     );
   }

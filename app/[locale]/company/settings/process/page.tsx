@@ -4,7 +4,7 @@ import {
   DEFAULT_MEETING_TYPES,
   DEFAULT_PIPELINE_STAGES,
 } from "@/lib/onboarding-defaults";
-import { pageTitleClass } from "@/lib/page-typography";
+import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
@@ -31,7 +31,7 @@ export default async function OrganizationSettingsProcessPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className={pageTitleClass}>Process</h1>
+      <PageHeaderSimple title="Process" />
       <OrgSettingsProcessForm
         initial={{
           meetingTypes:

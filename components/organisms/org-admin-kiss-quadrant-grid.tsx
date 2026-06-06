@@ -1,3 +1,4 @@
+import { DotBulletList } from "@/components/atoms/dot-bullet-list";
 import { Ban, Play, TrendingUp, UserRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
@@ -81,31 +82,6 @@ const quadrantsManagerMember = [
   },
 ] as const;
 
-function KissQuadrantBulletList({ items }: { items: string[] }) {
-  if (items.length === 0) {
-    return (
-      <p className="text-muted-foreground text-sm leading-relaxed">
-        Aucune recommandation KISS sur la période — lancez des analyses sur vos
-        rendez-vous.
-      </p>
-    );
-  }
-
-  return (
-    <ul className="space-y-2.5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
-      {items.map((line) => (
-        <li key={line} className="flex items-start gap-2.5">
-          <span
-            className="mt-2 inline-block size-1.5 shrink-0 rounded-full bg-neutral-400 dark:bg-neutral-500"
-            aria-hidden
-          />
-          <span>{line}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 export function OrgAdminKissQuadrantGrid({
   rollup,
   presentation = "teamDashboard",
@@ -144,7 +120,11 @@ export function OrgAdminKissQuadrantGrid({
               </div>
             </CardHeader>
             <CardContent>
-              <KissQuadrantBulletList items={bullets} />
+              <DotBulletList
+                items={bullets}
+                density="compact"
+                emptyMessage="Aucune recommandation KISS sur la période — lancez des analyses sur vos rendez-vous."
+              />
             </CardContent>
           </Card>
         );

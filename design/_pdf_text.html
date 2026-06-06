@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>PDF Text Extract</title></head>
+<body style="font:13px monospace;padding:16px;white-space:pre-wrap;background:#1a1a1a;color:#0f0">
+<div id="out">Chargement...</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+fetch('uploads/Vue manager.pdf')
+  .then(r => r.arrayBuffer())
+  .then(buf => pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise)
+  .then(async pdf => {
+    let all = `Pages: ${pdf.numPages}\n\n`;
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      all += `=== PAGE ${p} ===\n`;
+      // Group items by y position (line grouping)
+      const lines = {};
+      content.items.forEach(item => {
+        const y = Math.round(item.transform[5] / 8) * 8;
+        if (!lines[y]) lines[y] = [];
+        lines[y].push({ x: Math.round(item.transform[4]), text: item.str, size: Math.round(item.transform[0]) });
+      });
+      // Sort by y descending (PDF coords: y increases upward)
+      Object.keys(lines).sort((a,b) => b-a).forEach(y => {
+        const row = lines[y].sort((a,b) => a.x-b.x);
+        const lineText = row.map(i => i.text).join(' ').trim();
+        if (lineText) all += `[y${y}] ${lineText}\n`;
+      });
+    }
+    document.getElementById('out').textContent = all;
+  })
+  .catch(e => { document.getElementById('out').textContent = 'Error: ' + e; });
+</script>
+</body>
+</html>

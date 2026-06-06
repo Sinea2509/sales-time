@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import {
   registerFromInvitationAction,
   type RegisterFromInvitationState,
-} from "./actions";
+} from "@/app/[locale]/invitations/[token]/join/actions";
 
 type Props = {
   token: string;

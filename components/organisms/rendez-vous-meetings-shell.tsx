@@ -10,8 +10,9 @@ import {
   Search,
 } from "lucide-react";
 import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
+import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
-import { RendezVousMeetingRowActions } from "@/components/molecules/rendez-vous-meeting-row-actions";
+import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -261,16 +262,15 @@ export function RendezVousMeetingsShell({
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
               {filtered.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={showSellerColumn ? 7 : 6}
-                    className="text-muted-foreground px-4 py-12 text-center"
-                  >
-                    {meetings.length === 0
+                <TableEmptyRow
+                  colSpan={showSellerColumn ? 7 : 6}
+                  message={
+                    meetings.length === 0
                       ? "Aucun rendez-vous enregistré. Créez votre premier RDV pour lancer une analyse SONCAS / DISC / KISS."
-                      : "Aucun résultat pour cette recherche."}
-                  </td>
-                </tr>
+                      : "Aucun résultat pour cette recherche."
+                  }
+                  size="large"
+                />
               ) : (
                 pageRows.map((m) => {
                   const checked = selectedIds.has(m.id);

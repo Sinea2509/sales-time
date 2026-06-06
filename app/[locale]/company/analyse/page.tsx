@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
-import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
+import { AnalysePagePeriodFallback } from "@/components/molecules/analyse-page-period-fallback";
+import { InfoCard } from "@/components/molecules/info-card";
+import { PageHeader, PageHeaderSimple } from "@/components/molecules/page-header";
 import { AnalyseKpiCards } from "@/components/organisms/analyse-kpi-cards";
 import { AnalyseRecommandationsSection } from "@/components/organisms/analyse-recommandations-section";
 import { AnalyseStatistiquesGlobalesSection } from "@/components/organisms/analyse-statistiques-globales-section";
@@ -9,17 +10,8 @@ import { summarizeTeamCoachingRecommendations } from "@/src/core/application/sum
 import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { getEnv } from "@/lib/env";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import {
-  cardTitleClass,
-  pageTitleClass,
   sectionHeadingClass,
 } from "@/lib/page-typography";
 import {
@@ -50,16 +42,11 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   if (actor.workspaceRoleMode === "member" && !actor.internalUserId) {
     return (
       <div className="space-y-6">
-        <h1 className={pageTitleClass}>Performance</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle className={cardTitleClass}>Compte</CardTitle>
-            <CardDescription>
-              Profil utilisateur non synchronisé — impossible de charger votre
-              analyse personnelle.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <PageHeaderSimple title="Performance" />
+        <InfoCard
+          title="Compte"
+          description="Profil utilisateur non synchronisé — impossible de charger votre analyse personnelle."
+        />
       </div>
     );
   }
@@ -100,15 +87,11 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   if (!home) {
     return (
       <div className="space-y-6">
-        <h1 className={pageTitleClass}>Performance</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle className={cardTitleClass}>Organisation</CardTitle>
-            <CardDescription>
-              Sélectionnez une organisation pour afficher les statistiques.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <PageHeaderSimple title="Performance" />
+        <InfoCard
+          title="Organisation"
+          description="Sélectionnez une organisation pour afficher les statistiques."
+        />
       </div>
     );
   }
@@ -151,18 +134,10 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className={pageTitleClass}>
-            {isOrgAdmin ? "Performance" : "Ma performance"}
-          </h1>
-          <Suspense
-            fallback={
-              <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
-            }
-          >
-            <DashboardStatsPeriodSelect value={home.statsWindowDays} />
-          </Suspense>
-        </div>
+        <PageHeader
+          title={isOrgAdmin ? "Performance" : "Ma performance"}
+          actions={<AnalysePagePeriodFallback value={home.statsWindowDays} />}
+        />
 
         <AnalyseKpiCards home={home} isOrgAdmin={isOrgAdmin} />
       </div>

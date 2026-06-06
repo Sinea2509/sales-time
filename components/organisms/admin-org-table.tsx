@@ -31,6 +31,7 @@ import {
   bulkDeleteOrganizationsAction,
 } from "@/app/[locale]/admin/organizations/actions";
 import { AdminExportButton } from "@/components/molecules/admin-export-button";
+import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 
 type OrgRow = {
   id: string;
@@ -229,14 +230,11 @@ export function AdminOrgTable({ organizations }: Props) {
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {filtered.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-12 text-center text-zinc-400"
-                  >
-                    Aucune organisation trouvée.
-                  </td>
-                </tr>
+                <TableEmptyRow
+                  colSpan={7}
+                  message="Aucune organisation trouvée."
+                  size="large"
+                />
               ) : (
                 filtered.map((org) => (
                   <tr

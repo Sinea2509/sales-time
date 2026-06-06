@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { PrepareMeetingBriefingForm } from "@/components/organisms/prepare-meeting-briefing-form";
-import { pageTitleClass } from "@/lib/page-typography";
+import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { stringArrayFromOrgJson } from "@/lib/org-settings-json";
@@ -25,13 +25,10 @@ export default async function PreparerRdvPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className={pageTitleClass}>Préparer un RDV</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Synthèse de l&apos;historique prospect, profils DISC/SONCAS et conseils
-          pour la prochaine étape.
-        </p>
-      </div>
+      <PageHeaderSimple
+        title="Préparer un RDV"
+        description="Synthèse de l'historique prospect, profils DISC/SONCAS et conseils pour la prochaine étape."
+      />
       <PrepareMeetingBriefingForm pipelineStageOptions={pipelineStageOptions} />
     </div>
   );

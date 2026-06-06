@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Time — Coach commercial IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --p:#6C4DFF;--p80:rgba(108,77,255,.8);--p20:rgba(108,77,255,.2);--p10:rgba(108,77,255,.1);--p06:rgba(108,77,255,.06);
+      --ink:#09090B;--mid:#3F3F46;--muted:#71717A;--subtle:#A1A1AA;
+      --border:#E4E4E7;--bg:#FAFAFA;
+      --s:#16A34A;--s10:rgba(22,163,74,.1);
+      --i:#0284C7;--i10:rgba(2,132,199,.1);
+      --w:#D97706;--w10:rgba(217,119,6,.1);
+      --r:#DC2626;--r10:rgba(220,38,38,.1);
+      --dark:#06060A;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased;background:#fff;color:var(--ink);overflow-x:hidden}
+
+    /* ── Reveal animations ── */
+    .reveal{opacity:0;transform:translateY(24px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1)}
+    .reveal.in{opacity:1;transform:none}
+    .reveal-d1{transition-delay:.08s}
+    .reveal-d2{transition-delay:.16s}
+    .reveal-d3{transition-delay:.24s}
+    .reveal-d4{transition-delay:.32s}
+
+    /* ── Nav ── */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;height:60px;
+      display:flex;align-items:center;
+      background:rgba(6,6,10,.7);
+      border-bottom:1px solid rgba(255,255,255,.06);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      transition:background .2s;
+    }
+    .nav-inner{max-width:1160px;margin:0 auto;padding:0 40px;display:flex;align-items:center;gap:0;width:100%}
+    .nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0}
+    .nav-logo-mark{width:30px;height:30px;border-radius:8px;background:var(--p);display:flex;align-items:center;justify-content:center}
+    .nav-logo-text{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.01em}
+    .nav-links{display:flex;align-items:center;gap:2px;margin-left:32px;flex:1}
+    .nav-link{font-size:13.5px;color:rgba(255,255,255,.5);text-decoration:none;padding:5px 12px;border-radius:7px;transition:color .12s,background .12s;white-space:nowrap}
+    .nav-link:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.06)}
+    .nav-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .nav-sign{font-size:13.5px;color:rgba(255,255,255,.55);text-decoration:none;padding:6px 14px;border-radius:8px;font-weight:500;transition:color .12s;white-space:nowrap}
+    .nav-sign:hover{color:#fff}
+    .nav-cta{font-size:13.5px;font-weight:600;color:#fff;text-decoration:none;padding:7px 16px;border-radius:8px;background:var(--p);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15),0 1px 3px rgba(108,77,255,.35);transition:filter .12s;white-space:nowrap}
+    .nav-cta:hover{filter:brightness(1.1)}
+
+    /* ── Hero ── */
+    #hero{
+      min-height:100vh;background:var(--dark);padding-top:60px;
+      display:flex;flex-direction:column;align-items:center;
+      position:relative;overflow:hidden;
+    }
+    /* Grid texture */
+    #hero::before{
+      content:'';position:absolute;inset:0;
+      background-image:linear-gradient(rgba(108,77,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(108,77,255,.04) 1px,transparent 1px);
+      background-size:48px 48px;pointer-events:none;
+    }
+    .hero-glow{
+      position:absolute;top:-80px;left:50%;transform:translateX(-50%);
+      width:1000px;height:600px;pointer-events:none;
+      background:radial-gradient(ellipse at 50% 30%,rgba(108,77,255,.22) 0%,transparent 68%);
+    }
+    .hero-content{
+      position:relative;z-index:2;width:100%;max-width:1160px;padding:0 40px;
+      padding-top:72px;display:flex;flex-direction:column;align-items:center;
+    }
+    .hero-badge{
+      display:inline-flex;align-items:center;gap:8px;
+      background:rgba(108,77,255,.12);border:1px solid rgba(108,77,255,.28);
+      color:#C4B5FD;font-size:12px;font-weight:500;padding:5px 14px 5px 8px;border-radius:20px;
+      margin-bottom:28px;
+    }
+    .badge-dot{width:6px;height:6px;border-radius:3px;background:var(--p);box-shadow:0 0 6px rgba(108,77,255,.8)}
+    .hero-h1{font-size:clamp(44px,5.5vw,76px);font-weight:800;line-height:1.06;letter-spacing:-.04em;color:#fff;text-align:center;max-width:840px;margin-bottom:22px}
+    .hero-h1 em{font-style:normal;color:#C4B5FD}
+    .hero-sub{font-size:18px;color:rgba(255,255,255,.45);text-align:center;max-width:500px;line-height:1.65;margin-bottom:36px;font-weight:400}
+    .hero-actions{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .hero-btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--p);color:#fff;font-family:inherit;font-size:15px;font-weight:600;padding:0 24px;height:48px;border-radius:12px;border:none;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 4px 16px rgba(108,77,255,.4);transition:filter .15s,transform .12s;text-decoration:none}
+    .hero-btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    .hero-btn-ghost{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.65);font-family:inherit;font-size:15px;font-weight:500;padding:0 24px;height:48px;border-radius:12px;border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:all .15s;text-decoration:none}
+    .hero-btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff}
+    .hero-trust{display:flex;align-items:center;gap:20px;font-size:12.5px;color:rgba(255,255,255,.28);margin-bottom:56px}
+    .trust-sep{width:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.15)}
+
+    /* Floating stats strip */
+    .hero-stats{
+      display:flex;align-items:stretch;gap:0;
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;margin-bottom:48px;overflow:hidden;
+    }
+    .hero-stat{padding:18px 32px;text-align:center;border-right:1px solid rgba(255,255,255,.07)}
+    .hero-stat:last-child{border-right:none}
+    .hero-stat-v{font-size:26px;font-weight:700;color:#fff;letter-spacing:-.03em;margin-bottom:3px}
+    .hero-stat-l{font-size:11.5px;color:rgba(255,255,255,.35);font-weight:500}
+
+    /* App mockup */
+    .hero-app{
+      width:100%;max-width:1000px;border-radius:14px 14px 0 0;overflow:hidden;
+      border:1px solid rgba(255,255,255,.1);border-bottom:none;
+      box-shadow:0 -12px 60px rgba(108,77,255,.15),0 40px 80px rgba(0,0,0,.5);
+      position:relative;z-index:2;
+    }
+    .app-chrome{
+      height:38px;background:#0D0D16;border-bottom:1px solid rgba(255,255,255,.07);
+      display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;
+    }
+    .chrome-dots{display:flex;gap:5px}
+    .chrome-dot{width:10px;height:10px;border-radius:5px}
+    .chrome-url{flex:1;max-width:260px;margin:0 auto;height:22px;background:rgba(255,255,255,.05);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:rgba(255,255,255,.22)}
+    .app-body{display:flex;height:400px}
+
+    /* Sidebar */
+    .app-sb{width:188px;background:#0A0A12;border-right:1px solid rgba(255,255,255,.05);padding:14px 10px;display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+    .sb-logo{display:flex;align-items:center;gap:7px;padding:6px 8px;margin-bottom:10px}
+    .sb-logo-mark{width:22px;height:22px;border-radius:6px;background:var(--p)}
+    .sb-logo-text{font-size:12px;font-weight:700;color:rgba(255,255,255,.75)}
+    .sb-item{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:6px;font-size:11.5px;color:rgba(255,255,255,.32);cursor:pointer}
+    .sb-item.on{background:rgba(255,255,255,.07);color:rgba(255,255,255,.8)}
+    .sb-icon{width:13px;height:13px;flex-shrink:0;opacity:.6}
+    .sb-item.on .sb-icon{opacity:1}
+    .sb-spacer{flex:1}
+    .sb-trial{padding:10px;background:rgba(108,77,255,.1);border:1px solid rgba(108,77,255,.2);border-radius:8px;margin-top:8px}
+    .sb-trial-label{font-size:9px;color:rgba(255,255,255,.28);margin-bottom:5px}
+    .sb-trial-bar{height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin-bottom:5px}
+    .sb-trial-fill{height:100%;width:50%;background:var(--p);border-radius:2px}
+    .sb-trial-cta{font-size:9px;color:rgba(108,77,255,.8);font-weight:600}
+
+    /* Main area */
+    .app-main{flex:1;background:#0E0E18;padding:18px;overflow:hidden;display:flex;flex-direction:column;gap:14px}
+    .app-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+    .app-top-title{font-size:13px;font-weight:600;color:rgba(255,255,255,.75)}
+    .app-top-period{font-size:11px;color:rgba(255,255,255,.3);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:2px 8px}
+    .stat-row{display:flex;gap:10px}
+    .stat-card{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:12px 14px}
+    .stat-l{font-size:9.5px;color:rgba(255,255,255,.28);margin-bottom:3px;font-weight:500}
+    .stat-v{font-size:22px;font-weight:700;color:rgba(255,255,255,.88);letter-spacing:-.03em}
+    .stat-t{font-size:9.5px;margin-top:2px}
+
+    /* Table */
+    .app-table{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:9px;overflow:hidden;flex:1}
+    .tbl-head{display:grid;grid-template-columns:1.8fr 1fr 70px 50px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.05)}
+    .tbl-th{font-size:9.5px;color:rgba(255,255,255,.22);font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+    .tbl-row{display:grid;grid-template-columns:1.8fr 1fr 70px 50px;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center}
+    .tbl-row:last-child{border-bottom:none}
+    .tbl-prospect{display:flex;align-items:center;gap:8px}
+    .tbl-av{width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+    .tbl-name{font-size:11px;color:rgba(255,255,255,.72);font-weight:500}
+    .tbl-company{font-size:9.5px;color:rgba(255,255,255,.24)}
+    .tbl-badge{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;width:fit-content}
+    .tbl-score{width:34px;height:19px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+    .tbl-dot{width:28px;height:18px;border-radius:4px;background:rgba(108,77,255,.18);display:flex;align-items:center;justify-content:center}
+
+    /* ── Shared section styles ── */
+    .section{padding:88px 0}
+    .wrap{max-width:1160px;margin:0 auto;padding:0 40px}
+    .label{font-size:11.5px;font-weight:600;color:var(--p);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+    h2.sec{font-size:clamp(28px,3.2vw,46px);font-weight:700;line-height:1.13;letter-spacing:-.03em;color:var(--ink);margin-bottom:16px}
+    h2.sec em{font-style:normal;color:var(--p)}
+    .sec-sub{font-size:17px;color:var(--muted);line-height:1.7;max-width:520px}
+
+    /* ── Logos ── */
+    #logos{padding:44px 0;background:var(--bg);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    #logos .wrap{display:flex;flex-direction:column;align-items:center;gap:24px}
+    .logos-label{font-size:11.5px;font-weight:600;color:var(--subtle);letter-spacing:.07em;text-transform:uppercase}
+    .logos-row{display:flex;align-items:center;gap:40px;flex-wrap:wrap;justify-content:center}
+    .logo-chip{display:flex;align-items:center;gap:8px;opacity:.65;transition:opacity .15s;cursor:default}
+    .logo-chip:hover{opacity:1}
+    .logo-mark{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
+    .logo-name{font-size:14.5px;font-weight:600;color:var(--mid);letter-spacing:-.01em}
+
+    /* ── Perspectives ── */
+    #persp{background:#fff}
+    .persp-head{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-bottom:44px}
+    .persp-tabs{display:flex;gap:6px;align-items:center;flex-shrink:0}
+    .ptab{display:flex;align-items:center;gap:7px;padding:9px 16px;border-radius:9px;border:1px solid var(--border);background:transparent;font-family:inherit;font-size:13.5px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+    .ptab svg{opacity:.5;transition:opacity .15s}
+    .ptab.on{background:var(--p);color:#fff;border-color:var(--p);box-shadow:0 2px 10px rgba(108,77,255,.3)}
+    .ptab.on svg{opacity:1}
+    .persp-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+    .persp-text h3{font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.02em;margin-bottom:14px}
+    .persp-text p{font-size:15.5px;color:var(--muted);line-height:1.75;margin-bottom:28px}
+    .bullets{display:flex;flex-direction:column;gap:9px}
+    .bullet{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mid)}
+    .bullet-ic{width:20px;height:20px;border-radius:10px;background:var(--s10);border:1px solid rgba(22,163,74,.22);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .persp-visual{border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.07)}
+    .pv-inner{background:var(--bg);padding:20px}
+    .pv-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .pv-title{font-size:13px;font-weight:600;color:var(--ink)}
+    .pv-badge{font-size:11px;padding:3px 10px;border-radius:5px;font-weight:600}
+    .pv-card{background:#fff;border:1px solid var(--border);border-radius:9px;padding:14px;margin-bottom:8px}
+    .pv-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+    .pv-kiss{padding:11px;border-radius:7px;margin-bottom:0}
+    .pv-kiss-k{font-size:9.5px;font-weight:700;margin-bottom:4px}
+    .pv-kiss-v{font-size:11px;color:var(--mid);line-height:1.5}
+    .pv-bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+    .pv-bar-label{width:16px;font-size:10px;font-weight:700}
+    .pv-bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+    .pv-bar-fill{height:100%;border-radius:3px}
+    .pv-bar-pct{width:28px;font-size:10px;color:var(--muted);text-align:right}
+    .pv-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:7px;margin-bottom:6px}
+    .pv-av{width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0}
+    .pv-rname{flex:1;font-size:11px;font-weight:500;color:var(--ink)}
+    .pv-rsub{font-size:9.5px;color:var(--muted)}
+    .pv-score{font-size:11px;font-weight:700;color:var(--ink)}
+    .pv-mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+    .pv-mini{background:#fff;border:1px solid var(--border);border-radius:7px;padding:10px}
+    .pv-mini-v{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.02em}
+    .pv-mini-l{font-size:9.5px;color:var(--muted);margin-top:1px}
+    .pv-kpi-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+    .pv-kpi-k{font-size:11px;color:var(--mid)}
+    .pv-kpi-v{font-size:11px;font-weight:700}
+
+    /* ── How it works ── */
+    #how{background:var(--dark);position:relative;overflow:hidden}
+    #how::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(108,77,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(108,77,255,.035) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+    #how .label{color:#C4B5FD}
+    #how h2.sec{color:#fff}
+    #how h2.sec em{color:#C4B5FD}
+    #how .sec-sub{color:rgba(255,255,255,.38);max-width:440px}
+    .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:52px;position:relative}
+    .how-step{padding:36px 32px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);position:relative}
+    .how-step:first-child{border-radius:14px 0 0 14px}
+    .how-step:last-child{border-radius:0 14px 14px 0}
+    .how-step:not(:last-child)::after{content:'→';position:absolute;top:40px;right:-14px;color:rgba(108,77,255,.5);font-size:16px;z-index:2;background:var(--dark);padding:0 2px}
+    .how-num{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--p);margin-bottom:18px;text-transform:uppercase}
+    .how-icon{width:42px;height:42px;border-radius:11px;background:rgba(108,77,255,.12);border:1px solid rgba(108,77,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+    .how-step h3{font-size:17px;font-weight:600;color:rgba(255,255,255,.88);margin-bottom:10px;letter-spacing:-.01em}
+    .how-step p{font-size:13.5px;color:rgba(255,255,255,.36);line-height:1.7}
+
+    /* ── Features ── */
+    #features{background:#fff}
+    .feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:52px}
+    .feat{background:#fff;padding:40px 36px;transition:background .15s;cursor:default}
+    .feat:hover{background:var(--bg)}
+    .feat-ic{width:42px;height:42px;border-radius:11px;background:var(--p10);border:1px solid var(--p20);display:flex;align-items:center;justify-content:center;margin-bottom:20px;transition:background .15s,border-color .15s}
+    .feat:hover .feat-ic{background:var(--p);border-color:var(--p)}
+    .feat:hover .feat-ic svg{stroke:#fff}
+    .feat-ic svg{transition:stroke .15s}
+    .feat h3{font-size:17px;font-weight:600;color:var(--ink);margin-bottom:10px;letter-spacing:-.01em}
+    .feat p{font-size:14px;color:var(--muted);line-height:1.7}
+
+    /* ── Testimonial ── */
+    #testi{background:var(--bg);padding:88px 0}
+    .testi-wrap{max-width:860px;margin:0 auto;text-align:center}
+    .testi-stars{display:flex;gap:3px;justify-content:center;margin-bottom:28px}
+    .star{width:18px;height:18px;color:var(--w)}
+    .testi-q{font-size:clamp(22px,2.8vw,34px);font-weight:600;line-height:1.45;color:var(--ink);letter-spacing:-.025em;margin-bottom:36px;text-wrap:pretty}
+    .testi-q::before{content:'\201C';color:var(--p);font-size:1.4em;line-height:.6;vertical-align:-.3em;margin-right:2px}
+    .testi-q::after{content:'\201D';color:var(--p);font-size:1.4em;line-height:.6;vertical-align:-.3em;margin-left:2px}
+    .testi-author{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:52px}
+    .testi-av{width:44px;height:44px;border-radius:22px;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
+    .testi-name{font-size:14px;font-weight:600;color:var(--ink);text-align:left}
+    .testi-role{font-size:13px;color:var(--muted);text-align:left}
+    .testi-stats{display:flex;gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .testi-stat{flex:1;padding:28px 24px;text-align:center;border-right:1px solid var(--border)}
+    .testi-stat:last-child{border-right:none}
+    .tstat-v{font-size:36px;font-weight:700;color:var(--ink);letter-spacing:-.04em;margin-bottom:4px}
+    .tstat-l{font-size:13px;color:var(--muted)}
+
+    /* ── FAQ ── */
+    #faq{background:#fff;padding:88px 0}
+    .faq-head{text-align:center;margin-bottom:52px}
+    .faq-list{max-width:740px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+    .faq-item{border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:box-shadow .15s,border-color .15s}
+    .faq-item:hover{border-color:#D4D4D8;box-shadow:0 2px 14px rgba(0,0,0,.06)}
+    .faq-item.open{border-color:var(--p20)}
+    .faq-q{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px;cursor:pointer;font-size:14.5px;font-weight:500;color:var(--ink);user-select:none;background:#fff;transition:background .12s}
+    .faq-item.open .faq-q{background:var(--p06)}
+    .faq-toggle{width:24px;height:24px;border-radius:6px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+    .faq-item.open .faq-toggle{background:var(--p10);border-color:var(--p20);transform:rotate(45deg)}
+    .faq-a{font-size:14px;color:var(--muted);line-height:1.78;padding:0 22px 18px;display:none}
+    .faq-item.open .faq-a{display:block}
+
+    /* ── CTA ── */
+    #cta{background:var(--dark);padding:100px 0;position:relative;overflow:hidden}
+    #cta::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(108,77,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(108,77,255,.035) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+    .cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:500px;background:radial-gradient(ellipse,rgba(108,77,255,.18) 0%,transparent 65%);pointer-events:none}
+    #cta .wrap{position:relative;z-index:2;text-align:center}
+    #cta h2{font-size:clamp(32px,4vw,52px);font-weight:800;color:#fff;letter-spacing:-.035em;margin-bottom:16px;line-height:1.1}
+    #cta h2 em{font-style:normal;color:#C4B5FD}
+    #cta p{font-size:17px;color:rgba(255,255,255,.4);max-width:440px;margin:0 auto 40px;line-height:1.65}
+    .cta-btns{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:28px}
+    .cta-trust{display:flex;align-items:center;justify-content:center;gap:20px;font-size:12px;color:rgba(255,255,255,.22)}
+    .cta-trust-sep{width:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.12)}
+    .cta-btn-dark{display:inline-flex;align-items:center;height:48px;padding:0 24px;border-radius:12px;background:#fff;color:var(--ink);font-size:15px;font-weight:600;font-family:inherit;border:none;cursor:pointer;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:background .12s}
+    .cta-btn-dark:hover{background:#F0F0F3}
+
+    /* ── Footer ── */
+    footer{background:var(--dark);border-top:1px solid rgba(255,255,255,.06);padding:32px 0}
+    .foot-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+    .foot-logo{display:flex;align-items:center;gap:8px}
+    .foot-logo-mark{width:24px;height:24px;border-radius:6px;background:var(--p);display:flex;align-items:center;justify-content:center}
+    .foot-logo-text{font-size:14px;font-weight:700;color:rgba(255,255,255,.6)}
+    .foot-links{display:flex;gap:20px}
+    .foot-links a{font-size:13px;color:rgba(255,255,255,.3);text-decoration:none;transition:color .12s}
+    .foot-links a:hover{color:rgba(255,255,255,.6)}
+    .foot-copy{font-size:12px;color:rgba(255,255,255,.18)}
+
+    /* SVG icons inline */
+    svg{display:block}
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      </div>
+      <span class="nav-logo-text">Sales Time</span>
+    </a>
+    <div class="nav-links">
+      <a href="#persp" class="nav-link">Fonctionnalités</a>
+      <a href="#how" class="nav-link">Comment ça marche</a>
+      <a href="#faq" class="nav-link">FAQ</a>
+    </div>
+    <div class="nav-actions">
+      <a href="#" class="nav-sign">Connexion</a>
+      <a href="#" class="nav-cta">Commencer</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <div class="hero-badge reveal">
+      <span class="badge-dot"></span>
+      Coach commercial IA · Analyse DISC &amp; SONCAS
+    </div>
+    <h1 class="hero-h1 reveal reveal-d1">Le directeur commercial<br><em>virtuel</em> de votre équipe</h1>
+    <p class="hero-sub reveal reveal-d2">Chaque RDV devient un compte rendu structuré, un coaching personnalisé et un mail de suivi — en 30 secondes.</p>
+    <div class="hero-actions reveal reveal-d3">
+      <a href="#" class="hero-btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Essayer gratuitement
+      </a>
+      <a href="#" class="hero-btn-ghost">Voir les offres</a>
+    </div>
+    <div class="hero-trust reveal reveal-d3">
+      <span>Essai gratuit</span>
+      <span class="trust-sep"></span>
+      <span>Pas de carte bancaire</span>
+      <span class="trust-sep"></span>
+      <span>Équipes B2B</span>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="hero-stats reveal reveal-d4">
+      <div class="hero-stat">
+        <div class="hero-stat-v">30 s</div>
+        <div class="hero-stat-l">Pour une première analyse</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-v">5+</div>
+        <div class="hero-stat-l">Frameworks (KISS, DISC…)</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-v">100%</div>
+        <div class="hero-stat-l">Données restent les vôtres</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-v">24/7</div>
+        <div class="hero-stat-l">Disponible après chaque RDV</div>
+      </div>
+    </div>
+
+    <!-- App mockup -->
+    <div class="hero-app reveal">
+      <div class="app-chrome">
+        <div class="chrome-dots">
+          <div class="chrome-dot" style="background:#FF5F57"></div>
+          <div class="chrome-dot" style="background:#FEBC2E"></div>
+          <div class="chrome-dot" style="background:#28C840"></div>
+        </div>
+        <div class="chrome-url">app.sales-time.io / tableau de bord</div>
+      </div>
+      <div class="app-body">
+        <div class="app-sb">
+          <div class="sb-logo">
+            <div class="sb-logo-mark"></div>
+            <span class="sb-logo-text">Sales Time</span>
+          </div>
+          <div class="sb-item on">
+            <svg class="sb-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Tableau de bord
+          </div>
+          <div class="sb-item">
+            <svg class="sb-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Mes rendez-vous
+          </div>
+          <div class="sb-item">
+            <svg class="sb-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+            Analyse
+          </div>
+          <div class="sb-spacer"></div>
+          <div class="sb-trial">
+            <div class="sb-trial-label">Essai gratuit · 5 restantes</div>
+            <div class="sb-trial-bar"><div class="sb-trial-fill"></div></div>
+            <div class="sb-trial-cta">Voir les plans →</div>
+          </div>
+        </div>
+        <div class="app-main">
+          <div class="app-topbar">
+            <span class="app-top-title">Thomas Vidal · Tableau de bord</span>
+            <span class="app-top-period">30 jours</span>
+          </div>
+          <div class="stat-row">
+            <div class="stat-card">
+              <div class="stat-l">TAM CUMULÉ</div>
+              <div class="stat-v">3h40</div>
+              <div class="stat-t" style="color:#4ADE80">+12 min</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-l">RENDEZ-VOUS ANALYSÉS</div>
+              <div class="stat-v">24</div>
+              <div class="stat-t" style="color:#F87171">−2</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-l">TUC OPTIMISÉ</div>
+              <div class="stat-v">70%</div>
+              <div class="stat-t" style="color:#F87171">−5%</div>
+            </div>
+          </div>
+          <div class="app-table">
+            <div class="tbl-head">
+              <div class="tbl-th">Prospect</div>
+              <div class="tbl-th">Étape</div>
+              <div class="tbl-th">Score</div>
+              <div class="tbl-th"></div>
+            </div>
+            <div class="tbl-row">
+              <div class="tbl-prospect"><div class="tbl-av" style="background:#6C4DFF">AL</div><div><div class="tbl-name">Antoine Lambert</div><div class="tbl-company">TechVision</div></div></div>
+              <div><span class="tbl-badge" style="background:rgba(2,132,199,.15);color:#60B8E8">Découverte</span></div>
+              <div><span class="tbl-score" style="background:rgba(227,146,25,.15);color:#E39219">64</span></div>
+              <div class="tbl-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(108,77,255,.8)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+            <div class="tbl-row">
+              <div class="tbl-prospect"><div class="tbl-av" style="background:#0284C7">PC</div><div><div class="tbl-name">Pierre Charpentier</div><div class="tbl-company">InnovaGroup</div></div></div>
+              <div><span class="tbl-badge" style="background:rgba(108,77,255,.15);color:#BDB0FF">Proposition</span></div>
+              <div><span class="tbl-score" style="background:rgba(227,146,25,.15);color:#E39219">56</span></div>
+              <div class="tbl-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(108,77,255,.8)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+            <div class="tbl-row">
+              <div class="tbl-prospect"><div class="tbl-av" style="background:#16A34A">ML</div><div><div class="tbl-name">Mathilde Leroy</div><div class="tbl-company">DigitechSA</div></div></div>
+              <div><span class="tbl-badge" style="background:rgba(2,132,199,.15);color:#60B8E8">Découverte</span></div>
+              <div><span class="tbl-score" style="background:rgba(220,38,38,.15);color:#F87171">48</span></div>
+              <div class="tbl-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(108,77,255,.8)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+            <div class="tbl-row">
+              <div class="tbl-prospect"><div class="tbl-av" style="background:#E39219">FA</div><div><div class="tbl-name">Fabien Aubry</div><div class="tbl-company">BuildPro</div></div></div>
+              <div><span class="tbl-badge" style="background:rgba(22,163,74,.15);color:#4ADE80">Négociation</span></div>
+              <div><span class="tbl-score" style="background:rgba(22,163,74,.15);color:#4ADE80">98</span></div>
+              <div class="tbl-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(108,77,255,.8)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGOS -->
+<section id="logos">
+  <div class="wrap">
+    <div class="logos-label">Ils utilisent Sales Time</div>
+    <div class="logos-row">
+      <div class="logo-chip"><div class="logo-mark" style="background:#4F46E5">NV</div><span class="logo-name">Novalis ERP</span></div>
+      <div class="logo-chip"><div class="logo-mark" style="background:#0891B2">KM</div><span class="logo-name">Kermor Media</span></div>
+      <div class="logo-chip"><div class="logo-mark" style="background:#D97706">BX</div><span class="logo-name">Bexon Logistique</span></div>
+      <div class="logo-chip"><div class="logo-mark" style="background:#7C3AED">AR</div><span class="logo-name">Archetype Labs</span></div>
+      <div class="logo-chip"><div class="logo-mark" style="background:#0D9488">ML</div><span class="logo-name">Maillon Santé</span></div>
+      <div class="logo-chip"><div class="logo-mark" style="background:#65A30D">CT</div><span class="logo-name">Côté Terre</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PERSPECTIVES -->
+<section id="persp" class="section">
+  <div class="wrap">
+    <div class="persp-head">
+      <div>
+        <div class="label reveal">Une plateforme, trois regards</div>
+        <h2 class="sec reveal reveal-d1">Conçu pour <em>chaque niveau</em><br>de l'équipe commerciale</h2>
+      </div>
+      <div class="persp-tabs">
+        <button class="ptab on" onclick="switchTab(0)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Commercial
+        </button>
+        <button class="ptab" onclick="switchTab(1)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Manager
+        </button>
+        <button class="ptab" onclick="switchTab(2)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Direction
+        </button>
+      </div>
+    </div>
+
+    <!-- Commercial -->
+    <div class="persp-grid" id="pb0">
+      <div class="persp-text reveal">
+        <h3>Gagnez du Temps Utile Commercial</h3>
+        <p>Compte rendu structuré, coaching KISS, mail de suivi prêt à envoyer, profil DISC et SONCAS — sans repasser des heures sur le CRM.</p>
+        <div class="bullets">
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Synthèse du RDV en 30 secondes</div>
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Coaching personnalisé selon le profil prospect</div>
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Mail de relance généré et modifiable</div>
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Dashboard : TAM, tendances, next actions</div>
+        </div>
+      </div>
+      <div class="persp-visual reveal reveal-d2">
+        <div class="pv-inner">
+          <div class="pv-head"><div class="pv-title">Analyse RDV · Antoine Lambert</div><span class="pv-badge" style="background:var(--p10);color:var(--p)">Score 64</span></div>
+          <div class="pv-grid2">
+            <div class="pv-kiss" style="background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.15)"><div class="pv-kiss-k" style="color:#16A34A">KEEP</div><div class="pv-kiss-v">Très bonne écoute active. Excellentes questions de découverte.</div></div>
+            <div class="pv-kiss" style="background:rgba(2,132,199,.06);border:1px solid rgba(2,132,199,.15)"><div class="pv-kiss-k" style="color:#0284C7">IMPROVE</div><div class="pv-kiss-v">Challenger davantage sur le budget avant la proposition.</div></div>
+            <div class="pv-kiss" style="background:var(--p06);border:1px solid var(--p20)"><div class="pv-kiss-k" style="color:var(--p)">START</div><div class="pv-kiss-v">Créer de l'urgence via des benchmarks sectoriels.</div></div>
+            <div class="pv-kiss" style="background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15)"><div class="pv-kiss-k" style="color:#DC2626">STOP</div><div class="pv-kiss-v">Promettre un POC gratuit sans accord de principe.</div></div>
+          </div>
+          <div style="font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Profil DISC</div>
+          <div class="pv-bar-wrap"><span class="pv-bar-label" style="color:#DC2626">D</span><div class="pv-bar-track"><div class="pv-bar-fill" style="width:65%;background:#DC2626"></div></div><span class="pv-bar-pct">65%</span></div>
+          <div class="pv-bar-wrap"><span class="pv-bar-label" style="color:#D97706">I</span><div class="pv-bar-track"><div class="pv-bar-fill" style="width:30%;background:#D97706"></div></div><span class="pv-bar-pct">30%</span></div>
+          <div class="pv-bar-wrap"><span class="pv-bar-label" style="color:#16A34A">S</span><div class="pv-bar-track"><div class="pv-bar-fill" style="width:35%;background:#16A34A"></div></div><span class="pv-bar-pct">35%</span></div>
+          <div class="pv-bar-wrap"><span class="pv-bar-label" style="color:#0284C7">C</span><div class="pv-bar-track"><div class="pv-bar-fill" style="width:20%;background:#0284C7"></div></div><span class="pv-bar-pct">20%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manager -->
+    <div class="persp-grid" id="pb1" style="display:none">
+      <div class="persp-text reveal">
+        <h3>Pilotez la qualité sans micro-management</h3>
+        <p>Vue équipe sur le volume de RDV coachés, les axes de coaching collectifs et les signaux de risque — sans lire chaque note individuellement.</p>
+        <div class="bullets">
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Dashboard équipe : TAM agrégé, volume, DISC</div>
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Profil de chaque commercial et axes à coacher</div>
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Signaux de risque sur les deals en cours</div>
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Répartition DISC et SONCAS de l'équipe</div>
+        </div>
+      </div>
+      <div class="persp-visual">
+        <div class="pv-inner">
+          <div class="pv-head"><div class="pv-title">Vue Manager · Équipe</div><span class="pv-badge" style="background:var(--s10);color:var(--s)">6 membres</span></div>
+          <div class="pv-grid2" style="margin-bottom:12px">
+            <div class="pv-mini"><div class="pv-mini-l">TAM cumulé</div><div class="pv-mini-v">21h40</div></div>
+            <div class="pv-mini"><div class="pv-mini-l">RDVs analysés</div><div class="pv-mini-v">165</div></div>
+          </div>
+          <div style="font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Mon équipe</div>
+          <div class="pv-row"><div class="pv-av" style="background:#6C4DFF">AL</div><div><div class="pv-rname">Antoine Lambert</div><div class="pv-rsub">Fort en découverte</div></div><div class="pv-score">4.2</div></div>
+          <div class="pv-row"><div class="pv-av" style="background:#0284C7">PC</div><div><div class="pv-rname">Pierre Charpentier</div><div class="pv-rsub">À travailler qualification</div></div><div class="pv-score">3.8</div></div>
+          <div class="pv-row"><div class="pv-av" style="background:#16A34A">ML</div><div><div class="pv-rname">Mathilde Leroy</div><div class="pv-rsub">Top performer</div></div><div class="pv-score">4.5</div></div>
+          <div class="pv-row"><div class="pv-av" style="background:#D97706">FA</div><div><div class="pv-rname">Fabien Aubry</div><div class="pv-rsub">Excellent négo</div></div><div class="pv-score">4.8</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direction -->
+    <div class="persp-grid" id="pb2" style="display:none">
+      <div class="persp-text">
+        <h3>Mesurez le ROI commercial avec clarté</h3>
+        <p>Indicateurs consolidés : TUC, TAM, volume et thématiques récurrentes. Un argument ROI clair pour piloter l'investissement commercial.</p>
+        <div class="bullets">
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>KPIs consolidés : TUC, TAM, volume global</div>
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Thématiques KISS récurrentes sur l'ensemble</div>
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Progression mois après mois</div>
+          <div class="bullet"><div class="bullet-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>Argument ROI structuré pour arbitrages budgétaires</div>
+        </div>
+      </div>
+      <div class="persp-visual">
+        <div class="pv-inner">
+          <div class="pv-head"><div class="pv-title">Rapports · Entreprise</div><span class="pv-badge" style="background:var(--p10);color:var(--p)">30 jours</span></div>
+          <div class="pv-mini-grid">
+            <div class="pv-mini"><div class="pv-mini-l">TAM cumulé</div><div class="pv-mini-v">21h40</div></div>
+            <div class="pv-mini"><div class="pv-mini-l">RDVs coachés</div><div class="pv-mini-v">165</div></div>
+            <div class="pv-mini"><div class="pv-mini-l">TUC moyen</div><div class="pv-mini-v">68%</div></div>
+          </div>
+          <div style="font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Thématiques KISS</div>
+          <div style="margin-bottom:8px"><div class="pv-kpi-row"><span class="pv-kpi-k">Qualification budget</span><span class="pv-kpi-v" style="color:#DC2626">STOP · 38%</span></div><div class="pv-bar-track"><div class="pv-bar-fill" style="width:38%;background:#DC2626"></div></div></div>
+          <div style="margin-bottom:8px"><div class="pv-kpi-row"><span class="pv-kpi-k">Écoute active</span><span class="pv-kpi-v" style="color:#16A34A">KEEP · 72%</span></div><div class="pv-bar-track"><div class="pv-bar-fill" style="width:72%;background:#16A34A"></div></div></div>
+          <div><div class="pv-kpi-row"><span class="pv-kpi-k">Closing next step</span><span class="pv-kpi-v" style="color:#0284C7">IMPROVE · 55%</span></div><div class="pv-bar-track"><div class="pv-bar-fill" style="width:55%;background:#0284C7"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" class="section">
+  <div class="wrap">
+    <div class="label reveal">Simple par design</div>
+    <h2 class="sec reveal reveal-d1">Comment <em>ça marche</em></h2>
+    <p class="sec-sub reveal reveal-d2">Trois étapes, zéro friction — de la fin du RDV à la fiche structurée.</p>
+    <div class="how-grid">
+      <div class="how-step reveal">
+        <div class="how-num">ÉTAPE 01</div>
+        <div class="how-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4B5FD" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <h3>Collez votre transcript</h3>
+        <p>Après le RDV, importez ou collez le texte issu de votre visio ou enregistrement. Tout format texte fonctionne.</p>
+      </div>
+      <div class="how-step reveal reveal-d1">
+        <div class="how-num">ÉTAPE 02</div>
+        <div class="how-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4B5FD" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg></div>
+        <h3>L'IA génère la fiche RDV</h3>
+        <p>Synthèse, coaching KISS, profil DISC/SONCAS avec verbatims et mail de suivi — en quelques secondes.</p>
+      </div>
+      <div class="how-step reveal reveal-d2">
+        <div class="how-num">ÉTAPE 03</div>
+        <div class="how-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4B5FD" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <h3>Suivez vos progrès</h3>
+        <p>Retrouvez sur votre tableau de bord le cumul TAM, vos tendances et les prochaines actions à prioriser.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="section">
+  <div class="wrap">
+    <div class="label reveal">Fonctionnalités</div>
+    <h2 class="sec reveal reveal-d1">Tout ce dont votre équipe<br>a besoin, <em>dès le départ</em></h2>
+    <div class="feat-grid">
+      <div class="feat reveal">
+        <div class="feat-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <h3>Fiche RDV analysée</h3>
+        <p>Métadonnées, synthèse du contexte et des enjeux, pistes de solution — prête à partager ou à archiver dans votre CRM.</p>
+      </div>
+      <div class="feat reveal reveal-d1">
+        <div class="feat-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg></div>
+        <h3>Coaching KISS personnalisé</h3>
+        <p>Recommandations adaptées au profil du prospect : ce qu'il faut garder, améliorer, arrêter et commencer — golden question incluse.</p>
+      </div>
+      <div class="feat reveal reveal-d2">
+        <div class="feat-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
+        <h3>Mail de suivi client</h3>
+        <p>Génération d'un mail structuré (remerciement, rappel des enjeux, prochaines étapes) modifiable avant envoi.</p>
+      </div>
+      <div class="feat reveal reveal-d3">
+        <div class="feat-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <h3>Dashboard manager</h3>
+        <p>Vue équipe : volumes, TAM agrégé, répartition des types de RDV et thématiques KISS — sans exposer les notes individuelles.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section id="testi">
+  <div class="wrap">
+    <div class="testi-wrap reveal">
+      <div class="testi-stars">
+        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <p class="testi-q">On a enfin un fil conducteur après les RDV : la synthèse et le mail de relance nous font gagner un créneau entier chaque semaine.</p>
+      <div class="testi-author">
+        <div class="testi-av">ML</div>
+        <div>
+          <div class="testi-name">Directrice commerciale</div>
+          <div class="testi-role">PME logiciel · 14 commerciaux</div>
+        </div>
+      </div>
+      <div class="testi-stats">
+        <div class="testi-stat"><div class="tstat-v">~4h</div><div class="tstat-l">Temps libéré / semaine</div></div>
+        <div class="testi-stat"><div class="tstat-v">120+</div><div class="tstat-l">RDV coachés / mois</div></div>
+        <div class="testi-stat"><div class="tstat-v">92%</div><div class="tstat-l">Adoption équipe</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="faq-head">
+      <div class="label" style="display:inline-block">FAQ</div>
+      <h2 class="sec" style="margin-top:10px">Questions fréquentes</h2>
+      <p class="sec-sub" style="margin:12px auto 0;text-align:center">Les réponses essentielles avant de lancer un pilote.</p>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Mes transcripts et analyses sont-ils confidentiels ?<div class="faq-toggle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+        <div class="faq-a">Oui. Les contenus sont traités pour votre organisation et vos rôles. Nous recommandons d'anonymiser les données personnelles sensibles si votre politique interne l'exige.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Faut-il une intégration CRM pour commencer ?<div class="faq-toggle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+        <div class="faq-a">Non. Vous collez le transcript issu de votre visio / enregistrement. Les intégrations CRM enrichiront le flux dans une phase ultérieure.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">L'IA remplace-t-elle le manager commercial ?<div class="faq-toggle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+        <div class="faq-a">Non. L'outil accélère la structuration et le feedback, mais la décision, la relation client et le coaching humain restent au centre.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Quels formats de transcript sont acceptés ?<div class="faq-toggle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+        <div class="faq-a">Tout texte brut : export visio, transcription automatique, prise de notes. L'important est un minimum de contexte (parties, sujets abordés).</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Puis-je inviter toute l'équipe ?<div class="faq-toggle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+        <div class="faq-a">Oui. Créez votre organisation, définissez les rôles admin / membre et invitez vos collègues par e-mail depuis l'espace équipe.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-glow"></div>
+  <div class="wrap">
+    <div class="reveal">
+      <h2>Prêt à transformer<br><em>vos rendez-vous ?</em></h2>
+      <p>Créez votre espace, invitez votre équipe et lancez la première analyse en quelques minutes.</p>
+      <div class="cta-btns">
+        <a href="#" class="hero-btn-primary" style="font-size:15px;height:48px">Créer un compte gratuit</a>
+        <a href="#" class="cta-btn-dark">Connexion</a>
+      </div>
+      <div class="cta-trust">
+        <span>Hébergement UE</span><span class="cta-trust-sep"></span>
+        <span>Rôles &amp; accès inclus</span><span class="cta-trust-sep"></span>
+        <span>Pas de carte bancaire</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-inner">
+      <div class="foot-logo">
+        <div class="foot-logo-mark"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+        <span class="foot-logo-text">Sales Time</span>
+      </div>
+      <div class="foot-links">
+        <a href="#">Connexion</a>
+        <a href="#">Inscription</a>
+        <a href="#">Plan produit</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="foot-copy">© 2026 Sales Time. Tous droits réservés.</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ── Perspective tabs ──
+  function switchTab(idx) {
+    document.querySelectorAll('.ptab').forEach((t,i) => t.classList.toggle('on', i===idx));
+    [0,1,2].forEach(i => {
+      const el = document.getElementById('pb'+i);
+      if (el) el.style.display = i===idx ? 'grid' : 'none';
+    });
+  }
+
+  // ── FAQ ──
+  function toggleFaq(el) {
+    const item = el.closest('.faq-item');
+    const open = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+    if (!open) item.classList.add('open');
+  }
+
+  // ── Scroll reveal ──
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // ── Nav bg on scroll ──
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 40 ? 'rgba(6,6,10,.88)' : 'rgba(6,6,10,.7)';
+  }, { passive: true });
+</script>
+</body>
+</html>

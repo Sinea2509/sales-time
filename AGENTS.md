@@ -4,6 +4,20 @@
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 
+## UI components (atomic design)
+
+| Layer | Path | Role |
+|-------|------|------|
+| Atoms | `components/atoms/` | Small presentational pieces (bullet lists, markdown preview, table empty row) |
+| Primitives | `components/ui/` | shadcn/Radix building blocks |
+| Molecules | `components/molecules/` | Composed UI (KPI tile, page header, section subnav) |
+| Organisms | `components/organisms/` | Feature sections with behavior |
+| Templates | `components/templates/` | Page shells and layout frames |
+
+`app/` routes must not import `components/ui/` directly (use atoms/molecules/organisms/templates). Root layout providers are the exception.
+
+Prefer reusing atoms/molecules before duplicating markup in organisms or `app/` routes.
+
 <!-- END:nextjs-agent-rules -->
 
 ## Architecture (hexagonal)

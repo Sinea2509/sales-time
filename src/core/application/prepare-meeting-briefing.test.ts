@@ -18,6 +18,7 @@ describe("prepareMeetingBriefing", () => {
       contacts: { findById: jest.fn().mockResolvedValue(null) },
       meetings: { listMeetingsForPersonOrdered: jest.fn() },
       analysis: { prepareMeetingBriefing: jest.fn() },
+      prompts: { getCurrentVersion: jest.fn() },
     };
 
     const result = await prepareMeetingBriefing(deps as never, {
@@ -94,6 +95,11 @@ describe("prepareMeetingBriefing", () => {
           .fn()
           .mockResolvedValue({ result: briefingResult }),
       },
+      prompts: {
+        getCurrentVersion: jest.fn().mockResolvedValue({
+          markdown: "Briefing system prompt",
+        }),
+      },
     };
 
     const result = await prepareMeetingBriefing(deps as never, {
@@ -108,6 +114,7 @@ describe("prepareMeetingBriefing", () => {
     expect(result?.briefing).toEqual(briefingResult);
     expect(deps.analysis.prepareMeetingBriefing).toHaveBeenCalledWith(
       expect.objectContaining({
+        systemMarkdown: "Briefing system prompt",
         targetStage: "Proposition",
         prospectCompany: "Acme",
         hasHistory: true,

@@ -11,11 +11,10 @@
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../lib/generated/prisma/client";
 import {
-  DEFAULT_DISC_MARKDOWN,
-  DEFAULT_KISS_MARKDOWN,
-  DEFAULT_SONCAS_MARKDOWN,
+  DEFAULT_ANALYSIS_PROMPT_MARKDOWN,
 } from "../lib/default-analysis-prompts";
 import { hashPassword } from "../lib/auth/password";
+import type { AnalysisKind } from "../lib/generated/prisma/client";
 import {
   ensureDemoTenant,
   type DemoPromptVersionIds,
@@ -42,13 +41,11 @@ const prisma = new PrismaClient({
 });
 
 async function ensurePromptTemplates(authorUserId: string) {
-  const seeds: Array<{ kind: "SONCAS" | "DISC" | "KISS"; markdown: string }> = [
-    { kind: "SONCAS", markdown: DEFAULT_SONCAS_MARKDOWN },
-    { kind: "DISC", markdown: DEFAULT_DISC_MARKDOWN },
-    { kind: "KISS", markdown: DEFAULT_KISS_MARKDOWN },
-  ];
+  const seeds = Object.entries(DEFAULT_ANALYSIS_PROMPT_MARKDOWN) as Array<
+    [AnalysisKind, string]
+  >;
 
-  for (const { kind, markdown } of seeds) {
+  for (const [kind, markdown] of seeds) {
     const template = await prisma.promptTemplate.upsert({
       where: { kind },
       create: { kind },

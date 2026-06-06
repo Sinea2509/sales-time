@@ -1,5 +1,5 @@
 import { getApplicationDeps } from "@/lib/application-deps";
-import { pageTitleClass } from "@/lib/page-typography";
+import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { AdminUserTable } from "@/components/organisms/admin-user-table";
 
 export const dynamic = "force-dynamic";
@@ -10,13 +10,10 @@ export default async function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className={pageTitleClass}>Utilisateurs</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Gérer les utilisateurs, bloquer/débloquer, modifier les profils et
-          inviter dans des organisations.
-        </p>
-      </div>
+      <PageHeaderSimple
+        title="Utilisateurs"
+        description="Gérer les utilisateurs, bloquer/débloquer, modifier les profils et inviter dans des organisations."
+      />
       <AdminUserTable users={serialized} organizations={orgOptions} />
     </div>
   );

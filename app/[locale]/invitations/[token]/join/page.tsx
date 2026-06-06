@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { pageTitleClass } from "@/lib/page-typography";
-import { JoinInvitationForm } from "./join-invitation-form";
+import { JoinInvitationForm } from "@/components/organisms/join-invitation-form";
 
 type Props = { params: Promise<{ token: string }> };
 

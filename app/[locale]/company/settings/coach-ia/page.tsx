@@ -1,6 +1,6 @@
 import { OrgSettingsCoachForm } from "@/components/organisms/org-settings-coach-form";
+import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { asStringArray } from "@/lib/as-string-array";
-import { pageTitleClass } from "@/lib/page-typography";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
@@ -24,7 +24,7 @@ export default async function OrganizationSettingsCoachPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className={pageTitleClass}>Coach IA</h1>
+      <PageHeaderSimple title="Coach IA" />
       <OrgSettingsCoachForm
         initial={{
           companyPitch: row?.companyPitch ?? "",

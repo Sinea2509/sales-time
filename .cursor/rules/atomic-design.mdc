@@ -1,0 +1,14 @@
+# Atomic UI components
+
+- **`components/ui/`** — shadcn primitives (buttons, cards, inputs). Used only inside atoms/molecules/organisms/templates — not in `app/` routes.
+- **`components/atoms/`** — tiny reusable presentational pieces with no business logic.
+- **`components/molecules/`** — compose atoms/ui into named patterns (headers, subnav, KPI tiles). No server actions.
+- **`components/organisms/`** — feature blocks; may call server actions and hold state.
+- **`components/templates/`** — page shells (admin sidebar, org dashboard, settings layout).
+
+When adding UI:
+
+1. Check atoms/molecules for an existing pattern before inlining markup.
+2. Extract duplicated markup after the second copy (not before the first).
+3. Keep `app/` routes thin — fetch data, pass props to organisms/templates; do not import `components/ui/` (root layout providers excepted).
+4. Pure formatting helpers belong in `lib/` (e.g. `lib/markdown-to-html.ts`).

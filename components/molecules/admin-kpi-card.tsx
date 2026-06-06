@@ -1,26 +1,9 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
+import {
+  statAccentStyles,
+  type StatAccent,
+} from "@/lib/stat-accent-styles";
 import { cn } from "@/lib/utils";
-
-type Accent = "blue" | "emerald" | "violet" | "amber";
-
-const accentMap: Record<Accent, { bg: string; icon: string }> = {
-  blue: {
-    bg: "bg-blue-50 dark:bg-blue-950/40",
-    icon: "text-blue-600 dark:text-blue-400",
-  },
-  emerald: {
-    bg: "bg-emerald-50 dark:bg-emerald-950/40",
-    icon: "text-emerald-600 dark:text-emerald-400",
-  },
-  violet: {
-    bg: "bg-violet-50 dark:bg-violet-950/40",
-    icon: "text-violet-600 dark:text-violet-400",
-  },
-  amber: {
-    bg: "bg-amber-50 dark:bg-amber-950/40",
-    icon: "text-amber-600 dark:text-amber-400",
-  },
-};
 
 type Props = {
   icon: React.ComponentType<{ className?: string }>;
@@ -28,7 +11,7 @@ type Props = {
   value: number | string;
   trend?: number | null;
   footer?: string;
-  accent?: Accent;
+  accent?: StatAccent;
 };
 
 export function AdminKpiCard({
@@ -39,7 +22,7 @@ export function AdminKpiCard({
   footer,
   accent = "blue",
 }: Props) {
-  const colors = accentMap[accent];
+  const colors = statAccentStyles[accent];
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">

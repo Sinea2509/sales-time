@@ -8,27 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DotBulletList } from "@/components/atoms/dot-bullet-list";
+import { IconCardHeader } from "@/components/molecules/icon-card-header";
 import { cardTitleClass } from "@/lib/page-typography";
 import {
   SalesProfileRadar,
   type SalesProfileScores,
 } from "@/components/organisms/sales-profile-radar";
-
-function CoachingBulletList({ items }: { items: string[] }) {
-  return (
-    <ul className="space-y-3 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
-      {items.map((line) => (
-        <li key={line} className="flex items-start gap-2.5">
-          <span
-            className="mt-2 inline-block size-1.5 shrink-0 rounded-full bg-neutral-400 dark:bg-neutral-500"
-            aria-hidden
-          />
-          <span>{line}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 export function AnalyseRecommandationsSection({
   salesProfile,
@@ -85,38 +71,28 @@ export function AnalyseRecommandationsSection({
 
       <div className="flex h-full flex-col gap-4">
         <Card className="flex flex-1 flex-col border-neutral-200 shadow-sm dark:border-neutral-800">
-          <CardHeader>
-            <div className="flex items-start gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/15">
-                <LineChart className="size-5 text-sky-600 dark:text-sky-400" />
-              </div>
-              <div className="min-w-0">
-                <CardTitle className={cardTitleClass}>{progressTitle}</CardTitle>
-                <CardDescription>{progressSubtitle}</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
+          <IconCardHeader
+            icon={LineChart}
+            title={progressTitle}
+            description={progressSubtitle}
+            iconWrapClassName="bg-sky-100 dark:bg-sky-500/15"
+            iconClassName="text-sky-600 dark:text-sky-400"
+          />
           <CardContent className="flex-1">
-            <CoachingBulletList items={progressBullets} />
+            <DotBulletList items={progressBullets} />
           </CardContent>
         </Card>
 
         <Card className="flex flex-1 flex-col border-neutral-200 shadow-sm dark:border-neutral-800">
-          <CardHeader>
-            <div className="flex items-start gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/15">
-                <Play className="size-5 fill-violet-600 text-violet-600 dark:fill-violet-400 dark:text-violet-400" />
-              </div>
-              <div className="min-w-0">
-                <CardTitle className={cardTitleClass}>
-                  {improvementTitle}
-                </CardTitle>
-                <CardDescription>{improvementSubtitle}</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
+          <IconCardHeader
+            icon={Play}
+            title={improvementTitle}
+            description={improvementSubtitle}
+            iconWrapClassName="bg-violet-100 dark:bg-violet-500/15"
+            iconClassName="fill-violet-600 text-violet-600 dark:fill-violet-400 dark:text-violet-400"
+          />
           <CardContent className="flex-1">
-            <CoachingBulletList items={improvementBullets} />
+            <DotBulletList items={improvementBullets} />
           </CardContent>
         </Card>
       </div>

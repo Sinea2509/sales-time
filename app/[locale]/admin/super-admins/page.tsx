@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { SuperAdminInvitesPanel } from "@/components/organisms/super-admin-invites-panel";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { NavLinkButton } from "@/components/molecules/nav-link-button";
+import { PageHeader } from "@/components/molecules/page-header";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { pageTitleClass } from "@/lib/page-typography";
 
 export const dynamic = "force-dynamic";
 
@@ -21,20 +19,15 @@ export default async function SuperAdminInvitesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className={pageTitleClass}>{t("title")}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {t("description")}
-          </p>
-        </div>
-        <Link
-          href="/admin"
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-        >
-          {t("backToOrgs")}
-        </Link>
-      </div>
+      <PageHeader
+        title={t("title")}
+        description={t("description")}
+        actions={
+          <NavLinkButton href="/admin" variant="outline" size="sm">
+            {t("backToOrgs")}
+          </NavLinkButton>
+        }
+      />
       <SuperAdminInvitesPanel
         currentUserId={principal.userId}
         superAdmins={superAdmins}

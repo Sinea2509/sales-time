@@ -14,7 +14,7 @@ import {
 } from "@/lib/onboarding-step1-options";
 import { optionsWithLegacy } from "@/lib/options-with-legacy";
 import { cn } from "@/lib/utils";
-import { orgSettingsSelectClassName } from "@/components/organisms/org-settings-select-class";
+import { nativeSelectClassName } from "@/components/ui/native-select-class";
 import { OrgSettingsLogoForm } from "@/components/organisms/org-settings-logo-form";
 
 export type OrgContexteFormInitial = {
@@ -121,7 +121,7 @@ export function OrgSettingsContexteForm({
             <Label htmlFor="org-industry">Secteur d’activité</Label>
             <select
               id="org-industry"
-              className={orgSettingsSelectClassName}
+              className={nativeSelectClassName}
               value={
                 industryOptions.some((o) => o.value === industrySector)
                   ? industrySector
@@ -141,7 +141,7 @@ export function OrgSettingsContexteForm({
             <Label htmlFor="org-team">Taille de l’équipe commerciale</Label>
             <select
               id="org-team"
-              className={orgSettingsSelectClassName}
+              className={nativeSelectClassName}
               value={
                 teamSizeOptions.some((o) => o.value === commercialTeamSize)
                   ? commercialTeamSize
@@ -161,7 +161,7 @@ export function OrgSettingsContexteForm({
             <Label htmlFor="org-cycle">Cycle de vente moyen</Label>
             <select
               id="org-cycle"
-              className={orgSettingsSelectClassName}
+              className={nativeSelectClassName}
               value={
                 cycleOptions.some((o) => o.value === averageSalesCycle)
                   ? averageSalesCycle
@@ -181,7 +181,7 @@ export function OrgSettingsContexteForm({
             <Label htmlFor="org-deal">Ticket moyen</Label>
             <select
               id="org-deal"
-              className={orgSettingsSelectClassName}
+              className={nativeSelectClassName}
               value={
                 dealSizeOptions.some((o) => o.value === averageDealSize)
                   ? averageDealSize

@@ -1,8 +1,8 @@
 import { RendezVousMeetingsShell } from "@/components/organisms/rendez-vous-meetings-shell";
+import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { pageTitleClass } from "@/lib/page-typography";
 import { formatUserDisplayName } from "@/lib/user-display-name";
 
 export const dynamic = "force-dynamic";
@@ -46,11 +46,7 @@ export default async function RendezVousPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className={pageTitleClass}>
-          {isAdmin ? "Rendez-vous" : "Mes rendez-vous"}
-        </h1>
-      </div>
+      <PageHeaderSimple title={isAdmin ? "Rendez-vous" : "Mes rendez-vous"} />
 
       <RendezVousMeetingsShell meetings={rows} showSellerColumn={isAdmin} />
     </div>

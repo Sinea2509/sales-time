@@ -68,7 +68,7 @@ function mapMeeting(row: {
 function mapAnalysis(row: {
   id: string;
   meetingId: string;
-  kind: MeetingAnalysisKind;
+  kind: string;
   model: string;
   result: unknown;
   createdAt: Date;
@@ -76,7 +76,7 @@ function mapAnalysis(row: {
   return {
     id: row.id,
     meetingId: row.meetingId,
-    kind: row.kind,
+    kind: row.kind as MeetingAnalysisKind,
     model: row.model,
     result: row.result,
     createdAt: row.createdAt,

@@ -1,9 +1,14 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
+import { AnalysisKind } from "@/lib/generated/prisma/client";
 import type {
   AnalysisKindSlug,
   PromptTemplateRepositoryPort,
   PromptTemplateVersionRow,
 } from "@/src/core/ports/prompt-template-repository-port";
+
+function toPrismaAnalysisKind(kind: AnalysisKindSlug): AnalysisKind {
+  return kind as AnalysisKind;
+}
 
 export class PrismaPromptTemplateRepository implements PromptTemplateRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
@@ -12,7 +17,7 @@ export class PrismaPromptTemplateRepository implements PromptTemplateRepositoryP
     kind: AnalysisKindSlug;
   }): Promise<PromptTemplateVersionRow | null> {
     const template = await this.db.promptTemplate.findUnique({
-      where: { kind: input.kind },
+      where: { kind: toPrismaAnalysisKind(input.kind) },
       include: { currentVersion: true },
     });
     const v = template?.currentVersion;
@@ -33,7 +38,7 @@ export class PrismaPromptTemplateRepository implements PromptTemplateRepositoryP
     limit?: number;
   }): Promise<PromptTemplateVersionRow[]> {
     const template = await this.db.promptTemplate.findUnique({
-      where: { kind: input.kind },
+      where: { kind: toPrismaAnalysisKind(input.kind) },
     });
     if (!template) return [];
 
@@ -61,8 +66,8 @@ export class PrismaPromptTemplateRepository implements PromptTemplateRepositoryP
   }): Promise<PromptTemplateVersionRow> {
     return this.db.$transaction(async (tx) => {
       const template = await tx.promptTemplate.upsert({
-        where: { kind: input.kind },
-        create: { kind: input.kind },
+        where: { kind: toPrismaAnalysisKind(input.kind) },
+        create: { kind: toPrismaAnalysisKind(input.kind) },
         update: {},
       });
 

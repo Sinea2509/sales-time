@@ -7,9 +7,14 @@ import { kissCoachingBulletsFromMeetings } from "@/src/core/domain/kiss-coaching
 import type { TeamSalesProfileAggregate } from "@/src/core/domain/sales-profile-from-meetings";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
+import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
 import { buildMeetingDigestsForAiSummary } from "@/lib/meeting-ai-digest";
 import { getEnv } from "@/lib/env";
+import {
+  appendOrganizationKissPromptAppendix,
+  loadAnalysisPromptMarkdown,
+} from "@/lib/load-analysis-prompt";
 
 export type TeamCoachingRecommendationBullets = {
   progressBullets: string[];
@@ -40,7 +45,7 @@ function fallbackBullets(input: {
 }
 
 export async function summarizeTeamCoachingRecommendations(
-  deps: { analysis: AnalysisPort },
+  deps: { analysis: AnalysisPort; prompts: PromptTemplateRepositoryPort },
   input: {
     meetings: RecentMeetingListRow[];
     previousMeetings: RecentMeetingListRow[];
@@ -62,7 +67,13 @@ export async function summarizeTeamCoachingRecommendations(
   }
 
   try {
+    const basePrompt = await loadAnalysisPromptMarkdown(deps.prompts, "TEAM_COACHING");
+    const systemMarkdown = appendOrganizationKissPromptAppendix(
+      basePrompt,
+      input.organizationKissPromptAppendix,
+    );
     const result = await deps.analysis.summarizeTeamCoachingRecommendations({
+      systemMarkdown,
       model: input.model,
       statsWindowDays: input.statsWindowDays,
       audience: input.audience,
@@ -70,7 +81,6 @@ export async function summarizeTeamCoachingRecommendations(
       salesProfile: input.teamSalesProfile.scores,
       previousSalesProfile: input.previousSalesProfile.scores,
       kissRollup: buildKissTeamRollupFromMeetings(input.meetings),
-      organizationKissPromptAppendix: input.organizationKissPromptAppendix,
     });
     return {
       progressBullets: result.progressBullets,

@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
+import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
-import { RendezVousMeetingRowActions } from "@/components/molecules/rendez-vous-meeting-row-actions";
+import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -175,14 +176,7 @@ export function DashboardHomeShell({
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {home.recentMeetings.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="text-muted-foreground px-4 py-12 text-center dark:text-zinc-500"
-                    >
-                      Aucun rendez-vous.
-                    </td>
-                  </tr>
+                  <TableEmptyRow colSpan={6} message="Aucun rendez-vous." size="large" />
                 ) : (
                   home.recentMeetings.map((m) => (
                     <tr

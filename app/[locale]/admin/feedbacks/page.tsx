@@ -1,5 +1,6 @@
 import { getApplicationDeps } from "@/lib/application-deps";
-import { pageTitleClass } from "@/lib/page-typography";
+import { PageHeaderSimple } from "@/components/molecules/page-header";
+import { PrdEmptyState } from "@/components/molecules/prd-empty-state";
 import { AdminFeedbacksInbox } from "@/components/organisms/admin-feedbacks-inbox";
 
 export const dynamic = "force-dynamic";
@@ -11,14 +12,15 @@ export default async function AdminFeedbacksPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className={pageTitleClass}>Feedbacks</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Retours utilisateurs avec contexte technique et export Cursor.
-        </p>
-      </div>
+      <PageHeaderSimple
+        title="Feedbacks"
+        description="Retours utilisateurs avec contexte technique et export Cursor."
+      />
       {rows.length === 0 ? (
-        <p className="text-muted-foreground text-sm">Aucun feedback.</p>
+        <PrdEmptyState
+          title="Aucun feedback"
+          description="Les retours soumis via le widget apparaîtront ici."
+        />
       ) : (
         <AdminFeedbacksInbox rows={rows} />
       )}
