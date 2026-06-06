@@ -1,0 +1,14 @@
+---
+description: Project quality baseline — architecture, validation, tests (always read first)
+alwaysApply: true
+---
+
+# Sales Time — agent baseline
+
+1. **Layers**: Hexagonal layout is mandatory — see `AGENTS.md` (“Architecture”). Do not break dependency direction.
+2. **Trust boundaries**: Parse and narrow unknown input at edges with **Zod**; core/application work with validated types or plain domain types — not raw `unknown`/`any`.
+3. **Tests**: Colocate `*.test.ts`; extend coverage when you touch behavior. Target **≥75% lines** on paths in `jest.config.js` → `collectCoverageFrom` (report via `npm run test:coverage`; thresholds intentionally omitted until Jest+SWC coverage is reliable).
+4. **Verification**: Before claiming done on non-trivial work, run `npm run verify` (typecheck, lint, unit tests).
+5. **Next.js**: Follow `node_modules/next/dist/docs/` — this repo’s Next version may differ from training defaults.
+
+When editing a specific layer, also obey the matching scoped rule under `.cursor/rules/` (`hexagonal-*`, `zod-validation`, `unit-testing`, `clean-code`).

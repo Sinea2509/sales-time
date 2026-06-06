@@ -7,8 +7,11 @@ import {
   TrendingDown,
   Activity,
   Zap,
+  DollarSign,
+  AlertTriangle,
 } from "lucide-react";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { getPlatformAiKpis } from "@/src/core/application/get-platform-ai-kpis";
 import { pageTitleClass } from "@/lib/page-typography";
 import { AdminKpiCard } from "@/components/molecules/admin-kpi-card";
 import { AdminActivityChart } from "@/components/organisms/admin-activity-chart";
@@ -31,7 +34,12 @@ export default async function AdminDashboardPage(props: {
   const { range: rawRange } = await props.searchParams;
   const rangeDays = VALID_RANGES[rawRange ?? ""] ?? 30;
   const now = new Date();
+  const since30d = new Date(now.getTime() - rangeDays * 24 * 60 * 60 * 1000);
   const deps = getApplicationDeps();
+  const [bundle, aiKpis] = await Promise.all([
+    deps.backoffice.getAdminDashboardBundle({ rangeDays, now }),
+    getPlatformAiKpis(deps, since30d),
+  ]);
   const {
     totalUsers,
     totalOrgs,
@@ -52,7 +60,7 @@ export default async function AdminDashboardPage(props: {
     recentOrgs,
     dailyActiveData,
     orgGrowthData,
-  } = await deps.backoffice.getAdminDashboardBundle({ rangeDays, now });
+  } = bundle;
 
   function trendPercent(current: number, previous: number): number | null {
     if (previous === 0) return current > 0 ? 100 : null;
@@ -110,6 +118,28 @@ export default async function AdminDashboardPage(props: {
           value={totalAnalyses}
           footer={`${avgAnalysesPerMeeting} moy. / RDV`}
           accent="amber"
+        />
+      </div>
+
+      {/* Platform ops */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <AdminKpiCard
+          icon={DollarSign}
+          label={`Coût IA estimé (${rangeDays}j)`}
+          value={`$${aiKpis.estimatedCostUsd30d}`}
+          footer={`${aiKpis.aiCalls30d} appels · ${aiKpis.aiErrors30d} erreurs`}
+          accent="amber"
+        />
+        <AdminKpiCard
+          icon={AlertTriangle}
+          label="Taux d'échec analyse"
+          value={
+            aiKpis.analysisFailureRatePct != null
+              ? `${aiKpis.analysisFailureRatePct}%`
+              : "—"
+          }
+          footer={`${aiKpis.failedMeetings} échecs / ${aiKpis.readyMeetings} OK`}
+          accent="violet"
         />
       </div>
 

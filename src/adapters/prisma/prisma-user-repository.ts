@@ -72,6 +72,14 @@ export class PrismaUserRepository implements UserRepositoryPort {
     };
   }
 
+  async findEmailById(userId: string): Promise<string | null> {
+    const row = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    return row?.email ?? null;
+  }
+
   async findUserWithOnboardingByUserId(
     userId: string,
   ): Promise<UserWithOnboardingRow | null> {
@@ -125,5 +133,13 @@ export class PrismaUserRepository implements UserRepositoryPort {
         registerProfileCompletedAt: new Date(),
       },
     });
+  }
+
+  async listDirectReportUserIds(managerUserId: string): Promise<string[]> {
+    const rows = await this.db.user.findMany({
+      where: { managerId: managerUserId },
+      select: { id: true },
+    });
+    return rows.map((r) => r.id);
   }
 }

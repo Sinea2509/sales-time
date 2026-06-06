@@ -12,7 +12,7 @@ const quadrantsTeam = [
   {
     key: "keep" as const,
     title: "Keep",
-    subtitle: "Ce que votre équipe fait bien et doit continuer",
+    subtitle: "Ce que votre équipe a bien fait",
     bulletsKey: "keepBullets" as const,
     icon: UserRound,
     iconWrapClass:
@@ -21,7 +21,7 @@ const quadrantsTeam = [
   {
     key: "improve" as const,
     title: "Improve",
-    subtitle: "Ce que votre équipe peut renforcer",
+    subtitle: "Ce que votre équipe peut améliorer",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
     iconWrapClass: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
@@ -81,6 +81,31 @@ const quadrantsManagerMember = [
   },
 ] as const;
 
+function KissQuadrantBulletList({ items }: { items: string[] }) {
+  if (items.length === 0) {
+    return (
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        Aucune recommandation KISS sur la période — lancez des analyses sur vos
+        rendez-vous.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="space-y-2.5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+      {items.map((line) => (
+        <li key={line} className="flex items-start gap-2.5">
+          <span
+            className="mt-2 inline-block size-1.5 shrink-0 rounded-full bg-neutral-400 dark:bg-neutral-500"
+            aria-hidden
+          />
+          <span>{line}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function OrgAdminKissQuadrantGrid({
   rollup,
   presentation = "teamDashboard",
@@ -97,7 +122,7 @@ export function OrgAdminKissQuadrantGrid({
     <div className="grid gap-4 md:grid-cols-2">
       {quadrants.map((q) => {
         const Icon = q.icon;
-        const count = rollup[q.bulletsKey];
+        const bullets = rollup[q.bulletsKey];
         return (
           <Card key={q.key} className="bg-white shadow-sm dark:bg-zinc-900">
             <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-2">
@@ -119,9 +144,7 @@ export function OrgAdminKissQuadrantGrid({
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-foreground text-3xl font-semibold tabular-nums tracking-tight">
-                {count}
-              </p>
+              <KissQuadrantBulletList items={bullets} />
             </CardContent>
           </Card>
         );

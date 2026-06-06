@@ -4,6 +4,6 @@ export function percentChangeVsPrevious(
   previous: number,
 ): number | null {
   if (previous === 0 && current === 0) return null;
-  if (previous === 0) return null;
+  if (previous === 0) return 100;
   return Math.round((100 * (current - previous)) / previous);
 }

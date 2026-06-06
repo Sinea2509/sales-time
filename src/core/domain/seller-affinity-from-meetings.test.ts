@@ -101,6 +101,31 @@ describe("seller-affinity-from-meetings", () => {
     expect(aggregateSoncasAffinityBarsFromMeetings(meetings)).toHaveLength(6);
   });
 
+  it("breaks SONCAS pct ties with lexicographic key ordering", () => {
+    const mk = (sec: number, org: number) => ({
+      drivers: {
+        securite: driver(sec),
+        orgueil: driver(org),
+        nouveaute: driver(0),
+        confort: driver(0),
+        argent: driver(0),
+        sympathie: driver(0),
+      },
+      dominant: "securite" as const,
+      summary: "",
+    });
+    const meetings = [
+      row({ latestSoncasResult: mk(40, 60) }),
+      row({ latestSoncasResult: mk(60, 40) }),
+    ];
+    const bars = aggregateSoncasAffinityBarsFromMeetings(meetings);
+    expect(bars.find((b) => b.key === "securite")!.pct).toBe(50);
+    expect(bars.find((b) => b.key === "orgueil")!.pct).toBe(50);
+    expect(bars.findIndex((b) => b.key === "orgueil")).toBeLessThan(
+      bars.findIndex((b) => b.key === "securite"),
+    );
+  });
+
   it("breaks DISC pct ties with lexicographic key ordering", () => {
     const meetings = [
       row({ latestDiscResult: disc({ D: 60, I: 40, S: 0, C: 0 }) }),

@@ -1,12 +1,16 @@
 import type { ActorContext } from "@/src/core/domain/actor-context";
 import { DashboardHeader } from "@/components/organisms/dashboard-header";
 import type { OrgSwitcherMembership } from "@/components/organisms/org-switcher";
+import type { NotificationItem } from "@/components/organisms/notification-bell";
 import { OrgDashboardShell } from "@/components/templates/org-dashboard-shell";
 
 type Props = {
   actor: ActorContext;
   superAdminOrgCookie: string | null;
-  analysesUsed: number;
+  trialAnalysesLeft: number;
+  trialLimit: number;
+  unreadNotificationCount: number;
+  notifications: NotificationItem[];
   organizationSwitcherMemberships?: OrgSwitcherMembership[];
   children: React.ReactNode;
 };
@@ -14,7 +18,10 @@ type Props = {
 export function AuthenticatedAppShell({
   actor,
   superAdminOrgCookie,
-  analysesUsed,
+  trialAnalysesLeft,
+  trialLimit,
+  unreadNotificationCount,
+  notifications,
   organizationSwitcherMemberships = [],
   children,
 }: Props) {
@@ -32,7 +39,10 @@ export function AuthenticatedAppShell({
         elevatedOrganizationId={superAdminOrgCookie}
         activeOrganizationId={actor.activeOrganizationId}
         workspaceRoleMode={actor.workspaceRoleMode}
-        analysesUsed={analysesUsed}
+        trialAnalysesLeft={trialAnalysesLeft}
+        trialLimit={trialLimit}
+        unreadNotificationCount={unreadNotificationCount}
+        notifications={notifications}
         organizationSwitcherMemberships={organizationSwitcherMemberships}
         sessionUser={{
           firstName: actor.firstName,

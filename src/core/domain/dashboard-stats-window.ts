@@ -29,3 +29,19 @@ export function previousMeetingAtWindowStart(
 ): Date {
   return new Date(now.getTime() - 2 * days * MS_PER_DAY);
 }
+
+/** Split meetings into current stats window vs the immediately preceding window. */
+export function partitionMeetingsByStatsWindow<T extends { meetingAt: Date }>(
+  meetings: T[],
+  days: StatsWindowDays,
+  now: Date = new Date(),
+): { currentWindow: T[]; previousWindow: T[] } {
+  const sinceCurrent = meetingAtSinceForStatsWindow(days, now);
+  const sincePrev = previousMeetingAtWindowStart(days, now);
+  return {
+    currentWindow: meetings.filter((m) => m.meetingAt >= sinceCurrent),
+    previousWindow: meetings.filter(
+      (m) => m.meetingAt >= sincePrev && m.meetingAt < sinceCurrent,
+    ),
+  };
+}

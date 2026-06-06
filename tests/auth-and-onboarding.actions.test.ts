@@ -155,7 +155,7 @@ jest.mock("@/lib/application-deps", () => {
           signupWebsiteNormalized: input.signupWebsiteNormalized,
           firstName: input.firstName,
           lastName: input.lastName,
-          profileRole: input.profileRole,
+          profileRole: input.profileRole as UserProfileRole,
           registerProfileCompletedAt: new Date(),
         },
       });
@@ -328,7 +328,36 @@ jest.mock("@/lib/application-deps", () => {
   };
 });
 
-import { prisma as prismaMock } from "@/lib/prisma";
+/** Shape of `prisma` under `@/lib/prisma` jest mock — delegates are `jest.fn`. */
+type AuthActionsPrismaMock = {
+  user: {
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+  };
+  organization: { findUnique: jest.Mock };
+  onboardingProfile: {
+    findUnique: jest.Mock;
+    update: jest.Mock;
+    upsert: jest.Mock;
+  };
+  passwordResetToken: {
+    findFirst: jest.Mock;
+    create: jest.Mock;
+    updateMany: jest.Mock;
+  };
+  organizationInvitation: {
+    findFirst: jest.Mock;
+    update: jest.Mock;
+    create: jest.Mock;
+  };
+  organizationMembership: { upsert: jest.Mock };
+  $transaction: jest.Mock;
+};
+
+import { prisma } from "@/lib/prisma";
+
+const prismaMock = prisma as unknown as AuthActionsPrismaMock;
 import { signUpAction } from "@/app/[locale]/sign-up/actions";
 import { signInAction } from "@/app/[locale]/sign-in/actions";
 import { forgotPasswordAction } from "@/app/[locale]/forgot-password/actions";
@@ -342,6 +371,7 @@ import {
   submitOnboardingStep4,
 } from "@/app/[locale]/onboarding/actions";
 import { hashToken } from "@/lib/auth/tokens";
+import type { UserProfileRole } from "@/src/core/domain/user-profile-role";
 
 function form(entries: Record<string, string>): FormData {
   const fd = new FormData();

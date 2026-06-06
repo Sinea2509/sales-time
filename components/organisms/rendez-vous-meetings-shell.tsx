@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "@/i18n/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -13,7 +14,6 @@ import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/molecules/rendez-vous-meeting-row-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import {
   meetingEtapeLabel,
   meetingEtapePillClass,
@@ -22,36 +22,27 @@ import { meetingOutcomeLabel } from "@/lib/meeting-outcome-labels";
 import { prospectInitials } from "@/lib/prospect-initials";
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import { cn } from "@/lib/utils";
-import { nativeSelectChevronClasses } from "@/components/ui/native-select-class";
 
 export type RendezVousMeetingRow = {
   id: string;
   prospectName: string;
-  meetingAt: string;
   outcome: MeetingOutcome;
   durationMin: number | null;
-  sellerEmail: string | null;
+  sellerName: string | null;
   salesScore: number | null;
-  tamMinutesPerRdv: number;
+  potentialAmount: number | null;
 };
 
-const ETAPE_FILTER_OPTIONS: ReadonlyArray<{
-  value: MeetingOutcome | "ALL";
-  label: string;
-}> = [
-  { value: "ALL", label: "Toutes les étapes" },
-  { value: "OTHER", label: "Qualification" },
-  { value: "FOLLOW_UP", label: "Découverte" },
-  { value: "WON", label: "Proposition" },
-  { value: "LOST", label: "Négociation" },
-  { value: "NO_SHOW", label: "Absent" },
-];
-
-const dateShort = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
+const euroFormat = new Intl.NumberFormat("fr-FR", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 0,
 });
+
+function formatPotentialEuro(amount: number | null): string {
+  if (amount == null) return "—";
+  return euroFormat.format(amount);
+}
 
 function escapeCsvCell(value: string): string {
   if (/[",\n\r]/.test(value)) {
@@ -63,8 +54,7 @@ function escapeCsvCell(value: string): string {
 function downloadMeetingsCsv(meetings: RendezVousMeetingRow[]) {
   const headers = [
     "Prospect",
-    "TAM (min / RDV)",
-    "Date du rendez-vous",
+    "Potentiel (€)",
     "Étape",
     "SalesScore",
     "Commercial",
@@ -75,11 +65,10 @@ function downloadMeetingsCsv(meetings: RendezVousMeetingRow[]) {
     ...meetings.map((m) =>
       [
         escapeCsvCell(m.prospectName),
-        String(m.tamMinutesPerRdv),
-        escapeCsvCell(m.meetingAt),
+        m.potentialAmount != null ? String(m.potentialAmount) : "",
         escapeCsvCell(meetingOutcomeLabel(m.outcome)),
         m.salesScore != null ? String(m.salesScore) : "",
-        escapeCsvCell(m.sellerEmail ?? ""),
+        escapeCsvCell(m.sellerName ?? ""),
         m.durationMin != null ? String(m.durationMin) : "",
       ].join(","),
     ),
@@ -119,8 +108,8 @@ export function RendezVousMeetingsShell({
   /** When true (org admin), show which seller owns the meeting. */
   showSellerColumn?: boolean;
 }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
-  const [etapeFilter, setEtapeFilter] = useState<MeetingOutcome | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -128,10 +117,9 @@ export function RendezVousMeetingsShell({
     const q = query.trim().toLowerCase();
     return meetings.filter((m) => {
       if (q && !m.prospectName.toLowerCase().includes(q)) return false;
-      if (etapeFilter !== "ALL" && m.outcome !== etapeFilter) return false;
       return true;
     });
-  }, [meetings, query, etapeFilter]);
+  }, [meetings, query]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
@@ -142,13 +130,6 @@ export function RendezVousMeetingsShell({
     setPage(1);
   }, []);
 
-  const setEtapeFilterAndResetPage = useCallback(
-    (value: MeetingOutcome | "ALL") => {
-      setEtapeFilter(value);
-      setPage(1);
-    },
-    [],
-  );
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const pageRows = filtered.slice(startIndex, startIndex + PAGE_SIZE);
   const rangeStart = filtered.length === 0 ? 0 : startIndex + 1;
@@ -179,9 +160,31 @@ export function RendezVousMeetingsShell({
     });
   };
 
-  const filterSelectClass = cn(
-    "h-10 rounded-lg border border-neutral-200 bg-white py-1 pl-3 pr-10 text-sm shadow-none outline-none focus-visible:border-neutral-200 focus-visible:ring-0 dark:border-neutral-800 dark:bg-neutral-950 dark:focus-visible:border-neutral-800",
-    nativeSelectChevronClasses,
+  const openMeetingDetail = useCallback(
+    (meetingId: string) => {
+      router.push(`/company/rendez-vous/${meetingId}`);
+    },
+    [router],
+  );
+
+  const handleRowClick = useCallback(
+    (meetingId: string, event: React.MouseEvent<HTMLTableRowElement>) => {
+      const target = event.target as HTMLElement;
+      if (target.closest("button, a, input, select, textarea, [role='menu']")) {
+        return;
+      }
+      openMeetingDetail(meetingId);
+    },
+    [openMeetingDetail],
+  );
+
+  const handleRowKeyDown = useCallback(
+    (meetingId: string, event: React.KeyboardEvent<HTMLTableRowElement>) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openMeetingDetail(meetingId);
+    },
+    [openMeetingDetail],
   );
 
   return (
@@ -198,25 +201,6 @@ export function RendezVousMeetingsShell({
               className="h-10 rounded-xl border-neutral-200 bg-white pl-9 shadow-none dark:border-neutral-800 dark:bg-neutral-950"
             />
           </div>
-          <label className="sr-only" htmlFor="filter-etape">
-            Étape
-          </label>
-          <select
-            id="filter-etape"
-            value={etapeFilter}
-            onChange={(e) =>
-              setEtapeFilterAndResetPage(
-                e.target.value as MeetingOutcome | "ALL",
-              )
-            }
-            className={filterSelectClass}
-          >
-            {ETAPE_FILTER_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button
@@ -264,10 +248,7 @@ export function RendezVousMeetingsShell({
                   </DataTableHead>
                 ) : null}
                 <DataTableHead className="hidden px-4 py-3.5 sm:table-cell">
-                  TAM
-                </DataTableHead>
-                <DataTableHead className="px-4 py-3.5">
-                  Date du RDV
+                  Potentiel
                 </DataTableHead>
                 <DataTableHead className="px-4 py-3.5">Étape</DataTableHead>
                 <DataTableHead className="hidden px-4 py-3.5 md:table-cell">
@@ -282,12 +263,12 @@ export function RendezVousMeetingsShell({
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={showSellerColumn ? 8 : 7}
+                    colSpan={showSellerColumn ? 7 : 6}
                     className="text-muted-foreground px-4 py-12 text-center"
                   >
                     {meetings.length === 0
-                      ? "Aucun rendez-vous pour cette organisation."
-                      : "Aucun résultat avec ces filtres."}
+                      ? "Aucun rendez-vous enregistré. Créez votre premier RDV pour lancer une analyse SONCAS / DISC / KISS."
+                      : "Aucun résultat pour cette recherche."}
                   </td>
                 </tr>
               ) : (
@@ -297,7 +278,12 @@ export function RendezVousMeetingsShell({
                     <tr
                       key={m.id}
                       data-state={checked ? "selected" : undefined}
-                      className="hover:bg-neutral-50/80 data-[state=selected]:bg-brand/5 dark:hover:bg-neutral-900/40"
+                      tabIndex={0}
+                      role="link"
+                      aria-label={`Ouvrir le rendez-vous ${m.prospectName}`}
+                      onClick={(event) => handleRowClick(m.id, event)}
+                      onKeyDown={(event) => handleRowKeyDown(m.id, event)}
+                      className="cursor-pointer hover:bg-neutral-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-inset data-[state=selected]:bg-brand/5 dark:hover:bg-neutral-900/40"
                     >
                       <td className="px-4 py-3.5 align-middle">
                         <input
@@ -325,14 +311,11 @@ export function RendezVousMeetingsShell({
                       </td>
                       {showSellerColumn ? (
                         <td className="text-muted-foreground hidden max-w-[140px] truncate px-4 py-3.5 align-middle text-xs md:table-cell">
-                          {m.sellerEmail ?? "—"}
+                          {m.sellerName ?? "—"}
                         </td>
                       ) : null}
                       <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell">
-                        {formatDurationHoursMinutes(m.tamMinutesPerRdv)}
-                      </td>
-                      <td className="text-muted-foreground whitespace-nowrap px-4 py-3.5 align-middle tabular-nums">
-                        {dateShort.format(new Date(m.meetingAt))}
+                        {formatPotentialEuro(m.potentialAmount)}
                       </td>
                       <td className="px-4 py-3.5 align-middle">
                         <span

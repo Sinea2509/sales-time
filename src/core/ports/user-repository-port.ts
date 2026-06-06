@@ -36,6 +36,8 @@ export type UserWithOnboardingRow = DomainUser & {
 export interface UserRepositoryPort {
   findById(userId: string): Promise<DomainUser | null>;
 
+  findEmailById(userId: string): Promise<string | null>;
+
   findUserWithOnboardingByUserId(
     userId: string,
   ): Promise<UserWithOnboardingRow | null>;
@@ -55,4 +57,6 @@ export interface UserRepositoryPort {
     lastName: string;
     profileRole: UserProfileRole;
   }): Promise<void>;
+
+  listDirectReportUserIds(managerUserId: string): Promise<string[]>;
 }

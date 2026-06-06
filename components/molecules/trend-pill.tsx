@@ -1,7 +1,6 @@
 import {
   ArrowDown,
   ArrowUp,
-  Minus,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -34,13 +33,20 @@ const adminVariants = cva(basePill, {
   defaultVariants: { intent: "neutral" },
 });
 
-export type TrendDirectionMode = "up-good" | "down-good";
+export type TrendDirectionMode = "up-good" | "down-good" | "neutral";
+
+function deltaDisplayMagnitude(delta: number): number {
+  const absVal = Math.abs(delta);
+  return Math.abs(absVal % 1) < 0.001
+    ? Math.round(absVal)
+    : Math.round(absVal * 10) / 10;
+}
 
 function resolveIntent(
   delta: number,
   mode: TrendDirectionMode,
 ): NonNullable<VariantProps<typeof dashboardVariants>["intent"]> {
-  if (delta === 0) return "neutral";
+  if (delta === 0 || mode === "neutral") return "neutral";
   const good = mode === "up-good" ? delta > 0 : delta < 0;
   const bad = mode === "up-good" ? delta < 0 : delta > 0;
   if (good) return "good";
@@ -82,30 +88,27 @@ export function KpiVsPreviousBadge({
   className,
 }: KpiVsPreviousBadgeProps) {
   if (delta === null || Number.isNaN(delta)) return null;
+  const displayMagnitude = deltaDisplayMagnitude(delta);
+  if (displayMagnitude === 0) return null;
   const intent = resolveIntent(delta, mode);
-  const Icon = delta === 0 ? Minus : delta > 0 ? TrendingUp : TrendingDown;
-  const absVal = Math.abs(delta);
+  const Icon = delta > 0 ? TrendingUp : TrendingDown;
   const textRaw =
-    Math.abs(absVal % 1) < 0.001
-      ? String(Math.round(absVal))
-      : String(Math.round(absVal * 10) / 10);
+    Math.abs(displayMagnitude % 1) < 0.001
+      ? String(Math.round(displayMagnitude))
+      : String(displayMagnitude);
   const textFr = textRaw.replace(".", ",");
   const isPp = deltaDisplay === "percentagePoints";
   const periodHint = isPp
     ? "Écart vs la période précédente (même durée), en points de pourcentage du TUC"
     : "Variation vs la période précédente (même durée que la sélection)";
   const ariaLabel =
-    delta === 0
+    delta > 0
       ? isPp
-        ? `${periodHint} — stable (0 point).`
-        : `${periodHint} — stable (0 %).`
-      : delta > 0
-        ? isPp
-          ? `${periodHint} — hausse de ${textFr} points.`
-          : `${periodHint} — hausse de ${textFr} %.`
-        : isPp
-          ? `${periodHint} — baisse de ${textFr} points.`
-          : `${periodHint} — baisse de ${textFr} %.`;
+        ? `${periodHint} — hausse de ${textFr} points.`
+        : `${periodHint} — hausse de ${textFr} %.`
+      : isPp
+        ? `${periodHint} — baisse de ${textFr} points.`
+        : `${periodHint} — baisse de ${textFr} %.`;
   return (
     <span
       className={cn(kpiVsPreviousVariants({ intent }), className)}
@@ -186,11 +189,15 @@ export function TrendPointsPill({
   surface = "dashboard",
   className,
 }: TrendPointsPillProps) {
-  if (points === null) return null;
+  if (points === null || Number.isNaN(points)) return null;
+  const displayMagnitude = deltaDisplayMagnitude(points);
+  if (displayMagnitude === 0) return null;
   const intent = resolveIntent(points, "up-good");
   const Icon = points > 0 ? ArrowUp : ArrowDown;
   const text =
-    Math.abs(points % 1) < 0.05 ? String(Math.round(points)) : String(points);
+    Math.abs(displayMagnitude % 1) < 0.05
+      ? String(Math.round(displayMagnitude))
+      : String(displayMagnitude);
   const variants =
     surface === "admin" ? pointsAdminVariants : pointsDashboardVariants;
   return (

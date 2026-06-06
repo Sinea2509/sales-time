@@ -74,22 +74,22 @@ export function DashboardAdminShell({
         <h2 className={sectionHeadingClass}>Mon équipe</h2>
         <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-[680px] text-left text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
                   <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
                     Personne
                   </DataTableHead>
-                  <DataTableHead className="px-4 py-3.5 tabular-nums dark:text-zinc-500">
-                    RDVs
-                  </DataTableHead>
                   <DataTableHead
                     className="px-4 py-3.5 tabular-nums dark:text-zinc-500"
                     title="Nombre de RDV avec au moins une analyse KISS"
                   >
-                    Coachings
+                    RDVs coachés
                   </DataTableHead>
-                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
+                  <DataTableHead
+                    className="px-4 py-3.5 tabular-nums dark:text-zinc-500"
+                    title="Temps d'appel moyen sur les RDV connectés (durée renseignée)"
+                  >
                     TAM
                   </DataTableHead>
                   <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
@@ -104,7 +104,7 @@ export function DashboardAdminShell({
                 {monEquipe.rows.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={5}
                       className="text-muted-foreground px-4 py-12 text-center dark:text-zinc-500"
                     >
                       Aucun membre dans cette organisation.
@@ -144,13 +144,12 @@ export function DashboardAdminShell({
                           </Link>
                         </td>
                         <td className="px-4 py-3.5 tabular-nums">
-                          {row.nbRdvs}
-                        </td>
-                        <td className="px-4 py-3.5 tabular-nums">
                           {row.coachesCount}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3.5 tabular-nums">
-                          {formatDurationHoursMinutes(row.tamMinutesCumule)}
+                          {row.tamMinutesAvg != null
+                            ? formatDurationHoursMinutes(row.tamMinutesAvg)
+                            : "—"}
                         </td>
                         <td className="text-muted-foreground max-w-[10rem] truncate px-4 py-3.5 dark:text-zinc-400">
                           {row.postureLabel ?? "—"}

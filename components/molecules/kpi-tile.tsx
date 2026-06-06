@@ -25,18 +25,18 @@ export function KpiTile({
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20">
-            <Icon className="size-4 text-brand dark:text-brand-muted" />
-          </div>
-          <p className="text-muted-foreground truncate text-sm font-medium dark:text-zinc-400">
-            {label}
-          </p>
+      <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20">
+          <Icon className="size-4 text-brand dark:text-brand-muted" />
         </div>
-        {trend}
+        <p className="text-muted-foreground truncate text-sm font-medium dark:text-zinc-400">
+          {label}
+        </p>
       </div>
-      <p className="mt-4 text-3xl font-semibold tabular-nums">{children}</p>
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <p className="text-3xl font-semibold tabular-nums">{children}</p>
+        {trend ? <div className="shrink-0">{trend}</div> : null}
+      </div>
       {footer ? (
         <p className="text-muted-foreground mt-1 text-xs dark:text-zinc-400">
           {footer}

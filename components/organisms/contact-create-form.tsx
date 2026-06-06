@@ -4,18 +4,31 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createContactAction } from "@/app/[locale]/company/contacts/actions";
 import { Button } from "@/components/ui/button";
+import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
-export function ContactCreateForm() {
+type ContactCreateFormProps = {
+  variant?: "page" | "dialog";
+  onSuccess?: (id: string) => void;
+  onCancel?: () => void;
+};
+
+export function ContactCreateForm({
+  variant = "page",
+  onSuccess,
+  onCancel,
+}: ContactCreateFormProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const isDialog = variant === "dialog";
 
   return (
     <form
-      className="max-w-xl space-y-4"
+      className={cn("space-y-4", !isDialog && "max-w-xl")}
       action={(fd) => {
         setError(null);
         startTransition(async () => {
@@ -37,8 +50,12 @@ export function ContactCreateForm() {
             }
             return;
           }
-          router.push(`/company/contacts/${r.id}`);
-          router.refresh();
+          if (onSuccess) {
+            onSuccess(r.id);
+          } else {
+            router.push(`/company/contacts/${r.id}`);
+            router.refresh();
+          }
         });
       }}
     >
@@ -73,13 +90,33 @@ export function ContactCreateForm() {
           {error}
         </p>
       ) : null}
-      <Button
-        type="submit"
-        disabled={pending}
-        className="bg-brand text-white hover:bg-brand-hover"
-      >
-        {pending ? "Enregistrement…" : "Créer le contact"}
-      </Button>
+      {isDialog ? (
+        <DialogFooter className="-mx-4 -mb-4 mt-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={pending}
+            onClick={onCancel}
+          >
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            disabled={pending}
+            className="bg-brand text-white hover:bg-brand-hover"
+          >
+            {pending ? "Enregistrement…" : "Créer le contact"}
+          </Button>
+        </DialogFooter>
+      ) : (
+        <Button
+          type="submit"
+          disabled={pending}
+          className="bg-brand text-white hover:bg-brand-hover"
+        >
+          {pending ? "Enregistrement…" : "Créer le contact"}
+        </Button>
+      )}
     </form>
   );
 }

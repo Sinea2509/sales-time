@@ -1,17 +1,21 @@
 import type {
   DiscAnalysisResult,
-  KissAnalysisResult,
   SoncasAnalysisResult,
 } from "@/src/core/domain/analysis-result-zod";
+import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod";
+import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
+import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type { SalesProfileScores } from "@/src/core/domain/sales-profile-from-meetings";
+import type { TeamCoachingRecommendations } from "@/src/core/domain/team-coaching-recommendations-zod";
 
 /** Agrégats KISS équipe (tableau de bord admin) pour synthèse texte. */
 export type OrgKissRollupForSummary = {
   kissMeetingsCount: number;
-  keepBullets: number;
-  improveBullets: number;
-  stopBullets: number;
-  startBullets: number;
+  keepBullets: string[];
+  improveBullets: string[];
+  stopBullets: string[];
+  startBullets: string[];
 };
 
 /** Un RDV digesté pour la synthèse profil (extraits + JSON d’analyses). */
@@ -95,4 +99,27 @@ export interface AnalysisPort {
     meetings: SellerCommercialMeetingDigestForSummary[];
     model: string;
   }): Promise<SellerRelationalAffinitySummary>;
+
+  prepareMeetingBriefing(input: {
+    model: string;
+    targetStage: string;
+    prospectCompany: string;
+    priorMeetingsJson: string;
+    hasHistory: boolean;
+  }): Promise<{ result: MeetingBriefingResult; rawText?: string }>;
+
+  /**
+   * Puces « progrès » et « axes d’amélioration » pour la page Performance,
+   * à partir des RDV, du profil de vente et de l’agrégat KISS sur la période.
+   */
+  summarizeTeamCoachingRecommendations(input: {
+    model: string;
+    statsWindowDays: StatsWindowDays;
+    audience: "manager" | "commercial";
+    meetings: SellerCommercialMeetingDigestForSummary[];
+    salesProfile: SalesProfileScores | null;
+    previousSalesProfile: SalesProfileScores | null;
+    kissRollup: OrgKissRollupForSummary;
+    organizationKissPromptAppendix?: string | null;
+  }): Promise<TeamCoachingRecommendations>;
 }

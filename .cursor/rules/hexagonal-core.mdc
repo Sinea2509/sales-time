@@ -1,0 +1,22 @@
+---
+description: Hexagonal rules for domain + ports + application (inner hexagon)
+globs: src/core/**/*.ts
+alwaysApply: false
+---
+
+# Core layer (`src/core`)
+
+## Allowed
+
+- **`domain/`**: Pure logic — no imports from `app/`, `src/adapters/`, `next/*`, `react`, `@prisma/client`, or HTTP/SDK clients.
+- **`ports/`**: Interfaces only (types + `interface`/function signatures). No implementations, no Prisma.
+- **`application/`**: Use cases orchestrating ports + domain. Inject deps via parameters or small factories — **no direct Prisma or framework globals**.
+
+## Forbidden
+
+- Importing `src/adapters/**` or `app/**` into `src/core/**`.
+- Side-effectful singletons inside domain (clock/random OK via injected interfaces when testing matters).
+
+## Patterns
+
+- New external capability → add a **port** in `src/core/ports/`, implement in `src/adapters/`, wire in `src/adapters/composition.ts` (or equivalent).

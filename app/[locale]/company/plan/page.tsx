@@ -14,6 +14,7 @@ import {
   sectionHeadingClass,
 } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
+import { PlanUpgradeRequestForm } from "@/components/organisms/plan-upgrade-request-form";
 
 export const dynamic = "force-dynamic";
 
@@ -204,6 +205,8 @@ export default function CompanyPlanPage() {
           </CardContent>
         </Card>
       </div>
+
+      <PlanUpgradeRequestForm />
 
       <div className="space-y-3">
         <h2 className={sectionHeadingClass}>Comparatif détaillé</h2>

@@ -27,9 +27,9 @@ import {
   SONCAS_BAR_CLASS,
 } from "@/src/core/domain/seller-affinity-from-meetings";
 import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
+import { buildMeetingDigestsForAiSummary } from "@/lib/meeting-ai-digest";
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
 import type {
-  SellerCommercialMeetingDigestForSummary,
   SellerCommercialPerformanceSummary,
   SellerRelationalAffinitySummary,
 } from "@/src/core/ports/analysis-port";
@@ -104,32 +104,20 @@ function countMeetingTypes(meetings: RecentMeetingListRow[]): {
   return { decouverte, proposition };
 }
 
-const MAX_MEETINGS_FOR_AI = 16;
-const MAX_TRANSCRIPT_CHARS = 2400;
-
-function buildSellerMeetingDigests(
-  meetings: RecentMeetingListRow[],
-): SellerCommercialMeetingDigestForSummary[] {
-  const sorted = [...meetings].sort(
-    (a, b) => b.meetingAt.getTime() - a.meetingAt.getTime(),
-  );
-  return sorted.slice(0, MAX_MEETINGS_FOR_AI).map((m) => ({
-    prospectName: m.prospectName,
-    meetingAt: m.meetingAt.toISOString(),
-    meetingType: m.meetingType,
-    transcriptExcerpt:
-      m.transcript.length > MAX_TRANSCRIPT_CHARS
-        ? `${m.transcript.slice(0, MAX_TRANSCRIPT_CHARS)}\n\n[…]`
-        : m.transcript,
-    soncasResult: m.latestSoncasResult ?? undefined,
-    discResult: m.latestDiscResult ?? undefined,
-    kissResult: m.latestKissResult ?? undefined,
-  }));
-}
-
-function statColumn({ value, label }: { value: string; label: string }) {
+function statColumn({
+  value,
+  label,
+  title,
+}: {
+  value: string;
+  label: string;
+  title?: string;
+}) {
   return (
-    <div className="flex min-w-[4.5rem] flex-col items-start gap-1 sm:min-w-[5.5rem]">
+    <div
+      className="flex min-w-[4.5rem] flex-col items-start gap-1 sm:min-w-[5.5rem]"
+      title={title}
+    >
       <span className="text-foreground text-2xl font-semibold tabular-nums tracking-tight">
         {value}
       </span>
@@ -168,7 +156,7 @@ export default async function ManagerCommercialViewPage({
   const deps = getApplicationDeps();
   const orgId = actor.activeOrganizationId;
 
-  const [member, home, globalKissJson] = await Promise.all([
+  const [member, home, globalKissJson, tamMinutes] = await Promise.all([
     deps.organizationTeam.findMembershipForManagerView(orgId, userId),
     getOrgDashboardHome(
       {
@@ -182,6 +170,10 @@ export default async function ManagerCommercialViewPage({
       },
     ),
     deps.globalKissCoachingPrompts.getPrompts(),
+    deps.meetings.averageDurationMinForMeetingsInWindow({
+      organizationId: orgId,
+      sellerUserId: userId,
+    }),
   ]);
 
   if (!member) notFound();
@@ -207,7 +199,7 @@ export default async function ManagerCommercialViewPage({
       .trim() || member.user.email;
   const initials = prospectInitials(nameLine);
 
-  const meetingDigests = buildSellerMeetingDigests(meetings);
+  const meetingDigests = buildMeetingDigestsForAiSummary(meetings);
   let performanceSummary: SellerCommercialPerformanceSummary | null = null;
   let relationalAffinity: SellerRelationalAffinitySummary | null = null;
   if (getEnv().AI_GATEWAY_API_KEY && meetingDigests.length > 0) {
@@ -324,8 +316,13 @@ export default async function ManagerCommercialViewPage({
             label: "RDVs Proposition",
           })}
           {statColumn({
-            value: formatDurationHoursMinutes(home.tamCumuleMinutes),
+            value:
+              tamMinutes != null
+                ? formatDurationHoursMinutes(tamMinutes)
+                : "—",
             label: "TAM",
+            title:
+              "Temps d'appel moyen sur l'ensemble des RDV connectés de ce commercial (durée renseignée)",
           })}
         </div>
       </div>

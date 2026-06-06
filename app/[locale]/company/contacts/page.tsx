@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus } from "lucide-react";
+import { ContactCreateDialog } from "@/components/organisms/contact-create-dialog";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
-import { buttonVariants } from "@/components/ui/button";
 import { pageTitleClass } from "@/lib/page-typography";
-import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -17,11 +15,17 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function ContactsPage() {
+type ContactsPageProps = {
+  searchParams: Promise<{ create?: string }>;
+};
+
+export default async function ContactsPage({ searchParams }: ContactsPageProps) {
   const actor = await requireDashboardActor();
   if (actor.kind !== "authenticated" || !actor.activeOrganizationId) {
     redirect("/company");
   }
+
+  const { create } = await searchParams;
 
   const deps = getApplicationDeps();
   const rows = await deps.contacts.listForOrg({
@@ -35,16 +39,10 @@ export default async function ContactsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className={pageTitleClass}>Contacts</h1>
-        <Link
-          href="/company/contacts/nouveau"
-          className={cn(
-            buttonVariants(),
-            "bg-brand text-primary-foreground hover:bg-brand-hover inline-flex h-9 w-fit shrink-0 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium",
-          )}
-        >
-          <Plus className="size-4 shrink-0" aria-hidden />
-          Nouveau contact
-        </Link>
+        <ContactCreateDialog
+          key={create === "1" ? "create-open" : "create-closed"}
+          defaultOpen={create === "1"}
+        />
       </div>
 
       <div className="rounded-xl border">

@@ -1,5 +1,9 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
+import type {
+  MeetingSourceType,
+  MeetingStatus,
+} from "@/src/core/domain/meeting-status";
 import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
 import { normalizePersonDisplayKey } from "@/src/core/domain/person-normalize";
 import { outreachPriorityScore } from "@/src/core/domain/person-outreach-priority";
@@ -28,6 +32,11 @@ function mapMeeting(row: {
   transcript: string;
   notes: string | null;
   outcome: MeetingOutcome;
+  feeling: number | null;
+  status: MeetingStatus;
+  errorMessage: string | null;
+  sourceType: MeetingSourceType;
+  sourceBlobUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): MeetingRow {
@@ -46,6 +55,11 @@ function mapMeeting(row: {
     transcript: row.transcript,
     notes: row.notes,
     outcome: row.outcome,
+    feeling: row.feeling,
+    status: row.status,
+    errorMessage: row.errorMessage,
+    sourceType: row.sourceType,
+    sourceBlobUrl: row.sourceBlobUrl,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -89,6 +103,10 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     transcript: string;
     notes: string | null;
     outcome: MeetingOutcome;
+    feeling?: number | null;
+    sourceType?: MeetingSourceType;
+    sourceBlobUrl?: string | null;
+    status?: MeetingStatus;
   }): Promise<MeetingRow> {
     let personId: string;
     let prospectDisplay: string;
@@ -141,6 +159,10 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
         transcript: input.transcript,
         notes: input.notes,
         outcome: input.outcome,
+        feeling: input.feeling ?? null,
+        sourceType: input.sourceType ?? "TRANSCRIPT",
+        sourceBlobUrl: input.sourceBlobUrl ?? null,
+        status: input.status ?? "PENDING",
       },
     });
     return mapMeeting(row);
@@ -302,18 +324,24 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
 
   async averageDurationMinForMeetingsInWindow(input: {
     organizationId: string;
-    meetingAtGte: Date;
+    meetingAtGte?: Date;
     meetingAtLt?: Date;
     sellerUserId?: string;
   }): Promise<number | null> {
+    const meetingAtFilter =
+      input.meetingAtGte != null || input.meetingAtLt != null
+        ? {
+            meetingAt: {
+              ...(input.meetingAtGte != null ? { gte: input.meetingAtGte } : {}),
+              ...(input.meetingAtLt != null ? { lt: input.meetingAtLt } : {}),
+            },
+          }
+        : {};
     const row = await this.db.meeting.aggregate({
       where: {
         organizationId: input.organizationId,
-        meetingAt: {
-          gte: input.meetingAtGte,
-          ...(input.meetingAtLt != null ? { lt: input.meetingAtLt } : {}),
-        },
-        durationMin: { not: null },
+        ...meetingAtFilter,
+        durationMin: { gt: 0 },
         ...sellerWhere(input.sellerUserId),
       },
       _avg: { durationMin: true },
@@ -352,7 +380,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       orderBy: { createdAt: "desc" },
       ...(input.limit != null ? { take: input.limit } : {}),
       include: {
-        seller: { select: { email: true } },
+        seller: { select: { email: true, firstName: true, lastName: true } },
         analyses: {
           select: { kind: true, result: true, createdAt: true },
           orderBy: { createdAt: "desc" },
@@ -370,6 +398,8 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       const out: RecentMeetingListRow = {
         ...base,
         sellerEmail: row.seller.email,
+        sellerFirstName: row.seller.firstName,
+        sellerLastName: row.seller.lastName,
         hasSoncas: kinds.has("SONCAS"),
         hasDisc: kinds.has("DISC"),
         hasKiss: kinds.has("KISS"),
@@ -491,12 +521,16 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     return {
       id: row.id,
       sellerUserId: row.sellerUserId,
+      personId: row.personId,
       prospectName: row.prospectName,
       meetingAt: row.meetingAt,
       outcome: row.outcome,
       meetingType: row.meetingType,
       pipelineStage: row.pipelineStage,
       potentialAmount: row.potentialAmount,
+      feeling: row.feeling,
+      status: row.status,
+      errorMessage: row.errorMessage,
       followUpEmailDraft: row.followUpEmailDraft,
       transcript: row.transcript,
       notes: row.notes,
@@ -518,5 +552,90 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       data: { followUpEmailDraft: input.followUpEmailDraft },
     });
     return res.count > 0;
+  }
+
+  async updateMeetingStatus(input: {
+    id: string;
+    organizationId: string;
+    status: MeetingStatus;
+    errorMessage?: string | null;
+  }): Promise<boolean> {
+    const res = await this.db.meeting.updateMany({
+      where: { id: input.id, organizationId: input.organizationId },
+      data: {
+        status: input.status,
+        errorMessage: input.errorMessage ?? null,
+      },
+    });
+    return res.count > 0;
+  }
+
+  async updatePersonProfileCache(input: {
+    personId: string;
+    organizationId: string;
+    discDominant?: string | null;
+    soncasDominant?: string | null;
+  }): Promise<void> {
+    await this.db.person.updateMany({
+      where: {
+        id: input.personId,
+        organizationId: input.organizationId,
+      },
+      data: {
+        ...(input.discDominant !== undefined
+          ? { discDominant: input.discDominant }
+          : {}),
+        ...(input.soncasDominant !== undefined
+          ? { soncasDominant: input.soncasDominant }
+          : {}),
+      },
+    });
+  }
+
+  async searchMeetingsForOrg(input: {
+    organizationId: string;
+    query: string;
+    sellerUserId?: string;
+    limit?: number;
+  }): Promise<MeetingRow[]> {
+    const q = input.query.trim();
+    if (!q) return [];
+    const rows = await this.db.meeting.findMany({
+      where: {
+        organizationId: input.organizationId,
+        ...sellerWhere(input.sellerUserId),
+        OR: [
+          { prospectName: { contains: q, mode: "insensitive" } },
+          { transcript: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      orderBy: { meetingAt: "desc" },
+      take: input.limit ?? 20,
+    });
+    return rows.map(mapMeeting);
+  }
+
+  async listMeetingsForPersonOrdered(input: {
+    organizationId: string;
+    personId: string;
+    limit?: number;
+  }): Promise<MeetingRow[]> {
+    const rows = await this.db.meeting.findMany({
+      where: {
+        organizationId: input.organizationId,
+        personId: input.personId,
+      },
+      orderBy: { meetingAt: "desc" },
+      take: input.limit ?? 10,
+    });
+    return rows.map(mapMeeting);
+  }
+
+  async countByAnalysisStatus(): Promise<{ ready: number; failed: number }> {
+    const [ready, failed] = await Promise.all([
+      this.db.meeting.count({ where: { status: "READY" } }),
+      this.db.meeting.count({ where: { status: "FAILED" } }),
+    ]);
+    return { ready, failed };
   }
 }

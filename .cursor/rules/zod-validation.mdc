@@ -1,0 +1,13 @@
+---
+description: Zod at trust boundaries — parse unknown input before core
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Zod validation
+
+- Any **`unknown`** / JSON / form / webhook / searchParams → **parse with Zod** at the boundary (route, Server Action, adapter translating external payloads).
+- Export **`z.infer<typeof Schema>`** types alongside schemas in domain/application modules when they define wire formats.
+- Prefer **`.safeParse`** + explicit error mapping for UX; reserve `.parse` for internal invariants where failure should throw.
+- Do not widen validated data back to `any`; thread inferred types through functions.
+- Colocate domain-centric schemas with domain (`*-zod.ts` pattern already used in this repo).

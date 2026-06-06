@@ -14,6 +14,7 @@ import { cardTitleClass } from "@/lib/page-typography";
 import { parseStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
+import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import { listPersonOutreachPriorities } from "@/src/core/application/get-person-outreach-priorities";
@@ -59,11 +60,16 @@ export default async function DashboardHomePage({
   }
 
   if (actor.workspaceRoleMode === "admin") {
+    const teamUserIds = await resolveManagerTeamUserIds(deps, {
+      canManageOrganization: actor.canManageOrganization,
+      internalUserId: actor.internalUserId,
+    });
     const [admin, globalKissJson] = await Promise.all([
       getOrgAdminDashboard(deps, {
         organizationId: actor.activeOrganizationId,
         statsWindowDays,
         monEquipePage,
+        teamUserIds,
       }),
       deps.globalKissCoachingPrompts.getPrompts(),
     ]);

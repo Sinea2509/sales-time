@@ -16,6 +16,12 @@ import { PrismaOnboardingSharedPhraseRepository } from "@/src/adapters/prisma/pr
 import { PrismaOrganizationSettingsRepository } from "@/src/adapters/prisma/prisma-organization-settings-repository";
 import { PrismaRegistrationRepository } from "@/src/adapters/prisma/prisma-registration-repository";
 import { PrismaGlobalKissCoachingPromptsRepository } from "@/src/adapters/prisma/prisma-global-kiss-coaching-prompts-repository";
+import { PrismaAnalysisJobRepository } from "@/src/adapters/prisma/prisma-analysis-job-repository";
+import { PrismaAiRequestLogRepository } from "@/src/adapters/prisma/prisma-ai-request-log-repository";
+import { PrismaPlanRequestRepository } from "@/src/adapters/prisma/prisma-plan-request-repository";
+import { PrismaFeedbackRepository } from "@/src/adapters/prisma/prisma-feedback-repository";
+import { PrismaNotificationRepository } from "@/src/adapters/prisma/prisma-notification-repository";
+import { PrismaOrganizationQuotaRepository } from "@/src/adapters/prisma/prisma-organization-quota-repository";
 import { PrismaPromptTemplateRepository } from "@/src/adapters/prisma/prisma-prompt-template-repository";
 import { PrismaSignInReadRepository } from "@/src/adapters/prisma/prisma-sign-in-read-repository";
 import { PrismaOrganizationInvitationRepository } from "@/src/adapters/prisma/prisma-organization-invitation-repository";
@@ -45,6 +51,12 @@ import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 import type { SessionRepositoryPort } from "@/src/core/ports/session-repository-port";
 import type { BackofficeRepositoryPort } from "@/src/core/ports/backoffice-repository-port";
 import type { GlobalKissCoachingPromptsRepositoryPort } from "@/src/core/ports/global-kiss-coaching-prompts-repository-port";
+import type { AnalysisJobRepositoryPort } from "@/src/core/ports/analysis-job-repository-port";
+import type { AiRequestLogRepositoryPort } from "@/src/core/ports/ai-request-log-repository-port";
+import type { PlanRequestRepositoryPort } from "@/src/core/ports/plan-request-repository-port";
+import type { FeedbackRepositoryPort } from "@/src/core/ports/feedback-repository-port";
+import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
+import type { OrganizationQuotaRepositoryPort } from "@/src/core/ports/organization-quota-repository-port";
 
 export type ApplicationDeps = {
   auth: AuthSessionPort;
@@ -70,6 +82,12 @@ export type ApplicationDeps = {
   organizationTeam: OrganizationTeamRepositoryPort;
   backoffice: BackofficeRepositoryPort;
   globalKissCoachingPrompts: GlobalKissCoachingPromptsRepositoryPort;
+  analysisJobs: AnalysisJobRepositoryPort;
+  aiLogs: AiRequestLogRepositoryPort;
+  planRequests: PlanRequestRepositoryPort;
+  feedbacks: FeedbackRepositoryPort;
+  notifications: NotificationRepositoryPort;
+  organizationQuota: OrganizationQuotaRepositoryPort;
 };
 
 export function makeApplicationDeps(): ApplicationDeps {
@@ -100,5 +118,11 @@ export function makeApplicationDeps(): ApplicationDeps {
     globalKissCoachingPrompts: new PrismaGlobalKissCoachingPromptsRepository(
       prisma,
     ),
+    analysisJobs: new PrismaAnalysisJobRepository(prisma),
+    aiLogs: new PrismaAiRequestLogRepository(prisma),
+    planRequests: new PrismaPlanRequestRepository(prisma),
+    feedbacks: new PrismaFeedbackRepository(prisma),
+    notifications: new PrismaNotificationRepository(prisma),
+    organizationQuota: new PrismaOrganizationQuotaRepository(prisma),
   };
 }

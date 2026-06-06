@@ -18,12 +18,17 @@ function createPrismaClient(): PrismaClient {
 
   const adapter = new PrismaNeon({ connectionString });
 
+  const devLogs: ("query" | "error" | "warn")[] = ["error", "warn"];
+  if (
+    process.env.NODE_ENV === "development" &&
+    process.env.PRISMA_LOG_QUERIES === "1"
+  ) {
+    devLogs.unshift("query");
+  }
+
   return new PrismaClient({
     adapter,
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
-        : ["error"],
+    log: process.env.NODE_ENV === "development" ? devLogs : ["error"],
   });
 }
 

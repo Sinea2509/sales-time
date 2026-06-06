@@ -1,0 +1,12 @@
+---
+description: Next.js delivery layer — routes, Server Actions, UI wiring to core
+globs: app/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Delivery layer (`app/`)
+
+- **Thin**: Parse requests, call application use cases with injected deps from the composition root, map results to HTTP/redirect/JSON/UI.
+- **Validation**: Use Zod for body/query/form **`unknown`** before crossing into core. Prefer `.safeParse` + structured errors for user-facing flows.
+- **No Prisma in UI/route handlers** except through adapters already composed — prefer a single `getDeps()` or similar pattern over ad-hoc `prisma` imports in random route files.
+- **Imports**: Routes/actions may import `src/core/application`, port types, and adapter composition — not deep adapter internals unless wiring tests.

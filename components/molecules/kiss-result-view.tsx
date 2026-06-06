@@ -1,4 +1,4 @@
-import type { KissAnalysisResult } from "@/src/core/domain/analysis-result-zod";
+import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import {
   Card,
   CardContent,

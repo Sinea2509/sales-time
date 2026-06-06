@@ -1,18 +1,27 @@
-import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
+import type { AnalysisJobRepositoryPort } from "@/src/core/ports/analysis-job-repository-port";
 import type { ContactRepositoryPort } from "@/src/core/ports/contact-repository-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
+import type { OrganizationQuotaRepositoryPort } from "@/src/core/ports/organization-quota-repository-port";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
+import type { MeetingSourceType } from "@/src/core/domain/meeting-status";
 
 export type CreateMeetingResult =
   | { ok: true; meetingId: string }
   | {
       ok: false;
-      error: "NO_ACTIVE_ORG" | "NO_INTERNAL_USER" | "INVALID_PERSON";
+      error:
+        | "NO_ACTIVE_ORG"
+        | "NO_INTERNAL_USER"
+        | "INVALID_PERSON"
+        | "QUOTA_EXHAUSTED";
     };
 
 export async function createMeetingForOrg(
   deps: {
     meetings: MeetingRepositoryPort;
     contacts: ContactRepositoryPort;
+    analysisJobs: AnalysisJobRepositoryPort;
+    organizationQuota: OrganizationQuotaRepositoryPort;
   },
   input: {
     organizationId: string | null;
@@ -27,6 +36,10 @@ export async function createMeetingForOrg(
     transcript: string;
     notes: string | null;
     outcome: MeetingOutcome;
+    feeling?: number | null;
+    sourceType?: MeetingSourceType;
+    sourceBlobUrl?: string | null;
+    enqueueAnalysis?: boolean;
   },
 ): Promise<CreateMeetingResult> {
   if (!input.organizationId) {
@@ -34,6 +47,15 @@ export async function createMeetingForOrg(
   }
   if (!input.sellerInternalUserId) {
     return { ok: false, error: "NO_INTERNAL_USER" };
+  }
+
+  if (input.enqueueAnalysis !== false) {
+    const left = await deps.organizationQuota.getTrialAnalysesLeft(
+      input.organizationId,
+    );
+    if (left <= 0) {
+      return { ok: false, error: "QUOTA_EXHAUSTED" };
+    }
   }
 
   const personId =
@@ -64,7 +86,21 @@ export async function createMeetingForOrg(
     transcript: input.transcript.trim(),
     notes: input.notes?.trim() ? input.notes.trim() : null,
     outcome: input.outcome,
+    feeling: input.feeling ?? null,
+    sourceType: input.sourceType ?? "TRANSCRIPT",
+    sourceBlobUrl: input.sourceBlobUrl ?? null,
+    status: input.enqueueAnalysis === false ? "PENDING" : "PROCESSING",
   });
+
+  if (input.enqueueAnalysis !== false) {
+    await deps.organizationQuota.decrementTrialAnalysesLeft(
+      input.organizationId,
+    );
+    await deps.analysisJobs.enqueueMeetingAnalysis({
+      organizationId: input.organizationId,
+      meetingId: meeting.id,
+    });
+  }
 
   return { ok: true, meetingId: meeting.id };
 }

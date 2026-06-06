@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   meetingAtSinceForStatsWindow,
   parseStatsWindowDays,
+  partitionMeetingsByStatsWindow,
   previousMeetingAtWindowStart,
 } from "./dashboard-stats-window";
 
@@ -21,6 +22,7 @@ describe("parseStatsWindowDays", () => {
     expect(parseStatsWindowDays("")).toBe(30);
     expect(parseStatsWindowDays("14")).toBe(30);
     expect(parseStatsWindowDays(null as unknown as undefined)).toBe(30);
+    expect(parseStatsWindowDays(true as unknown as string)).toBe(30);
   });
 });
 
@@ -45,5 +47,23 @@ describe("meetingAtSinceForStatsWindow / previousMeetingAtWindowStart", () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+});
+
+describe("partitionMeetingsByStatsWindow", () => {
+  const now = new Date("2026-05-01T12:00:00.000Z");
+
+  it("splits meetings into current and previous windows", () => {
+    const { currentWindow, previousWindow } = partitionMeetingsByStatsWindow(
+      [
+        { meetingAt: new Date("2026-04-20T00:00:00.000Z") },
+        { meetingAt: new Date("2026-03-15T00:00:00.000Z") },
+        { meetingAt: new Date("2026-02-01T00:00:00.000Z") },
+      ],
+      30,
+      now,
+    );
+    expect(currentWindow).toHaveLength(1);
+    expect(previousWindow).toHaveLength(1);
   });
 });

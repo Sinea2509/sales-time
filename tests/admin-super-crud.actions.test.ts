@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it } from "@jest/globals";
-import type { Mock } from "jest-mock";
+
+type JestFn = jest.Mock;
 
 type AdminAppDepsMocks = {
-  getAuthenticatedPrincipalMock: Mock;
-  findByIdMock: Mock;
-  backofficeMock: Record<string, Mock>;
+  getAuthenticatedPrincipalMock: JestFn;
+  findByIdMock: JestFn;
+  backofficeMock: Record<string, JestFn>;
 };
 
 jest.mock("@/lib/application-deps", () => {
@@ -57,23 +58,23 @@ jest.mock("@/lib/application-deps", () => {
 });
 
 // eslint-disable-next-line no-var -- Jest mock factories run before `let` bindings exist
-var revalidatePathMock: Mock;
+var revalidatePathMock: JestFn;
 jest.mock("next/cache", () => {
   revalidatePathMock = jest.fn();
   return { revalidatePath: revalidatePathMock };
 });
 
 // eslint-disable-next-line no-var
-var sendTransactionalEmailMock: Mock;
+var sendTransactionalEmailMock: JestFn;
 jest.mock("@/lib/email/mailer", () => {
   sendTransactionalEmailMock = jest.fn().mockResolvedValue(undefined);
   return { sendTransactionalEmail: sendTransactionalEmailMock };
 });
 
 // eslint-disable-next-line no-var
-var generateOpaqueTokenMock: Mock;
+var generateOpaqueTokenMock: JestFn;
 // eslint-disable-next-line no-var
-var hashTokenMock: Mock;
+var hashTokenMock: JestFn;
 jest.mock("@/lib/auth/tokens", () => {
   generateOpaqueTokenMock = jest.fn(() => "raw-invite-token");
   hashTokenMock = jest.fn(() => "hashed-token");
@@ -84,7 +85,7 @@ jest.mock("@/lib/auth/tokens", () => {
 });
 
 // eslint-disable-next-line no-var
-var publishGlobalPromptVersionMock: Mock;
+var publishGlobalPromptVersionMock: JestFn;
 jest.mock("@/src/core/application/publish-global-prompt-version", () => {
   publishGlobalPromptVersionMock = jest.fn();
   return { publishGlobalPromptVersion: publishGlobalPromptVersionMock };
@@ -120,7 +121,7 @@ const {
   getAuthenticatedPrincipalMock,
   findByIdMock,
   backofficeMock,
-} = (getApplicationDeps() as { __adminTestMocks: AdminAppDepsMocks })
+} = (getApplicationDeps() as unknown as { __adminTestMocks: AdminAppDepsMocks })
   .__adminTestMocks;
 
 function mockAuthenticatedSuperAdminPrincipal() {
@@ -137,12 +138,14 @@ beforeEach(() => {
   getAuthenticatedPrincipalMock.mockReset();
   findByIdMock.mockReset();
   publishGlobalPromptVersionMock.mockReset();
-  publishGlobalPromptVersionMock.mockImplementation(async (_deps, input) => {
-    if (!input.isSuperAdmin) {
-      return { ok: false as const, error: "NOT_SUPER_ADMIN" as const };
-    }
-    return { ok: true as const, version: 99 };
-  });
+  publishGlobalPromptVersionMock.mockImplementation(
+    async (_deps: unknown, input: { isSuperAdmin: boolean }) => {
+      if (!input.isSuperAdmin) {
+        return { ok: false as const, error: "NOT_SUPER_ADMIN" as const };
+      }
+      return { ok: true as const, version: 99 };
+    },
+  );
   for (const fn of Object.values(backofficeMock)) {
     if (typeof fn === "function" && "mockReset" in fn) {
       (fn as ReturnType<typeof jest.fn>).mockReset();

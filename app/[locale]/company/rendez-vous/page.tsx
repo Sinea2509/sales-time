@@ -1,9 +1,9 @@
 import { RendezVousMeetingsShell } from "@/components/organisms/rendez-vous-meetings-shell";
-import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { pageTitleClass } from "@/lib/page-typography";
+import { formatUserDisplayName } from "@/lib/user-display-name";
 
 export const dynamic = "force-dynamic";
 
@@ -24,25 +24,24 @@ export default async function RendezVousPage() {
     redirect("/company");
   }
 
-  const [meetings, orgSettings] = await Promise.all([
-    deps.meetings.listRecentMeetingsForDashboard({
-      organizationId: actor.activeOrganizationId,
-      limit: 200,
-      sellerUserId: sellerScope,
-    }),
-    deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
-  ]);
-  const tamMinutesPerRdv = tamMinutesSavedPerMeetingFromSettings(orgSettings);
+  const meetings = await deps.meetings.listRecentMeetingsForDashboard({
+    organizationId: actor.activeOrganizationId,
+    limit: 200,
+    sellerUserId: sellerScope,
+  });
 
   const rows = meetings.map((m) => ({
     id: m.id,
     prospectName: m.prospectName,
-    meetingAt: m.meetingAt.toISOString(),
     outcome: m.outcome,
     durationMin: m.durationMin,
-    sellerEmail: m.sellerEmail,
+    sellerName: formatUserDisplayName({
+      firstName: m.sellerFirstName,
+      lastName: m.sellerLastName,
+      email: m.sellerEmail,
+    }),
     salesScore: m.salesScore,
-    tamMinutesPerRdv,
+    potentialAmount: m.potentialAmount,
   }));
 
   return (

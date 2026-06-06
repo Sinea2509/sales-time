@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { uploadMeetingTranscriptFile } from "@/lib/meeting-transcript-upload";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createMeetingForOrg } from "@/src/core/application/create-meeting";
 
@@ -36,7 +37,7 @@ const createMeetingSchema = z.object({
     ])
     .transform((v) => (v === "" ? null : v))
     .nullable(),
-  transcript: z.string().trim().min(1).max(200_000),
+  transcript: z.string().trim().max(200_000),
   notes: z
     .string()
     .trim()
@@ -60,6 +61,7 @@ const createMeetingSchema = z.object({
     z.union([z.null(), z.number().min(0).max(1e12)]),
   ),
   outcome: meetingOutcomeSchema,
+  feeling: z.coerce.number().int().min(1).max(5).optional().nullable(),
 });
 
 const meetingIdSchema = z.string().trim().min(1).max(64);
@@ -80,17 +82,38 @@ export async function createMeetingAction(formData: FormData) {
     return { ok: false as const, error: "NO_ORG" };
   }
 
+  const file = formData.get("transcriptFile");
+  let sourceType: "TRANSCRIPT" | "UPLOAD" = "TRANSCRIPT";
+  let sourceBlobUrl: string | null = null;
+  let transcriptFromFile = "";
+
+  if (file instanceof File && file.size > 0) {
+    const uploaded = await uploadMeetingTranscriptFile({ file });
+    transcriptFromFile = uploaded.transcript;
+    sourceBlobUrl = uploaded.blobUrl || null;
+    sourceType = "UPLOAD";
+  }
+
+  const pastedTranscript = String(formData.get("transcript") ?? "").trim();
+  const transcript =
+    pastedTranscript.length > 0 ? pastedTranscript : transcriptFromFile;
+
+  if (transcript.length < 1) {
+    return { ok: false as const, error: "VALIDATION" };
+  }
+
   const parsed = createMeetingSchema.safeParse({
     personId: formData.get("personId") ?? "",
     prospectName: formData.get("prospectName") ?? "",
     meetingAt: formData.get("meetingAt") ?? "",
     durationMin: formData.get("durationMin") ?? "",
-    transcript: formData.get("transcript") ?? "",
+    transcript,
     notes: formData.get("notes") ?? "",
     meetingType: formData.get("meetingType") ?? "",
     pipelineStage: formData.get("pipelineStage") ?? "",
     potentialAmount: formData.get("potentialAmount") ?? "",
     outcome: formData.get("outcome") ?? "",
+    feeling: formData.get("feeling") ?? "",
   });
   if (!parsed.success) {
     return { ok: false as const, error: "VALIDATION" };
@@ -109,6 +132,9 @@ export async function createMeetingAction(formData: FormData) {
     transcript: parsed.data.transcript,
     notes: parsed.data.notes,
     outcome: parsed.data.outcome,
+    feeling: parsed.data.feeling ?? null,
+    sourceType,
+    sourceBlobUrl,
   });
 
   if (!result.ok) {
@@ -117,7 +143,9 @@ export async function createMeetingAction(formData: FormData) {
       error:
         result.error === "INVALID_PERSON"
           ? ("INVALID_PERSON" as const)
-          : result.error,
+          : result.error === "QUOTA_EXHAUSTED"
+            ? ("QUOTA_EXHAUSTED" as const)
+            : result.error,
     };
   }
 

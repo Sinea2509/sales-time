@@ -64,19 +64,29 @@ export function MeetingMatrixScatter({
     [points],
   );
 
-  if (points.length === 0) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        Aucun rendez-vous à analyser pour l’instant.
-      </p>
-    );
-  }
+  const chartSeries = useMemo(() => {
+    if (series.length > 0) return series;
+    return [
+      {
+        label: "",
+        data: [{ id: "__axis-placeholder__", x: 50, y: 30 }],
+        color: "transparent",
+        markerSize: 0,
+      },
+    ];
+  }, [series]);
+
+  const yMax = useMemo(() => {
+    if (points.length === 0) return 60;
+    const maxTam = Math.max(...points.map((p) => p.tamMinutes));
+    return Math.max(60, Math.ceil(maxTam / 10) * 10);
+  }, [points]);
 
   return (
     <div className="space-y-3">
       <ScatterChart
         height={height}
-        series={series}
+        series={chartSeries}
         xAxis={[
           {
             label: "SalesScore",
@@ -87,6 +97,8 @@ export function MeetingMatrixScatter({
         yAxis={[
           {
             label: "TAM (min / RDV)",
+            min: 0,
+            max: yMax,
             valueFormatter: (v: number) => formatDurationHoursMinutes(v),
           },
         ]}
@@ -94,6 +106,12 @@ export function MeetingMatrixScatter({
         hideLegend
         margin={{ top: 16, right: 16, bottom: 44, left: 64 }}
       />
+      {points.length === 0 ? (
+        <p className="text-muted-foreground text-center text-xs">
+          Aucun rendez-vous à afficher — axes prêts pour les prochains RDV
+          analysés.
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-center gap-2">
         {presentOutcomes.map((outcome) => (
           <span

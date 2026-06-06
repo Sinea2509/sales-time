@@ -1,4 +1,11 @@
 import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
+import {
+  averageTamMinutes,
+  countConnectedMeetings,
+  prospectingMinutesForStatsWindow,
+  sumUsefulConversationMinutes,
+  tucOptimisePercent,
+} from "@/src/core/domain/dashboard-tam-tuc";
 import { percentChangeVsPrevious } from "@/src/core/domain/dashboard-trend";
 import {
   meetingAtSinceForStatsWindow,
@@ -13,34 +20,37 @@ import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organi
 
 export type OrgDashboardHome = {
   statsWindowDays: StatsWindowDays;
-  /** Temps utile cumulé (minutes) sur la fenêtre : nb RDV × minutes/RDV (paramètres org). */
-  tamCumuleMinutes: number;
-  /** Minutes de TAM estimées par RDV selon les paramètres organisation. */
+  /** Gain estimé par RDV (minutes) — paramètres org (CR, CRM, e-mail, résiduel). */
   tamMinutesPerRdv: number;
-  nbRdvs: number;
-  tucOptimisePercent: number | null;
-  /** Moyenne durée RDV (min) sur la fenêtre, si renseignée. */
+  /** TAM — temps d'appel moyen (min) sur les RDV connectés (durée renseignée). */
   avgDurationMin: number | null;
+  /** Somme des durées de conversation utile (RDV connectés) sur la fenêtre. */
+  usefulConversationMinutes: number;
+  /** TAM cumulé — même valeur que usefulConversationMinutes (libellé Performance). */
+  tamCumuleMinutes: number;
+  /** RDV avec durée renseignée (> 0 min) sur la fenêtre. */
+  nbRdvsRenseignes: number;
+  nbRdvs: number;
+  /** TUC optimisé = conversation utile / temps de prospection (objectif org proratisé). */
+  tucOptimisePercent: number | null;
+  /** Variation TAM vs fenêtre précédente (%). */
   tamTrendPercent: number | null;
+  /** Variation TAM cumulé vs fenêtre précédente (%). */
+  tamCumuleTrendPercent: number | null;
   nbRdvsTrendPercent: number | null;
-  /** Écart en points de pourcentage du TUC vs période précédente (TUC est déjà un %). */
+  nbRdvsRenseignesTrendPercent: number | null;
+  /** Écart en points de pourcentage du TUC vs période précédente. */
   tucTrendPoints: number | null;
   avgDurationTrendPercent: number | null;
   /** Note globale /5 (moyenne SalesScore /100 ÷ 20, arrondi 0.1), null si aucune analyse. */
   noteGlobaleOn5: number | null;
   noteGlobaleTrendPoints: number | null;
+  /** Variation % de la note globale vs période précédente. */
+  noteGlobaleTrendPercent: number | null;
   recentMeetings: RecentMeetingListRow[];
 };
 
 const RECENT_LIMIT = 8;
-
-function tucPercentForMeetings(
-  meetings: RecentMeetingListRow[],
-): number | null {
-  if (meetings.length === 0) return null;
-  const withBoth = meetings.filter((m) => m.hasSoncas && m.hasDisc).length;
-  return Math.round((100 * withBoth) / meetings.length);
-}
 
 function noteGlobaleOn5ForMeetings(
   meetings: RecentMeetingListRow[],
@@ -71,6 +81,10 @@ export async function getOrgDashboardHome(
     input.organizationId,
   );
   const tamMinutesPerRdv = tamMinutesSavedPerMeetingFromSettings(orgSettings);
+  const prospectingMinutes = prospectingMinutesForStatsWindow(
+    orgSettings?.tamObjectiveMinutesPerMonth ?? 180,
+    input.statsWindowDays,
+  );
 
   const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
   const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays);
@@ -129,49 +143,88 @@ export async function getOrgDashboardHome(
     }),
   ]);
 
-  const tamCumuleMinutes = nbRdvs * tamMinutesPerRdv;
-  const tamPrevMinutes = nbRdvsPrev * tamMinutesPerRdv;
+  const currentDurations = kpiMeetingsCurrent.map((m) => m.durationMin);
+  const prevDurations = kpiMeetingsPrev.map((m) => m.durationMin);
 
-  const tucOptimisePercent = tucPercentForMeetings(kpiMeetingsCurrent);
-  const tucPrevPercent = tucPercentForMeetings(kpiMeetingsPrev);
+  const usefulConversationMinutes = sumUsefulConversationMinutes(currentDurations);
+  const usefulConversationPrev = sumUsefulConversationMinutes(prevDurations);
+  const nbRdvsRenseignes = countConnectedMeetings(currentDurations);
+  const nbRdvsRenseignesPrev = countConnectedMeetings(prevDurations);
+
+  const tucOptimisePercentValue = tucOptimisePercent(
+    usefulConversationMinutes,
+    prospectingMinutes,
+  );
+  const tucPrevPercent = tucOptimisePercent(
+    usefulConversationPrev,
+    prospectingMinutes,
+  );
+
+  const avgDurationFromMeetings = averageTamMinutes(
+    kpiMeetingsCurrent.map((m) => m.durationMin),
+  );
+  const avgDurationPrevFromMeetings = averageTamMinutes(
+    kpiMeetingsPrev.map((m) => m.durationMin),
+  );
+  const avgDurationMinResolved = avgDurationMin ?? avgDurationFromMeetings;
+  const avgDurationPrevResolved =
+    avgDurationPrev ?? avgDurationPrevFromMeetings;
 
   const noteGlobaleOn5 = noteGlobaleOn5ForMeetings(kpiMeetingsCurrent);
   const noteGlobalePrevOn5 = noteGlobaleOn5ForMeetings(kpiMeetingsPrev);
 
   const nbRdvsTrendPercent = percentChangeVsPrevious(nbRdvs, nbRdvsPrev);
-  const tamTrendPercent = percentChangeVsPrevious(
-    tamCumuleMinutes,
-    tamPrevMinutes,
+  const nbRdvsRenseignesTrendPercent = percentChangeVsPrevious(
+    nbRdvsRenseignes,
+    nbRdvsRenseignesPrev,
   );
+  const tamCumuleTrendPercent = percentChangeVsPrevious(
+    usefulConversationMinutes,
+    usefulConversationPrev,
+  );
+  const tamTrendPercent =
+    avgDurationMinResolved != null
+      ? percentChangeVsPrevious(
+          avgDurationMinResolved,
+          avgDurationPrevResolved ?? 0,
+        )
+      : null;
 
   const tucTrendPoints =
-    tucOptimisePercent != null && tucPrevPercent != null
-      ? Math.round((tucOptimisePercent - tucPrevPercent) * 10) / 10
+    tucOptimisePercentValue != null && tucPrevPercent != null
+      ? Math.round((tucOptimisePercentValue - tucPrevPercent) * 10) / 10
       : null;
 
-  const avgDurationTrendPercent =
-    avgDurationMin != null && avgDurationPrev != null
-      ? percentChangeVsPrevious(avgDurationMin, avgDurationPrev)
-      : null;
+  const avgDurationTrendPercent = tamTrendPercent;
 
   const noteGlobaleTrendPoints =
     noteGlobaleOn5 != null && noteGlobalePrevOn5 != null
       ? Math.round((noteGlobaleOn5 - noteGlobalePrevOn5) * 10) / 10
       : null;
 
+  const noteGlobaleTrendPercent =
+    noteGlobaleOn5 != null
+      ? percentChangeVsPrevious(noteGlobaleOn5, noteGlobalePrevOn5 ?? 0)
+      : null;
+
   return {
     statsWindowDays: input.statsWindowDays,
-    tamCumuleMinutes,
     tamMinutesPerRdv,
+    avgDurationMin: avgDurationMinResolved,
+    usefulConversationMinutes,
+    tamCumuleMinutes: usefulConversationMinutes,
+    nbRdvsRenseignes,
     nbRdvs,
-    tucOptimisePercent,
-    avgDurationMin,
+    tucOptimisePercent: tucOptimisePercentValue,
     tamTrendPercent,
+    tamCumuleTrendPercent,
     nbRdvsTrendPercent,
+    nbRdvsRenseignesTrendPercent,
     tucTrendPoints,
     avgDurationTrendPercent,
     noteGlobaleOn5,
     noteGlobaleTrendPoints,
+    noteGlobaleTrendPercent,
     recentMeetings,
   };
 }

@@ -9,11 +9,11 @@
     "exitSuperAdminOrg": "Exit super admin org"
   },
   "nav": {
-    "dashboard": "Dashboard",
-    "meetingsTeam": "Meetings",
-    "meetingsMine": "My meetings",
-    "analyseTeam": "Analysis",
-    "analyseMine": "My analysis",
+    "dashboard": "Tableau de bord",
+    "meetingsTeam": "Rendez-vous",
+    "meetingsMine": "Mes rendez-vous",
+    "analyseTeam": "Performance",
+    "analyseMine": "My performance",
     "contacts": "Contacts",
     "orgSettings": "Settings",
     "superAdmin": "Super admin"

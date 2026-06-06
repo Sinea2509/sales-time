@@ -1,4 +1,8 @@
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
+import type {
+  MeetingSourceType,
+  MeetingStatus,
+} from "@/src/core/domain/meeting-status";
 
 /** Analysis kinds persisted on \`MeetingAnalysis\`. */
 export type MeetingAnalysisKind = "SONCAS" | "DISC" | "KISS";
@@ -18,6 +22,11 @@ export type MeetingRow = {
   transcript: string;
   notes: string | null;
   outcome: MeetingOutcome;
+  feeling: number | null;
+  status: MeetingStatus;
+  errorMessage: string | null;
+  sourceType: MeetingSourceType;
+  sourceBlobUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -34,6 +43,8 @@ export type MeetingAnalysisRow = {
 /** Recent meeting row for dashboard (tri par date d’ajout). */
 export type RecentMeetingListRow = MeetingRow & {
   sellerEmail: string | null;
+  sellerFirstName: string | null;
+  sellerLastName: string | null;
   hasSoncas: boolean;
   hasDisc: boolean;
   hasKiss: boolean;
@@ -62,12 +73,16 @@ export type PersonOutreachSummaryRow = {
 export type MeetingDetailWithAnalyses = {
   id: string;
   sellerUserId: string;
+  personId: string;
   prospectName: string;
   meetingAt: Date;
   outcome: MeetingOutcome;
   meetingType: string | null;
   pipelineStage: string | null;
   potentialAmount: number | null;
+  feeling: number | null;
+  status: MeetingStatus;
+  errorMessage: string | null;
   followUpEmailDraft: string | null;
   transcript: string;
   notes: string | null;
@@ -93,6 +108,10 @@ export interface MeetingRepositoryPort {
     transcript: string;
     notes: string | null;
     outcome: MeetingOutcome;
+    feeling?: number | null;
+    sourceType?: MeetingSourceType;
+    sourceBlobUrl?: string | null;
+    status?: MeetingStatus;
   }): Promise<MeetingRow>;
 
   findMeetingByIdForOrg(input: {
@@ -154,10 +173,10 @@ export interface MeetingRepositoryPort {
     sellerUserId?: string;
   }): Promise<number>;
 
-  /** Moyenne de `durationMin` (non null) sur la fenêtre [gte, lt) ou [gte, +∞). */
+  /** Moyenne de `durationMin` (> 0) sur [gte, lt), [gte, +∞) ou l'ensemble si aucune borne date. */
   averageDurationMinForMeetingsInWindow(input: {
     organizationId: string;
-    meetingAtGte: Date;
+    meetingAtGte?: Date;
     meetingAtLt?: Date;
     sellerUserId?: string;
   }): Promise<number | null>;
@@ -202,4 +221,33 @@ export interface MeetingRepositoryPort {
     organizationId: string;
     followUpEmailDraft: string | null;
   }): Promise<boolean>;
+
+  updateMeetingStatus(input: {
+    id: string;
+    organizationId: string;
+    status: MeetingStatus;
+    errorMessage?: string | null;
+  }): Promise<boolean>;
+
+  updatePersonProfileCache(input: {
+    personId: string;
+    organizationId: string;
+    discDominant?: string | null;
+    soncasDominant?: string | null;
+  }): Promise<void>;
+
+  searchMeetingsForOrg(input: {
+    organizationId: string;
+    query: string;
+    sellerUserId?: string;
+    limit?: number;
+  }): Promise<MeetingRow[]>;
+
+  listMeetingsForPersonOrdered(input: {
+    organizationId: string;
+    personId: string;
+    limit?: number;
+  }): Promise<MeetingRow[]>;
+
+  countByAnalysisStatus(): Promise<{ ready: number; failed: number }>;
 }

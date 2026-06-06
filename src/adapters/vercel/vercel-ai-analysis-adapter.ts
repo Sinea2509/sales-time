@@ -2,10 +2,12 @@ import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import {
   discResultSchema,
-  kissResultSchema,
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
+import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
+import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
+import { teamCoachingRecommendationsSchema } from "@/src/core/domain/team-coaching-recommendations-zod";
 import type {
   AnalysisPort,
   OrgKissRollupForSummary,
@@ -141,10 +143,10 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       "Tu es un coach commercial B2B.",
       "À partir du JSON d’agrégats KISS d’une équipe (période déjà filtrée côté produit), rédige UN seul paragraphe en français (3 à 5 phrases maximum).",
       "Ton : professionnel, chaleureux, orienté manager.",
-      "Concentre-toi sur ce que l’équipe peut améliorer : lecture des volumes Keep / Improve / Start / Stop et du nombre de réunions coachées, priorités actionnables pour le manager.",
-      "Synthétise : ne liste pas mécaniquement chaque chiffre ; donne une lecture utile.",
+      "Le JSON contient des recommandations Keep / Improve / Start / Stop issues des analyses IA sur les rendez-vous — synthétise-les en priorités actionnables pour le manager.",
+      "Ne te contente pas de compter les puces : fais une lecture utile des thèmes récurrents.",
       "Si kissMeetingsCount vaut 0, indique qu’il n’y a pas encore de données KISS sur la période, en une ou deux phrases.",
-      "N’invente pas de chiffres hors du JSON. Pas de titre ni de liste à puces, uniquement du texte continu.",
+      "N’invente pas de recommandations hors du JSON. Pas de titre ni de liste à puces, uniquement du texte continu.",
     ];
     if (orgAppendix) {
       systemLines.push(
@@ -252,5 +254,99 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       discAffinity: object.discAffinity.trim(),
       soncasAffinity: object.soncasAffinity.trim(),
     };
+  }
+
+  async summarizeTeamCoachingRecommendations(input: {
+    model: string;
+    statsWindowDays: number;
+    audience: "manager" | "commercial";
+    meetings: SellerCommercialMeetingDigestForSummary[];
+    salesProfile: Record<string, number> | null;
+    previousSalesProfile: Record<string, number> | null;
+    kissRollup: OrgKissRollupForSummary;
+    organizationKissPromptAppendix?: string | null;
+  }) {
+    const orgAppendix = input.organizationKissPromptAppendix?.trim();
+    const audienceLabel =
+      input.audience === "manager"
+        ? "manager d’équipe commerciale"
+        : "commercial individuel";
+    const systemLines = [
+      "Tu es un coach commercial B2B.",
+      `Tu rédiges des recommandations pour un ${audienceLabel}, à partir de rendez-vous déjà analysés (SONCAS, DISC, KISS) sur une période glissante.`,
+      "Produis exactement deux listes de puces courtes en français (2 à 5 puces chacune, une phrase par puce, sans numérotation ni tirets dans le texte) :",
+      "1) progressBullets — progrès observés : ce que l’équipe ou le commercial a amélioré, consolidé ou fait mieux (thèmes Keep / Improve KISS, évolution du profil de vente vs période précédente).",
+      "2) improvementBullets — axes d’amélioration : nouvelles pratiques à démarrer ou renforcer (thèmes Start KISS, lacunes du profil de vente, priorités concrètes pour la prochaine période).",
+      "Ton : professionnel, concret, orienté action. Chaque puce doit être autonome et utile sans contexte supplémentaire.",
+      "N’invente pas de faits, chiffres ou citations absents des données. Si les données sont insuffisantes, dis-le en une puce prudente plutôt que d’halluciner.",
+      "Ne répète pas le JSON ; synthétise les thèmes récurrents.",
+    ];
+    if (orgAppendix) {
+      systemLines.push(
+        "",
+        "Consignes spécifiques fournies par l’organisation (à respecter si compatibles avec les données) :",
+        orgAppendix,
+      );
+    }
+    const system = withDataScopeSystemPrompt(systemLines.join("\n"));
+    const userContent = [
+      `Période : ${input.statsWindowDays} derniers jours.`,
+      "Contexte (JSON) :",
+      JSON.stringify(
+        {
+          profilVenteActuel: input.salesProfile,
+          profilVentePeriodePrecedente: input.previousSalesProfile,
+          agregatsKiss: input.kissRollup,
+          rendezVous: input.meetings,
+        },
+        null,
+        2,
+      ),
+    ].join("\n");
+
+    const { object } = await generateObject({
+      model: input.model,
+      system,
+      schema: teamCoachingRecommendationsSchema,
+      prompt: userContent,
+      maxOutputTokens: 900,
+    });
+    return {
+      progressBullets: object.progressBullets.map((s) => s.trim()),
+      improvementBullets: object.improvementBullets.map((s) => s.trim()),
+    };
+  }
+
+  async prepareMeetingBriefing(input: {
+    model: string;
+    targetStage: string;
+    prospectCompany: string;
+    priorMeetingsJson: string;
+    hasHistory: boolean;
+  }) {
+    const system = withDataScopeSystemPrompt(
+      [
+        "Tu es un coach commercial B2B. Tu prépares un briefing pour le PROCHAIN rendez-vous.",
+        "Si un historique de RDV est fourni, base-toi sur les synthèses et analyses stockées.",
+        "Sinon, fournis des conseils génériques adaptés à l'étape de vente visée.",
+        "Réponds en français au format structuré demandé.",
+      ].join("\n"),
+    );
+    const userContent = [
+      `Société prospect : ${input.prospectCompany}`,
+      `Étape visée : ${input.targetStage}`,
+      `Historique disponible : ${input.hasHistory ? "oui" : "non"}`,
+      "",
+      "Historique (JSON) :",
+      input.priorMeetingsJson,
+    ].join("\n");
+    const { object } = await generateObject({
+      model: input.model,
+      schema: meetingBriefingSchema,
+      system,
+      prompt: userContent,
+      maxOutputTokens: 900,
+    });
+    return { result: object };
   }
 }

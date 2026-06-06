@@ -67,6 +67,15 @@ describe("kiss-org-coaching-prompts", () => {
   it("skips quadrants with no content and returns empty when nothing to say", () => {
     expect(buildKissOrgMarkdownAppendix(emptyKissCoachingPromptsForm(), "manager")).toBe("");
     expect(buildKissOrgMarkdownAppendix(null, "manager")).toBe("");
+    expect(
+      buildKissOrgMarkdownAppendix(
+        {
+          ...emptyKissCoachingPromptsForm(),
+          keep: { global: "   ", manager: "", commercial: "" },
+        },
+        "commercial",
+      ),
+    ).toBe("");
     const form = emptyKissCoachingPromptsForm();
     form.keep.manager = "mgr only";
     expect(buildKissOrgMarkdownAppendix(form, "manager")).toContain("mgr only");

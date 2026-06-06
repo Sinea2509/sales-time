@@ -32,6 +32,7 @@ import {
   DashboardHeader,
   type SessionUserMenuInfo,
 } from "@/components/organisms/dashboard-header";
+import type { NotificationItem } from "@/components/organisms/notification-bell";
 import {
   OrgSwitcher,
   type OrgSwitcherMembership,
@@ -53,7 +54,10 @@ type OrgDashboardShellProps = {
   elevatedOrganizationId: string | null;
   activeOrganizationId: string | null;
   workspaceRoleMode: WorkspaceRoleMode | null;
-  analysesUsed: number;
+  trialAnalysesLeft: number;
+  trialLimit: number;
+  unreadNotificationCount: number;
+  notifications: NotificationItem[];
   organizationSwitcherMemberships: OrgSwitcherMembership[];
   sessionUser: SessionUserMenuInfo;
 };
@@ -72,7 +76,10 @@ export function OrgDashboardShell({
   elevatedOrganizationId,
   activeOrganizationId,
   workspaceRoleMode,
-  analysesUsed,
+  trialAnalysesLeft,
+  trialLimit,
+  unreadNotificationCount,
+  notifications,
   organizationSwitcherMemberships,
   sessionUser,
 }: OrgDashboardShellProps) {
@@ -95,14 +102,14 @@ export function OrgDashboardShell({
       icon: Calendar,
     },
     {
-      href: "/company/contacts",
-      label: tNav("contacts"),
-      icon: ContactRound,
-    },
-    {
       href: "/company/analyse",
       label: isAdmin ? tNav("analyseTeam") : tNav("analyseMine"),
       icon: LineChart,
+    },
+    {
+      href: "/company/contacts",
+      label: tNav("contacts"),
+      icon: ContactRound,
     },
   ];
   const orgAdminNav: NavItem[] =
@@ -126,11 +133,11 @@ export function OrgDashboardShell({
       ]
     : [];
   const [showQuotaPopup, setShowQuotaPopup] = useState(false);
-  const freeAnalysesLimit = 5;
-  const quotaReached = analysesUsed >= freeAnalysesLimit;
+  const analysesUsed = Math.max(0, trialLimit - trialAnalysesLeft);
+  const quotaReached = trialAnalysesLeft <= 0;
   const progressPercent = Math.min(
     100,
-    Math.max(0, (analysesUsed / freeAnalysesLimit) * 100),
+    Math.max(0, (analysesUsed / trialLimit) * 100),
   );
 
   // SessionStorage is unavailable during SSR; open the quota modal once per tab after mount.
@@ -229,7 +236,9 @@ export function OrgDashboardShell({
                   Essai gratuit
                 </p>
                 <p className="mt-1 text-xs leading-snug text-[#404040]">
-                  Plus que 5 analyses — passez au plan pour continuer
+                  {trialAnalysesLeft > 0
+                    ? `Plus que ${trialAnalysesLeft} analyse${trialAnalysesLeft > 1 ? "s" : ""} — passez au plan pour continuer`
+                    : "Quota épuisé — passez au plan pour continuer"}
                 </p>
                 <div className="mt-3">
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#171717]/20">
@@ -264,8 +273,8 @@ export function OrgDashboardShell({
                   Quota d&apos;analyses atteint
                 </h3>
                 <p className="mt-1 text-sm text-[#404040] dark:text-neutral-300">
-                  Vos 5 analyses gratuites sont utilisees. Book a meeting with
-                  Cedric pour debloquer la suite.
+                  Vos {trialLimit} analyses gratuites sont utilisées. Demandez un
+                  upgrade pour débloquer la suite.
                 </p>
               </div>
               <button
@@ -313,6 +322,9 @@ export function OrgDashboardShell({
           showHeaderNavLinks={false}
           sessionUser={sessionUser}
           stickyTop={false}
+          unreadNotificationCount={unreadNotificationCount}
+          notifications={notifications}
+          showFeedbackWidget
         />
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-6">
           <div className="mx-auto w-full max-w-6xl">{children}</div>

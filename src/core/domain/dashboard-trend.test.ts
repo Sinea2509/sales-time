@@ -7,7 +7,7 @@ describe("percentChangeVsPrevious", () => {
   });
 
   it("returns null when previous is zero but current is not", () => {
-    expect(percentChangeVsPrevious(5, 0)).toBeNull();
+    expect(percentChangeVsPrevious(5, 0)).toBe(100);
   });
 
   it("computes rounded percent change when previous is non-zero", () => {

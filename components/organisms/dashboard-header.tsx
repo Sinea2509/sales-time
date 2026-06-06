@@ -5,6 +5,11 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronDown, LogOut, Settings } from "lucide-react";
 import { ElevatedModeIndicator } from "@/components/molecules/elevated-mode-indicator";
+import { FeedbackWidget } from "@/components/organisms/feedback-widget";
+import {
+  NotificationBell,
+  type NotificationItem,
+} from "@/components/organisms/notification-bell";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -59,6 +64,9 @@ type DashboardHeaderProps = {
    * Default true keeps sticky top bar for full-page scroll layouts.
    */
   stickyTop?: boolean;
+  unreadNotificationCount?: number;
+  notifications?: NotificationItem[];
+  showFeedbackWidget?: boolean;
 };
 
 export function DashboardHeader({
@@ -70,6 +78,9 @@ export function DashboardHeader({
   showHeaderNavLinks = true,
   sessionUser = null,
   stickyTop = true,
+  unreadNotificationCount = 0,
+  notifications = [],
+  showFeedbackWidget = false,
 }: DashboardHeaderProps) {
   const t = useTranslations("common");
   const router = useRouter();
@@ -102,6 +113,13 @@ export function DashboardHeader({
           <div className="flex-1" />
         )}
         <div className="flex items-center gap-2">
+          {showFeedbackWidget ? <FeedbackWidget /> : null}
+          {sessionUser && notifications.length >= 0 ? (
+            <NotificationBell
+              unreadCount={unreadNotificationCount}
+              items={notifications}
+            />
+          ) : null}
           {isElevatedSuperAdmin ? <ElevatedModeIndicator /> : null}
           {isElevatedSuperAdmin && elevatedOrganizationId ? (
             <Button

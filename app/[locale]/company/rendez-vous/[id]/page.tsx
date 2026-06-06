@@ -14,15 +14,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  meetingStatusBadgeClass,
+  meetingStatusLabel,
+} from "@/lib/meeting-status-label";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { cardTitleClass, pageTitleClass } from "@/lib/page-typography";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import {
   discResultSchema,
-  kissResultSchema,
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
+import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { getApplicationDeps } from "@/lib/application-deps";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +70,14 @@ export default async function RendezVousDetailPage({
             Fiche RDV
           </p>
           <h1 className={pageTitleClass}>{meeting.prospectName}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge className={meetingStatusBadgeClass(meeting.status)}>
+              {meetingStatusLabel(meeting.status)}
+            </Badge>
+            {meeting.feeling != null ? (
+              <Badge variant="outline">Ressenti {meeting.feeling}/5</Badge>
+            ) : null}
+          </div>
           <p className="text-muted-foreground mt-1 text-sm">
             {new Date(meeting.meetingAt).toLocaleString()} · {meeting.outcome}
             {meeting.meetingType ? ` · ${meeting.meetingType}` : ""}

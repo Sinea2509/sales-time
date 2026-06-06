@@ -1,9 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
-import {
-  discResultSchema,
-  kissResultSchema,
-  soncasResultSchema,
-} from "./analysis-result-zod";
+import { discResultSchema, soncasResultSchema } from "./analysis-result-zod";
+import { kissResultSchema } from "./kiss-result-zod";
 
 const driver = (score: number) => ({ score, evidence: ["e"] });
 

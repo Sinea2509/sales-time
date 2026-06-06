@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useTransition } from "react";
 import { Eye, MoreHorizontal, Sparkles, Trash2 } from "lucide-react";
 import { deleteMeetingAction } from "@/app/[locale]/company/rendez-vous/actions";

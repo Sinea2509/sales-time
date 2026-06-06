@@ -4,6 +4,7 @@ import { needsRegisterProfile } from "@/lib/register-profile-gate";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { DEFAULT_TRIAL_LIMIT } from "@/lib/team-seller-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -39,11 +40,20 @@ export default async function DashboardLayout({
     },
   );
 
-  const analysesUsed =
+  const trialAnalysesLeft =
     actor.kind === "authenticated" && actor.activeOrganizationId
-      ? await deps.meetings.countMeetingAnalysesForOrganization(
+      ? await deps.organizationQuota.getTrialAnalysesLeft(
           actor.activeOrganizationId,
         )
+      : DEFAULT_TRIAL_LIMIT;
+
+  const notificationItems =
+    actor.kind === "authenticated"
+      ? await deps.notifications.listUnreadForUser(principal.userId, 8)
+      : [];
+  const unreadNotificationCount =
+    actor.kind === "authenticated"
+      ? await deps.notifications.countUnreadForUser(principal.userId)
       : 0;
 
   const organizationSwitcherMemberships = await Promise.all(
@@ -58,11 +68,41 @@ export default async function DashboardLayout({
     }),
   );
 
+  if (
+    actor.kind === "authenticated" &&
+    actor.isElevatedSuperAdmin &&
+    actor.activeOrganizationId &&
+    !organizationSwitcherMemberships.some(
+      (m) => m.organizationId === actor.activeOrganizationId,
+    )
+  ) {
+    const org = await deps.orgDirectory.getOrganizationById(
+      actor.activeOrganizationId,
+    );
+    if (org) {
+      organizationSwitcherMemberships.unshift({
+        organizationId: actor.activeOrganizationId,
+        name: org.name,
+        role: "ADMIN",
+        logoUrl: org.logoUrl ?? null,
+      });
+    }
+  }
+
   return (
     <AuthenticatedAppShell
       actor={actor}
       superAdminOrgCookie={superAdminOrgCookie}
-      analysesUsed={analysesUsed}
+      trialAnalysesLeft={trialAnalysesLeft}
+      trialLimit={DEFAULT_TRIAL_LIMIT}
+      unreadNotificationCount={unreadNotificationCount}
+      notifications={notificationItems.map((n) => ({
+        id: n.id,
+        title: n.title,
+        body: n.body,
+        href: n.href,
+        createdAt: n.createdAt.toISOString(),
+      }))}
       organizationSwitcherMemberships={organizationSwitcherMemberships}
     >
       {children}

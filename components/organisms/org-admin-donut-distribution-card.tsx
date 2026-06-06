@@ -33,14 +33,18 @@ export function OrgAdminDonutDistributionCard({
   const gradient = conicGradientStops(data.slices);
   const rdvCount = data.analyzedMeetings;
 
+  const description = data.isDefaultEqual
+    ? "Répartition par défaut (parts égales) — en attente d'analyses"
+    : `Moyenne équipe sur ${rdvCount} RDV analysé${rdvCount > 1 ? "s" : ""}`;
+
   return (
     <Card className="border-neutral-200 shadow-sm dark:border-neutral-800">
       <CardHeader>
         <CardTitle className={cardTitleClass}>{title}</CardTitle>
-        <CardDescription>Sur {rdvCount} RDV</CardDescription>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        {total <= 0 || !gradient ? (
+        {!gradient ? (
           <p className="text-muted-foreground text-sm">
             Pas assez de données sur la période sélectionnée.
           </p>
@@ -54,7 +58,7 @@ export function OrgAdminDonutDistributionCard({
               />
               <div className="absolute inset-[32%] flex items-center justify-center rounded-full bg-white text-center dark:bg-zinc-900">
                 <span className="text-muted-foreground text-xs font-medium tabular-nums">
-                  {total}
+                  {data.isDefaultEqual ? 0 : rdvCount}
                   <span className="block text-[10px] font-normal">RDV</span>
                 </span>
               </div>
@@ -76,10 +80,19 @@ export function OrgAdminDonutDistributionCard({
                     </span>
                   </span>
                   <span className="shrink-0 tabular-nums text-zinc-600 dark:text-zinc-400">
-                    {s.value}{" "}
-                    <span className="text-muted-foreground text-xs">
-                      ({Math.round((100 * s.value) / total)}%)
-                    </span>
+                    {data.isDefaultEqual ? (
+                      <span className="text-muted-foreground text-xs">
+                        {Math.round((100 * s.value) / total)}%
+                      </span>
+                    ) : (
+                      <>
+                        {s.value}
+                        <span className="text-muted-foreground text-xs">
+                          {" "}
+                          ({Math.round((100 * s.value) / total)}%)
+                        </span>
+                      </>
+                    )}
                   </span>
                 </li>
               ))}

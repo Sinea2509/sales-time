@@ -63,6 +63,60 @@ enum UserProfileRole {
   OTHER
 }
 
+enum MeetingStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum MeetingSourceType {
+  UPLOAD
+  TRANSCRIPT
+}
+
+enum AnalysisJobStatus {
+  QUEUED
+  PROCESSING
+  DONE
+  FAILED
+  DEAD
+}
+
+enum AiCallKind {
+  DISC
+  SONCAS
+  COACHING
+  PREPARE
+  EMAIL
+}
+
+enum AiCallStatus {
+  SUCCESS
+  ERROR
+}
+
+enum PlanRequestStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  DISMISSED
+}
+
+enum FeedbackType {
+  BUG
+  IDEA
+  QUESTION
+  OTHER
+}
+
+enum FeedbackStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  WONT_FIX
+}
+
 model User {
   id                           String    @id @default(cuid())
   email                        String    @unique
@@ -91,6 +145,14 @@ model User {
   invitationsAccepted        OrganizationInvitation[] @relation("InvitationAcceptor")
   superAdminInvitationsSent     SuperAdminInvitation[] @relation("SuperAdminInvitationInviter")
   superAdminInvitationsAccepted SuperAdminInvitation[] @relation("SuperAdminInvitationAcceptor")
+  managerId                     String?
+  manager                       User?                  @relation("UserManager", fields: [managerId], references: [id], onDelete: SetNull)
+  managedUsers                  User[]                 @relation("UserManager")
+  notifications                 Notification[]
+  feedbacks                     Feedback[]
+  planRequestsSubmitted         PlanRequest[]          @relation("PlanRequestRequester")
+
+  @@index([managerId])
 }
 
 model Session {
@@ -131,8 +193,15 @@ model Organization {
   settings     OrganizationSettings?
   memberships  OrganizationMembership[]
   invitations  OrganizationInvitation[]
+  trialAnalysesLeft Int @default(5)
+
   people       Person[]
   meetings     Meeting[]
+  analysisJobs AnalysisJob[]
+  aiRequestLogs AiRequestLog[]
+  planRequests PlanRequest[]
+  feedbacks    Feedback[]
+  notifications Notification[]
 }
 
 model OrganizationMembership {
@@ -296,6 +365,8 @@ model Person {
   phone          String?
   jobTitle       String?
   notes          String?      @db.Text
+  discDominant   String?
+  soncasDominant String?
   meetings       Meeting[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -322,7 +393,14 @@ model Meeting {
   transcript     String         @db.Text
   notes          String?        @db.Text
   outcome        MeetingOutcome
+  feeling        Int?
+  status         MeetingStatus      @default(PENDING)
+  errorMessage   String?            @db.Text
+  sourceType     MeetingSourceType  @default(TRANSCRIPT)
+  sourceBlobUrl  String?
   analyses       MeetingAnalysis[]
+  analysisJobs   AnalysisJob[]
+  aiRequestLogs  AiRequestLog[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -330,6 +408,7 @@ model Meeting {
   @@index([sellerUserId])
   @@index([organizationId, sellerUserId])
   @@index([personId])
+  @@index([status])
 }
 
 model MeetingAnalysis {
@@ -375,4 +454,117 @@ model GlobalKissCoachingPrompts {
   id        String   @id
   prompts   Json?
   updatedAt DateTime @updatedAt
+}
+
+model AnalysisJob {
+  id             String            @id @default(cuid())
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  meetingId      String
+  meeting        Meeting           @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  jobType        String            @default("analyze_meeting")
+  status         AnalysisJobStatus @default(QUEUED)
+  priority       Int               @default(0)
+  attempts       Int               @default(0)
+  maxAttempts    Int               @default(3)
+  runAfter       DateTime          @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  lastError      String?           @db.Text
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  aiRequestLogs  AiRequestLog[]
+
+  @@index([status, runAfter, priority])
+  @@index([meetingId])
+}
+
+model AiRequestLog {
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  meetingId      String?
+  meeting        Meeting?      @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  jobId          String?
+  job            AnalysisJob?  @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  kind           AiCallKind
+  status         AiCallStatus
+  modelName      String
+  promptVersion  String        @default("1")
+  systemPrompt   String?       @db.Text
+  userPrompt     String?       @db.Text
+  rawOutput      Json?
+  errorMessage   String?       @db.Text
+  inputTokens    Int?
+  outputTokens   Int?
+  latencyMs      Int?
+  temperature    Float?
+  createdAt      DateTime      @default(now())
+
+  @@index([meetingId, createdAt])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model PlanRequest {
+  id             String            @id @default(cuid())
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedById  String?
+  requestedBy    User?             @relation("PlanRequestRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+  desiredPlan    String?
+  message        String?           @db.Text
+  status         PlanRequestStatus @default(NEW)
+  handledAt      DateTime?
+  createdAt      DateTime          @default(now())
+
+  @@index([status, createdAt])
+  @@index([organizationId])
+}
+
+model Feedback {
+  id             String         @id @default(cuid())
+  organizationId String?
+  organization   Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  userId         String?
+  user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userEmail      String?
+  companyName    String?
+  type           FeedbackType   @default(BUG)
+  message        String         @db.Text
+  status         FeedbackStatus @default(NEW)
+  screenshotUrl  String?
+  pageUrl        String?
+  userAgent      String?        @db.Text
+  browser        String?
+  os             String?
+  deviceType     String?
+  viewport       String?
+  screenSize     String?
+  locale         String?
+  appVersion     String?
+  consoleErrors  Json?
+  extra          Json?
+  adminNotes     String?        @db.Text
+  handledAt      DateTime?
+  createdAt      DateTime       @default(now())
+
+  @@index([status, createdAt])
+  @@index([organizationId])
+}
+
+model Notification {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  body           String       @db.Text
+  href           String?
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@index([organizationId])
 }

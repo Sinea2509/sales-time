@@ -5,37 +5,21 @@ import { KpiVsPreviousBadge } from "@/components/molecules/trend-pill";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 
 export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
-  const heroIsDuration = home.avgDurationMin != null;
-  const heroTrend = heroIsDuration
-    ? home.avgDurationTrendPercent
-    : home.tamTrendPercent;
-  const heroTrendMode: "up-good" | "down-good" = heroIsDuration
-    ? "down-good"
-    : "up-good";
-
-  const HeroIcon = Clock;
-  const heroLabel = heroIsDuration ? "Temps moyen RDV" : "TAM cumulé";
-
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <KpiTile
-        icon={HeroIcon}
-        label={heroLabel}
-        trend={<KpiVsPreviousBadge delta={heroTrend} mode={heroTrendMode} />}
-        footer={
-          heroIsDuration ? (
-            <>
-              TAM cumulé :{" "}
-              <span className="text-foreground font-medium">
-                {formatDurationHoursMinutes(home.tamCumuleMinutes)}
-              </span>
-            </>
-          ) : undefined
+        icon={Clock}
+        label="TAM"
+        trend={
+          <KpiVsPreviousBadge
+            delta={home.tamTrendPercent}
+            mode="neutral"
+          />
         }
       >
-        {heroIsDuration
-          ? formatDurationHoursMinutes(home.avgDurationMin!)
-          : formatDurationHoursMinutes(home.tamCumuleMinutes)}
+        {home.avgDurationMin != null
+          ? formatDurationHoursMinutes(home.avgDurationMin)
+          : "—"}
       </KpiTile>
 
       <KpiTile

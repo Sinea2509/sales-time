@@ -1,8 +1,10 @@
 import {
-  discResultSchema,
-  soncasResultSchema,
-} from "@/src/core/domain/analysis-result-zod";
+  computeTeamDiscPie,
+  computeTeamSoncasPie,
+} from "@/src/core/domain/org-profile-distribution-pie";
+import { soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
+import { kissCoachingBulletsFromMeetings } from "@/src/core/domain/kiss-coaching-bullets-from-meetings";
 import type { SoncasDriverAverages } from "@/src/core/domain/org-soncas-team-aggregate";
 import type {
   MeetingRepositoryPort,
@@ -37,8 +39,8 @@ export type OrgAdminMonEquipeRow = {
   nbRdvs: number;
   /** Nombre de RDV avec au moins une analyse KISS sur la période. */
   coachesCount: number;
-  /** Temps utile cumulé (minutes) sur la période pour ce membre. */
-  tamMinutesCumule: number;
+  /** TAM — temps d'appel moyen (min) sur les RDV connectés du membre. */
+  tamMinutesAvg: number | null;
   /** Levier SONCAS dominant le plus fréquent sur les RDV analysés (SONCAS) du membre. */
   postureLabel: string | null;
 };
@@ -58,18 +60,20 @@ export type OrgAdminPieSlice = {
 };
 
 export type OrgAdminDistributionPie = {
-  /** RDV avec au moins une analyse valide pour ce graphique. */
+  /** RDV avec analyse valide pour ce graphique. */
   analyzedMeetings: number;
+  /** Répartition égale indicative lorsqu'aucune analyse n'est disponible. */
+  isDefaultEqual: boolean;
   slices: OrgAdminPieSlice[];
 };
 
 export type OrgAdminKissTeamRollup = {
   /** Nombre de RDV avec analyse KISS valide sur la période. */
   kissMeetingsCount: number;
-  keepBullets: number;
-  improveBullets: number;
-  stopBullets: number;
-  startBullets: number;
+  keepBullets: string[];
+  improveBullets: string[];
+  stopBullets: string[];
+  startBullets: string[];
 };
 
 export type OrgAdminDashboard = {
@@ -99,20 +103,38 @@ function aggregateSellerWindowStats(
   meetings: RecentMeetingListRow[],
 ): Map<
   string,
-  { nbRdvs: number; coachesCount: number; soncasDominants: string[] }
+  {
+    nbRdvs: number;
+    coachesCount: number;
+    soncasDominants: string[];
+    connectedDurationSum: number;
+    connectedCount: number;
+  }
 > {
   const map = new Map<
     string,
-    { nbRdvs: number; coachesCount: number; soncasDominants: string[] }
+    {
+      nbRdvs: number;
+      coachesCount: number;
+      soncasDominants: string[];
+      connectedDurationSum: number;
+      connectedCount: number;
+    }
   >();
   for (const row of meetings) {
     const cur = map.get(row.sellerUserId) ?? {
       nbRdvs: 0,
       coachesCount: 0,
       soncasDominants: [] as string[],
+      connectedDurationSum: 0,
+      connectedCount: 0,
     };
     cur.nbRdvs += 1;
     if (row.hasKiss) cur.coachesCount += 1;
+    if (row.durationMin != null && row.durationMin > 0) {
+      cur.connectedDurationSum += row.durationMin;
+      cur.connectedCount += 1;
+    }
     const parsed = soncasResultSchema.safeParse(row.latestSoncasResult);
     if (parsed.success) cur.soncasDominants.push(parsed.data.dominant);
     map.set(row.sellerUserId, cur);
@@ -143,7 +165,6 @@ function modeSoncasDominantLabel(dominants: string[]): string | null {
 }
 
 function buildMonEquipePage(input: {
-  tamMinutesPerRdv: number;
   members: Array<{
     membershipId: string;
     userId: string;
@@ -160,7 +181,13 @@ function buildMonEquipePage(input: {
       nbRdvs: 0,
       coachesCount: 0,
       soncasDominants: [] as string[],
+      connectedDurationSum: 0,
+      connectedCount: 0,
     };
+    const tamMinutesAvg =
+      s.connectedCount > 0
+        ? Math.round(s.connectedDurationSum / s.connectedCount)
+        : null;
     return {
       userId: mem.userId,
       membershipId: mem.membershipId,
@@ -169,7 +196,7 @@ function buildMonEquipePage(input: {
       email: mem.email,
       nbRdvs: s.nbRdvs,
       coachesCount: s.coachesCount,
-      tamMinutesCumule: s.nbRdvs * input.tamMinutesPerRdv,
+      tamMinutesAvg,
       postureLabel: modeSoncasDominantLabel(s.soncasDominants),
     };
   });
@@ -212,10 +239,10 @@ const DISC_PIE_COLORS: Record<(typeof DISC_PIE_ORDER)[number], string> = {
   C: "#7c3aed",
 };
 const DISC_PIE_LABELS: Record<(typeof DISC_PIE_ORDER)[number], string> = {
-  D: "Dominant D",
-  I: "Dominant I",
-  S: "Dominant S",
-  C: "Dominant C",
+  D: "D",
+  I: "I",
+  S: "S",
+  C: "C",
 };
 
 const SONCAS_PIE_ORDER = [
@@ -239,72 +266,72 @@ const SONCAS_PIE_COLORS: Record<(typeof SONCAS_PIE_ORDER)[number], string> = {
 function buildDiscPie(
   meetings: RecentMeetingListRow[],
 ): OrgAdminDistributionPie {
-  let analyzedMeetings = 0;
-  const counts = new Map<string, number>();
-  for (const m of meetings) {
-    const p = discResultSchema.safeParse(m.latestDiscResult);
-    if (!p.success) continue;
-    analyzedMeetings += 1;
-    const d = p.data.dominant;
-    counts.set(d, (counts.get(d) ?? 0) + 1);
-  }
-  const slices: OrgAdminPieSlice[] = DISC_PIE_ORDER.filter(
-    (key) => (counts.get(key) ?? 0) > 0,
-  ).map((key) => ({
+  const pie = computeTeamDiscPie(
+    meetings.map((m) => m.latestDiscResult).filter((r) => r != null),
+  );
+  const slices: OrgAdminPieSlice[] = DISC_PIE_ORDER.map((key) => ({
     id: key,
     label: DISC_PIE_LABELS[key],
-    value: counts.get(key) ?? 0,
+    value: pie.values[key],
     color: DISC_PIE_COLORS[key],
   }));
-  return { analyzedMeetings, slices };
+  return {
+    analyzedMeetings: pie.analyzedMeetings,
+    isDefaultEqual: pie.isDefaultEqual,
+    slices,
+  };
 }
 
-function buildSoncasDominantPie(
+function buildSoncasPie(
   meetings: RecentMeetingListRow[],
 ): OrgAdminDistributionPie {
-  let analyzedMeetings = 0;
-  const counts = new Map<string, number>();
-  for (const m of meetings) {
-    const p = soncasResultSchema.safeParse(m.latestSoncasResult);
-    if (!p.success) continue;
-    analyzedMeetings += 1;
-    const d = p.data.dominant;
-    counts.set(d, (counts.get(d) ?? 0) + 1);
-  }
-  const slices: OrgAdminPieSlice[] = SONCAS_PIE_ORDER.filter(
-    (key) => (counts.get(key) ?? 0) > 0,
-  ).map((key) => ({
+  const pie = computeTeamSoncasPie(
+    meetings.map((m) => m.latestSoncasResult).filter((r) => r != null),
+  );
+  const slices: OrgAdminPieSlice[] = SONCAS_PIE_ORDER.map((key) => ({
     id: key,
     label: DRIVER_LABEL_FR[key],
-    value: counts.get(key) ?? 0,
+    value: pie.values[key],
     color: SONCAS_PIE_COLORS[key],
   }));
-  return { analyzedMeetings, slices };
+  return {
+    analyzedMeetings: pie.analyzedMeetings,
+    isDefaultEqual: pie.isDefaultEqual,
+    slices,
+  };
 }
 
 export function buildKissTeamRollupFromMeetings(
   meetings: RecentMeetingListRow[],
+  bulletsPerQuadrant = 5,
 ): OrgAdminKissTeamRollup {
   let kissMeetingsCount = 0;
-  let keepBullets = 0;
-  let improveBullets = 0;
-  let stopBullets = 0;
-  let startBullets = 0;
   for (const m of meetings) {
     const p = kissResultSchema.safeParse(m.latestKissResult);
-    if (!p.success) continue;
-    kissMeetingsCount += 1;
-    keepBullets += p.data.keep.length;
-    improveBullets += p.data.improve.length;
-    stopBullets += p.data.stop.length;
-    startBullets += p.data.start.length;
+    if (p.success) kissMeetingsCount += 1;
   }
   return {
     kissMeetingsCount,
-    keepBullets,
-    improveBullets,
-    stopBullets,
-    startBullets,
+    keepBullets: kissCoachingBulletsFromMeetings(
+      meetings,
+      "keep",
+      bulletsPerQuadrant,
+    ),
+    improveBullets: kissCoachingBulletsFromMeetings(
+      meetings,
+      "improve",
+      bulletsPerQuadrant,
+    ),
+    stopBullets: kissCoachingBulletsFromMeetings(
+      meetings,
+      "stop",
+      bulletsPerQuadrant,
+    ),
+    startBullets: kissCoachingBulletsFromMeetings(
+      meetings,
+      "start",
+      bulletsPerQuadrant,
+    ),
   };
 }
 
@@ -312,7 +339,7 @@ export function buildOrgAdminProgressBullets(home: OrgDashboardHome): string[] {
   const out: string[] = [];
   if (home.tamTrendPercent != null && home.tamTrendPercent > 0) {
     out.push(
-      `TAM estimé en hausse de ${home.tamTrendPercent}% sur la période vs la fenêtre précédente.`,
+      `TAM en hausse de ${home.tamTrendPercent}% sur la période vs la fenêtre précédente.`,
     );
   }
   if (home.nbRdvsTrendPercent != null && home.nbRdvsTrendPercent > 0) {
@@ -378,6 +405,8 @@ export async function getOrgAdminDashboard(
     statsWindowDays: StatsWindowDays;
     /** Pagination 1-based pour la section Mon équipe (10 par page). */
     monEquipePage?: number;
+    /** When set, limits team dashboard to these seller user ids (manager scope). */
+    teamUserIds?: string[];
   },
 ): Promise<OrgAdminDashboard | null> {
   if (!input.organizationId) return null;
@@ -408,9 +437,17 @@ export async function getOrgAdminDashboard(
 
   if (!home || !kpis) return null;
 
-  const activeCommercialsCount = new Set(meetings.map((m) => m.sellerUserId))
+  const teamIds = input.teamUserIds?.length ? new Set(input.teamUserIds) : null;
+  const scopedMeetings = teamIds
+    ? meetings.filter((m) => teamIds.has(m.sellerUserId))
+    : meetings;
+  const scopedMembers = teamIds
+    ? teamList.members.filter((m) => teamIds.has(m.userId))
+    : teamList.members;
+
+  const activeCommercialsCount = new Set(scopedMeetings.map((m) => m.sellerUserId))
     .size;
-  const scoreVals = meetings
+  const scoreVals = scopedMeetings
     .map((m) => m.salesScore)
     .filter((s): s is number => s != null);
   const avgSalesScoreInWindow =
@@ -421,15 +458,14 @@ export async function getOrgAdminDashboard(
         ) / 10;
 
   const monEquipe = buildMonEquipePage({
-    tamMinutesPerRdv: home.tamMinutesPerRdv,
-    members: teamList.members,
-    meetings,
+    members: scopedMembers,
+    meetings: scopedMeetings,
     page: input.monEquipePage ?? 1,
   });
 
-  const discPie = buildDiscPie(meetings);
-  const soncasPie = buildSoncasDominantPie(meetings);
-  const kissTeamRollup = buildKissTeamRollupFromMeetings(meetings);
+  const discPie = buildDiscPie(scopedMeetings);
+  const soncasPie = buildSoncasPie(scopedMeetings);
+  const kissTeamRollup = buildKissTeamRollupFromMeetings(scopedMeetings);
 
   return {
     statsWindowDays: input.statsWindowDays,

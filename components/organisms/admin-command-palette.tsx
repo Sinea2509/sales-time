@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { searchAdminAction } from "@/app/[locale]/admin/search-actions";
+import { enterSuperAdminOrganizationAction } from "@/app/[locale]/company/super-admin-actions";
 
 type Props = {
   open: boolean;
@@ -40,7 +41,9 @@ type ResultItem = {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   subtitle?: string;
-  href: string;
+  href?: string;
+  /** When set, enters super-admin elevation for this org instead of navigating. */
+  organizationId?: string;
   section: string;
 };
 
@@ -95,6 +98,27 @@ const PAGES: ResultItem[] = [
     section: "Pages",
   },
   {
+    id: "p-ai-logs",
+    icon: Activity,
+    label: "Logs IA",
+    href: "/admin/ai-logs",
+    section: "Pages",
+  },
+  {
+    id: "p-plan-requests",
+    icon: Activity,
+    label: "Demandes upgrade",
+    href: "/admin/plan-requests",
+    section: "Pages",
+  },
+  {
+    id: "p-feedbacks",
+    icon: Activity,
+    label: "Feedbacks",
+    href: "/admin/feedbacks",
+    section: "Pages",
+  },
+  {
     id: "p-health",
     icon: Activity,
     label: "Santé système",
@@ -115,7 +139,7 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
     }[];
     organizations: { id: string; name: string; slug: string | null }[];
   }>({ users: [], organizations: [] });
-  const [, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -168,8 +192,10 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
       id: `org-${o.id}`,
       icon: Building2,
       label: o.name,
-      subtitle: o.slug ?? undefined,
-      href: `/admin/organizations`,
+      subtitle: o.slug
+        ? `${o.slug} · Opérer dans cette org`
+        : "Opérer dans cette org",
+      organizationId: o.id,
       section: "Organisations",
     }));
 
@@ -196,12 +222,27 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
     setActiveIndex(0);
   }
 
-  const navigate = useCallback(
-    (href: string) => {
-      onOpenChange(false);
-      router.push(href);
+  const selectItem = useCallback(
+    (item: ResultItem) => {
+      if (item.organizationId) {
+        onOpenChange(false);
+        startTransition(async () => {
+          const result = await enterSuperAdminOrganizationAction({
+            targetOrganizationId: item.organizationId!,
+            reason: "Sélection depuis la recherche admin",
+          });
+          if (result && !result.ok) {
+            router.push("/admin/organizations");
+          }
+        });
+        return;
+      }
+      if (item.href) {
+        onOpenChange(false);
+        router.push(item.href);
+      }
     },
-    [router, onOpenChange],
+    [router, onOpenChange, startTransition],
   );
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -214,7 +255,7 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
       setActiveIndex((i) => Math.max(i - 1, 0));
     } else if (e.key === "Enter" && allResults[activeIndex]) {
       e.preventDefault();
-      navigate(allResults[activeIndex].href);
+      selectItem(allResults[activeIndex]);
     }
   }
 
@@ -246,6 +287,7 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
+            disabled={pending}
             placeholder="Rechercher des pages, organisations, utilisateurs..."
             className="h-12 border-0 shadow-none focus-visible:ring-0"
           />
@@ -275,7 +317,8 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
                           ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
                           : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50",
                       )}
-                      onClick={() => navigate(item.href)}
+                      disabled={pending}
+                      onClick={() => selectItem(item)}
                       onMouseEnter={() => setActiveIndex(idx)}
                     >
                       <Icon className="size-4 shrink-0" />

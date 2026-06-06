@@ -1,0 +1,12 @@
+---
+description: Small functions, naming, and focused diffs
+alwaysApply: true
+---
+
+# Clean code (concise)
+
+- **Small**: Prefer short functions; extract helpers when a block needs a name or repeats.
+- **Naming**: Verbs for actions (`loadOrgDashboard`), nouns for data (`MeetingOutcome`). Avoid `data`, `info`, `handle` without specificity.
+- **Errors**: Preserve stack causes (`cause`), avoid empty `catch`; map to domain/HTTP errors at boundaries.
+- **Diff hygiene**: Only touch files needed for the task; no drive-by refactors or unrelated formatting.
+- **Imports**: Static imports at top of file (no lazy inline imports unless framework-required).
