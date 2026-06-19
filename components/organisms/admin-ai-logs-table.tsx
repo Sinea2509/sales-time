@@ -12,8 +12,12 @@ import {
 } from "@/components/ui/dialog";
 import type { AiRequestLogRow } from "@/src/core/ports/ai-request-log-repository-port";
 
-export function AdminAiLogsTable({ rows }: { rows: AiRequestLogRow[] }) {
-  const [selected, setSelected] = useState<AiRequestLogRow | null>(null);
+type AdminAiLogRow = Omit<AiRequestLogRow, "createdAt"> & {
+  createdAt: Date | string;
+};
+
+export function AdminAiLogsTable({ rows }: { rows: AdminAiLogRow[] }) {
+  const [selected, setSelected] = useState<AdminAiLogRow | null>(null);
   const [replayResult, setReplayResult] = useState<string | null>(null);
 
   async function handleReplay(id: string) {
@@ -38,10 +42,20 @@ export function AdminAiLogsTable({ rows }: { rows: AiRequestLogRow[] }) {
             </tr>
           </thead>
           <tbody className="divide-y">
+            {rows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="px-3 py-8 text-center text-muted-foreground"
+                >
+                  Aucun appel IA enregistré pour le moment.
+                </td>
+              </tr>
+            ) : null}
             {rows.map((row) => (
               <tr key={row.id} className="hover:bg-muted/30">
                 <td className="px-3 py-2 whitespace-nowrap">
-                  {row.createdAt.toLocaleString("fr-FR")}
+                  {new Date(row.createdAt).toLocaleString("fr-FR")}
                 </td>
                 <td className="px-3 py-2">{row.kind}</td>
                 <td className="px-3 py-2">

@@ -21,10 +21,10 @@ export async function exitSuperAdminOrganizationContext(
     return { ok: false, error: "NOT_SUPER_ADMIN" };
   }
 
-  await deps.audit.logSuperAdminAction({
-    actorInternalUserId: principal.userId,
+  await deps.audit.logPlatformAction({
+    actorUserId: principal.userId,
     organizationId: input.organizationId,
-    action: "EXIT_ORG",
+    action: "EXIT_ORGANIZATION",
     reason: input.reason,
   });
 

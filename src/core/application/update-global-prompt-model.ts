@@ -33,8 +33,8 @@ export async function updateGlobalPromptModel(
     model: input.model,
   });
 
-  await deps.audit.logSuperAdminAction({
-    actorInternalUserId: input.actorInternalUserId,
+  await deps.audit.logPlatformAction({
+    actorUserId: input.actorInternalUserId,
     organizationId: GLOBAL_PROMPT_AUDIT_ORG_ID,
     action: "UPDATE_PROMPT_MODEL",
     reason: `${input.kind} model → ${model}`,

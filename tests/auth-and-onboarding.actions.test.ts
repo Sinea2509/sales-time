@@ -368,6 +368,9 @@ jest.mock("@/lib/application-deps", () => {
       onboardingCompletion: {
         completeStep4CreateOrganizationAndInvites: onboardingCompletionStep4Mock,
       },
+      audit: {
+        logPlatformAction: jest.fn().mockResolvedValue(undefined),
+      },
     }),
   };
 });

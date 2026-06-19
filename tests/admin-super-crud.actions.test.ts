@@ -52,6 +52,9 @@ jest.mock("@/lib/application-deps", () => {
       findById: mocks.findByIdMock,
     },
     backoffice: mocks.backofficeMock,
+    audit: {
+      logPlatformAction: jest.fn().mockResolvedValue(undefined),
+    },
   };
   (graph as { __adminTestMocks?: AdminAppDepsMocks }).__adminTestMocks = mocks;
   return { getApplicationDeps: () => graph };
@@ -437,6 +440,7 @@ describe("admin super-admin — super-admins & prompts", () => {
     mockAuthenticatedSuperAdminPrincipal();
     backofficeMock.findPendingSuperAdminInvitationById.mockResolvedValue({
       id: INVITE_ID,
+      email: "invitee@example.com",
     });
     backofficeMock.revokeSuperAdminInvitation.mockResolvedValue(undefined);
 

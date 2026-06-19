@@ -1,7 +1,20 @@
+import { withDataScopeSystemPrompt } from "@/lib/ai-system-prompt";
 import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "@/lib/default-analysis-prompts";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
+import {
+  buildDelimitedMeetingUserContent,
+  buildKissUserPrompt,
+} from "@/lib/meeting-text-for-ai-prompt";
 import { resolveMeetingTranscriptForAnalysis } from "@/lib/meeting-transcript-for-analysis";
+import {
+  recordAiRequestError,
+  recordAiRequestSuccess,
+} from "@/lib/record-ai-request-log";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
+import type {
+  AiCallKind,
+  AiRequestLogRepositoryPort,
+} from "@/src/core/ports/ai-request-log-repository-port";
 import type {
   MeetingAnalysisKind,
   MeetingRepositoryPort,
@@ -25,6 +38,10 @@ export type RunMeetingAnalysisResult =
 
 export type AnalysisKindToRun = MeetingAnalysisKind;
 
+function aiLogKind(kind: AnalysisKindToRun): AiCallKind {
+  return kind === "KISS" ? "COACHING" : kind;
+}
+
 async function resolvePromptVersion(
   prompts: PromptTemplateRepositoryPort,
   kind: AnalysisKindSlug,
@@ -41,11 +58,13 @@ export async function runMeetingAnalysis(
     meetings: MeetingRepositoryPort;
     prompts: PromptTemplateRepositoryPort;
     analysis: AnalysisPort;
+    aiLogs?: AiRequestLogRepositoryPort;
   },
   input: {
     organizationId: string | null;
     meetingId: string;
     kind: AnalysisKindToRun;
+    jobId?: string | null;
     /** Suffixe markdown (paramètres org.) concaténé au prompt KISS global. */
     kissSystemMarkdownAppendix?: string | null;
   },
@@ -74,9 +93,45 @@ export async function runMeetingAnalysis(
     promptVersion = await resolvePromptVersion(deps.prompts, input.kind);
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
+    if (deps.aiLogs) {
+      const model = await resolvePromptGatewayModel(deps.prompts, input.kind).catch(
+        () => "unknown",
+      );
+      await recordAiRequestError(
+        deps.aiLogs,
+        {
+          organizationId: input.organizationId,
+          meetingId: meeting.id,
+          jobId: input.jobId ?? null,
+          kind: aiLogKind(input.kind),
+          modelName: model,
+          promptVersion: "0",
+          systemPrompt: "",
+          userPrompt: "",
+        },
+        { errorMessage: message, latencyMs: 0 },
+      );
+    }
     return { ok: false, error: "PROMPT_NOT_CONFIGURED", message };
   }
   if (!promptVersion) {
+    if (deps.aiLogs) {
+      const model = await resolvePromptGatewayModel(deps.prompts, input.kind);
+      await recordAiRequestError(
+        deps.aiLogs,
+        {
+          organizationId: input.organizationId,
+          meetingId: meeting.id,
+          jobId: input.jobId ?? null,
+          kind: aiLogKind(input.kind),
+          modelName: model,
+          promptVersion: "0",
+          systemPrompt: "",
+          userPrompt: "",
+        },
+        { errorMessage: "Prompt not configured", latencyMs: 0 },
+      );
+    }
     return { ok: false, error: "PROMPT_NOT_CONFIGURED" };
   }
 
@@ -84,24 +139,56 @@ export async function runMeetingAnalysis(
 
   try {
     if (input.kind === "SONCAS" || input.kind === "DISC") {
+      const systemPrompt = withDataScopeSystemPrompt(promptVersion.markdown);
+      const userPrompt = buildDelimitedMeetingUserContent({
+        transcript: transcriptForAnalysis,
+        notes: meeting.notes,
+      });
+      const logBase = {
+        organizationId: input.organizationId,
+        meetingId: meeting.id,
+        jobId: input.jobId ?? null,
+        kind: aiLogKind(input.kind),
+        modelName: model,
+        promptVersion: String(promptVersion.version),
+        systemPrompt,
+        userPrompt,
+      };
+      const started = Date.now();
+
       const analyze =
         input.kind === "SONCAS"
           ? deps.analysis.analyzeSoncas
           : deps.analysis.analyzeDisc;
-      const { result } = await analyze({
-        systemMarkdown: promptVersion.markdown,
-        transcript: transcriptForAnalysis,
-        notes: meeting.notes,
-        model,
-      });
-      const row = await deps.meetings.createAnalysis({
-        meetingId: meeting.id,
-        kind: input.kind,
-        promptVersionId: promptVersion.id,
-        model,
-        result,
-      });
-      return { ok: true, analysisId: row.id };
+      try {
+        const out = await analyze({
+          systemMarkdown: promptVersion.markdown,
+          transcript: transcriptForAnalysis,
+          notes: meeting.notes,
+          model,
+        });
+        await recordAiRequestSuccess(deps.aiLogs, logBase, {
+          rawOutput: out.result,
+          inputTokens: out.usage?.inputTokens ?? null,
+          outputTokens: out.usage?.outputTokens ?? null,
+          latencyMs: Date.now() - started,
+        });
+        const row = await deps.meetings.createAnalysis({
+          meetingId: meeting.id,
+          kind: input.kind,
+          promptVersionId: promptVersion.id,
+          model,
+          result: out.result,
+        });
+        return { ok: true, analysisId: row.id };
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        await recordAiRequestError(deps.aiLogs, logBase, {
+          errorMessage: message,
+          latencyMs: Date.now() - started,
+        });
+        return { ok: false, error: "ANALYSIS_FAILED", message };
+      }
     }
 
     if (input.kind !== "KISS") {
@@ -127,23 +214,56 @@ export async function runMeetingAnalysis(
       appendix && appendix.length > 0
         ? `${promptVersion.markdown}\n\n---\n\n## Consignes KISS (plateforme)\n\n${appendix}`
         : promptVersion.markdown;
-
-    const { result } = await deps.analysis.analyzeKiss({
-      systemMarkdown: kissSystemMarkdown,
+    const systemPrompt = withDataScopeSystemPrompt(kissSystemMarkdown);
+    const userPrompt = buildKissUserPrompt({
       transcript: transcriptForAnalysis,
       notes: meeting.notes,
-      model,
       priorSoncasResult: priorSoncas?.result,
       priorDiscResult: priorDisc?.result,
     });
-    const row = await deps.meetings.createAnalysis({
+    const logBase = {
+      organizationId: input.organizationId,
       meetingId: meeting.id,
-      kind: "KISS",
-      promptVersionId: promptVersion.id,
-      model,
-      result,
-    });
-    return { ok: true, analysisId: row.id };
+      jobId: input.jobId ?? null,
+      kind: aiLogKind(input.kind),
+      modelName: model,
+      promptVersion: String(promptVersion.version),
+      systemPrompt,
+      userPrompt,
+    };
+    const started = Date.now();
+
+    try {
+      const out = await deps.analysis.analyzeKiss({
+        systemMarkdown: kissSystemMarkdown,
+        transcript: transcriptForAnalysis,
+        notes: meeting.notes,
+        model,
+        priorSoncasResult: priorSoncas?.result,
+        priorDiscResult: priorDisc?.result,
+      });
+      await recordAiRequestSuccess(deps.aiLogs, logBase, {
+        rawOutput: out.result,
+        inputTokens: out.usage?.inputTokens ?? null,
+        outputTokens: out.usage?.outputTokens ?? null,
+        latencyMs: Date.now() - started,
+      });
+      const row = await deps.meetings.createAnalysis({
+        meetingId: meeting.id,
+        kind: "KISS",
+        promptVersionId: promptVersion.id,
+        model,
+        result: out.result,
+      });
+      return { ok: true, analysisId: row.id };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      await recordAiRequestError(deps.aiLogs, logBase, {
+        errorMessage: message,
+        latencyMs: Date.now() - started,
+      });
+      return { ok: false, error: "ANALYSIS_FAILED", message };
+    }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return { ok: false, error: "ANALYSIS_FAILED", message };

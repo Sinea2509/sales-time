@@ -41,20 +41,31 @@ export type SellerRelationalAffinitySummary = {
   soncasAffinity: string;
 };
 
+export type AiCallUsage = {
+  inputTokens?: number;
+  outputTokens?: number;
+};
+
+export type AiCallTrace = {
+  systemPrompt: string;
+  userPrompt: string;
+  usage?: AiCallUsage;
+};
+
 export interface AnalysisPort {
   analyzeSoncas(input: {
     systemMarkdown: string;
     transcript: string;
     notes: string | null;
     model: string;
-  }): Promise<{ result: SoncasAnalysisResult; rawText?: string }>;
+  }): Promise<{ result: SoncasAnalysisResult; rawText?: string } & AiCallTrace>;
 
   analyzeDisc(input: {
     systemMarkdown: string;
     transcript: string;
     notes: string | null;
     model: string;
-  }): Promise<{ result: DiscAnalysisResult; rawText?: string }>;
+  }): Promise<{ result: DiscAnalysisResult; rawText?: string } & AiCallTrace>;
 
   analyzeKiss(input: {
     systemMarkdown: string;
@@ -64,13 +75,13 @@ export interface AnalysisPort {
     /** Latest SONCAS / DISC structured results for this meeting, when already analyzed. */
     priorSoncasResult?: unknown;
     priorDiscResult?: unknown;
-  }): Promise<{ result: KissAnalysisResult; rawText?: string }>;
+  }): Promise<{ result: KissAnalysisResult; rawText?: string } & AiCallTrace>;
 
   generateFollowUpEmail(input: {
     systemMarkdown: string;
     userContent: string;
     model: string;
-  }): Promise<{ result: FollowUpEmailResult; rawText?: string }>;
+  }): Promise<{ result: FollowUpEmailResult; rawText?: string } & AiCallTrace>;
 
   /** Un paragraphe court (axes d’amélioration d’équipe) à partir des totaux KISS agrégés. */
   summarizeOrgKissRollup(input: {

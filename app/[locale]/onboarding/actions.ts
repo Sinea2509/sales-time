@@ -216,6 +216,13 @@ export async function submitOnboardingStep4(
 
   await setActiveOrganizationCookie(result.organizationId);
 
+  await deps.audit.logPlatformAction({
+    actorUserId: user.id,
+    organizationId: result.organizationId,
+    action: "ORG_CREATED",
+    reason: `Organisation « ${result.companyName} » créée à l'onboarding`,
+  });
+
   const orgName = result.companyName;
   for (const m of result.mailPayloads) {
     await sendTransactionalEmail({

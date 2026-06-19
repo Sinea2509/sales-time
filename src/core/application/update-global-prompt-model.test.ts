@@ -6,7 +6,7 @@ describe("updateGlobalPromptModel", () => {
     const result = await updateGlobalPromptModel(
       {
         prompts: { updateModelForKind: async () => "openai/gpt-4o-mini" },
-        audit: { logSuperAdminAction: async () => undefined },
+        audit: { logPlatformAction: async () => undefined },
       } as never,
       {
         actorInternalUserId: "u1",
@@ -20,11 +20,11 @@ describe("updateGlobalPromptModel", () => {
 
   it("updates model for super admin", async () => {
     const updateModelForKind = async () => "anthropic/claude-sonnet-4.6";
-    const logSuperAdminAction = async () => undefined;
+    const logPlatformAction = async () => undefined;
     const result = await updateGlobalPromptModel(
       {
         prompts: { updateModelForKind },
-        audit: { logSuperAdminAction },
+        audit: { logPlatformAction },
       } as never,
       {
         actorInternalUserId: "u1",

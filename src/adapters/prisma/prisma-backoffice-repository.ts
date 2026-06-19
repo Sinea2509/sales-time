@@ -14,6 +14,10 @@ import type {
   SuperAdminPendingInviteRow,
   SuperAdminRoleRow,
 } from "@/src/core/ports/backoffice-repository-port";
+import {
+  GLOBAL_AUDIT_ORG_ID,
+  SYSTEM_AUDIT_ORG_ID,
+} from "@/src/core/domain/platform-audit-actions";
 import type { OrganizationMembershipRole } from "@/src/core/domain/organization-membership-role";
 
 function mapMembershipRole(r: string): OrganizationMembershipRole {
@@ -480,6 +484,27 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
       },
     });
 
+    const orgIds = [
+      ...new Set(
+        logs
+          .map((log) => log.organizationId)
+          .filter(
+            (id) => id !== SYSTEM_AUDIT_ORG_ID && id !== GLOBAL_AUDIT_ORG_ID,
+          ),
+      ),
+    ];
+
+    const organizations =
+      orgIds.length > 0
+        ? await this.db.organization.findMany({
+            where: { id: { in: orgIds } },
+            select: { id: true, name: true },
+          })
+        : [];
+    const orgNameById = new Map(
+      organizations.map((org) => [org.id, org.name] as const),
+    );
+
     return logs.map((log) => ({
       id: log.id,
       actorUserId: log.actorUserId,
@@ -489,6 +514,7 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
           ? `${log.actor.firstName} ${log.actor.lastName}`
           : null,
       organizationId: log.organizationId,
+      organizationName: orgNameById.get(log.organizationId) ?? null,
       action: log.action,
       reason: log.reason,
       createdAt: log.createdAt.toISOString(),
@@ -815,10 +841,10 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
 
   async findPendingSuperAdminInvitationById(
     id: string,
-  ): Promise<{ id: string } | null> {
+  ): Promise<{ id: string; email: string } | null> {
     return this.db.superAdminInvitation.findFirst({
       where: { id, status: "PENDING" },
-      select: { id: true },
+      select: { id: true, email: true },
     });
   }
 

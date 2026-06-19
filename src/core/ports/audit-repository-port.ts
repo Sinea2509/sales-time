@@ -1,16 +1,10 @@
-export type SuperAdminAuditAction =
-  | "ENTER_ORG"
-  | "EXIT_ORG"
-  | "PUBLISH_PROMPT"
-  | "RESTORE_PROMPT"
-  | "UPDATE_PROMPT_MODEL"
-  | "PUBLISH_KISS_QUADRANT_PROMPTS";
+import type { PlatformAuditAction } from "@/src/core/domain/platform-audit-actions";
 
 export interface AuditRepositoryPort {
-  logSuperAdminAction(input: {
-    actorInternalUserId: string;
+  logPlatformAction(input: {
+    actorUserId: string;
     organizationId: string;
-    action: SuperAdminAuditAction;
+    action: PlatformAuditAction | (string & {});
     reason?: string | null;
   }): Promise<void>;
 }

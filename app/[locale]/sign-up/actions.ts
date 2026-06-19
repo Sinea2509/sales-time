@@ -111,6 +111,22 @@ export async function signUpAction(
     };
   }
 
+  if (reg.flow === "join_existing_organization") {
+    await deps.audit.logPlatformAction({
+      actorUserId: reg.userId,
+      organizationId: reg.organizationId,
+      action: "USER_JOIN_ORGANIZATION",
+      reason: `Inscription via domaine : ${parsed.data.email}`,
+    });
+  } else {
+    await deps.audit.logPlatformAction({
+      actorUserId: reg.userId,
+      organizationId: "system",
+      action: "USER_SIGN_UP",
+      reason: `Nouveau compte : ${parsed.data.email}`,
+    });
+  }
+
   const raw = generateOpaqueToken();
   await deps.session.createSessionRecord({
     userId: reg.userId,

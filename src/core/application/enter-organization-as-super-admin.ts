@@ -33,10 +33,10 @@ export async function enterOrganizationAsSuperAdmin(
     return { ok: false, error: "ORG_NOT_FOUND" };
   }
 
-  await deps.audit.logSuperAdminAction({
-    actorInternalUserId: principal.userId,
+  await deps.audit.logPlatformAction({
+    actorUserId: principal.userId,
     organizationId: input.targetOrganizationId,
-    action: "ENTER_ORG",
+    action: "ENTER_ORGANIZATION",
     reason: input.reason,
   });
 

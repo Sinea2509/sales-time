@@ -29,6 +29,13 @@ export async function updateFeedbackStatusAction(input: z.infer<typeof updateSch
     adminNotes: parsed.data.adminNotes,
   });
 
+  await deps.audit.logPlatformAction({
+    actorUserId: principal.userId,
+    organizationId: "system",
+    action: "UPDATE_FEEDBACK",
+    reason: `Feedback ${parsed.data.id} → ${parsed.data.status}`,
+  });
+
   revalidatePath("/admin/feedbacks");
   return { ok: true as const };
 }

@@ -6,7 +6,6 @@ import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-
 import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { GlobalKissCoachingPromptsRepositoryPort } from "@/src/core/ports/global-kiss-coaching-prompts-repository-port";
-import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
@@ -79,60 +78,25 @@ export async function processAnalysisJobs(
     let lastError = "";
 
     for (const kind of ["SONCAS", "DISC", "KISS"] as const) {
-      const started = Date.now();
-      const model = await resolvePromptGatewayModel(deps.prompts, kind);
-      try {
-        const r = await runMeetingAnalysis(
-          {
-            meetings: deps.meetings,
-            prompts: deps.prompts,
-            analysis: deps.analysis,
-          },
-          {
-            organizationId: job.organizationId,
-            meetingId: job.meetingId,
-            kind,
-            kissSystemMarkdownAppendix:
-              kind === "KISS" ? kissAppendix : undefined,
-          },
-        );
-        if (!r.ok) {
-          jobOk = false;
-          lastError = r.message ?? r.error;
-          await deps.aiLogs.createLog({
-            organizationId: job.organizationId,
-            meetingId: job.meetingId,
-            jobId: job.id,
-            kind: kind === "KISS" ? "COACHING" : kind,
-            status: "ERROR",
-            modelName: model,
-            errorMessage: lastError,
-            latencyMs: Date.now() - started,
-          });
-          break;
-        }
-        await deps.aiLogs.createLog({
+      const r = await runMeetingAnalysis(
+        {
+          meetings: deps.meetings,
+          prompts: deps.prompts,
+          analysis: deps.analysis,
+          aiLogs: deps.aiLogs,
+        },
+        {
           organizationId: job.organizationId,
           meetingId: job.meetingId,
+          kind,
           jobId: job.id,
-          kind: kind === "KISS" ? "COACHING" : kind,
-          status: "SUCCESS",
-          modelName: model,
-          latencyMs: Date.now() - started,
-        });
-      } catch (e) {
+          kissSystemMarkdownAppendix:
+            kind === "KISS" ? kissAppendix : undefined,
+        },
+      );
+      if (!r.ok) {
         jobOk = false;
-        lastError = e instanceof Error ? e.message : String(e);
-        await deps.aiLogs.createLog({
-          organizationId: job.organizationId,
-          meetingId: job.meetingId,
-          jobId: job.id,
-          kind: kind === "KISS" ? "COACHING" : kind,
-          status: "ERROR",
-          modelName: model,
-          errorMessage: lastError,
-          latencyMs: Date.now() - started,
-        });
+        lastError = r.message ?? r.error;
         break;
       }
     }

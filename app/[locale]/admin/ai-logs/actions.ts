@@ -64,5 +64,11 @@ export async function replayAiLogAction(logId: string) {
   }
 
   revalidatePath("/admin/ai-logs");
+  await deps.audit.logPlatformAction({
+    actorUserId: principal.userId,
+    organizationId: log.organizationId ?? "system",
+    action: "REPLAY_AI_LOG",
+    reason: `Rejeu du log IA ${logId}`,
+  });
   return { ok: true as const };
 }

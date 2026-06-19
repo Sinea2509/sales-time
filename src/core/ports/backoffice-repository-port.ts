@@ -158,6 +158,7 @@ export type AdminGlobalAuditLogRow = {
   actorEmail: string;
   actorName: string | null;
   organizationId: string;
+  organizationName: string | null;
   action: string;
   reason: string | null;
   createdAt: string;
@@ -322,7 +323,7 @@ export interface BackofficeRepositoryPort {
 
   findPendingSuperAdminInvitationById(
     id: string,
-  ): Promise<{ id: string } | null>;
+  ): Promise<{ id: string; email: string } | null>;
 
   revokeSuperAdminInvitation(id: string): Promise<void>;
 

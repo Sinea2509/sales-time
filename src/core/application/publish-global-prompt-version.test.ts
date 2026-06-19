@@ -12,7 +12,7 @@ describe("publishGlobalPromptVersion", () => {
       getModelForKind: jest.fn(),
       updateModelForKind: jest.fn(),
     };
-    const audit = { logSuperAdminAction: jest.fn() };
+    const audit = { logPlatformAction: jest.fn() };
 
     const result = await publishGlobalPromptVersion(
       { prompts, audit },
@@ -38,7 +38,7 @@ describe("publishGlobalPromptVersion", () => {
       getModelForKind: jest.fn(),
       updateModelForKind: jest.fn(),
     };
-    const audit = { logSuperAdminAction: jest.fn() };
+    const audit = { logPlatformAction: jest.fn() };
 
     const result = await publishGlobalPromptVersion(
       { prompts, audit },
@@ -72,7 +72,7 @@ describe("publishGlobalPromptVersion", () => {
       getModelForKind: jest.fn(),
       updateModelForKind: jest.fn(),
     };
-    const audit = { logSuperAdminAction: jest.fn().mockResolvedValue(undefined) };
+    const audit = { logPlatformAction: jest.fn().mockResolvedValue(undefined) };
 
     const result = await publishGlobalPromptVersion(
       { prompts, audit },
@@ -91,8 +91,8 @@ describe("publishGlobalPromptVersion", () => {
       markdown: "# body",
       authorUserId: "u1",
     });
-    expect(audit.logSuperAdminAction).toHaveBeenCalledWith({
-      actorInternalUserId: "u1",
+    expect(audit.logPlatformAction).toHaveBeenCalledWith({
+      actorUserId: "u1",
       organizationId: GLOBAL_PROMPT_AUDIT_ORG_ID,
       action: "RESTORE_PROMPT",
       reason: "SONCAS prompt v2",

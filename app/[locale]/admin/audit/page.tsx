@@ -6,13 +6,13 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminAuditPage() {
   const serialized =
-    await getApplicationDeps().backoffice.listGlobalAuditLogs(200);
+    await getApplicationDeps().backoffice.listGlobalAuditLogs(500);
 
   return (
     <div className="space-y-6">
       <PageHeaderSimple
         title="Journal d'audit"
-        description="Historique des actions effectuées par les super administrateurs."
+        description="Historique des actions plateforme : super admins, utilisateurs et organisations."
       />
       <AdminAuditLog logs={serialized} />
     </div>

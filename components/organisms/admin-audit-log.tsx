@@ -14,6 +14,11 @@ import {
 import { cn } from "@/lib/utils";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { AdminExportButton } from "@/components/molecules/admin-export-button";
+import {
+  PLATFORM_AUDIT_ACTIONS,
+  PLATFORM_AUDIT_ACTION_LABELS,
+  resolveAuditOrganizationLabel,
+} from "@/src/core/domain/platform-audit-actions";
 
 type AuditRow = {
   id: string;
@@ -21,6 +26,7 @@ type AuditRow = {
   actorEmail: string;
   actorName: string | null;
   organizationId: string;
+  organizationName: string | null;
   action: string;
   reason: string | null;
   createdAt: string;
@@ -30,38 +36,9 @@ type Props = {
   logs: AuditRow[];
 };
 
-const ACTION_OPTIONS = [
-  "Tous",
-  "ENTER_ORGANIZATION",
-  "EXIT_ORGANIZATION",
-  "PUBLISH_PROMPT",
-  "RESTORE_PROMPT",
-  "CREATE_ORGANIZATION",
-  "UPDATE_ORGANIZATION",
-  "DELETE_ORGANIZATION",
-  "BLOCK_USER",
-  "UNBLOCK_USER",
-  "UPDATE_USER",
-  "DELETE_USER",
-  "INVITE_USER_TO_ORG",
-] as const;
+const ACTION_OPTIONS = ["Tous", ...PLATFORM_AUDIT_ACTIONS] as const;
 
 type ActionType = (typeof ACTION_OPTIONS)[number];
-
-const ACTION_LABELS: Record<string, string> = {
-  ENTER_ORGANIZATION: "Entrer dans org",
-  EXIT_ORGANIZATION: "Quitter org",
-  PUBLISH_PROMPT: "Publier prompt",
-  RESTORE_PROMPT: "Restaurer prompt",
-  CREATE_ORGANIZATION: "Créer org",
-  UPDATE_ORGANIZATION: "Modifier org",
-  DELETE_ORGANIZATION: "Supprimer org",
-  BLOCK_USER: "Bloquer utilisateur",
-  UNBLOCK_USER: "Débloquer utilisateur",
-  UPDATE_USER: "Modifier utilisateur",
-  DELETE_USER: "Supprimer utilisateur",
-  INVITE_USER_TO_ORG: "Inviter dans org",
-};
 
 function actionBadgeClasses(action: string): string {
   if (action.startsWith("DELETE_") || action === "BLOCK_USER") {
@@ -70,15 +47,29 @@ function actionBadgeClasses(action: string): string {
   if (
     action.startsWith("CREATE_") ||
     action.startsWith("UPDATE_") ||
+    action.startsWith("ORG_") ||
+    action.startsWith("USER_") ||
     action === "UNBLOCK_USER" ||
-    action === "INVITE_USER_TO_ORG"
+    action === "INVITE_USER_TO_ORG" ||
+    action === "INVITE_SUPER_ADMIN"
   ) {
     return "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300";
   }
-  if (action === "ENTER_ORGANIZATION" || action === "EXIT_ORGANIZATION") {
+  if (
+    action === "ENTER_ORGANIZATION" ||
+    action === "EXIT_ORGANIZATION" ||
+    action === "ENTER_ORG" ||
+    action === "EXIT_ORG"
+  ) {
     return "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300";
   }
-  if (action === "PUBLISH_PROMPT" || action === "RESTORE_PROMPT") {
+  if (
+    action === "PUBLISH_PROMPT" ||
+    action === "RESTORE_PROMPT" ||
+    action === "UPDATE_PROMPT_MODEL" ||
+    action === "PUBLISH_KISS_QUADRANT_PROMPTS" ||
+    action === "REPLAY_AI_LOG"
+  ) {
     return "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300";
   }
   return "border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300";
@@ -93,23 +84,28 @@ export function AdminAuditLog({ logs }: Props) {
     return logs.filter((log) => {
       if (actionFilter !== "Tous" && log.action !== actionFilter) return false;
       if (!q) return true;
+      const orgLabel = resolveAuditOrganizationLabel(
+        log.organizationId,
+        log.organizationName,
+      );
       return (
         log.actorEmail.toLowerCase().includes(q) ||
+        (log.actorName?.toLowerCase().includes(q) ?? false) ||
         log.action.toLowerCase().includes(q) ||
-        (log.reason?.toLowerCase() ?? "").includes(q) ||
-        log.organizationId.toLowerCase().includes(q)
+        (log.reason?.toLowerCase().includes(q) ?? false) ||
+        log.organizationId.toLowerCase().includes(q) ||
+        orgLabel.toLowerCase().includes(q)
       );
     });
   }, [logs, search, actionFilter]);
 
   return (
     <>
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
           <Input
-            placeholder="Rechercher par e-mail, action, raison ou ID org..."
+            placeholder="Rechercher par acteur, org, action ou raison..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -124,6 +120,7 @@ export function AdminAuditLog({ logs }: Props) {
             { key: "actorName", label: "Nom acteur" },
             { key: "action", label: "Action" },
             { key: "organizationId", label: "Organisation ID" },
+            { key: "organizationName", label: "Organisation" },
             { key: "reason", label: "Raison" },
           ]}
         />
@@ -141,14 +138,13 @@ export function AdminAuditLog({ logs }: Props) {
               <SelectItem key={opt} value={opt}>
                 {opt === "Tous"
                   ? "Tous les types"
-                  : (ACTION_LABELS[opt] ?? opt)}
+                  : (PLATFORM_AUDIT_ACTION_LABELS[opt] ?? opt)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Table */}
       <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -180,61 +176,75 @@ export function AdminAuditLog({ logs }: Props) {
                   icon={ScrollText}
                 />
               ) : (
-                filtered.map((log) => (
-                  <tr
-                    key={log.id}
-                    className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
-                  >
-                    <td className="whitespace-nowrap px-4 py-3.5 text-zinc-500">
-                      {new Date(log.createdAt).toLocaleString("fr-FR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
-                          {log.actorEmail}
-                        </p>
-                        {log.actorName && (
-                          <p className="truncate text-xs text-zinc-400">
-                            {log.actorName}
+                filtered.map((log) => {
+                  const orgLabel = resolveAuditOrganizationLabel(
+                    log.organizationId,
+                    log.organizationName,
+                  );
+                  return (
+                    <tr
+                      key={log.id}
+                      className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                    >
+                      <td className="whitespace-nowrap px-4 py-3.5 text-zinc-500">
+                        {new Date(log.createdAt).toLocaleString("fr-FR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
+                            {log.actorEmail}
                           </p>
+                          {log.actorName ? (
+                            <p className="truncate text-xs text-zinc-400">
+                              {log.actorName}
+                            </p>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs font-medium",
+                            actionBadgeClasses(log.action),
+                          )}
+                        >
+                          {PLATFORM_AUDIT_ACTION_LABELS[log.action] ??
+                            log.action}
+                        </Badge>
+                      </td>
+                      <td className="hidden px-4 py-3.5 md:table-cell">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-zinc-800 dark:text-zinc-200">
+                            {orgLabel}
+                          </p>
+                          {orgLabel !== log.organizationId ? (
+                            <p className="truncate font-mono text-xs text-zinc-400">
+                              {log.organizationId}
+                            </p>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="hidden max-w-[260px] px-4 py-3.5 lg:table-cell">
+                        {log.reason ? (
+                          <span className="truncate text-zinc-600 dark:text-zinc-300">
+                            {log.reason}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-300 dark:text-zinc-600">
+                            —
+                          </span>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "text-xs font-medium",
-                          actionBadgeClasses(log.action),
-                        )}
-                      >
-                        {ACTION_LABELS[log.action] ?? log.action}
-                      </Badge>
-                    </td>
-                    <td className="hidden px-4 py-3.5 md:table-cell">
-                      <span className="font-mono text-xs text-zinc-500">
-                        {log.organizationId}
-                      </span>
-                    </td>
-                    <td className="hidden max-w-[260px] px-4 py-3.5 lg:table-cell">
-                      {log.reason ? (
-                        <span className="truncate text-zinc-600 dark:text-zinc-300">
-                          {log.reason}
-                        </span>
-                      ) : (
-                        <span className="text-zinc-300 dark:text-zinc-600">
-                          —
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

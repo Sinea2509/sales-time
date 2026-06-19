@@ -35,8 +35,8 @@ export async function publishGlobalPromptVersion(
     authorUserId: input.actorInternalUserId,
   });
 
-  await deps.audit.logSuperAdminAction({
-    actorInternalUserId: input.actorInternalUserId,
+  await deps.audit.logPlatformAction({
+    actorUserId: input.actorInternalUserId,
     organizationId: GLOBAL_PROMPT_AUDIT_ORG_ID,
     action: input.auditAction,
     reason: `${input.kind} prompt v${row.version}`,

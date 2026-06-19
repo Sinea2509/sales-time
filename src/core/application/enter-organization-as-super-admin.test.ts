@@ -10,7 +10,7 @@ describe("enterOrganizationAsSuperAdmin", () => {
       getOrganizationById: jest.fn(),
       listOrganizations: jest.fn(),
     };
-    const audit = { logSuperAdminAction: jest.fn().mockResolvedValue(undefined) };
+    const audit = { logPlatformAction: jest.fn().mockResolvedValue(undefined) };
 
     const result = await enterOrganizationAsSuperAdmin(
       { auth, audit, orgDirectory },
@@ -18,7 +18,7 @@ describe("enterOrganizationAsSuperAdmin", () => {
     );
 
     expect(result).toEqual({ ok: false, error: "NOT_AUTHENTICATED" });
-    expect(audit.logSuperAdminAction).not.toHaveBeenCalled();
+    expect(audit.logPlatformAction).not.toHaveBeenCalled();
   });
 
   it("returns NOT_SUPER_ADMIN when user lacks system role", async () => {
@@ -44,7 +44,7 @@ describe("enterOrganizationAsSuperAdmin", () => {
       }),
       listOrganizations: jest.fn(),
     };
-    const audit = { logSuperAdminAction: jest.fn().mockResolvedValue(undefined) };
+    const audit = { logPlatformAction: jest.fn().mockResolvedValue(undefined) };
 
     const result = await enterOrganizationAsSuperAdmin(
       { auth, audit, orgDirectory },
@@ -52,7 +52,7 @@ describe("enterOrganizationAsSuperAdmin", () => {
     );
 
     expect(result).toEqual({ ok: false, error: "NOT_SUPER_ADMIN" });
-    expect(audit.logSuperAdminAction).not.toHaveBeenCalled();
+    expect(audit.logPlatformAction).not.toHaveBeenCalled();
   });
 
   it("returns ORG_NOT_FOUND when organization does not exist", async () => {
@@ -73,7 +73,7 @@ describe("enterOrganizationAsSuperAdmin", () => {
       getOrganizationById: jest.fn().mockResolvedValue(null),
       listOrganizations: jest.fn(),
     };
-    const audit = { logSuperAdminAction: jest.fn().mockResolvedValue(undefined) };
+    const audit = { logPlatformAction: jest.fn().mockResolvedValue(undefined) };
 
     const result = await enterOrganizationAsSuperAdmin(
       { auth, audit, orgDirectory },
@@ -81,7 +81,7 @@ describe("enterOrganizationAsSuperAdmin", () => {
     );
 
     expect(result).toEqual({ ok: false, error: "ORG_NOT_FOUND" });
-    expect(audit.logSuperAdminAction).not.toHaveBeenCalled();
+    expect(audit.logPlatformAction).not.toHaveBeenCalled();
   });
 
   it("writes audit log when super admin enters org", async () => {
@@ -107,7 +107,7 @@ describe("enterOrganizationAsSuperAdmin", () => {
       }),
       listOrganizations: jest.fn(),
     };
-    const audit = { logSuperAdminAction: jest.fn().mockResolvedValue(undefined) };
+    const audit = { logPlatformAction: jest.fn().mockResolvedValue(undefined) };
 
     const result = await enterOrganizationAsSuperAdmin(
       { auth, audit, orgDirectory },
@@ -115,10 +115,10 @@ describe("enterOrganizationAsSuperAdmin", () => {
     );
 
     expect(result).toEqual({ ok: true });
-    expect(audit.logSuperAdminAction).toHaveBeenCalledWith({
-      actorInternalUserId: "int_1",
+    expect(audit.logPlatformAction).toHaveBeenCalledWith({
+      actorUserId: "int_1",
       organizationId: "org_2",
-      action: "ENTER_ORG",
+      action: "ENTER_ORGANIZATION",
       reason: "INC-42",
     });
   });

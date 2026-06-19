@@ -40,8 +40,8 @@ export async function saveGlobalKissCoachingPrompts(
     return { ok: false, error: "PERSIST_FAILED", message };
   }
 
-  await deps.audit.logSuperAdminAction({
-    actorInternalUserId: input.actorInternalUserId,
+  await deps.audit.logPlatformAction({
+    actorUserId: input.actorInternalUserId,
     organizationId: GLOBAL_PROMPT_AUDIT_ORG_ID,
     action: "PUBLISH_KISS_QUADRANT_PROMPTS",
     reason: "Consignes KISS par quadrant (plateforme)",

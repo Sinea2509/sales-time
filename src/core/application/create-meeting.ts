@@ -1,3 +1,4 @@
+import type { AuditRepositoryPort } from "@/src/core/ports/audit-repository-port";
 import type { AnalysisJobRepositoryPort } from "@/src/core/ports/analysis-job-repository-port";
 import type { ContactRepositoryPort } from "@/src/core/ports/contact-repository-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
@@ -22,6 +23,7 @@ export async function createMeetingForOrg(
     contacts: ContactRepositoryPort;
     analysisJobs: AnalysisJobRepositoryPort;
     organizationQuota: OrganizationQuotaRepositoryPort;
+    audit?: AuditRepositoryPort;
   },
   input: {
     organizationId: string | null;
@@ -101,6 +103,13 @@ export async function createMeetingForOrg(
       meetingId: meeting.id,
     });
   }
+
+  await deps.audit?.logPlatformAction({
+    actorUserId: input.sellerInternalUserId,
+    organizationId: input.organizationId,
+    action: "CREATE_MEETING",
+    reason: `RDV « ${input.prospectName.trim()} » (${meeting.id})`,
+  });
 
   return { ok: true, meetingId: meeting.id };
 }

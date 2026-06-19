@@ -71,6 +71,13 @@ export async function inviteSuperAdminAction(
     html: `<p>Vous êtes invité à devenir <strong>super administrateur</strong> de la plateforme Sales Time (accès système : organisations, prompts, analytics).</p><p><a href="${link}">Accepter l’invitation</a></p><p>Ce lien expire dans 14 jours. Vous devez vous connecter avec l’adresse <strong>${email}</strong>.</p>`,
   });
 
+  await deps.audit.logPlatformAction({
+    actorUserId: gate.actorUserId,
+    organizationId: "system",
+    action: "INVITE_SUPER_ADMIN",
+    reason: `Invitation super admin envoyée à ${email}`,
+  });
+
   revalidatePath("/admin/super-admins");
   return { ok: true };
 }
@@ -95,6 +102,13 @@ export async function revokeSuperAdminInvitationAction(
   }
 
   await deps.backoffice.revokeSuperAdminInvitation(inv.id);
+
+  await deps.audit.logPlatformAction({
+    actorUserId: gate.actorUserId,
+    organizationId: "system",
+    action: "REVOKE_SUPER_ADMIN_INVITE",
+    reason: `Invitation super admin annulée pour ${inv.email}`,
+  });
 
   revalidatePath("/admin/super-admins");
   return { ok: true };

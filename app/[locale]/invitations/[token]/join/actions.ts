@@ -102,5 +102,12 @@ export async function registerFromInvitationAction(
   await setSessionCookie(raw);
   await setActiveOrganizationCookie(reg.organizationId);
 
+  await deps.audit.logPlatformAction({
+    actorUserId: reg.userId,
+    organizationId: reg.organizationId,
+    action: "USER_JOIN_ORGANIZATION",
+    reason: "Inscription via invitation organisation",
+  });
+
   redirect("/company");
 }
