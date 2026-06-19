@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import {
   requireAnalysisActor,
 } from "@/lib/analysis-server-context";
@@ -29,7 +28,6 @@ export async function runAllMeetingAnalysesAction(meetingId: string) {
       organizationId: actor.organizationId,
       meetingId: parsed.data,
       kind,
-      model: ANALYSIS_GATEWAY_MODEL,
       kissSystemMarkdownAppendix: kind === "KISS" ? kissAppendix : undefined,
     });
     if (!r.ok) {
@@ -80,7 +78,6 @@ export async function generateFollowUpEmailAction(meetingId: string) {
       {
         meeting,
         emailPreferences,
-        model: ANALYSIS_GATEWAY_MODEL,
       },
     );
     const subject = email.subject;

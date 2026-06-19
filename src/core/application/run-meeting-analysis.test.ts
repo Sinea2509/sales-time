@@ -6,7 +6,10 @@ describe("runMeetingAnalysis", () => {
     const meetings = {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue(null),
     };
-    const prompts = { ensureCurrentVersion: jest.fn() };
+    const prompts = {
+      ensureCurrentVersion: jest.fn(),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+    };
     const analysis = {
       analyzeSoncas: jest.fn(),
       analyzeDisc: jest.fn(),
@@ -19,7 +22,6 @@ describe("runMeetingAnalysis", () => {
         organizationId: "org_1",
         meetingId: "m1",
         kind: "SONCAS",
-        model: "openai/gpt-4o-mini",
       },
     );
 
@@ -40,6 +42,7 @@ describe("runMeetingAnalysis", () => {
       ensureCurrentVersion: jest
         .fn()
         .mockRejectedValue(new Error("Cannot seed prompt template")),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
     };
     const analysis = {
       analyzeSoncas: jest.fn(),
@@ -53,7 +56,6 @@ describe("runMeetingAnalysis", () => {
         organizationId: "org_1",
         meetingId: "m1",
         kind: "DISC",
-        model: "openai/gpt-4o-mini",
       },
     );
 
@@ -91,6 +93,7 @@ describe("runMeetingAnalysis", () => {
         authorUserId: "u1",
         createdAt: new Date(),
       }),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
     };
     const analysis = {
       analyzeSoncas: jest.fn().mockResolvedValue({
@@ -117,7 +120,6 @@ describe("runMeetingAnalysis", () => {
         organizationId: "org_1",
         meetingId: "m1",
         kind: "SONCAS",
-        model: "openai/gpt-4o-mini",
       },
     );
 
@@ -136,7 +138,10 @@ describe("runMeetingAnalysis", () => {
     const result = await runMeetingAnalysis(
       {
         meetings: { findMeetingByIdForOrg: jest.fn() },
-        prompts: { ensureCurrentVersion: jest.fn() },
+        prompts: {
+          ensureCurrentVersion: jest.fn(),
+          getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+        },
         analysis: {
           analyzeSoncas: jest.fn(),
           analyzeDisc: jest.fn(),
@@ -147,7 +152,6 @@ describe("runMeetingAnalysis", () => {
         organizationId: null,
         meetingId: "m1",
         kind: "SONCAS",
-        model: "m",
       },
     );
     expect(result).toEqual({ ok: false, error: "NO_ACTIVE_ORG" });
@@ -181,6 +185,7 @@ describe("runMeetingAnalysis", () => {
         authorUserId: "u1",
         createdAt: new Date(),
       }),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
     };
     const analysis = {
       analyzeSoncas: jest.fn(),
@@ -194,7 +199,6 @@ describe("runMeetingAnalysis", () => {
         organizationId: "org_1",
         meetingId: "m1",
         kind: "DISC",
-        model: "m",
       },
     );
 
@@ -229,6 +233,7 @@ describe("runMeetingAnalysis", () => {
         authorUserId: "u1",
         createdAt: new Date(),
       }),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
     };
     const analysis = {
       analyzeSoncas: jest.fn(),
@@ -242,7 +247,6 @@ describe("runMeetingAnalysis", () => {
         organizationId: "org_1",
         meetingId: "m1",
         kind: "KISS",
-        model: "m",
         kissSystemMarkdownAppendix: "  appendix  ",
       },
     );
@@ -259,7 +263,6 @@ describe("runMeetingAnalysis", () => {
         organizationId: "org_1",
         meetingId: "m1",
         kind: "KISS",
-        model: "m",
         kissSystemMarkdownAppendix: "  appendix  ",
       },
     );
@@ -271,7 +274,6 @@ describe("runMeetingAnalysis", () => {
         organizationId: "org_1",
         meetingId: "m1",
         kind: "KISS",
-        model: "m",
       },
     );
     expect(okNoAppendix).toEqual({ ok: true, analysisId: "a-k" });
@@ -282,7 +284,6 @@ describe("runMeetingAnalysis", () => {
         organizationId: "org_1",
         meetingId: "m1",
         kind: "KISS",
-        model: "m",
         kissSystemMarkdownAppendix: "   \t  ",
       },
     );
@@ -309,6 +310,7 @@ describe("runMeetingAnalysis", () => {
         authorUserId: "u1",
         createdAt: new Date(),
       }),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
     };
     const analysis = {
       analyzeSoncas: jest.fn().mockRejectedValue("not-an-error"),
@@ -322,7 +324,6 @@ describe("runMeetingAnalysis", () => {
         organizationId: "org_1",
         meetingId: "m1",
         kind: "SONCAS",
-        model: "m",
       },
     );
     expect(result).toEqual({

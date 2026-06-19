@@ -19,6 +19,7 @@ import {
   Bot,
 } from "lucide-react";
 import { AdminCommandPalette } from "@/components/organisms/admin-command-palette";
+import { FeedbackWidget } from "@/components/organisms/feedback-widget";
 import {
   Sidebar,
   SidebarContent,
@@ -248,6 +249,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
             </kbd>
           </button>
           <div className="flex-1" />
+          <FeedbackWidget />
           <span
             className={cn(
               "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",

@@ -26,6 +26,7 @@ type VersionRow = {
 export type SuperAdminPromptPanel = {
   kind: AnalysisKindSlug;
   initialMarkdown: string;
+  initialModel: string;
   versionCount: number;
   versions: VersionRow[];
 };
@@ -117,6 +118,7 @@ export function SuperAdminPromptsShell({ panels, initialKind }: Props) {
           key={selectedKind}
           kind={selectedKind}
           initialMarkdown={selected.initialMarkdown}
+          initialModel={selected.initialModel}
           versions={selected.versions}
         />
       </div>

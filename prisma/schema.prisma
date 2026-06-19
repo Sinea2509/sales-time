@@ -123,6 +123,13 @@ enum FeedbackStatus {
   WONT_FIX
 }
 
+enum FeedbackPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 model User {
   id                           String    @id @default(cuid())
   email                        String    @unique
@@ -440,6 +447,8 @@ model MeetingAnalysis {
 model PromptTemplate {
   id               String                 @id @default(cuid())
   kind             AnalysisKind           @unique
+  /// Vercel AI Gateway model id (`provider/model`) for this prompt kind.
+  model            String                 @default("openai/gpt-4o-mini")
   currentVersionId String?                @unique
   currentVersion   PromptTemplateVersion? @relation("PromptTemplateCurrentVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
   versions         PromptTemplateVersion[] @relation("PromptTemplateVersions")
@@ -541,9 +550,10 @@ model Feedback {
   user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   userEmail      String?
   companyName    String?
-  type           FeedbackType   @default(BUG)
-  message        String         @db.Text
-  status         FeedbackStatus @default(NEW)
+  type           FeedbackType     @default(BUG)
+  message        String           @db.Text
+  status         FeedbackStatus   @default(NEW)
+  priority       FeedbackPriority @default(MEDIUM)
   screenshotUrl  String?
   pageUrl        String?
   userAgent      String?        @db.Text
@@ -561,6 +571,7 @@ model Feedback {
   createdAt      DateTime       @default(now())
 
   @@index([status, createdAt])
+  @@index([priority, createdAt])
   @@index([organizationId])
 }
 

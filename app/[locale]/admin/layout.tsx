@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/templates/admin-shell";
+import { FeedbackCaptureProvider } from "@/components/providers/feedback-capture-provider";
 import { getApplicationDeps } from "@/lib/application-deps";
 
 export const dynamic = "force-dynamic";
@@ -22,5 +23,9 @@ export default async function AdminLayout({
     redirect("/company");
   }
 
-  return <AdminShell userEmail={user.email}>{children}</AdminShell>;
+  return (
+    <FeedbackCaptureProvider>
+      <AdminShell userEmail={user.email}>{children}</AdminShell>
+    </FeedbackCaptureProvider>
+  );
 }

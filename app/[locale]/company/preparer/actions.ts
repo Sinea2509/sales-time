@@ -1,7 +1,6 @@
 "use server";
 
 import { getApplicationDeps } from "@/lib/application-deps";
-import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { prepareMeetingBriefing } from "@/src/core/application/prepare-meeting-briefing";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
@@ -33,7 +32,6 @@ export async function prepareBriefingAction(input: z.infer<typeof schema>) {
     organizationId: ctx.activeOrganizationId,
     personId: parsed.data.personId,
     targetStage: parsed.data.targetStage,
-    model: ANALYSIS_GATEWAY_MODEL,
   });
 
   if (!result) return { ok: false as const, error: "NOT_FOUND" };

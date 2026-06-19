@@ -1,12 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { getApplicationDeps } from "@/lib/application-deps";
 
-export async function updateFeedbackStatusAction(input: {
-  id: string;
-  status: "NEW" | "IN_PROGRESS" | "RESOLVED" | "WONT_FIX";
-}) {
+const updateSchema = z.object({
+  id: z.string().min(1),
+  status: z.enum(["NEW", "IN_PROGRESS", "RESOLVED", "WONT_FIX"]),
+  adminNotes: z.string().max(5000).nullable().optional(),
+});
+
+export async function updateFeedbackStatusAction(input: z.infer<typeof updateSchema>) {
+  const parsed = updateSchema.safeParse(input);
+  if (!parsed.success) return { ok: false as const };
+
   const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) return { ok: false as const };
@@ -17,8 +24,9 @@ export async function updateFeedbackStatusAction(input: {
   }
 
   await deps.feedbacks.updateStatus({
-    id: input.id,
-    status: input.status,
+    id: parsed.data.id,
+    status: parsed.data.status,
+    adminNotes: parsed.data.adminNotes,
   });
 
   revalidatePath("/admin/feedbacks");

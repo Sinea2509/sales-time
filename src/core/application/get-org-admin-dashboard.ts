@@ -337,9 +337,9 @@ export function buildKissTeamRollupFromMeetings(
 
 export function buildOrgAdminProgressBullets(home: OrgDashboardHome): string[] {
   const out: string[] = [];
-  if (home.tamTrendPercent != null && home.tamTrendPercent > 0) {
+  if (home.tamCumuleTrendPercent != null && home.tamCumuleTrendPercent > 0) {
     out.push(
-      `TAM en hausse de ${home.tamTrendPercent}% sur la période vs la fenêtre précédente.`,
+      `TAM en hausse de ${home.tamCumuleTrendPercent}% sur la période vs la fenêtre précédente.`,
     );
   }
   if (home.nbRdvsTrendPercent != null && home.nbRdvsTrendPercent > 0) {

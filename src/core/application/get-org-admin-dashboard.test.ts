@@ -40,7 +40,7 @@ describe("buildOrgAdminProgressBullets", () => {
   it("falls back when no positive signals", () => {
     const bullets = buildOrgAdminProgressBullets(
       baseHome({
-        tamTrendPercent: null,
+        tamCumuleTrendPercent: null,
         nbRdvsTrendPercent: null,
         tucTrendPoints: null,
         noteGlobaleTrendPoints: null,

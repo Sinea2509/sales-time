@@ -3,6 +3,7 @@ export type SuperAdminAuditAction =
   | "EXIT_ORG"
   | "PUBLISH_PROMPT"
   | "RESTORE_PROMPT"
+  | "UPDATE_PROMPT_MODEL"
   | "PUBLISH_KISS_QUADRANT_PROMPTS";
 
 export interface AuditRepositoryPort {

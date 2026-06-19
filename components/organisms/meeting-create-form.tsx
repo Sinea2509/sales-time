@@ -274,6 +274,7 @@ export function MeetingCreateForm({
             type="submit"
             disabled={pending}
             className="bg-brand text-white hover:bg-brand-hover"
+            data-feedback-id="meeting-create-submit"
           >
             {pending ? "Enregistrement…" : "Enregistrer et lancer l'analyse"}
           </Button>
@@ -283,6 +284,7 @@ export function MeetingCreateForm({
           type="submit"
           disabled={pending}
           className={cn("bg-brand text-white hover:bg-brand-hover")}
+          data-feedback-id="meeting-create-submit"
         >
           {pending ? "Enregistrement…" : "Enregistrer et lancer l'analyse"}
         </Button>

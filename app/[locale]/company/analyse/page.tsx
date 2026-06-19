@@ -7,7 +7,6 @@ import { AnalyseRecommandationsSection } from "@/components/organisms/analyse-re
 import { AnalyseStatistiquesGlobalesSection } from "@/components/organisms/analyse-statistiques-globales-section";
 import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analyse-priority-opportunities-table";
 import { summarizeTeamCoachingRecommendations } from "@/src/core/application/summarize-team-coaching-recommendations";
-import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { getEnv } from "@/lib/env";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
@@ -119,7 +118,6 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     teamSalesProfile,
     previousSalesProfile,
     statsWindowDays,
-    model: ANALYSIS_GATEWAY_MODEL,
     audience: isOrgAdmin ? "manager" : "commercial",
     organizationKissPromptAppendix: aiEnabled
       ? kissMarkdownAppendixForAudience(

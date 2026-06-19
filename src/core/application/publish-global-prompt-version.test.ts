@@ -9,6 +9,8 @@ describe("publishGlobalPromptVersion", () => {
       ensureCurrentVersion: jest.fn(),
       listVersions: jest.fn(),
       publishNewVersion: jest.fn(),
+      getModelForKind: jest.fn(),
+      updateModelForKind: jest.fn(),
     };
     const audit = { logSuperAdminAction: jest.fn() };
 
@@ -33,6 +35,8 @@ describe("publishGlobalPromptVersion", () => {
       ensureCurrentVersion: jest.fn(),
       listVersions: jest.fn(),
       publishNewVersion: jest.fn(),
+      getModelForKind: jest.fn(),
+      updateModelForKind: jest.fn(),
     };
     const audit = { logSuperAdminAction: jest.fn() };
 
@@ -65,6 +69,8 @@ describe("publishGlobalPromptVersion", () => {
         authorUserId: "u1",
         createdAt: new Date(),
       }),
+      getModelForKind: jest.fn(),
+      updateModelForKind: jest.fn(),
     };
     const audit = { logSuperAdminAction: jest.fn().mockResolvedValue(undefined) };
 

@@ -1,5 +1,5 @@
 import type { FeedbackRepositoryPort } from "@/src/core/ports/feedback-repository-port";
-import type { FeedbackType } from "@/src/core/ports/feedback-repository-port";
+import type { FeedbackPriority, FeedbackType } from "@/src/core/ports/feedback-repository-port";
 
 export async function createFeedback(
   deps: { feedbacks: FeedbackRepositoryPort },
@@ -10,6 +10,7 @@ export async function createFeedback(
     companyName: string | null;
     type: FeedbackType;
     message: string;
+    priority: FeedbackPriority;
     screenshotUrl: string | null;
     pageUrl: string | null;
     userAgent: string | null;

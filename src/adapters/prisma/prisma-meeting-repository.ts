@@ -380,6 +380,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       orderBy: { createdAt: "desc" },
       ...(input.limit != null ? { take: input.limit } : {}),
       include: {
+        person: { select: { company: true } },
         seller: { select: { email: true, firstName: true, lastName: true } },
         analyses: {
           select: { kind: true, result: true, createdAt: true },
@@ -397,6 +398,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       const base = mapMeeting(row);
       const out: RecentMeetingListRow = {
         ...base,
+        prospectCompany: row.person.company,
         sellerEmail: row.seller.email,
         sellerFirstName: row.seller.firstName,
         sellerLastName: row.seller.lastName,

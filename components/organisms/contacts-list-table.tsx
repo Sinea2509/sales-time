@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ProspectIdentityCell } from "@/components/molecules/prospect-identity-cell";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import {
   Table,
@@ -23,35 +23,34 @@ type ContactsListTableProps = {
 
 export function ContactsListTable({ rows }: ContactsListTableProps) {
   return (
-    <div className="rounded-xl border">
+    <div className="rounded-xl border" data-feedback-id="contacts-list-table">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nom</TableHead>
-            <TableHead>Société</TableHead>
-            <TableHead>E-mail</TableHead>
+            <TableHead>Contact</TableHead>
+            <TableHead className="hidden sm:table-cell">E-mail</TableHead>
             <TableHead className="hidden md:table-cell">Téléphone</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.length === 0 ? (
             <TableEmptyRow
-              colSpan={4}
+              colSpan={3}
               message="Aucun contact pour le moment. Créez-en un ou importez-les via un rendez-vous."
             />
           ) : (
             rows.map((r) => (
-              <TableRow key={r.id}>
+              <TableRow key={r.id} data-feedback-id="contacts-row">
                 <TableCell className="font-medium">
-                  <Link
+                  <ProspectIdentityCell
+                    displayName={r.displayName}
+                    company={r.company}
                     href={`/company/contacts/${r.id}`}
-                    className="text-brand hover:underline"
-                  >
-                    {r.displayName}
-                  </Link>
+                  />
                 </TableCell>
-                <TableCell>{r.company ?? "—"}</TableCell>
-                <TableCell>{r.email ?? "—"}</TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {r.email ?? "—"}
+                </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {r.phone ?? "—"}
                 </TableCell>

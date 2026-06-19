@@ -1,6 +1,7 @@
 import {
   loadAnalysisPromptMarkdown,
 } from "@/lib/load-analysis-prompt";
+import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { ContactRepositoryPort } from "@/src/core/ports/contact-repository-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
@@ -19,7 +20,6 @@ export async function prepareMeetingBriefing(
     organizationId: string;
     personId: string;
     targetStage: string;
-    model: string;
   },
 ) {
   const person = await deps.contacts.findById({
@@ -67,9 +67,10 @@ export async function prepareMeetingBriefing(
     deps.prompts,
     "MEETING_BRIEFING",
   );
+  const model = await resolvePromptGatewayModel(deps.prompts, "MEETING_BRIEFING");
   const { result } = await deps.analysis.prepareMeetingBriefing({
     systemMarkdown,
-    model: input.model,
+    model,
     targetStage: input.targetStage,
     prospectCompany: person.company ?? person.displayName,
     priorMeetingsJson: JSON.stringify(enriched, null, 2),

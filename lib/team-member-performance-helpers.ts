@@ -1,4 +1,5 @@
 import { soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
+import { meetingEtapeDisplayLabel } from "@/src/core/domain/meeting-etape-display";
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
 
 const DRIVER_LABEL_FR: Record<
@@ -52,9 +53,17 @@ export function countMeetingTypes(meetings: RecentMeetingListRow[]): {
   let decouverte = 0;
   let proposition = 0;
   for (const m of meetings) {
-    const t = (m.meetingType ?? "").trim().toLowerCase();
-    if (t === "découverte" || t === "decouverte") decouverte += 1;
-    else if (t === "proposition" || t.includes("proposition")) proposition += 1;
+    const label = meetingEtapeDisplayLabel({
+      meetingType: m.meetingType,
+      pipelineStage: m.pipelineStage,
+    })
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "")
+      .toLowerCase();
+    if (label.includes("decouverte")) decouverte += 1;
+    else if (label.includes("proposition") || label.includes("closing")) {
+      proposition += 1;
+    }
   }
   return { decouverte, proposition };
 }

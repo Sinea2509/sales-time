@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { requireAnalysisActor } from "@/lib/analysis-server-context";
 import { loadCommercialKissAppendix } from "@/lib/kiss-commercial-appendix";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
@@ -37,7 +36,6 @@ export async function runMeetingAnalysisAction(
     organizationId: actor.organizationId,
     meetingId: parsedId.data,
     kind,
-    model: ANALYSIS_GATEWAY_MODEL,
     kissSystemMarkdownAppendix,
   });
 

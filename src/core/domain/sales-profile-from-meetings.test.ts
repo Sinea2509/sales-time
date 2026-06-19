@@ -45,6 +45,7 @@ function meeting(
     sellerUserId: "u1",
     personId: "p1",
     prospectName: "Acme",
+    prospectCompany: null,
     meetingAt: new Date("2026-01-01T00:00:00.000Z"),
     durationMin: 30,
     meetingType: null,

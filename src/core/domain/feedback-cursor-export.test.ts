@@ -12,6 +12,7 @@ function sampleFeedback(over: Partial<FeedbackRow> = {}): FeedbackRow {
     type: "BUG",
     message: "Le bouton ne répond pas\nsur mobile",
     status: "NEW",
+    priority: "HIGH",
     screenshotUrl: "https://blob.example/shot.png",
     pageUrl: "https://app.example/company",
     userAgent: "Mozilla/5.0",
@@ -40,16 +41,33 @@ describe("buildFeedbackCursorMarkdown", () => {
           workspaceRoleMode: "admin",
           systemRoles: [],
           organizationId: "org_1",
+          targetElement: {
+            cssSelector: '[data-feedback-id="meeting-create-submit"]',
+            xpath: "/html/body/button[1]",
+            tagName: "button",
+            textSnippet: "Enregistrer",
+            ariaLabel: null,
+            boundingRect: { x: 10, y: 20, width: 100, height: 40 },
+            scroll: { x: 0, y: 120 },
+            dataFeedbackId: "meeting-create-submit",
+          },
+          networkErrors: ["POST /api/meetings → 500"],
+          consoleWarnings: ["deprecated API"],
+          technicalContext: { routePath: "/company/rendez-vous", scrollPosition: "0,120" },
         },
       }),
     );
 
     expect(md).toContain("# 🐛 BUG report — SalesTime (#fb_abcde");
+    expect(md).toContain("**Priority:** high");
     expect(md).toContain("user@example.com (org: Acme) (rôle: Manager)");
     expect(md).toContain("Le bouton ne répond pas sur mobile");
     expect(md).toContain("- TypeError: x is null");
     expect(md).toContain("https://blob.example/shot.png");
-    expect(md).toContain('"organizationId": "org_1"');
+    expect(md).toContain('data-feedback-id="meeting-create-submit"');
+    expect(md).toContain("POST /api/meetings → 500");
+    expect(md).toContain("deprecated API");
+    expect(md).toContain("components/organisms/meeting-create-form.tsx");
   });
 
   it("shows placeholder when no console errors", () => {

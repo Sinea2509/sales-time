@@ -4,6 +4,7 @@ import type { WorkspaceRoleMode } from "@/src/core/domain/authorization-policy";
 import type { NotificationItem } from "@/components/organisms/notification-bell";
 import type { OrgSwitcherMembership } from "@/components/organisms/org-switcher";
 import type { SessionUserMenuInfo } from "@/components/organisms/dashboard-header";
+import { FeedbackCaptureProvider } from "@/components/providers/feedback-capture-provider";
 import { OrgCommercialDashboardShell } from "@/components/templates/org-commercial-dashboard-shell";
 import { OrgManagerDashboardShell } from "@/components/templates/org-manager-dashboard-shell";
 
@@ -30,8 +31,16 @@ export function OrgDashboardShell({
   const sharedProps = { ...shellProps, children };
 
   if (workspaceRoleMode === "admin") {
-    return <OrgManagerDashboardShell {...sharedProps} />;
+    return (
+      <FeedbackCaptureProvider>
+        <OrgManagerDashboardShell {...sharedProps} />
+      </FeedbackCaptureProvider>
+    );
   }
 
-  return <OrgCommercialDashboardShell {...sharedProps} />;
+  return (
+    <FeedbackCaptureProvider>
+      <OrgCommercialDashboardShell {...sharedProps} />
+    </FeedbackCaptureProvider>
+  );
 }

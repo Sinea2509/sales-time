@@ -4,8 +4,8 @@ import { ScatterChart } from "@mui/x-charts/ScatterChart";
 import { ChartsReferenceLine } from "@mui/x-charts/ChartsReferenceLine";
 import { useMemo } from "react";
 import {
-  meetingEtapeLabel,
-  meetingEtapePillClass,
+  meetingEtapePillClassForLabel,
+  meetingEtapeScatterColorForLabel,
 } from "@/lib/meeting-etape-pill";
 import { cn } from "@/lib/utils";
 import {
@@ -14,27 +14,10 @@ import {
   MATRIX_AXIS_TICKS,
   type QualificationPotentialMatrixPoint,
 } from "@/src/core/domain/meeting-analyse-matrices";
-import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import {
   QualificationMatrixScatterTooltip,
   type QualificationMatrixScatterTooltipMeta,
 } from "@/components/molecules/qualification-matrix-scatter-tooltip";
-
-const OUTCOME_ORDER: MeetingOutcome[] = [
-  "OTHER",
-  "FOLLOW_UP",
-  "WON",
-  "LOST",
-  "NO_SHOW",
-];
-
-const OUTCOME_COLOR: Record<MeetingOutcome, string> = {
-  OTHER: "#8b5cf6",
-  FOLLOW_UP: "#10b981",
-  WON: "#0ea5e9",
-  LOST: "#f43f5e",
-  NO_SHOW: "#f59e0b",
-};
 
 const ORIGIN_LINE_STYLE = {
   stroke: "#0ea5e9",
@@ -59,6 +42,12 @@ const matrixAxisConfig = {
     value == null ? "" : String(Math.round(value)),
 };
 
+function sortedUniqueEtapes(points: QualificationPotentialMatrixPoint[]): string[] {
+  return [...new Set(points.map((p) => p.etape))].sort((a, b) =>
+    a.localeCompare(b, "fr"),
+  );
+}
+
 export function QualificationPotentialMatrixScatter({
   points,
   height = 420,
@@ -66,12 +55,14 @@ export function QualificationPotentialMatrixScatter({
   points: QualificationPotentialMatrixPoint[];
   height?: number;
 }) {
+  const presentEtapes = useMemo(() => sortedUniqueEtapes(points), [points]);
+
   const series = useMemo(() => {
-    return OUTCOME_ORDER.map((outcome) => {
-      const rows = points.filter((p) => p.outcome === outcome);
+    return presentEtapes.map((etape) => {
+      const rows = points.filter((p) => p.etape === etape);
       return {
-        id: `outcome-${outcome}`,
-        label: meetingEtapeLabel(outcome),
+        id: `etape-${etape}`,
+        label: etape,
         data: rows.map((p) => {
           const meta: QualificationMatrixScatterTooltipMeta = {
             contactName: p.prospectName,
@@ -85,16 +76,11 @@ export function QualificationPotentialMatrixScatter({
             z: meta,
           };
         }),
-        color: OUTCOME_COLOR[outcome],
+        color: meetingEtapeScatterColorForLabel(etape),
         markerSize: 8,
       };
     }).filter((s) => s.data.length > 0);
-  }, [points]);
-
-  const presentOutcomes = useMemo(
-    () => OUTCOME_ORDER.filter((o) => points.some((p) => p.outcome === o)),
-    [points],
-  );
+  }, [points, presentEtapes]);
 
   const chartSeries = useMemo(() => {
     if (series.length > 0) return series;
@@ -153,20 +139,20 @@ export function QualificationPotentialMatrixScatter({
         />
       </ScatterChart>
       <div className="flex flex-wrap items-center gap-2">
-        {presentOutcomes.map((outcome) => (
+        {presentEtapes.map((etape) => (
           <span
-            key={outcome}
+            key={etape}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
-              meetingEtapePillClass(outcome),
+              meetingEtapePillClassForLabel(etape),
             )}
           >
             <span
               className="inline-block size-2 rounded-full"
-              style={{ backgroundColor: OUTCOME_COLOR[outcome] }}
+              style={{ backgroundColor: meetingEtapeScatterColorForLabel(etape) }}
               aria-hidden
             />
-            {meetingEtapeLabel(outcome)}
+            {etape}
           </span>
         ))}
       </div>

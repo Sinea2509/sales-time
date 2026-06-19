@@ -1,3 +1,4 @@
+import { meetingEtapeDisplayLabel } from "./meeting-etape-display";
 import { soncasResultSchema } from "./analysis-result-zod";
 import { kissResultSchema } from "./kiss-result-zod";
 import type { MeetingOutcome } from "./meeting-outcome";
@@ -12,6 +13,8 @@ export type MeetingRdvMatrixPoint = {
   prospectName: string;
   salesScore: number;
   tamMinutes: number;
+  /** Libellé « Étape » affiché (type de RDV ou étape pipeline). */
+  etape: string;
   outcome: MeetingOutcome;
 };
 
@@ -21,10 +24,19 @@ export type QualificationPotentialMatrixPoint = {
   prospectName: string;
   qualification: number;
   potential: number;
+  /** Libellé « Étape » affiché (type de RDV ou étape pipeline). */
+  etape: string;
   outcome: MeetingOutcome;
   potentialAmount: number | null;
   salesScore: number | null;
 };
+
+function meetingEtapeFromRow(meeting: RecentMeetingListRow): string {
+  return meetingEtapeDisplayLabel({
+    meetingType: meeting.meetingType,
+    pipelineStage: meeting.pipelineStage,
+  });
+}
 
 /** Mappe un score 0–100 sur l’axe matrice [-3 ; 3]. */
 export function linearScoreToMatrixAxis(score0To100: number): number {
@@ -98,6 +110,7 @@ export function buildMeetingRdvMatrixPoints(
         prospectName: m.prospectName,
         salesScore: m.salesScore,
         tamMinutes: m.durationMin,
+        etape: meetingEtapeFromRow(m),
         outcome: m.outcome,
       },
     ];
@@ -121,6 +134,7 @@ export function buildQualificationPotentialMatrixPoints(
         prospectName: m.prospectName,
         qualification,
         potential,
+        etape: meetingEtapeFromRow(m),
         outcome: m.outcome,
         potentialAmount: m.potentialAmount,
         salesScore: m.salesScore,

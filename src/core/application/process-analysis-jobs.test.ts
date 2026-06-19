@@ -73,7 +73,9 @@ function makeDeps(over: {
       findLatestAnalysisForMeeting: jest.fn().mockResolvedValue(null),
       updatePersonProfileCache: jest.fn().mockResolvedValue(undefined),
     },
-    prompts: {},
+    prompts: {
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+    },
     analysis: {},
     aiLogs: { createLog: jest.fn().mockResolvedValue({}) },
     globalKissCoachingPrompts: {
@@ -100,7 +102,6 @@ describe("processAnalysisJobs", () => {
 
     const result = await processAnalysisJobs(deps as never, {
       workerId: "w1",
-      model: "openai/gpt-4o-mini",
     });
 
     expect(result).toEqual({
@@ -116,7 +117,6 @@ describe("processAnalysisJobs", () => {
 
     const result = await processAnalysisJobs(deps as never, {
       workerId: "w1",
-      model: "openai/gpt-4o-mini",
     });
 
     expect(result.failed).toBe(1);
@@ -133,7 +133,6 @@ describe("processAnalysisJobs", () => {
 
     const result = await processAnalysisJobs(deps as never, {
       workerId: "w1",
-      model: "openai/gpt-4o-mini",
     });
 
     expect(result.succeeded).toBe(1);
@@ -166,7 +165,6 @@ describe("processAnalysisJobs", () => {
 
     const result = await processAnalysisJobs(deps as never, {
       workerId: "w1",
-      model: "openai/gpt-4o-mini",
     });
 
     expect(result.failed).toBe(1);

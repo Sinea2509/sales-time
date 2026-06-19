@@ -592,6 +592,7 @@ export function OnboardingWizard({ initial }: Props) {
               type="button"
               onClick={goNext}
               disabled={pending}
+              data-feedback-id="onboarding-next"
               className={cn(
                 "h-10 shrink-0 rounded-md border-0 px-6 font-medium text-white shadow-sm",
                 "bg-brand hover:bg-brand-hover dark:bg-brand dark:hover:bg-brand-hover",

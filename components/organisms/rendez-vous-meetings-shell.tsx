@@ -9,6 +9,7 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import { ProspectIdentityCell } from "@/components/molecules/prospect-identity-cell";
 import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
@@ -17,18 +18,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import {
-  meetingEtapeLabel,
+  meetingEtapeDisplayLabel,
   meetingEtapePillClass,
 } from "@/lib/meeting-etape-pill";
-import { prospectInitials } from "@/lib/prospect-initials";
-import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import { cn } from "@/lib/utils";
 
 export type RendezVousMeetingRow = {
   id: string;
   prospectName: string;
+  prospectCompany: string | null;
   meetingAt: string;
-  outcome: MeetingOutcome;
+  meetingType: string | null;
+  pipelineStage: string | null;
   salesScore: number | null;
   potentialAmount: number | null;
 };
@@ -74,7 +75,12 @@ function downloadMeetingsCsv(meetings: RendezVousMeetingRow[], tamMinutesPerRdv:
         m.potentialAmount != null ? String(m.potentialAmount) : "",
         escapeCsvCell(formatDurationHoursMinutes(tamMinutesPerRdv)),
         escapeCsvCell(dateShort.format(new Date(m.meetingAt))),
-        escapeCsvCell(meetingEtapeLabel(m.outcome)),
+        escapeCsvCell(
+          meetingEtapeDisplayLabel({
+            meetingType: m.meetingType,
+            pipelineStage: m.pipelineStage,
+          }),
+        ),
         m.salesScore != null ? String(m.salesScore) : "",
       ].join(","),
     ),
@@ -215,6 +221,7 @@ export function RendezVousMeetingsShell({
             size="sm"
             className="h-10 rounded-md border-brand/25 bg-brand/10 text-brand-hover hover:bg-brand/15 dark:text-brand-muted"
             onClick={() => downloadMeetingsCsv(filtered, tamMinutesPerRdv)}
+            data-feedback-id="rendez-export-csv"
           >
             <Download className="size-4" />
             Exporter
@@ -223,6 +230,7 @@ export function RendezVousMeetingsShell({
             href="/company/rendez-vous/nouveau"
             variant="primary"
             className="h-10 gap-1.5 rounded-md"
+            data-feedback-id="rendez-create-new"
           >
             <Plus className="size-4" />
             Nouveau rendez-vous
@@ -299,19 +307,10 @@ export function RendezVousMeetingsShell({
                         />
                       </td>
                       <td className="px-4 py-3.5 align-middle">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-neutral-100 text-neutral-700 flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold dark:bg-neutral-800 dark:text-neutral-200">
-                            {prospectInitials(m.prospectName)}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-neutral-950 truncate font-semibold dark:text-neutral-50">
-                              {m.prospectName}
-                            </p>
-                            <p className="text-muted-foreground truncate text-xs">
-                              Entreprise
-                            </p>
-                          </div>
-                        </div>
+                        <ProspectIdentityCell
+                          displayName={m.prospectName}
+                          company={m.prospectCompany}
+                        />
                       </td>
                       <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell">
                         {formatPotentialEuro(m.potentialAmount)}
@@ -326,10 +325,16 @@ export function RendezVousMeetingsShell({
                         <span
                           className={cn(
                             "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
-                            meetingEtapePillClass(m.outcome),
+                            meetingEtapePillClass({
+                              meetingType: m.meetingType,
+                              pipelineStage: m.pipelineStage,
+                            }),
                           )}
                         >
-                          {meetingEtapeLabel(m.outcome)}
+                          {meetingEtapeDisplayLabel({
+                            meetingType: m.meetingType,
+                            pipelineStage: m.pipelineStage,
+                          })}
                         </span>
                       </td>
                       <td className="hidden px-4 py-3.5 align-middle md:table-cell">

@@ -4,6 +4,17 @@ export type FeedbackStatus =
   | "IN_PROGRESS"
   | "RESOLVED"
   | "WONT_FIX";
+export type FeedbackPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+export type FeedbackListFilters = {
+  status?: FeedbackStatus | null;
+  type?: FeedbackType | null;
+  priority?: FeedbackPriority | null;
+  hasScreenshot?: boolean | null;
+  hasTargetElement?: boolean | null;
+  limit?: number;
+  offset?: number;
+};
 
 export type FeedbackRow = {
   id: string;
@@ -14,6 +25,7 @@ export type FeedbackRow = {
   type: FeedbackType;
   message: string;
   status: FeedbackStatus;
+  priority: FeedbackPriority;
   screenshotUrl: string | null;
   pageUrl: string | null;
   userAgent: string | null;
@@ -34,11 +46,7 @@ export type FeedbackRow = {
 export interface FeedbackRepositoryPort {
   create(input: Omit<FeedbackRow, "id" | "status" | "adminNotes" | "handledAt" | "createdAt">): Promise<FeedbackRow>;
 
-  list(input: {
-    status?: FeedbackStatus | null;
-    limit?: number;
-    offset?: number;
-  }): Promise<{ rows: FeedbackRow[]; total: number }>;
+  list(input: FeedbackListFilters): Promise<{ rows: FeedbackRow[]; total: number }>;
 
   countGroupedByStatus(): Promise<Record<FeedbackStatus, number> & { all: number }>;
 

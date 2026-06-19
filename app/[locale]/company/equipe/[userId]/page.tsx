@@ -1,9 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { TeamMemberPerformanceShell } from "@/components/organisms/team-member-performance-shell";
-import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { buildMeetingDigestsForAiSummary } from "@/lib/meeting-ai-digest";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
+import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import {
   appendOrganizationKissPromptAppendix,
@@ -115,23 +115,27 @@ export default async function ManagerCommercialViewPage({
   let performanceSummary: SellerCommercialPerformanceSummary | null = null;
   let relationalAffinity: SellerRelationalAffinitySummary | null = null;
   if (aiEnabled && meetingDigests.length > 0) {
-    const [performancePrompt, affinityPrompt] = await Promise.all([
+    const [performancePrompt, affinityPrompt, performanceModel, affinityModel] =
+      await Promise.all([
       loadAnalysisPromptMarkdown(deps.prompts, "SELLER_PERFORMANCE"),
       loadAnalysisPromptMarkdown(deps.prompts, "SELLER_AFFINITY"),
+      resolvePromptGatewayModel(deps.prompts, "SELLER_PERFORMANCE"),
+      resolvePromptGatewayModel(deps.prompts, "SELLER_AFFINITY"),
     ]);
     const aiPayload = {
       sellerDisplayName: nameLine,
       meetings: meetingDigests,
-      model: ANALYSIS_GATEWAY_MODEL,
     };
     const [perfRes, affinityRes] = await Promise.allSettled([
       deps.analysis.summarizeSellerCommercialPerformance({
         ...aiPayload,
         systemMarkdown: performancePrompt,
+        model: performanceModel,
       }),
       deps.analysis.summarizeSellerRelationalAffinity({
         ...aiPayload,
         systemMarkdown: affinityPrompt,
+        model: affinityModel,
       }),
     ]);
     if (perfRes.status === "fulfilled") performanceSummary = perfRes.value;
@@ -151,10 +155,14 @@ export default async function ManagerCommercialViewPage({
         basePrompt,
         kissMarkdownAppendixForAudience(globalKissJson, "manager"),
       );
+      const orgKissModel = await resolvePromptGatewayModel(
+        deps.prompts,
+        "ORG_KISS_ROLLUP",
+      );
       kissSellerStrengthsNarrative = await deps.analysis.summarizeOrgKissRollup({
         systemMarkdown,
         rollup: kissSellerRollup,
-        model: ANALYSIS_GATEWAY_MODEL,
+        model: orgKissModel,
       });
     } catch {
       kissSellerStrengthsNarrative = null;

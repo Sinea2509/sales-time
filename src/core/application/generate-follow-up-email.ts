@@ -1,6 +1,7 @@
 import {
   loadAnalysisPromptMarkdown,
 } from "@/lib/load-analysis-prompt";
+import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { MeetingDetailWithAnalyses } from "@/src/core/ports/meeting-repository-port";
@@ -18,7 +19,6 @@ export async function generateFollowUpEmailForMeeting(
   input: {
     meeting: MeetingDetailWithAnalyses;
     emailPreferences: ResolvedFollowUpEmailPreferences;
-    model: string;
   },
 ) {
   const prefs = [
@@ -45,11 +45,12 @@ export async function generateFollowUpEmailForMeeting(
     deps.prompts,
     "FOLLOW_UP_EMAIL",
   );
+  const model = await resolvePromptGatewayModel(deps.prompts, "FOLLOW_UP_EMAIL");
 
   const { result } = await deps.analysis.generateFollowUpEmail({
     systemMarkdown,
     userContent: prefs,
-    model: input.model,
+    model,
   });
   return result;
 }

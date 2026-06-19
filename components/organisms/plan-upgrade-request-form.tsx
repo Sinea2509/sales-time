@@ -61,7 +61,7 @@ export function PlanUpgradeRequestForm() {
             <Textarea id="message" name="message" rows={3} />
           </div>
           {error ? <p className="text-destructive text-sm">{error}</p> : null}
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" disabled={pending} data-feedback-id="plan-upgrade-submit">
             {pending ? "Envoi…" : "Envoyer la demande"}
           </Button>
         </form>

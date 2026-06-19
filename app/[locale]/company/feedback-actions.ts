@@ -8,19 +8,44 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createFeedback } from "@/src/core/application/create-feedback";
 import { buildFeedbackSubmitContextExtra } from "@/src/core/domain/feedback-submit-context";
+import {
+  feedbackTargetElementSchema,
+  type FeedbackExtraPayload,
+} from "@/src/core/domain/feedback-target-element";
+import {
+  feedbackPrioritySchema,
+  parseFeedbackUserAgent,
+  resolveFeedbackPriority,
+} from "@/src/core/domain/feedback-technical-context";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 
 const feedbackSchema = z.object({
   type: z.enum(["BUG", "IDEA", "QUESTION", "OTHER"]),
   message: z.string().trim().min(5).max(5000),
+  priority: feedbackPrioritySchema.optional(),
   screenshotUrl: z.string().url().nullable().optional(),
+  elementCropUrl: z.string().url().nullable().optional(),
+  targetElement: feedbackTargetElementSchema.nullable().optional(),
   pageUrl: z.string().max(2000).nullable().optional(),
   userAgent: z.string().max(500).nullable().optional(),
   viewport: z.string().max(32).nullable().optional(),
   screenSize: z.string().max(32).nullable().optional(),
   locale: z.string().max(16).nullable().optional(),
   consoleErrors: z.array(z.string()).max(20).optional(),
+  consoleWarnings: z.array(z.string()).max(20).optional(),
+  networkErrors: z.array(z.string()).max(20).optional(),
+  scrollPosition: z.string().max(32).nullable().optional(),
+  routePath: z.string().max(500).nullable().optional(),
 });
+
+function assertOrgBlobUrl(
+  url: string | null | undefined,
+  organizationId: string | null,
+): boolean {
+  if (!url) return true;
+  if (!organizationId) return false;
+  return blobUrlBelongsToOrg(url, organizationId);
+}
 
 export async function submitFeedbackAction(input: z.infer<typeof feedbackSchema>) {
   const parsed = feedbackSchema.safeParse(input);
@@ -36,11 +61,12 @@ export async function submitFeedbackAction(input: z.infer<typeof feedbackSchema>
     { superAdminElevation: superAdminOrg },
   );
 
+  const organizationId =
+    ctx.kind === "authenticated" ? ctx.activeOrganizationId : null;
+
   if (
-    parsed.data.screenshotUrl &&
-    (ctx.kind !== "authenticated" ||
-      !ctx.activeOrganizationId ||
-      !blobUrlBelongsToOrg(parsed.data.screenshotUrl, ctx.activeOrganizationId))
+    !assertOrgBlobUrl(parsed.data.screenshotUrl, organizationId) ||
+    !assertOrgBlobUrl(parsed.data.elementCropUrl, organizationId)
   ) {
     return { ok: false as const };
   }
@@ -53,26 +79,45 @@ export async function submitFeedbackAction(input: z.infer<typeof feedbackSchema>
     companyName = org?.name ?? null;
   }
 
+  const ua = parseFeedbackUserAgent(parsed.data.userAgent);
+  const submitContext = buildFeedbackSubmitContextExtra(ctx);
+  const extra: FeedbackExtraPayload = {
+    submitContext,
+    targetElement: parsed.data.targetElement ?? null,
+    elementCropUrl: parsed.data.elementCropUrl ?? null,
+    networkErrors: parsed.data.networkErrors ?? [],
+    consoleWarnings: parsed.data.consoleWarnings ?? [],
+    technicalContext: {
+      routePath: parsed.data.routePath ?? null,
+      referrer: null,
+      timezone: null,
+      scrollPosition: parsed.data.scrollPosition ?? null,
+    },
+  };
+
   await createFeedback(deps, {
-    organizationId:
-      ctx.kind === "authenticated" ? ctx.activeOrganizationId : null,
+    organizationId,
     userId: principal.userId,
     userEmail: ctx.kind === "authenticated" ? ctx.email : null,
     companyName,
     type: parsed.data.type,
     message: parsed.data.message,
+    priority: resolveFeedbackPriority({
+      type: parsed.data.type,
+      priority: parsed.data.priority,
+    }),
     screenshotUrl: parsed.data.screenshotUrl ?? null,
     pageUrl: parsed.data.pageUrl ?? null,
     userAgent: parsed.data.userAgent ?? null,
-    browser: parsed.data.userAgent?.split(" ").slice(-2).join(" ") ?? null,
-    os: null,
-    deviceType: null,
+    browser: ua.browser,
+    os: ua.os,
+    deviceType: ua.deviceType,
     viewport: parsed.data.viewport ?? null,
     screenSize: parsed.data.screenSize ?? null,
     locale: parsed.data.locale ?? null,
     appVersion: process.env.NEXT_PUBLIC_COMMIT_SHA ?? null,
     consoleErrors: parsed.data.consoleErrors ?? [],
-    extra: buildFeedbackSubmitContextExtra(ctx) ?? {},
+    extra,
   });
 
   return { ok: true as const };

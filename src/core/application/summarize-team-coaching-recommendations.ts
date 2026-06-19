@@ -15,6 +15,7 @@ import {
   appendOrganizationKissPromptAppendix,
   loadAnalysisPromptMarkdown,
 } from "@/lib/load-analysis-prompt";
+import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 
 export type TeamCoachingRecommendationBullets = {
   progressBullets: string[];
@@ -52,7 +53,6 @@ export async function summarizeTeamCoachingRecommendations(
     teamSalesProfile: TeamSalesProfileAggregate;
     previousSalesProfile: TeamSalesProfileAggregate;
     statsWindowDays: StatsWindowDays;
-    model: string;
     audience: "manager" | "commercial";
     organizationKissPromptAppendix?: string | null;
     home: OrgDashboardHome;
@@ -72,9 +72,10 @@ export async function summarizeTeamCoachingRecommendations(
       basePrompt,
       input.organizationKissPromptAppendix,
     );
+    const model = await resolvePromptGatewayModel(deps.prompts, "TEAM_COACHING");
     const result = await deps.analysis.summarizeTeamCoachingRecommendations({
       systemMarkdown,
-      model: input.model,
+      model,
       statsWindowDays: input.statsWindowDays,
       audience: input.audience,
       meetings: digests,

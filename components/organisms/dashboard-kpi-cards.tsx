@@ -6,19 +6,19 @@ import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-
 
 export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" data-feedback-id="dashboard-kpi-cards">
       <KpiTile
         icon={Clock}
         label="TAM"
         trend={
           <KpiVsPreviousBadge
-            delta={home.tamTrendPercent}
-            mode="neutral"
+            delta={home.tamCumuleTrendPercent}
+            mode="up-good"
           />
         }
       >
-        {home.avgDurationMin != null
-          ? formatDurationHoursMinutes(home.avgDurationMin)
+        {home.tamCumuleMinutes > 0
+          ? formatDurationHoursMinutes(home.tamCumuleMinutes)
           : "—"}
       </KpiTile>
 

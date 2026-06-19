@@ -6,6 +6,7 @@ import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-
 import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { GlobalKissCoachingPromptsRepositoryPort } from "@/src/core/ports/global-kiss-coaching-prompts-repository-port";
+import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
@@ -31,7 +32,7 @@ export async function processAnalysisJobs(
     notifications: NotificationRepositoryPort;
     users: import("@/src/core/ports/user-repository-port").UserRepositoryPort;
   },
-  input: { workerId: string; model: string },
+  input: { workerId: string },
 ): Promise<ProcessAnalysisJobsResult> {
   const staleBefore = new Date(Date.now() - STALE_MINUTES * 60_000);
   const releasedStale = await deps.analysisJobs.releaseStaleProcessingJobs(
@@ -79,6 +80,7 @@ export async function processAnalysisJobs(
 
     for (const kind of ["SONCAS", "DISC", "KISS"] as const) {
       const started = Date.now();
+      const model = await resolvePromptGatewayModel(deps.prompts, kind);
       try {
         const r = await runMeetingAnalysis(
           {
@@ -90,7 +92,6 @@ export async function processAnalysisJobs(
             organizationId: job.organizationId,
             meetingId: job.meetingId,
             kind,
-            model: input.model,
             kissSystemMarkdownAppendix:
               kind === "KISS" ? kissAppendix : undefined,
           },
@@ -104,7 +105,7 @@ export async function processAnalysisJobs(
             jobId: job.id,
             kind: kind === "KISS" ? "COACHING" : kind,
             status: "ERROR",
-            modelName: input.model,
+            modelName: model,
             errorMessage: lastError,
             latencyMs: Date.now() - started,
           });
@@ -116,7 +117,7 @@ export async function processAnalysisJobs(
           jobId: job.id,
           kind: kind === "KISS" ? "COACHING" : kind,
           status: "SUCCESS",
-          modelName: input.model,
+          modelName: model,
           latencyMs: Date.now() - started,
         });
       } catch (e) {
@@ -128,7 +129,7 @@ export async function processAnalysisJobs(
           jobId: job.id,
           kind: kind === "KISS" ? "COACHING" : kind,
           status: "ERROR",
-          modelName: input.model,
+          modelName: model,
           errorMessage: lastError,
           latencyMs: Date.now() - started,
         });

@@ -26,8 +26,11 @@ function parsePromptKind(raw: string | undefined): AnalysisKindSlug {
 
 async function loadPromptPanel(kind: AnalysisKindSlug) {
   const deps = getApplicationDeps();
-  const current = await deps.prompts.getCurrentVersion({ kind });
-  const versions = await deps.prompts.listVersions({ kind, limit: 30 });
+  const [current, versions, initialModel] = await Promise.all([
+    deps.prompts.getCurrentVersion({ kind }),
+    deps.prompts.listVersions({ kind, limit: 30 }),
+    deps.prompts.getModelForKind({ kind }),
+  ]);
 
   const authorIds = [...new Set(versions.map((v) => v.authorUserId))];
   const emailMap = new Map<string, string | null>();
@@ -44,6 +47,7 @@ async function loadPromptPanel(kind: AnalysisKindSlug) {
   return {
     kind,
     initialMarkdown,
+    initialModel,
     versionCount: versions.length,
     versions: versions.map((v) => ({
       id: v.id,

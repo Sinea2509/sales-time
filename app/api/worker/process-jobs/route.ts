@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { checkAiGatewayConfigured } from "@/lib/env";
 import { getApplicationDeps } from "@/lib/application-deps";
@@ -28,7 +27,6 @@ export async function GET(request: Request) {
   const workerId = `cron-${Date.now()}`;
   const result = await processAnalysisJobs(deps, {
     workerId,
-    model: ANALYSIS_GATEWAY_MODEL,
   });
 
   return NextResponse.json({ ok: true, ...result });

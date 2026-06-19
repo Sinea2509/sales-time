@@ -34,7 +34,7 @@ export function DotBulletList({
             className="mt-2 inline-block size-1.5 shrink-0 rounded-full bg-neutral-400 dark:bg-neutral-500"
             aria-hidden
           />
-          <span>{line}</span>
+          <span className="min-w-0 break-words">{line}</span>
         </li>
       ))}
     </ul>

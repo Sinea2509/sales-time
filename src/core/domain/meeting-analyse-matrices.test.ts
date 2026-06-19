@@ -1,4 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
+import { meetingEtapeDisplayLabel } from "./meeting-etape-display";
 import {
   buildMeetingRdvMatrixPoints,
   buildQualificationPotentialMatrixPoints,
@@ -16,6 +17,7 @@ function meeting(
     sellerUserId: "u1",
     personId: "p1",
     prospectName: "Acme",
+    prospectCompany: null,
     meetingAt: new Date("2026-01-01T00:00:00.000Z"),
     durationMin: 30,
     meetingType: null,
@@ -67,11 +69,22 @@ describe("meeting-analyse-matrices", () => {
 
   it("buildQualificationPotentialMatrixPoints uses amount and sales score", () => {
     const points = buildQualificationPotentialMatrixPoints([
-      meeting({ potentialAmount: 10_000 }),
+      meeting({ potentialAmount: 10_000, meetingType: "Proposition" }),
       meeting({ id: "m2", potentialAmount: 30_000, salesScore: 60 }),
     ]);
     expect(points).toHaveLength(2);
+    expect(points[0]?.etape).toBe("Proposition");
     expect(points[0]?.qualification).toBeGreaterThan(-3.1);
     expect(points[0]?.potential).toBeGreaterThanOrEqual(-3);
+  });
+
+  it("buildMeetingRdvMatrixPoints includes étape from meeting fields", () => {
+    const points = buildMeetingRdvMatrixPoints([
+      meeting({ meetingType: "Closing", pipelineStage: "Gagné" }),
+    ]);
+    expect(points[0]?.etape).toBe("Closing");
+    expect(meetingEtapeDisplayLabel({ meetingType: null, pipelineStage: "Gagné" })).toBe(
+      "Gagné",
+    );
   });
 });

@@ -15,6 +15,7 @@ describe("createFeedback", () => {
       companyName: "Acme",
       type: "BUG" as const,
       message: "Something broke",
+      priority: "HIGH" as const,
       screenshotUrl: null,
       pageUrl: "/company",
       userAgent: null,

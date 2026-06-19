@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
 import { AnalysisKind } from "@/lib/generated/prisma/client";
+import { DEFAULT_ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-gateway-models";
 import type {
   AnalysisKindSlug,
   PromptTemplateRepositoryPort,
@@ -31,6 +32,32 @@ export class PrismaPromptTemplateRepository implements PromptTemplateRepositoryP
       authorUserId: v.authorUserId,
       createdAt: v.createdAt,
     };
+  }
+
+  async getModelForKind(input: {
+    kind: AnalysisKindSlug;
+  }): Promise<string> {
+    const template = await this.db.promptTemplate.findUnique({
+      where: { kind: toPrismaAnalysisKind(input.kind) },
+      select: { model: true },
+    });
+    return template?.model ?? DEFAULT_ANALYSIS_GATEWAY_MODEL;
+  }
+
+  async updateModelForKind(input: {
+    kind: AnalysisKindSlug;
+    model: string;
+  }): Promise<string> {
+    const template = await this.db.promptTemplate.upsert({
+      where: { kind: toPrismaAnalysisKind(input.kind) },
+      create: {
+        kind: toPrismaAnalysisKind(input.kind),
+        model: input.model,
+      },
+      update: { model: input.model },
+      select: { model: true },
+    });
+    return template.model;
   }
 
   async ensureCurrentVersion(input: {

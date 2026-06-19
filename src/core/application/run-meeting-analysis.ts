@@ -1,4 +1,5 @@
 import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "@/lib/default-analysis-prompts";
+import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import { resolveMeetingTranscriptForAnalysis } from "@/lib/meeting-transcript-for-analysis";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type {
@@ -45,7 +46,6 @@ export async function runMeetingAnalysis(
     organizationId: string | null;
     meetingId: string;
     kind: AnalysisKindToRun;
-    model: string;
     /** Suffixe markdown (paramètres org.) concaténé au prompt KISS global. */
     kissSystemMarkdownAppendix?: string | null;
   },
@@ -80,6 +80,8 @@ export async function runMeetingAnalysis(
     return { ok: false, error: "PROMPT_NOT_CONFIGURED" };
   }
 
+  const model = await resolvePromptGatewayModel(deps.prompts, input.kind);
+
   try {
     if (input.kind === "SONCAS" || input.kind === "DISC") {
       const analyze =
@@ -90,13 +92,13 @@ export async function runMeetingAnalysis(
         systemMarkdown: promptVersion.markdown,
         transcript: transcriptForAnalysis,
         notes: meeting.notes,
-        model: input.model,
+        model,
       });
       const row = await deps.meetings.createAnalysis({
         meetingId: meeting.id,
         kind: input.kind,
         promptVersionId: promptVersion.id,
-        model: input.model,
+        model,
         result,
       });
       return { ok: true, analysisId: row.id };
@@ -130,7 +132,7 @@ export async function runMeetingAnalysis(
       systemMarkdown: kissSystemMarkdown,
       transcript: transcriptForAnalysis,
       notes: meeting.notes,
-      model: input.model,
+      model,
       priorSoncasResult: priorSoncas?.result,
       priorDiscResult: priorDisc?.result,
     });
@@ -138,7 +140,7 @@ export async function runMeetingAnalysis(
       meetingId: meeting.id,
       kind: "KISS",
       promptVersionId: promptVersion.id,
-      model: input.model,
+      model,
       result,
     });
     return { ok: true, analysisId: row.id };

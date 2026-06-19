@@ -36,6 +36,14 @@ export interface PromptTemplateRepositoryPort {
     kind: AnalysisKindSlug;
   }): Promise<PromptTemplateVersionRow | null>;
 
+  /** Vercel AI Gateway model id (`provider/model`) configured for this prompt kind. */
+  getModelForKind(input: { kind: AnalysisKindSlug }): Promise<string>;
+
+  updateModelForKind(input: {
+    kind: AnalysisKindSlug;
+    model: string;
+  }): Promise<string>;
+
   /** Ensures a DB prompt version exists (seeds from default markdown when missing). */
   ensureCurrentVersion(input: {
     kind: AnalysisKindSlug;

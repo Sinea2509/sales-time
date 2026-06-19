@@ -2,9 +2,9 @@ import { redirect } from "next/navigation";
 import { InfoCard } from "@/components/molecules/info-card";
 import { DashboardAdminShell } from "@/components/organisms/dashboard-admin-shell";
 import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell";
-import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
+import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import { parseStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
@@ -83,10 +83,14 @@ export default async function DashboardHomePage({
           basePrompt,
           kissMarkdownAppendixForAudience(globalKissJson, "manager"),
         );
+        const orgKissModel = await resolvePromptGatewayModel(
+          deps.prompts,
+          "ORG_KISS_ROLLUP",
+        );
         kissTeamStrengthsNarrative = await deps.analysis.summarizeOrgKissRollup({
           systemMarkdown,
           rollup: admin.kissTeamRollup,
-          model: ANALYSIS_GATEWAY_MODEL,
+          model: orgKissModel,
         });
       } catch {
         kissTeamStrengthsNarrative = null;

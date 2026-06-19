@@ -42,6 +42,8 @@ export type MeetingAnalysisRow = {
 
 /** Recent meeting row for dashboard (tri par date d’ajout). */
 export type RecentMeetingListRow = MeetingRow & {
+  /** Société du contact lié, si renseignée. */
+  prospectCompany: string | null;
   sellerEmail: string | null;
   sellerFirstName: string | null;
   sellerLastName: string | null;

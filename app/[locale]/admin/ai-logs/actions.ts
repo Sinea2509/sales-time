@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
+import { DEFAULT_ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-gateway-models";
 import { generateObject } from "ai";
 import { z } from "zod";
 
@@ -21,10 +21,11 @@ export async function replayAiLogAction(logId: string) {
     return { ok: false as const, error: "NOT_FOUND" };
   }
 
+  const replayModel = log.modelName?.trim() || DEFAULT_ANALYSIS_GATEWAY_MODEL;
   const started = Date.now();
   try {
     const { object, usage } = await generateObject({
-      model: ANALYSIS_GATEWAY_MODEL,
+      model: replayModel,
       schema: z.object({ replay: z.string() }),
       system: log.systemPrompt ?? "Replay SalesTime AI call.",
       prompt: log.userPrompt,
@@ -36,7 +37,7 @@ export async function replayAiLogAction(logId: string) {
       jobId: log.jobId,
       kind: log.kind,
       status: "SUCCESS",
-      modelName: ANALYSIS_GATEWAY_MODEL,
+      modelName: replayModel,
       promptVersion: `${log.promptVersion}-replay`,
       systemPrompt: log.systemPrompt,
       userPrompt: log.userPrompt,
@@ -52,7 +53,7 @@ export async function replayAiLogAction(logId: string) {
       jobId: log.jobId,
       kind: log.kind,
       status: "ERROR",
-      modelName: ANALYSIS_GATEWAY_MODEL,
+      modelName: replayModel,
       promptVersion: `${log.promptVersion}-replay`,
       systemPrompt: log.systemPrompt,
       userPrompt: log.userPrompt,

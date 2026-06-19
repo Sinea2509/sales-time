@@ -38,8 +38,10 @@ export default async function RendezVousPage() {
   const rows = meetings.map((m) => ({
     id: m.id,
     prospectName: m.prospectName,
+    prospectCompany: m.prospectCompany,
     meetingAt: m.meetingAt.toISOString(),
-    outcome: m.outcome,
+    meetingType: m.meetingType,
+    pipelineStage: m.pipelineStage,
     salesScore: m.salesScore,
     potentialAmount: m.potentialAmount,
   }));

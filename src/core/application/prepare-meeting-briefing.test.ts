@@ -18,14 +18,16 @@ describe("prepareMeetingBriefing", () => {
       contacts: { findById: jest.fn().mockResolvedValue(null) },
       meetings: { listMeetingsForPersonOrdered: jest.fn() },
       analysis: { prepareMeetingBriefing: jest.fn() },
-      prompts: { getCurrentVersion: jest.fn() },
+      prompts: {
+        getCurrentVersion: jest.fn(),
+        getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+      },
     };
 
     const result = await prepareMeetingBriefing(deps as never, {
       organizationId: "org_1",
       personId: "person_missing",
       targetStage: "Proposition",
-      model: "openai/gpt-4o-mini",
     });
 
     expect(result).toBeNull();
@@ -99,6 +101,7 @@ describe("prepareMeetingBriefing", () => {
         getCurrentVersion: jest.fn().mockResolvedValue({
           markdown: "Briefing system prompt",
         }),
+        getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
       },
     };
 
@@ -106,7 +109,6 @@ describe("prepareMeetingBriefing", () => {
       organizationId: "org_1",
       personId: "person_1",
       targetStage: "Proposition",
-      model: "openai/gpt-4o-mini",
     });
 
     expect(result?.hasHistory).toBe(true);

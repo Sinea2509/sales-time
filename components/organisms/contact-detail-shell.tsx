@@ -70,7 +70,7 @@ export function ContactDetailShell({
                 meetings.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>
-                      {m.meetingAt.toLocaleDateString("fr-FR", {
+                      {m.meetingAt.toLocaleString("fr-FR", {
                         dateStyle: "medium",
                         timeStyle: "short",
                       })}

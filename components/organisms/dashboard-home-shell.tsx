@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ProspectIdentityCell } from "@/components/molecules/prospect-identity-cell";
 import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
 import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
@@ -9,10 +10,9 @@ import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import {
-  meetingEtapeLabel,
+  meetingEtapeDisplayLabel,
   meetingEtapePillClass,
 } from "@/lib/meeting-etape-pill";
-import { prospectInitials } from "@/lib/prospect-initials";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
@@ -44,7 +44,7 @@ export function DashboardHomeShell({
   pipelineStageOptions: string[];
 }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-feedback-id="dashboard-home">
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className={sectionHeadingClass}>Mes KPI opérationnels</h2>
@@ -65,6 +65,7 @@ export function DashboardHomeShell({
           href="/company/rendez-vous/nouveau"
           variant="outline"
           className="h-10 rounded-md"
+          data-feedback-id="dashboard-prepare-rdv"
         >
           Préparer un RDV
         </BrandCtaLink>
@@ -115,19 +116,10 @@ export function DashboardHomeShell({
                       className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/50"
                     >
                       <td className="px-4 py-3.5 align-middle">
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                            {prospectInitials(m.prospectName)}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold text-zinc-950 dark:text-zinc-50">
-                              {m.prospectName}
-                            </p>
-                            <p className="text-muted-foreground truncate text-xs dark:text-zinc-500">
-                              Entreprise
-                            </p>
-                          </div>
-                        </div>
+                        <ProspectIdentityCell
+                          displayName={m.prospectName}
+                          company={m.prospectCompany}
+                        />
                       </td>
                       <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell dark:text-zinc-400">
                         {formatPotentialEuro(m.potentialAmount)}
@@ -142,10 +134,16 @@ export function DashboardHomeShell({
                         <span
                           className={cn(
                             "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
-                            meetingEtapePillClass(m.outcome),
+                            meetingEtapePillClass({
+                              meetingType: m.meetingType,
+                              pipelineStage: m.pipelineStage,
+                            }),
                           )}
                         >
-                          {meetingEtapeLabel(m.outcome)}
+                          {meetingEtapeDisplayLabel({
+                            meetingType: m.meetingType,
+                            pipelineStage: m.pipelineStage,
+                          })}
                         </span>
                       </td>
                       <td className="hidden px-4 py-3.5 align-middle md:table-cell">

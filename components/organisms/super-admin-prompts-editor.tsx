@@ -12,12 +12,22 @@ import {
   AlertCircle,
   History,
 } from "lucide-react";
-import { publishPromptAction } from "@/app/[locale]/admin/prompts/actions";
+import { publishPromptAction, updatePromptModelAction } from "@/app/[locale]/admin/prompts/actions";
 import type { AnalysisKindSlug } from "@/src/core/ports/prompt-template-repository-port";
+import { ANALYSIS_GATEWAY_MODEL_OPTIONS } from "@/lib/analysis-gateway-models";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -52,6 +62,7 @@ type VersionRow = {
 type Props = {
   kind: AnalysisKindSlug;
   initialMarkdown: string;
+  initialModel: string;
   versions: VersionRow[];
 };
 
@@ -175,12 +186,16 @@ function computeSideBySideDiff(
 export function SuperAdminPromptsEditor({
   kind,
   initialMarkdown,
+  initialModel,
   versions,
 }: Props) {
   const router = useRouter();
   const [markdown, setMarkdown] = useState(initialMarkdown);
+  const [model, setModel] = useState(initialModel);
   const [pending, startTransition] = useTransition();
+  const [modelPending, startModelTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [modelError, setModelError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [diffVersion, setDiffVersion] = useState<VersionRow | null>(null);
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
@@ -195,8 +210,22 @@ export function SuperAdminPromptsEditor({
   const charCount = markdown.length;
   const lineCount = markdown.split("\n").length;
   const isDirty = markdown !== initialMarkdown;
+  const isModelDirty = model !== initialModel;
   /** First publication when no history row exists yet */
   const canPublish = isDirty || sorted.length === 0;
+
+  const modelGroups = useMemo(() => {
+    const byProvider = new Map<
+      string,
+      Array<(typeof ANALYSIS_GATEWAY_MODEL_OPTIONS)[number]>
+    >();
+    for (const option of ANALYSIS_GATEWAY_MODEL_OPTIONS) {
+      const group = byProvider.get(option.provider) ?? [];
+      group.push(option);
+      byProvider.set(option.provider, group);
+    }
+    return [...byProvider.entries()];
+  }, []);
 
   const diffRows = useMemo(
     () =>
@@ -230,6 +259,22 @@ export function SuperAdminPromptsEditor({
     },
     [kind, router],
   );
+
+  const saveModel = useCallback(() => {
+    setModelError(null);
+    startModelTransition(async () => {
+      const res = await updatePromptModelAction({ kind, model });
+      if (!res.ok) {
+        setModelError(
+          res.error === "VALIDATION"
+            ? "Modèle invalide."
+            : "Impossible d'enregistrer le modèle.",
+        );
+        return;
+      }
+      router.refresh();
+    });
+  }, [kind, model, router]);
 
   return (
     <div className="space-y-6">
@@ -271,6 +316,59 @@ export function SuperAdminPromptsEditor({
             </div>
           </div>
         </CardHeader>
+        <CardContent className="space-y-4 border-b pb-6 pt-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0 flex-1 space-y-2">
+              <Label htmlFor={`model-${kind}`} className="text-sm font-medium">
+                Modèle Vercel AI Gateway
+              </Label>
+              <Select
+                value={model}
+                onValueChange={(v: string | null) => {
+                  if (v) setModel(v);
+                }}
+              >
+                <SelectTrigger id={`model-${kind}`} className="w-full sm:max-w-md">
+                  <SelectValue placeholder="Choisir un modèle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelGroups.map(([provider, options]) => (
+                    <SelectGroup key={provider}>
+                      <SelectLabel>{provider}</SelectLabel>
+                      {options.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
+                          <span className="text-muted-foreground ml-2 text-xs">
+                            {option.id}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                Appliqué immédiatement aux prochaines analyses utilisant ce
+                prompt (indépendant de la publication markdown).
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={modelPending || !isModelDirty}
+              onClick={saveModel}
+            >
+              {modelPending ? "Enregistrement…" : "Enregistrer le modèle"}
+            </Button>
+          </div>
+          {modelError ? (
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertTitle>Modèle</AlertTitle>
+              <AlertDescription>{modelError}</AlertDescription>
+            </Alert>
+          ) : null}
+        </CardContent>
         <CardContent className="space-y-4 pt-6">
           <div
             className={cn(
