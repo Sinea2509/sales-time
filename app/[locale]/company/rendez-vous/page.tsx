@@ -3,7 +3,7 @@ import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { formatUserDisplayName } from "@/lib/user-display-name";
+import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
 
 export const dynamic = "force-dynamic";
 
@@ -24,22 +24,22 @@ export default async function RendezVousPage() {
     redirect("/company");
   }
 
-  const meetings = await deps.meetings.listRecentMeetingsForDashboard({
-    organizationId: actor.activeOrganizationId,
-    limit: 200,
-    sellerUserId: sellerScope,
-  });
+  const [meetings, settings] = await Promise.all([
+    deps.meetings.listRecentMeetingsForDashboard({
+      organizationId: actor.activeOrganizationId,
+      limit: 200,
+      sellerUserId: sellerScope,
+    }),
+    deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
+  ]);
+
+  const tamMinutesPerRdv = tamMinutesSavedPerMeetingFromSettings(settings);
 
   const rows = meetings.map((m) => ({
     id: m.id,
     prospectName: m.prospectName,
+    meetingAt: m.meetingAt.toISOString(),
     outcome: m.outcome,
-    durationMin: m.durationMin,
-    sellerName: formatUserDisplayName({
-      firstName: m.sellerFirstName,
-      lastName: m.sellerLastName,
-      email: m.sellerEmail,
-    }),
     salesScore: m.salesScore,
     potentialAmount: m.potentialAmount,
   }));
@@ -48,7 +48,10 @@ export default async function RendezVousPage() {
     <div className="space-y-8">
       <PageHeaderSimple title={isAdmin ? "Rendez-vous" : "Mes rendez-vous"} />
 
-      <RendezVousMeetingsShell meetings={rows} showSellerColumn={isAdmin} />
+      <RendezVousMeetingsShell
+        meetings={rows}
+        tamMinutesPerRdv={tamMinutesPerRdv}
+      />
     </div>
   );
 }

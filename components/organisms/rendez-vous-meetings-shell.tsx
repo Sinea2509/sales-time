@@ -15,11 +15,11 @@ import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import {
   meetingEtapeLabel,
   meetingEtapePillClass,
 } from "@/lib/meeting-etape-pill";
-import { meetingOutcomeLabel } from "@/lib/meeting-outcome-labels";
 import { prospectInitials } from "@/lib/prospect-initials";
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import { cn } from "@/lib/utils";
@@ -27,12 +27,17 @@ import { cn } from "@/lib/utils";
 export type RendezVousMeetingRow = {
   id: string;
   prospectName: string;
+  meetingAt: string;
   outcome: MeetingOutcome;
-  durationMin: number | null;
-  sellerName: string | null;
   salesScore: number | null;
   potentialAmount: number | null;
 };
+
+const dateShort = new Intl.DateTimeFormat("fr-FR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
 
 const euroFormat = new Intl.NumberFormat("fr-FR", {
   style: "currency",
@@ -52,14 +57,14 @@ function escapeCsvCell(value: string): string {
   return value;
 }
 
-function downloadMeetingsCsv(meetings: RendezVousMeetingRow[]) {
+function downloadMeetingsCsv(meetings: RendezVousMeetingRow[], tamMinutesPerRdv: number) {
   const headers = [
     "Prospect",
     "Potentiel (€)",
+    "TAM",
+    "Date du RDV",
     "Étape",
     "SalesScore",
-    "Commercial",
-    "Durée (min)",
   ];
   const lines = [
     headers.join(","),
@@ -67,10 +72,10 @@ function downloadMeetingsCsv(meetings: RendezVousMeetingRow[]) {
       [
         escapeCsvCell(m.prospectName),
         m.potentialAmount != null ? String(m.potentialAmount) : "",
-        escapeCsvCell(meetingOutcomeLabel(m.outcome)),
+        escapeCsvCell(formatDurationHoursMinutes(tamMinutesPerRdv)),
+        escapeCsvCell(dateShort.format(new Date(m.meetingAt))),
+        escapeCsvCell(meetingEtapeLabel(m.outcome)),
         m.salesScore != null ? String(m.salesScore) : "",
-        escapeCsvCell(m.sellerName ?? ""),
-        m.durationMin != null ? String(m.durationMin) : "",
       ].join(","),
     ),
   ];
@@ -103,11 +108,11 @@ function paginationWindow(currentPage: number, totalPages: number): number[] {
 
 export function RendezVousMeetingsShell({
   meetings,
-  showSellerColumn = false,
+  tamMinutesPerRdv,
 }: {
   meetings: RendezVousMeetingRow[];
-  /** When true (org admin), show which seller owns the meeting. */
-  showSellerColumn?: boolean;
+  /** Gain estimé par RDV (minutes) — aligné sur le tableau de bord. */
+  tamMinutesPerRdv: number;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -209,7 +214,7 @@ export function RendezVousMeetingsShell({
             variant="outline"
             size="sm"
             className="h-10 rounded-md border-brand/25 bg-brand/10 text-brand-hover hover:bg-brand/15 dark:text-brand-muted"
-            onClick={() => downloadMeetingsCsv(filtered)}
+            onClick={() => downloadMeetingsCsv(filtered, tamMinutesPerRdv)}
           >
             <Download className="size-4" />
             Exporter
@@ -227,7 +232,7 @@ export function RendezVousMeetingsShell({
 
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left text-sm">
+          <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50/80 dark:border-neutral-800 dark:bg-neutral-900/50">
                 <th className="w-12 px-4 py-3.5">
@@ -243,14 +248,13 @@ export function RendezVousMeetingsShell({
                   />
                 </th>
                 <DataTableHead className="px-4 py-3.5">Prospect</DataTableHead>
-                {showSellerColumn ? (
-                  <DataTableHead className="hidden px-4 py-3.5 md:table-cell">
-                    Commercial
-                  </DataTableHead>
-                ) : null}
                 <DataTableHead className="hidden px-4 py-3.5 sm:table-cell">
                   Potentiel
                 </DataTableHead>
+                <DataTableHead className="hidden px-4 py-3.5 sm:table-cell">
+                  TAM
+                </DataTableHead>
+                <DataTableHead className="px-4 py-3.5">Date du RDV</DataTableHead>
                 <DataTableHead className="px-4 py-3.5">Étape</DataTableHead>
                 <DataTableHead className="hidden px-4 py-3.5 md:table-cell">
                   SalesScore
@@ -263,7 +267,7 @@ export function RendezVousMeetingsShell({
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
               {filtered.length === 0 ? (
                 <TableEmptyRow
-                  colSpan={showSellerColumn ? 7 : 6}
+                  colSpan={8}
                   message={
                     meetings.length === 0
                       ? "Aucun rendez-vous enregistré. Créez votre premier RDV pour lancer une analyse SONCAS / DISC / KISS."
@@ -309,13 +313,14 @@ export function RendezVousMeetingsShell({
                           </div>
                         </div>
                       </td>
-                      {showSellerColumn ? (
-                        <td className="text-muted-foreground hidden max-w-[140px] truncate px-4 py-3.5 align-middle text-xs md:table-cell">
-                          {m.sellerName ?? "—"}
-                        </td>
-                      ) : null}
                       <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell">
                         {formatPotentialEuro(m.potentialAmount)}
+                      </td>
+                      <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell">
+                        {formatDurationHoursMinutes(tamMinutesPerRdv)}
+                      </td>
+                      <td className="text-muted-foreground whitespace-nowrap px-4 py-3.5 align-middle tabular-nums">
+                        {dateShort.format(new Date(m.meetingAt))}
                       </td>
                       <td className="px-4 py-3.5 align-middle">
                         <span
