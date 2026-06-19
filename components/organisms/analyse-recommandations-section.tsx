@@ -15,6 +15,7 @@ import {
   SalesProfileRadar,
   type SalesProfileScores,
 } from "@/components/organisms/sales-profile-radar";
+import { coachingProgressBulletsForDisplay } from "@/src/core/domain/coaching-progress-eligibility";
 
 export function AnalyseRecommandationsSection({
   salesProfile,
@@ -44,6 +45,10 @@ export function AnalyseRecommandationsSection({
   const improvementTitle = isOrgAdmin
     ? "Axes d'amélioration de l'équipe"
     : "Mes axes d'amélioration";
+  const visibleProgressBullets = coachingProgressBulletsForDisplay(
+    rdvCount,
+    progressBullets,
+  );
 
   return (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
@@ -79,7 +84,7 @@ export function AnalyseRecommandationsSection({
             iconClassName="text-sky-600 dark:text-sky-400"
           />
           <CardContent className="flex-1">
-            <DotBulletList items={progressBullets} />
+            <DotBulletList items={visibleProgressBullets} />
           </CardContent>
         </Card>
 

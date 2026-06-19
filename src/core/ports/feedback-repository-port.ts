@@ -40,6 +40,8 @@ export interface FeedbackRepositoryPort {
     offset?: number;
   }): Promise<{ rows: FeedbackRow[]; total: number }>;
 
+  countGroupedByStatus(): Promise<Record<FeedbackStatus, number> & { all: number }>;
+
   findById(id: string): Promise<FeedbackRow | null>;
 
   updateStatus(input: {

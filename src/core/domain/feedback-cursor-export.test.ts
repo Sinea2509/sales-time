@@ -33,14 +33,23 @@ function sampleFeedback(over: Partial<FeedbackRow> = {}): FeedbackRow {
 
 describe("buildFeedbackCursorMarkdown", () => {
   it("formats feedback as markdown for Cursor export", () => {
-    const md = buildFeedbackCursorMarkdown(sampleFeedback());
+    const md = buildFeedbackCursorMarkdown(
+      sampleFeedback({
+        extra: {
+          organizationMembershipRole: "ADMIN",
+          workspaceRoleMode: "admin",
+          systemRoles: [],
+          organizationId: "org_1",
+        },
+      }),
+    );
 
     expect(md).toContain("# 🐛 BUG report — SalesTime (#fb_abcde");
-    expect(md).toContain("user@example.com (org: Acme)");
+    expect(md).toContain("user@example.com (org: Acme) (rôle: Manager)");
     expect(md).toContain("Le bouton ne répond pas sur mobile");
     expect(md).toContain("- TypeError: x is null");
     expect(md).toContain("https://blob.example/shot.png");
-    expect(md).toContain('"route": "/company"');
+    expect(md).toContain('"organizationId": "org_1"');
   });
 
   it("shows placeholder when no console errors", () => {

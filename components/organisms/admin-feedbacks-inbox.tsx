@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { Copy } from "lucide-react";
 import { updateFeedbackStatusAction } from "@/app/[locale]/admin/feedbacks/actions";
 import { buildFeedbackCursorMarkdown } from "@/src/core/domain/feedback-cursor-export";
+import { formatFeedbackUserRoleLabel } from "@/src/core/domain/feedback-submit-context";
 import { blobProxyUrl } from "@/lib/blob-paths";
 import type { FeedbackRow } from "@/src/core/ports/feedback-repository-port";
 import { Button } from "@/components/ui/button";
@@ -14,11 +15,14 @@ export function AdminFeedbacksInbox({ rows }: { rows: FeedbackRow[] }) {
 
   return (
     <div className="space-y-4">
-      {rows.map((row) => (
-        <article
-          key={row.id}
-          className="rounded-xl border bg-card p-4 shadow-sm"
-        >
+      {rows.map((row) => {
+        const roleLabel = formatFeedbackUserRoleLabel(row.extra);
+
+        return (
+          <article
+            key={row.id}
+            className="rounded-xl border bg-card p-4 shadow-sm"
+          >
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <p className="font-semibold">
@@ -27,6 +31,7 @@ export function AdminFeedbacksInbox({ rows }: { rows: FeedbackRow[] }) {
               <p className="text-muted-foreground text-xs">
                 {row.createdAt.toLocaleString("fr-FR")}
                 {row.companyName ? ` · ${row.companyName}` : ""}
+                {roleLabel ? ` · ${roleLabel}` : ""}
               </p>
             </div>
             <select
@@ -71,8 +76,9 @@ export function AdminFeedbacksInbox({ rows }: { rows: FeedbackRow[] }) {
               Copier pour Cursor
             </Button>
           </div>
-        </article>
-      ))}
+          </article>
+        );
+      })}
     </div>
   );
 }

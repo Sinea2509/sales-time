@@ -53,6 +53,32 @@ export class PrismaFeedbackRepository implements FeedbackRepositoryPort {
     return { rows: rows as FeedbackRow[], total };
   }
 
+  async countGroupedByStatus(): Promise<
+    Record<FeedbackRow["status"], number> & { all: number }
+  > {
+    const [all, groups] = await Promise.all([
+      this.db.feedback.count(),
+      this.db.feedback.groupBy({
+        by: ["status"],
+        _count: { _all: true },
+      }),
+    ]);
+
+    const counts = {
+      all,
+      NEW: 0,
+      IN_PROGRESS: 0,
+      RESOLVED: 0,
+      WONT_FIX: 0,
+    };
+
+    for (const group of groups) {
+      counts[group.status] = group._count._all;
+    }
+
+    return counts;
+  }
+
   async findById(id: string): Promise<FeedbackRow | null> {
     const row = await this.db.feedback.findUnique({ where: { id } });
     return row as FeedbackRow | null;

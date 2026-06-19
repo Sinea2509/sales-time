@@ -16,7 +16,6 @@ import {
 import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
-import { listPersonOutreachPriorities } from "@/src/core/application/get-person-outreach-priorities";
 
 export const dynamic = "force-dynamic";
 
@@ -120,16 +119,11 @@ export default async function DashboardHomePage({
   }
 
   const sellerId = actor.internalUserId!;
-  const [home, personOutreach, settings] = await Promise.all([
+  const [home, settings] = await Promise.all([
     getOrgDashboardHome(deps, {
       organizationId: actor.activeOrganizationId,
       statsWindowDays,
       sellerUserId: sellerId,
-    }),
-    listPersonOutreachPriorities(deps, {
-      organizationId: actor.activeOrganizationId,
-      sellerUserId: sellerId,
-      limit: 12,
     }),
     deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
   ]);
@@ -141,7 +135,6 @@ export default async function DashboardHomePage({
       {!home ? null : (
         <DashboardHomeShell
           home={home}
-          personOutreach={personOutreach}
           meetingTypeOptions={meetingTypeOptions}
           pipelineStageOptions={pipelineStageOptions}
         />

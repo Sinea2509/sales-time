@@ -7,6 +7,7 @@ import { blobUrlBelongsToOrg, buildOrgBlobPath } from "@/lib/blob-paths";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createFeedback } from "@/src/core/application/create-feedback";
+import { buildFeedbackSubmitContextExtra } from "@/src/core/domain/feedback-submit-context";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 
 const feedbackSchema = z.object({
@@ -71,7 +72,7 @@ export async function submitFeedbackAction(input: z.infer<typeof feedbackSchema>
     locale: parsed.data.locale ?? null,
     appVersion: process.env.NEXT_PUBLIC_COMMIT_SHA ?? null,
     consoleErrors: parsed.data.consoleErrors ?? [],
-    extra: {},
+    extra: buildFeedbackSubmitContextExtra(ctx) ?? {},
   });
 
   return { ok: true as const };

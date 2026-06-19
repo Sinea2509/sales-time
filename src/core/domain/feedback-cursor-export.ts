@@ -1,10 +1,20 @@
 import type { FeedbackRow } from "@/src/core/ports/feedback-repository-port";
+import { formatFeedbackUserRoleLabel } from "@/src/core/domain/feedback-submit-context";
 
 export function buildFeedbackCursorMarkdown(feedback: FeedbackRow): string {
+  const roleLabel = formatFeedbackUserRoleLabel(feedback.extra);
+  const userLine = [
+    feedback.userEmail ?? "—",
+    feedback.companyName ? `(org: ${feedback.companyName})` : null,
+    roleLabel ? `(rôle: ${roleLabel})` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const lines = [
     `# 🐛 ${feedback.type} report — SalesTime (#${feedback.id.slice(0, 8)})`,
     `**Type:** ${feedback.type.toLowerCase()}`,
-    `**User:** ${feedback.userEmail ?? "—"}${feedback.companyName ? ` (org: ${feedback.companyName})` : ""}`,
+    `**User:** ${userLine}`,
     `**Date:** ${feedback.createdAt.toISOString()}${feedback.appVersion ? `   **App version:** ${feedback.appVersion}` : ""}`,
     "",
     "## Description",
