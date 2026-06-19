@@ -13,8 +13,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { nativeSelectClassName } from "@/components/ui/native-select-class";
 import {
   snapshotFeedbackConsoleErrors,
   snapshotFeedbackConsoleWarnings,
@@ -156,7 +162,10 @@ export function FeedbackWidget() {
           if (!open) resetWidget();
         }}
       >
-        <DialogContent className="max-h-[calc(100vh-2rem)] max-w-md overflow-y-auto" data-feedback-dialog>
+        <DialogContent
+          className="max-w-md overflow-visible sm:max-w-md"
+          data-feedback-dialog
+        >
           {phase === "choose" ? (
             <>
               <DialogHeader>
@@ -169,14 +178,14 @@ export function FeedbackWidget() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-auto flex-col items-start gap-2 px-4 py-4 text-left"
+                  className="h-auto min-w-0 flex-col items-start gap-2 px-4 py-4 text-left whitespace-normal"
                   data-feedback-id="feedback-choose-element"
                   onClick={startPicker}
                 >
                   <MousePointerClick className="size-5 shrink-0 text-blue-600" />
-                  <span className="flex flex-col gap-0.5">
+                  <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="font-medium">Sélectionner un élément</span>
-                    <span className="text-muted-foreground text-xs font-normal">
+                    <span className="text-muted-foreground text-xs font-normal break-words">
                       Survolez la page avec le curseur et cliquez sur la zone concernée.
                     </span>
                   </span>
@@ -184,14 +193,14 @@ export function FeedbackWidget() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-auto flex-col items-start gap-2 px-4 py-4 text-left"
+                  className="h-auto min-w-0 flex-col items-start gap-2 px-4 py-4 text-left whitespace-normal"
                   data-feedback-id="feedback-choose-form"
                   onClick={() => openForm(null)}
                 >
                   <PenLine className="size-5 shrink-0" />
-                  <span className="flex flex-col gap-0.5">
+                  <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="font-medium">Remplir le formulaire</span>
-                    <span className="text-muted-foreground text-xs font-normal">
+                    <span className="text-muted-foreground text-xs font-normal break-words">
                       Décrivez votre retour sans cibler un élément précis.
                     </span>
                   </span>
@@ -208,7 +217,7 @@ export function FeedbackWidget() {
                   Merci — votre retour a été enregistré.
                 </p>
               ) : (
-                <div className="min-w-0 space-y-4">
+                <div className="max-h-[calc(100vh-8rem)] min-w-0 space-y-4 overflow-x-hidden overflow-y-auto">
               {targetElement ? (
                 <div className="bg-muted/40 min-w-0 overflow-hidden rounded-lg border p-3 text-xs">
                   <p className="font-medium">Élément ciblé</p>
@@ -231,39 +240,62 @@ export function FeedbackWidget() {
                 </p>
               )}
 
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <Label htmlFor="feedback-type">Type</Label>
-                <select
-                  id="feedback-type"
-                  className={nativeSelectClassName}
+                <Select
                   value={type}
-                  onChange={(e) => {
-                    const nextType = e.target.value as FeedbackType;
-                    setType(nextType);
-                    if (nextType === "BUG") setPriority("HIGH");
+                  onValueChange={(value) => {
+                    if (
+                      value !== "BUG" &&
+                      value !== "IDEA" &&
+                      value !== "QUESTION" &&
+                      value !== "OTHER"
+                    ) {
+                      return;
+                    }
+                    setType(value);
+                    if (value === "BUG") setPriority("HIGH");
                     else if (priority === "HIGH") setPriority("MEDIUM");
                   }}
                 >
-                  <option value="BUG">Bug</option>
-                  <option value="IDEA">Idée</option>
-                  <option value="QUESTION">Question</option>
-                  <option value="OTHER">Autre</option>
-                </select>
+                  <SelectTrigger id="feedback-type" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent sideOffset={4}>
+                    <SelectItem value="BUG">Bug</SelectItem>
+                    <SelectItem value="IDEA">Idée</SelectItem>
+                    <SelectItem value="QUESTION">Question</SelectItem>
+                    <SelectItem value="OTHER">Autre</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <Label htmlFor="feedback-priority">Priorité</Label>
-                <select
-                  id="feedback-priority"
-                  className={nativeSelectClassName}
+                <Select
                   value={priority}
-                  onChange={(e) => setPriority(e.target.value as FeedbackPriority)}
+                  onValueChange={(value) => {
+                    if (
+                      value !== "LOW" &&
+                      value !== "MEDIUM" &&
+                      value !== "HIGH" &&
+                      value !== "CRITICAL"
+                    ) {
+                      return;
+                    }
+                    setPriority(value);
+                  }}
                 >
-                  <option value="LOW">Basse</option>
-                  <option value="MEDIUM">Moyenne</option>
-                  <option value="HIGH">Haute</option>
-                  <option value="CRITICAL">Critique</option>
-                </select>
+                  <SelectTrigger id="feedback-priority" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent sideOffset={4}>
+                    <SelectItem value="LOW">Basse</SelectItem>
+                    <SelectItem value="MEDIUM">Moyenne</SelectItem>
+                    <SelectItem value="HIGH">Haute</SelectItem>
+                    <SelectItem value="CRITICAL">Critique</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

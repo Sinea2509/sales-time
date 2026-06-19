@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   captureTargetElementFromDom,
   pickElementAtPoint,
+  pickVisualElementAtPoint,
 } from "@/lib/feedback-target-capture";
 import type { FeedbackTargetElement } from "@/src/core/domain/feedback-target-element";
 import { Button } from "@/components/ui/button";
@@ -13,20 +15,32 @@ type Props = {
   onCancel: () => void;
 };
 
+function readElementLabel(element: Element): string {
+  const tag = element.tagName.toLowerCase();
+  const feedbackId = element.getAttribute("data-feedback-id");
+  return feedbackId ? `${tag} · ${feedbackId}` : tag;
+}
+
 export function FeedbackElementPickerOverlay({ onSelect, onCancel }: Props) {
   const [hovered, setHovered] = useState<Element | null>(null);
   const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
 
-  const updateHover = useCallback((clientX: number, clientY: number) => {
-    const target = pickElementAtPoint(clientX, clientY);
-    if (!target) {
-      setHovered(null);
+  const syncHoverRect = useCallback((element: Element | null) => {
+    if (!element) {
       setHoverRect(null);
       return;
     }
-    setHovered(target);
-    setHoverRect(target.getBoundingClientRect());
+    setHoverRect(element.getBoundingClientRect());
   }, []);
+
+  const updateHover = useCallback(
+    (clientX: number, clientY: number) => {
+      const target = pickVisualElementAtPoint(clientX, clientY);
+      setHovered(target);
+      syncHoverRect(target);
+    },
+    [syncHoverRect],
+  );
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -35,16 +49,23 @@ export function FeedbackElementPickerOverlay({ onSelect, onCancel }: Props) {
     function onMouseMove(event: MouseEvent) {
       updateHover(event.clientX, event.clientY);
     }
+    function onScrollOrResize() {
+      if (hovered) syncHoverRect(hovered);
+    }
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("mousemove", onMouseMove, true);
+    window.addEventListener("scroll", onScrollOrResize, true);
+    window.addEventListener("resize", onScrollOrResize);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("mousemove", onMouseMove, true);
+      window.removeEventListener("scroll", onScrollOrResize, true);
+      window.removeEventListener("resize", onScrollOrResize);
     };
-  }, [onCancel, updateHover]);
+  }, [hovered, onCancel, syncHoverRect, updateHover]);
 
-  return (
+  return createPortal(
     <div
       data-feedback-overlay
       className="fixed inset-0 z-[100] cursor-crosshair"
@@ -56,12 +77,12 @@ export function FeedbackElementPickerOverlay({ onSelect, onCancel }: Props) {
         onSelect(captureTargetElementFromDom(target));
       }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-black/10" />
+      <div className="pointer-events-none fixed inset-0 bg-black/10" />
 
       {hoverRect ? (
         <>
           <div
-            className="pointer-events-none absolute border-2 border-blue-500 bg-blue-500/20"
+            className="pointer-events-none fixed bg-blue-500/15 ring-2 ring-blue-500"
             style={{
               top: hoverRect.top,
               left: hoverRect.left,
@@ -70,16 +91,13 @@ export function FeedbackElementPickerOverlay({ onSelect, onCancel }: Props) {
             }}
           />
           <div
-            className="pointer-events-none absolute max-w-[min(20rem,calc(100vw-1rem))] truncate rounded bg-blue-600 px-2 py-0.5 text-xs text-white shadow"
+            className="pointer-events-none fixed max-w-[min(20rem,calc(100vw-1rem))] truncate rounded bg-blue-600 px-2 py-0.5 text-xs text-white shadow"
             style={{
               top: Math.max(8, hoverRect.top - 28),
               left: `clamp(8px, ${hoverRect.left}px, calc(100vw - 100% - 8px))`,
             }}
           >
-            {hovered?.tagName.toLowerCase()}
-            {hovered?.getAttribute("data-feedback-id")
-              ? ` · ${hovered.getAttribute("data-feedback-id")}`
-              : ""}
+            {hovered ? readElementLabel(hovered) : null}
           </div>
         </>
       ) : null}
@@ -95,6 +113,7 @@ export function FeedbackElementPickerOverlay({ onSelect, onCancel }: Props) {
           Retour
         </Button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

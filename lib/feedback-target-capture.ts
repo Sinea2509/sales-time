@@ -35,6 +35,23 @@ export function resolveMeaningfulPickerTarget(element: Element | null): Element 
   return current;
 }
 
+export function pickVisualElementAtPoint(clientX: number, clientY: number): Element | null {
+  if (typeof document === "undefined") return null;
+
+  const stack =
+    typeof document.elementsFromPoint === "function"
+      ? document.elementsFromPoint(clientX, clientY)
+      : ([document.elementFromPoint(clientX, clientY)].filter(Boolean) as Element[]);
+
+  for (const candidate of stack) {
+    if (!isFeedbackPickerExcludedElement(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
 export function pickElementAtPoint(clientX: number, clientY: number): Element | null {
   if (typeof document === "undefined") return null;
 
