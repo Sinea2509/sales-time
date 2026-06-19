@@ -225,6 +225,24 @@ export interface MeetingRepositoryPort {
     followUpEmailDraft: string | null;
   }): Promise<boolean>;
 
+  updateMeeting(input: {
+    id: string;
+    organizationId: string;
+    personId?: string | null;
+    prospectName: string;
+    meetingAt: Date;
+    durationMin: number | null;
+    meetingType: string | null;
+    pipelineStage: string | null;
+    potentialAmount: number | null;
+    transcript: string;
+    notes: string | null;
+    outcome: MeetingOutcome;
+    feeling?: number | null;
+    sourceType?: MeetingSourceType;
+    sourceBlobUrl?: string | null;
+  }): Promise<boolean>;
+
   updateMeetingStatus(input: {
     id: string;
     organizationId: string;

@@ -9,9 +9,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 type Hit = { id: string; displayName: string; company: string | null };
 
-export function ContactPicker() {
-  const [query, setQuery] = useState("");
-  const [personId, setPersonId] = useState<string | null>(null);
+type ContactPickerProps = {
+  initialPersonId?: string | null;
+  initialProspectName?: string;
+};
+
+export function ContactPicker({
+  initialPersonId = null,
+  initialProspectName = "",
+}: ContactPickerProps) {
+  const [query, setQuery] = useState(initialProspectName);
+  const [personId, setPersonId] = useState<string | null>(initialPersonId);
   const [hits, setHits] = useState<Hit[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);

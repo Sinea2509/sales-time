@@ -557,6 +557,101 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     return res.count > 0;
   }
 
+  async updateMeeting(input: {
+    id: string;
+    organizationId: string;
+    personId?: string | null;
+    prospectName: string;
+    meetingAt: Date;
+    durationMin: number | null;
+    meetingType: string | null;
+    pipelineStage: string | null;
+    potentialAmount: number | null;
+    transcript: string;
+    notes: string | null;
+    outcome: MeetingOutcome;
+    feeling?: number | null;
+    sourceType?: MeetingSourceType;
+    sourceBlobUrl?: string | null;
+  }): Promise<boolean> {
+    let personId: string;
+    let prospectDisplay: string;
+
+    if (input.personId) {
+      const linked = await this.db.person.findFirst({
+        where: {
+          id: input.personId,
+          organizationId: input.organizationId,
+        },
+      });
+      if (!linked) {
+        throw new Error("MEETING_UPDATE_INVALID_PERSON");
+      }
+      personId = linked.id;
+      prospectDisplay = linked.displayName;
+    } else {
+      const displayName = input.prospectName.trim();
+      const normalizedKey = normalizePersonDisplayKey(displayName);
+      const person = await this.db.person.upsert({
+        where: {
+          organizationId_normalizedKey: {
+            organizationId: input.organizationId,
+            normalizedKey,
+          },
+        },
+        create: {
+          organizationId: input.organizationId,
+          displayName,
+          normalizedKey,
+        },
+        update: { displayName },
+      });
+      personId = person.id;
+      prospectDisplay = displayName;
+    }
+
+    const data: {
+      personId: string;
+      prospectName: string;
+      meetingAt: Date;
+      durationMin: number | null;
+      meetingType: string | null;
+      pipelineStage: string | null;
+      potentialAmount: number | null;
+      transcript: string;
+      notes: string | null;
+      outcome: MeetingOutcome;
+      feeling: number | null;
+      sourceType?: MeetingSourceType;
+      sourceBlobUrl?: string | null;
+    } = {
+      personId,
+      prospectName: prospectDisplay,
+      meetingAt: input.meetingAt,
+      durationMin: input.durationMin,
+      meetingType: input.meetingType,
+      pipelineStage: input.pipelineStage,
+      potentialAmount: input.potentialAmount,
+      transcript: input.transcript,
+      notes: input.notes,
+      outcome: input.outcome,
+      feeling: input.feeling ?? null,
+    };
+
+    if (input.sourceType != null) {
+      data.sourceType = input.sourceType;
+    }
+    if (input.sourceBlobUrl !== undefined) {
+      data.sourceBlobUrl = input.sourceBlobUrl;
+    }
+
+    const res = await this.db.meeting.updateMany({
+      where: { id: input.id, organizationId: input.organizationId },
+      data,
+    });
+    return res.count > 0;
+  }
+
   async updateMeetingStatus(input: {
     id: string;
     organizationId: string;
