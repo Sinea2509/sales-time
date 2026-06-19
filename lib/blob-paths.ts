@@ -1,6 +1,7 @@
 const ORG_ROOT = "orgs";
 
-const LEGACY_ORG_PREFIXES = [
+/** Current (`orgs/`) plus legacy prefixes still readable for existing blobs. */
+const ORG_PATH_PREFIXES = [
   (orgId: string) => `${ORG_ROOT}/${orgId}/`,
   (orgId: string) => `meetings/transcripts/${orgId}/`,
   (orgId: string) => `org-logos/${orgId}/`,
@@ -46,11 +47,6 @@ export function blobProxyUrl(blobUrl: string): string {
   return `/api/org-blob?url=${encodeURIComponent(blobUrl)}`;
 }
 
-/** @deprecated Use blobProxyUrl */
-export function orgBlobProxyUrl(blobUrl: string): string {
-  return blobProxyUrl(blobUrl);
-}
-
 export function sanitizeBlobFilename(name: string): string {
   const base = name.split(/[/\\]/).pop() ?? "file";
   const cleaned = base.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
@@ -92,7 +88,7 @@ export function blobPathBelongsToOrg(
   pathname: string,
   organizationId: string,
 ): boolean {
-  return LEGACY_ORG_PREFIXES.some((prefix) =>
+  return ORG_PATH_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix(organizationId)),
   );
 }

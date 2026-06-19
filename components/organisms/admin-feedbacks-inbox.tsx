@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { Copy } from "lucide-react";
 import { updateFeedbackStatusAction } from "@/app/[locale]/admin/feedbacks/actions";
 import { buildFeedbackCursorMarkdown } from "@/src/core/domain/feedback-cursor-export";
-import { orgBlobProxyUrl } from "@/lib/blob-paths";
+import { blobProxyUrl } from "@/lib/blob-paths";
 import type { FeedbackRow } from "@/src/core/ports/feedback-repository-port";
 import { Button } from "@/components/ui/button";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
@@ -51,7 +51,7 @@ export function AdminFeedbacksInbox({ rows }: { rows: FeedbackRow[] }) {
           {row.screenshotUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={orgBlobProxyUrl(row.screenshotUrl)}
+              src={blobProxyUrl(row.screenshotUrl)}
               alt="Screenshot"
               className="mt-3 max-h-48 rounded border object-contain"
             />

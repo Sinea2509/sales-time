@@ -4,7 +4,13 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    // Transcript uploads (.txt/.vtt/.srt/.md) exceed the 1 MB Server Action
+    // default; 4 MB is the practical ceiling (Vercel caps request bodies ~4.5 MB).
+    serverActions: {
+      bodySizeLimit: "4mb",
+    },
+  },
 };
 
 export default withNextIntl(nextConfig);

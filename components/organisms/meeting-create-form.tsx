@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { createMeetingAction } from "@/app/[locale]/company/rendez-vous/actions";
 import { ContactPicker } from "@/components/organisms/contact-picker";
+import { FileDropzone } from "@/components/molecules/file-dropzone";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
+
+const TRANSCRIPT_ACCEPT = ".txt,.vtt,.srt,.md,text/plain";
+const TRANSCRIPT_MAX_BYTES = 4 * 1024 * 1024;
 
 const outcomes = [
   { value: "WON", label: "Gagné" },
@@ -48,7 +52,7 @@ export function MeetingCreateForm({
   const [error, setError] = useState<string | null>(null);
   const [feeling, setFeeling] = useState(3);
   const [useUpload, setUseUpload] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
   const isDialog = variant === "dialog";
 
   return (
@@ -57,32 +61,38 @@ export function MeetingCreateForm({
       action={(fd) => {
         setError(null);
         fd.set("feeling", String(feeling));
-        if (useUpload && fileRef.current?.files?.[0]) {
-          fd.set("transcriptFile", fileRef.current.files[0]);
+        if (useUpload && file) {
+          fd.set("transcriptFile", file);
         }
         startTransition(async () => {
-          const res = await createMeetingAction(fd);
-          if (!res.ok) {
+          try {
+            const res = await createMeetingAction(fd);
+            if (!res.ok) {
+              setError(
+                res.error === "VALIDATION"
+                  ? "Vérifiez les champs obligatoires."
+                  : res.error === "INVALID_PERSON"
+                    ? "Contact introuvable. Rechargez la page ou choisissez un autre contact."
+                    : res.error === "QUOTA_EXHAUSTED"
+                      ? "Quota d'analyses épuisé — passez au plan pour continuer."
+                      : res.error === "UNSUPPORTED_FORMAT"
+                        ? "Format de fichier non pris en charge (.txt, .vtt, .srt, .md)."
+                        : res.error === "TRANSCRIPT_TOO_SHORT"
+                          ? "Le transcript est trop court (minimum 20 caractères)."
+                          : res.error,
+              );
+              return;
+            }
+            if (onSuccess) {
+              onSuccess(res.meetingId);
+            } else {
+              router.push(`/company/rendez-vous/${res.meetingId}`);
+              router.refresh();
+            }
+          } catch {
             setError(
-              res.error === "VALIDATION"
-                ? "Vérifiez les champs obligatoires."
-                : res.error === "INVALID_PERSON"
-                  ? "Contact introuvable. Rechargez la page ou choisissez un autre contact."
-                  : res.error === "QUOTA_EXHAUSTED"
-                    ? "Quota d'analyses épuisé — passez au plan pour continuer."
-                    : res.error === "UNSUPPORTED_FORMAT"
-                      ? "Format de fichier non pris en charge (.txt, .vtt, .srt, .md)."
-                      : res.error === "TRANSCRIPT_TOO_SHORT"
-                        ? "Le transcript est trop court (minimum 20 caractères)."
-                        : res.error,
+              "Échec de l'envoi. Si vous importez un fichier volumineux, réessayez avec un fichier plus léger.",
             );
-            return;
-          }
-          if (onSuccess) {
-            onSuccess(res.meetingId);
-          } else {
-            router.push(`/company/rendez-vous/${res.meetingId}`);
-            router.refresh();
           }
         });
       }}
@@ -202,17 +212,20 @@ export function MeetingCreateForm({
               checked={useUpload}
               onChange={() => setUseUpload(true)}
             />
-            Importer un fichier (.txt, .vtt, .srt)
+            Importer un fichier (.txt, .vtt, .srt, .md)
           </label>
         </div>
         {useUpload ? (
           <div className="space-y-2">
             <Label htmlFor="transcriptFile">Fichier transcript</Label>
-            <Input
-              ref={fileRef}
+            <FileDropzone
               id="transcriptFile"
-              type="file"
-              accept=".txt,.vtt,.srt,text/plain"
+              accept={TRANSCRIPT_ACCEPT}
+              maxBytes={TRANSCRIPT_MAX_BYTES}
+              file={file}
+              onFileChange={setFile}
+              disabled={pending}
+              hint="Formats acceptés : .txt, .vtt, .srt, .md — 4 Mo max."
             />
             <Textarea
               id="transcript"

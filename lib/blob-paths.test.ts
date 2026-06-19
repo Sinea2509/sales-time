@@ -1,12 +1,12 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   blobPathBelongsToOrg,
+  blobProxyUrl,
   blobUrlBelongsToOrg,
   blobUrlToPathname,
   buildOrgBlobPath,
   extractOrgIdFromBlobPath,
   isLegacyUnscopedBlobPath,
-  orgBlobProxyUrl,
   sanitizeBlobFilename,
 } from "@/lib/blob-paths";
 
@@ -41,7 +41,7 @@ describe("blob-paths", () => {
   });
 
   it("builds authenticated proxy URLs", () => {
-    expect(orgBlobProxyUrl("https://example.com/a.png")).toBe(
+    expect(blobProxyUrl("https://example.com/a.png")).toBe(
       "/api/org-blob?url=https%3A%2F%2Fexample.com%2Fa.png",
     );
   });

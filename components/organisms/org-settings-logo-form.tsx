@@ -9,7 +9,7 @@ import {
   uploadOrganizationLogo,
 } from "@/app/[locale]/company/settings/actions";
 import { cn } from "@/lib/utils";
-import { orgBlobProxyUrl } from "@/lib/blob-paths";
+import { blobProxyUrl } from "@/lib/blob-paths";
 
 export function OrgSettingsLogoForm({
   initialLogoUrl,
@@ -105,7 +105,7 @@ export function OrgSettingsLogoForm({
           {initialLogoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- proxied org blob asset
             <img
-              src={orgBlobProxyUrl(initialLogoUrl)}
+              src={blobProxyUrl(initialLogoUrl)}
               alt=""
               className="max-h-full max-w-full object-contain p-1.5"
             />
