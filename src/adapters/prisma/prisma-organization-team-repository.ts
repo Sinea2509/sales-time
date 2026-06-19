@@ -256,12 +256,12 @@ export class PrismaOrganizationTeamRepository implements OrganizationTeamReposit
     };
   }
 
-  async upsertMembershipFollowUpEmailPreferences(
+  async updateMembershipFollowUpEmailPreferences(
     userId: string,
     organizationId: string,
     data: {
       emailTone: string | null;
-      emailVouvoiement: boolean;
+      emailVouvoiement: boolean | null;
       emailSignature: string | null;
     },
   ): Promise<void> {

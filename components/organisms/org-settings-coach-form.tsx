@@ -35,8 +35,10 @@ function sanitizeKeyArguments(list: string[]): string[] {
 
 export function OrgSettingsCoachForm({
   initial,
+  canEdit = true,
 }: {
   initial: OrgCoachFormInitial;
+  canEdit?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -61,6 +63,7 @@ export function OrgSettingsCoachForm({
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!canEdit) return;
     setMessage(null);
     startTransition(async () => {
       const r = await updateOrganizationCoach({
@@ -106,6 +109,8 @@ export function OrgSettingsCoachForm({
           value={companyPitch}
           onChange={(e) => setCompanyPitch(e.target.value.slice(0, 500))}
           rows={4}
+          readOnly={!canEdit}
+          disabled={!canEdit}
         />
       </div>
 
@@ -117,27 +122,31 @@ export function OrgSettingsCoachForm({
               <span className="border-border flex-1 rounded-md border px-3 py-2">
                 {o}
               </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  setObjections((xs) => xs.filter((_, j) => j !== i))
-                }
-              >
-                Retirer
-              </Button>
+              {canEdit ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setObjections((xs) => xs.filter((_, j) => j !== i))
+                  }
+                >
+                  Retirer
+                </Button>
+              ) : null}
             </li>
           ))}
         </ul>
-        <Button
-          type="button"
-          variant="secondary"
-          className={coachListAddSecondaryButtonClass}
-          onClick={() => setObjectionPickerOpen(true)}
-        >
-          + Ajouter une objection
-        </Button>
+        {canEdit ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className={coachListAddSecondaryButtonClass}
+            onClick={() => setObjectionPickerOpen(true)}
+          >
+            + Ajouter une objection
+          </Button>
+        ) : null}
       </div>
 
       <div className="space-y-3">
@@ -150,27 +159,31 @@ export function OrgSettingsCoachForm({
               <span className="border-border flex-1 rounded-md border px-3 py-2">
                 {o}
               </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  setKeyArguments((xs) => xs.filter((_, j) => j !== i))
-                }
-              >
-                Retirer
-              </Button>
+              {canEdit ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setKeyArguments((xs) => xs.filter((_, j) => j !== i))
+                  }
+                >
+                  Retirer
+                </Button>
+              ) : null}
             </li>
           ))}
         </ul>
-        <Button
-          type="button"
-          variant="secondary"
-          className={coachListAddSecondaryButtonClass}
-          onClick={() => setArgumentPickerOpen(true)}
-        >
-          + Ajouter un argument
-        </Button>
+        {canEdit ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className={coachListAddSecondaryButtonClass}
+            onClick={() => setArgumentPickerOpen(true)}
+          >
+            + Ajouter un argument
+          </Button>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -185,6 +198,8 @@ export function OrgSettingsCoachForm({
           value={industryVocabulary}
           onChange={(e) => setIndustryVocabulary(e.target.value.slice(0, 500))}
           rows={3}
+          readOnly={!canEdit}
+          disabled={!canEdit}
         />
       </div>
 
@@ -200,15 +215,19 @@ export function OrgSettingsCoachForm({
         .
       </p>
 
-      <Button
-        type="submit"
-        disabled={pending}
-        className="bg-brand text-white hover:bg-brand-hover"
-      >
-        Enregistrer
-      </Button>
+      {canEdit ? (
+        <Button
+          type="submit"
+          disabled={pending}
+          className="bg-brand text-white hover:bg-brand-hover"
+        >
+          Enregistrer
+        </Button>
+      ) : null}
 
-      <CoachSharedPhrasePickerSheet
+      {canEdit ? (
+        <>
+          <CoachSharedPhrasePickerSheet
         kind="OBJECTION"
         open={objectionPickerOpen}
         onOpenChange={setObjectionPickerOpen}
@@ -230,6 +249,8 @@ export function OrgSettingsCoachForm({
           setKeyArguments((xs) => mergeUniqueCoachPhrases(xs, texts))
         }
       />
+        </>
+      ) : null}
     </form>
   );
 }

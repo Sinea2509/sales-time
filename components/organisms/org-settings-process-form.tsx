@@ -18,8 +18,10 @@ export type OrgProcessFormInitial = {
 
 export function OrgSettingsProcessForm({
   initial,
+  canEdit = true,
 }: {
   initial: OrgProcessFormInitial;
+  canEdit?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -36,6 +38,7 @@ export function OrgSettingsProcessForm({
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!canEdit) return;
     setMessage(null);
     startTransition(async () => {
       const r = await updateOrganizationProcess({
@@ -73,6 +76,7 @@ export function OrgSettingsProcessForm({
         draftPlaceholder="Nouveau type de RDV"
         items={meetingTypeItems}
         setItems={setMeetingTypeItems}
+        canEdit={canEdit}
       />
 
       <ProcessStringListSection
@@ -81,17 +85,20 @@ export function OrgSettingsProcessForm({
         draftPlaceholder="Nouvelle étape"
         items={pipelineStageItems}
         setItems={setPipelineStageItems}
+        canEdit={canEdit}
       />
 
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={pending}
-          className="bg-brand text-white hover:bg-brand-hover"
-        >
-          Enregistrer
-        </Button>
-      </div>
+      {canEdit ? (
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={pending}
+            className="bg-brand text-white hover:bg-brand-hover"
+          >
+            Enregistrer
+          </Button>
+        </div>
+      ) : null}
     </form>
   );
 }

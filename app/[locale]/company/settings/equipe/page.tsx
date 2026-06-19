@@ -11,15 +11,12 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function OrganizationSettingsEquipePage() {
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) redirect("/sign-in");
-
   const access = await loadOrgSettingsAccess();
   if (!access) {
     redirect("/company");
   }
 
+  const deps = getApplicationDeps();
   const orgId = access.actor.activeOrganizationId!;
 
   const { members, invitations } =
@@ -50,8 +47,8 @@ export default async function OrganizationSettingsEquipePage() {
       <OrgSettingsTeamList
         members={memberRows}
         invitations={invRows}
-        currentUserId={principal.userId}
-        currentUserEmail={principal.email}
+        currentUserId={access.actor.internalUserId}
+        currentUserEmail={access.actor.email}
         canManageTeam={access.canManageOrganizationSettings}
       />
     </div>

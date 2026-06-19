@@ -12,8 +12,10 @@ import { cn } from "@/lib/utils";
 
 export function OrgSettingsLogoForm({
   initialLogoUrl,
+  canEdit = true,
 }: {
   initialLogoUrl: string | null;
+  canEdit?: boolean;
 }) {
   const router = useRouter();
   const inputId = useId();
@@ -24,6 +26,7 @@ export function OrgSettingsLogoForm({
   } | null>(null);
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!canEdit) return;
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
@@ -42,6 +45,7 @@ export function OrgSettingsLogoForm({
   }
 
   function onRemove() {
+    if (!canEdit) return;
     setMessage(null);
     startTransition(async () => {
       const r = await removeOrganizationLogo();
@@ -76,18 +80,20 @@ export function OrgSettingsLogoForm({
           accept="image/png,image/jpeg,image/webp,image/gif"
           className="peer sr-only"
           aria-label="Téléverser ou remplacer le logo de l’entreprise"
-          disabled={pending}
+          disabled={pending || !canEdit}
           onChange={onFileChange}
         />
         <label
           htmlFor={inputId}
           className={cn(
-            "relative flex size-40 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border transition-[opacity,box-shadow,background-color] sm:size-44",
+            "relative flex size-40 shrink-0 items-center justify-center overflow-hidden rounded-xl border transition-[opacity,box-shadow,background-color] sm:size-44",
             initialLogoUrl
               ? "border-border bg-muted hover:bg-muted/80"
               : "border-muted-foreground/20 border-dashed bg-muted/20 hover:border-muted-foreground/35 hover:bg-muted/40",
-            pending && "pointer-events-none opacity-60",
-            "peer-focus-visible:ring-ring peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background",
+            (pending || !canEdit) && "pointer-events-none opacity-60",
+            canEdit &&
+              "peer-focus-visible:ring-ring peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background",
+            canEdit ? "cursor-pointer" : "cursor-default",
           )}
         >
           {pending ? (
@@ -109,7 +115,7 @@ export function OrgSettingsLogoForm({
             </span>
           )}
         </label>
-        {initialLogoUrl ? (
+        {initialLogoUrl && canEdit ? (
           <Button
             type="button"
             variant="link"

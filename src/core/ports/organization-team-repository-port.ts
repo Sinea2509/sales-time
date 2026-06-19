@@ -1,4 +1,5 @@
 import type { OrganizationMembershipRole } from "../domain/organization-membership-role";
+import type { FollowUpEmailPreferenceSource } from "../domain/follow-up-email-preferences";
 
 export type OrgTeamMemberRow = {
   membershipId: string;
@@ -93,19 +94,11 @@ export interface OrganizationTeamRepositoryPort {
   findMembershipFollowUpEmailPreferences(
     userId: string,
     organizationId: string,
-  ): Promise<{
-    emailTone: string | null;
-    emailVouvoiement: boolean | null;
-    emailSignature: string | null;
-  } | null>;
+  ): Promise<FollowUpEmailPreferenceSource | null>;
 
-  upsertMembershipFollowUpEmailPreferences(
+  updateMembershipFollowUpEmailPreferences(
     userId: string,
     organizationId: string,
-    data: {
-      emailTone: string | null;
-      emailVouvoiement: boolean;
-      emailSignature: string | null;
-    },
+    data: FollowUpEmailPreferenceSource,
   ): Promise<void>;
 }

@@ -12,11 +12,5 @@ export default async function OrganizationSettingsLayout({
     redirect("/company");
   }
 
-  return (
-    <OrgSettingsShell
-      canManageOrganizationSettings={access.canManageOrganizationSettings}
-    >
-      {children}
-    </OrgSettingsShell>
-  );
+  return <OrgSettingsShell>{children}</OrgSettingsShell>;
 }

@@ -1,6 +1,7 @@
 import {
   clearSignInFormDraft,
   readSignInFormDraft,
+  resetSignInFormDraftCacheForTests,
   writeSignInFormDraft,
 } from "@/lib/sign-in-form-draft";
 
@@ -28,6 +29,7 @@ describe("sign-in-form-draft", () => {
       configurable: true,
       value: createStorage(),
     });
+    resetSignInFormDraftCacheForTests();
   });
 
   it("returns empty draft when nothing is stored", () => {
@@ -51,5 +53,12 @@ describe("sign-in-form-draft", () => {
   it("ignores malformed stored JSON", () => {
     localStorage.setItem("sales-time:sign-in-draft", "{not-json");
     expect(readSignInFormDraft()).toEqual({ email: "", password: "" });
+  });
+
+  it("returns the same snapshot reference when storage is unchanged", () => {
+    writeSignInFormDraft({ email: "user@acme.co", password: "secret" });
+    const first = readSignInFormDraft();
+    const second = readSignInFormDraft();
+    expect(first).toBe(second);
   });
 });

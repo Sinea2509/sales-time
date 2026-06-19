@@ -6,6 +6,17 @@ import {
   type ResolvedFollowUpEmailPreferences,
 } from "../domain/follow-up-email-preferences";
 
+function organizationSettingsToPreferenceSource(
+  settings: OrganizationSettingsRow | null,
+): FollowUpEmailPreferenceSource | null {
+  if (!settings) return null;
+  return {
+    emailTone: settings.emailTone,
+    emailVouvoiement: settings.emailVouvoiement,
+    emailSignature: settings.emailSignature,
+  };
+}
+
 export async function loadResolvedFollowUpEmailPreferences(
   deps: {
     organizationTeam: OrganizationTeamRepositoryPort;
@@ -22,16 +33,10 @@ export async function loadResolvedFollowUpEmailPreferences(
       input.organizationId,
     );
 
-  const orgSource: FollowUpEmailPreferenceSource | null = input.organizationSettings
-    ? {
-        emailTone: input.organizationSettings.emailTone,
-        emailVouvoiement: input.organizationSettings.emailVouvoiement,
-        emailSignature: input.organizationSettings.emailSignature,
-      }
-    : null;
-
   return resolveFollowUpEmailPreferences({
-    organization: orgSource,
+    organization: organizationSettingsToPreferenceSource(
+      input.organizationSettings,
+    ),
     membership,
   });
 }

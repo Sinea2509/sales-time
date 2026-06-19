@@ -6,28 +6,24 @@ import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 import { buildInvitationEmailHtml } from "@/lib/invite-email-html";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
+import { loadOrgSettingsActor } from "@/lib/load-org-settings-access";
 import { resolveOrganizationInviteRole } from "@/src/core/domain/organization-invite-policy";
 import type { OrganizationMembershipRole } from "@/src/core/domain/organization-membership-role";
 
 async function requireOrgSettingsAccess() {
-  const access = await loadOrgSettingsAccess();
-  if (!access || !access.actor.organizationMembershipRole) {
+  const actor = await loadOrgSettingsActor();
+  if (!actor) {
     return { ok: false as const, error: "FORBIDDEN" as const };
-  }
-
-  const principal = await getApplicationDeps().auth.getAuthenticatedPrincipal();
-  if (!principal) {
-    return { ok: false as const, error: "UNAUTHENTICATED" as const };
   }
 
   return {
     ok: true as const,
-    organizationId: access.actor.activeOrganizationId!,
-    actorUserId: principal.userId,
-    actorRole: access.actor.organizationMembershipRole,
-    canManageOrganizationSettings: access.canManageOrganizationSettings,
-    organizationHasManager: access.organizationHasManager,
+    organizationId: actor.organizationId,
+    actorUserId: actor.userId,
+    actorEmail: actor.email,
+    actorRole: actor.role,
+    canManageOrganizationSettings: actor.canManageOrganizationSettings,
+    organizationHasManager: actor.organizationHasManager,
   };
 }
 
@@ -76,8 +72,7 @@ export async function inviteMemberAction(
 
   const deps = getApplicationDeps();
   const email = parsed.data.email.toLowerCase();
-  const actor = await deps.auth.getAuthenticatedPrincipal();
-  if (actor && email === actor.email.trim().toLowerCase()) {
+  if (email === gate.actorEmail.trim().toLowerCase()) {
     return { ok: false, message: "Vous ne pouvez pas vous inviter vous-même." };
   }
 

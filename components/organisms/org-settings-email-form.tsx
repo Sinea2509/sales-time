@@ -14,11 +14,13 @@ import { nativeSelectClassName } from "@/components/ui/native-select-class";
 
 export function OrgSettingsEmailForm({
   mode,
+  canEdit = true,
   initialTone,
   initialVouvoiement,
   initialSignature,
 }: {
   mode: "organization" | "personal";
+  canEdit?: boolean;
   initialTone: "formal" | "informal" | null;
   initialVouvoiement: boolean;
   initialSignature: string | null;
@@ -37,6 +39,7 @@ export function OrgSettingsEmailForm({
       className="max-w-xl space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
+        if (!canEdit) return;
         setMsg(null);
         startTransition(async () => {
           const payload = {
@@ -64,6 +67,7 @@ export function OrgSettingsEmailForm({
           className={cn(nativeSelectClassName, "max-w-md")}
           value={tone}
           onChange={(e) => setTone(e.target.value as "formal" | "informal")}
+          disabled={!canEdit}
         >
           <option value="formal">Formel / soutenu</option>
           <option value="informal">Informel / direct</option>
@@ -75,6 +79,7 @@ export function OrgSettingsEmailForm({
           type="checkbox"
           checked={vouv}
           onChange={(e) => setVouv(e.target.checked)}
+          disabled={!canEdit}
           className="size-4 rounded border"
         />
         <Label htmlFor="email-vouv" className="font-normal">
@@ -88,6 +93,8 @@ export function OrgSettingsEmailForm({
           rows={5}
           value={sig}
           onChange={(e) => setSig(e.target.value)}
+          readOnly={!canEdit}
+          disabled={!canEdit}
           placeholder="Ex. Cordialement,\nJean Dupont\nAccount Executive — …"
         />
       </div>
@@ -102,13 +109,15 @@ export function OrgSettingsEmailForm({
           {msg.text}
         </p>
       ) : null}
-      <Button
-        type="submit"
-        disabled={pending}
-        className="bg-brand text-white hover:bg-brand-hover"
-      >
-        Enregistrer
-      </Button>
+      {canEdit ? (
+        <Button
+          type="submit"
+          disabled={pending}
+          className="bg-brand text-white hover:bg-brand-hover"
+        >
+          Enregistrer
+        </Button>
+      ) : null}
     </form>
   );
 }

@@ -3,29 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
+import { loadOrgSettingsActor } from "@/lib/load-org-settings-access";
 import { uploadOrgLogoToBlob } from "@/lib/org-logo-upload";
+import { personalFollowUpEmailOverridesFromForm } from "@/src/core/domain/follow-up-email-preferences";
 
-type OrgSettingsActor =
-  | {
-      organizationId: string;
-      userId: string;
-      canManageOrganizationSettings: boolean;
-    }
-  | null;
-
-async function requireOrgSettingsActor(): Promise<OrgSettingsActor> {
-  const access = await loadOrgSettingsAccess();
-  if (!access) return null;
-  return {
-    organizationId: access.actor.activeOrganizationId!,
-    userId: access.actor.internalUserId,
-    canManageOrganizationSettings: access.canManageOrganizationSettings,
-  };
-}
-
-async function requireOrgAdminOrganizationId(): Promise<string | null> {
-  const actor = await requireOrgSettingsActor();
+async function requireOrgSettingsManagerOrganizationId(): Promise<string | null> {
+  const actor = await loadOrgSettingsActor();
   if (!actor?.canManageOrganizationSettings) return null;
   return actor.organizationId;
 }
@@ -61,7 +44,7 @@ export type OrgLogoUploadResult =
 export async function updateOrganizationContext(
   raw: z.input<typeof orgContextSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsManagerOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -85,7 +68,7 @@ export async function updateOrganizationContext(
 export async function updateOrganizationCoach(
   raw: z.input<typeof orgCoachSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsManagerOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -108,7 +91,7 @@ export async function updateOrganizationCoach(
 export async function updateOrganizationProcess(
   raw: z.input<typeof orgProcessSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsManagerOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -141,7 +124,7 @@ const followUpEmailSchema = z.object({
 export async function uploadOrganizationLogo(
   formData: FormData,
 ): Promise<OrgLogoUploadResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsManagerOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -160,7 +143,7 @@ export async function uploadOrganizationLogo(
 }
 
 export async function removeOrganizationLogo(): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsManagerOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -173,7 +156,7 @@ export async function removeOrganizationLogo(): Promise<OrgSettingsActionResult>
 export async function updateOrganizationEmailSettings(
   raw: z.input<typeof followUpEmailSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsManagerOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -194,7 +177,7 @@ export async function updateOrganizationEmailSettings(
 export async function updatePersonalFollowUpEmailSettings(
   raw: z.input<typeof followUpEmailSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const actor = await requireOrgSettingsActor();
+  const actor = await loadOrgSettingsActor();
   if (!actor || actor.canManageOrganizationSettings) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -202,15 +185,32 @@ export async function updatePersonalFollowUpEmailSettings(
   if (!parsed.success) {
     return { ok: false, message: "Données invalides." };
   }
+
   const deps = getApplicationDeps();
-  await deps.organizationTeam.upsertMembershipFollowUpEmailPreferences(
-    actor.userId,
+  const orgRow = await deps.organizationSettings.findByOrganizationId(
     actor.organizationId,
-    {
-      emailTone: parsed.data.emailTone,
+  );
+  const orgSource = orgRow
+    ? {
+        emailTone: orgRow.emailTone,
+        emailVouvoiement: orgRow.emailVouvoiement,
+        emailSignature: orgRow.emailSignature,
+      }
+    : null;
+
+  const overrides = personalFollowUpEmailOverridesFromForm({
+    organization: orgSource,
+    form: {
+      emailTone: parsed.data.emailTone ?? "formal",
       emailVouvoiement: parsed.data.emailVouvoiement,
       emailSignature: parsed.data.emailSignature?.trim() || null,
     },
+  });
+
+  await deps.organizationTeam.updateMembershipFollowUpEmailPreferences(
+    actor.userId,
+    actor.organizationId,
+    overrides,
   );
   revalidatePath("/company/settings", "layout");
   return { ok: true };

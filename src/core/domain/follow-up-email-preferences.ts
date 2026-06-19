@@ -34,3 +34,27 @@ export function resolveFollowUpEmailPreferences(input: {
 
   return { emailTone, emailVouvoiement, emailSignature };
 }
+
+/** Persist only fields that differ from organization defaults (null = inherit). */
+export function personalFollowUpEmailOverridesFromForm(input: {
+  organization: FollowUpEmailPreferenceSource | null;
+  form: ResolvedFollowUpEmailPreferences;
+}): FollowUpEmailPreferenceSource {
+  const orgDefaults = resolveFollowUpEmailPreferences({
+    organization: input.organization,
+    membership: null,
+  });
+
+  const signature = input.form.emailSignature?.trim() || null;
+  const orgSignature = orgDefaults.emailSignature?.trim() || null;
+
+  return {
+    emailTone:
+      input.form.emailTone === orgDefaults.emailTone ? null : input.form.emailTone,
+    emailVouvoiement:
+      input.form.emailVouvoiement === orgDefaults.emailVouvoiement
+        ? null
+        : input.form.emailVouvoiement,
+    emailSignature: signature === orgSignature ? null : signature,
+  };
+}

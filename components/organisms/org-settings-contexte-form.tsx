@@ -28,9 +28,11 @@ export type OrgContexteFormInitial = {
 export function OrgSettingsContexteForm({
   initial,
   initialLogoUrl,
+  canEdit = true,
 }: {
   initial: OrgContexteFormInitial;
   initialLogoUrl: string | null;
+  canEdit?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -70,6 +72,7 @@ export function OrgSettingsContexteForm({
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!canEdit) return;
     setMessage(null);
     startTransition(async () => {
       const r = await updateOrganizationContext({
@@ -105,7 +108,7 @@ export function OrgSettingsContexteForm({
       ) : null}
 
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <OrgSettingsLogoForm initialLogoUrl={initialLogoUrl} />
+        <OrgSettingsLogoForm initialLogoUrl={initialLogoUrl} canEdit={canEdit} />
         <div className="min-w-0 flex-1 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="org-company">Nom de l’entreprise</Label>
@@ -115,6 +118,8 @@ export function OrgSettingsContexteForm({
               onChange={(e) => setCompanyName(e.target.value)}
               maxLength={200}
               autoComplete="organization"
+              readOnly={!canEdit}
+              disabled={!canEdit}
             />
           </div>
           <div className="space-y-2">
@@ -128,6 +133,7 @@ export function OrgSettingsContexteForm({
                   : ""
               }
               onChange={(e) => setIndustrySector(e.target.value)}
+              disabled={!canEdit}
             >
               <option value="">Sélectionnez un secteur</option>
               {industryOptions.map((o) => (
@@ -148,6 +154,7 @@ export function OrgSettingsContexteForm({
                   : ""
               }
               onChange={(e) => setCommercialTeamSize(e.target.value)}
+              disabled={!canEdit}
             >
               <option value="">Sélectionnez une taille</option>
               {teamSizeOptions.map((o) => (
@@ -168,6 +175,7 @@ export function OrgSettingsContexteForm({
                   : ""
               }
               onChange={(e) => setAverageSalesCycle(e.target.value)}
+              disabled={!canEdit}
             >
               <option value="">Sélectionnez une durée</option>
               {cycleOptions.map((o) => (
@@ -188,6 +196,7 @@ export function OrgSettingsContexteForm({
                   : ""
               }
               onChange={(e) => setAverageDealSize(e.target.value)}
+              disabled={!canEdit}
             >
               <option value="">Sélectionnez une fourchette</option>
               {dealSizeOptions.map((o) => (
@@ -200,15 +209,17 @@ export function OrgSettingsContexteForm({
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={pending}
-          className="bg-brand text-white hover:bg-brand-hover"
-        >
-          Enregistrer
-        </Button>
-      </div>
+      {canEdit ? (
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={pending}
+            className="bg-brand text-white hover:bg-brand-hover"
+          >
+            Enregistrer
+          </Button>
+        </div>
+      ) : null}
     </form>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useActionState, useEffect, useRef, useSyncExternalStore } from "react";
 import {
   signInAction,
   type SignInFieldErrors,
@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   clearSignInFormDraft,
-  readSignInFormDraft,
+  EMPTY_SIGN_IN_FORM_DRAFT,
+  getSignInFormDraftSnapshot,
+  subscribeToSignInFormDraft,
   writeSignInFormDraft,
   type SignInFormDraft,
 } from "@/lib/sign-in-form-draft";
@@ -18,13 +20,6 @@ import {
 type Props = {
   next?: string;
 };
-
-const emptyDraft = (): SignInFormDraft => ({ email: "", password: "" });
-
-function subscribeToSignInDraft(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-  return () => window.removeEventListener("storage", onStoreChange);
-}
 
 function fieldError(
   fieldErrors: SignInFieldErrors | undefined,
@@ -35,26 +30,20 @@ function fieldError(
 
 export function SignInForm({ next }: Props) {
   const [state, formAction, pending] = useActionState(signInAction, null);
-  const storedDraft = useSyncExternalStore(
-    subscribeToSignInDraft,
-    readSignInFormDraft,
-    emptyDraft,
+  const draft = useSyncExternalStore(
+    subscribeToSignInFormDraft,
+    getSignInFormDraftSnapshot,
+    () => EMPTY_SIGN_IN_FORM_DRAFT,
   );
-  const [localDraft, setLocalDraft] = useState<SignInFormDraft | null>(null);
   const wasPending = useRef(false);
 
-  const email = localDraft?.email ?? storedDraft.email;
-  const password = localDraft?.password ?? storedDraft.password;
-
   function updateDraft(nextDraft: SignInFormDraft) {
-    setLocalDraft(nextDraft);
     writeSignInFormDraft(nextDraft);
   }
 
   useEffect(() => {
     if (wasPending.current && !pending && state === null) {
       clearSignInFormDraft();
-      setLocalDraft(null);
     }
     wasPending.current = pending;
   }, [pending, state]);
@@ -77,9 +66,9 @@ export function SignInForm({ next }: Props) {
           autoComplete="email"
           required
           disabled={pending}
-          value={email}
+          value={draft.email}
           onChange={(e) =>
-            updateDraft({ email: e.target.value, password })
+            updateDraft({ email: e.target.value, password: draft.password })
           }
           aria-invalid={fieldError(fieldErrors, "email") ? true : undefined}
         />
@@ -98,9 +87,9 @@ export function SignInForm({ next }: Props) {
           autoComplete="current-password"
           required
           disabled={pending}
-          value={password}
+          value={draft.password}
           onChange={(e) =>
-            updateDraft({ email, password: e.target.value })
+            updateDraft({ email: draft.email, password: e.target.value })
           }
           aria-invalid={fieldError(fieldErrors, "password") ? true : undefined}
         />

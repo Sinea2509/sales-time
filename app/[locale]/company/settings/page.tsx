@@ -7,9 +7,5 @@ export default async function OrganizationSettingsIndexPage() {
     redirect("/company");
   }
 
-  if (access.canManageOrganizationSettings) {
-    redirect("/company/settings/contexte");
-  }
-
-  redirect("/company/settings/email");
+  redirect("/company/settings/contexte");
 }

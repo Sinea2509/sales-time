@@ -3,13 +3,20 @@ import {
   DEFAULT_PIPELINE_STAGES,
 } from "@/lib/onboarding-defaults";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
+import type { OrganizationSettingsRow } from "@/src/core/ports/organization-settings-repository-port";
 
 describe("orgMeetingFormOptionsFromSettings", () => {
   it("returns org-configured meeting types and pipeline stages", () => {
-    const options = orgMeetingFormOptionsFromSettings({
+    const settings: Pick<
+      OrganizationSettingsRow,
+      "meetingTypes" | "pipelineStages"
+    > = {
       meetingTypes: ["Appel découverte", "Closing"],
       pipelineStages: ["MQL", "SQL", "Closed won"],
-    } as never);
+    };
+    const options = orgMeetingFormOptionsFromSettings(
+      settings as OrganizationSettingsRow,
+    );
 
     expect(options.meetingTypeOptions).toEqual([
       "Appel découverte",

@@ -66,11 +66,13 @@ function ProcessSortableRow({
   onDelete,
   sortable,
   maxLen,
+  canEdit = true,
 }: {
   value: string;
   onSave: (next: string) => void;
   onDelete: () => void;
   maxLen: number;
+  canEdit?: boolean;
   sortable?: {
     setNodeRef: (node: HTMLElement | null) => void;
     style: CSSProperties;
@@ -145,7 +147,7 @@ function ProcessSortableRow({
           </div>
         ) : (
           <>
-            {sortable ? (
+            {sortable && canEdit ? (
               <button
                 type="button"
                 className={cn(
@@ -160,31 +162,33 @@ function ProcessSortableRow({
               </button>
             ) : null}
             <span className="min-w-0 flex-1 text-sm leading-snug">{value}</span>
-            <div className="flex shrink-0 gap-0.5">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
-                aria-label="Modifier"
-                onClick={() => {
-                  setDraft(value);
-                  setEditing(true);
-                }}
-              >
-                <Pencil className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300"
-                aria-label="Supprimer"
-                onClick={onDelete}
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            </div>
+            {canEdit ? (
+              <div className="flex shrink-0 gap-0.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+                  aria-label="Modifier"
+                  onClick={() => {
+                    setDraft(value);
+                    setEditing(true);
+                  }}
+                >
+                  <Pencil className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300"
+                  aria-label="Supprimer"
+                  onClick={onDelete}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ) : null}
           </>
         )}
       </div>
@@ -196,10 +200,12 @@ function SortableProcessStringRow({
   item,
   setItems,
   maxLen,
+  canEdit,
 }: {
   item: ProcessStringListItem;
   setItems: Dispatch<SetStateAction<ProcessStringListItem[]>>;
   maxLen: number;
+  canEdit: boolean;
 }) {
   const {
     attributes,
@@ -219,13 +225,18 @@ function SortableProcessStringRow({
     <ProcessSortableRow
       value={item.value}
       maxLen={maxLen}
-      sortable={{
-        setNodeRef,
-        style,
-        dragAttributes: attributes,
-        dragListeners: listeners,
-        isDragging,
-      }}
+      canEdit={canEdit}
+      sortable={
+        canEdit
+          ? {
+              setNodeRef,
+              style,
+              dragAttributes: attributes,
+              dragListeners: listeners,
+              isDragging,
+            }
+          : undefined
+      }
       onSave={(next) =>
         setItems((xs) =>
           xs.map((r) => (r.id === item.id ? { ...r, value: next } : r)),
@@ -240,10 +251,12 @@ function ProcessSortableList({
   items,
   setItems,
   maxLen,
+  canEdit,
 }: {
   items: ProcessStringListItem[];
   setItems: Dispatch<SetStateAction<ProcessStringListItem[]>>;
   maxLen: number;
+  canEdit: boolean;
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -265,6 +278,21 @@ function ProcessSortableList({
     });
   }
 
+  if (!canEdit) {
+    return (
+      <ul className="space-y-2">
+        {items.map((item) => (
+          <li
+            key={item.id}
+            className="border-border rounded-md border bg-background px-3 py-2.5 text-sm"
+          >
+            {item.value}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -282,6 +310,7 @@ function ProcessSortableList({
               item={item}
               setItems={setItems}
               maxLen={maxLen}
+              canEdit={canEdit}
             />
           ))}
         </ul>
@@ -298,6 +327,7 @@ export type ProcessStringListSectionProps = {
   setItems: Dispatch<SetStateAction<ProcessStringListItem[]>>;
   maxItems?: number;
   maxLen?: number;
+  canEdit?: boolean;
 };
 
 /**
@@ -311,6 +341,7 @@ export function ProcessStringListSection({
   setItems,
   maxItems = 40,
   maxLen = 120,
+  canEdit = true,
 }: ProcessStringListSectionProps) {
   const [draftOpen, setDraftOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -328,8 +359,13 @@ export function ProcessStringListSection({
   return (
     <div className="space-y-3">
       <Label className="text-foreground">{label}</Label>
-      <ProcessSortableList items={items} setItems={setItems} maxLen={maxLen} />
-      {draftOpen ? (
+      <ProcessSortableList
+        items={items}
+        setItems={setItems}
+        maxLen={maxLen}
+        canEdit={canEdit}
+      />
+      {canEdit && draftOpen ? (
         <div className="flex flex-col gap-2 rounded-md border border-dashed border-brand/30 bg-brand/5 p-3 sm:flex-row sm:items-center">
           <Input
             value={draft}
@@ -374,18 +410,20 @@ export function ProcessStringListSection({
           </div>
         </div>
       ) : null}
-      <Button
-        type="button"
-        variant="secondary"
-        className={coachListAddSecondaryButtonClass}
-        disabled={atMax}
-        onClick={() => {
-          setDraftOpen(true);
-          setDraft("");
-        }}
-      >
-        {addButtonLabel}
-      </Button>
+      {canEdit ? (
+        <Button
+          type="button"
+          variant="secondary"
+          className={coachListAddSecondaryButtonClass}
+          disabled={atMax}
+          onClick={() => {
+            setDraftOpen(true);
+            setDraft("");
+          }}
+        >
+          {addButtonLabel}
+        </Button>
+      ) : null}
     </div>
   );
 }
