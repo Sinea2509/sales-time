@@ -11,6 +11,8 @@ import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
 import { orgSettingsCanEdit } from "@/lib/org-settings-can-edit";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function OrganizationSettingsProcessPage() {
   const access = await loadOrgSettingsAccess();
   if (!access) redirect("/company");

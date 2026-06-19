@@ -135,6 +135,70 @@ export class PrismaUserRepository implements UserRepositoryPort {
     });
   }
 
+  async findAccountProfileByUserId(userId: string): Promise<{
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatarUrl: string | null;
+  } | null> {
+    return this.db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        avatarUrl: true,
+      },
+    });
+  }
+
+  async updateAccountProfile(input: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<void> {
+    await this.db.user.update({
+      where: { id: input.userId },
+      data: {
+        firstName: input.firstName,
+        lastName: input.lastName,
+      },
+    });
+  }
+
+  async updateAvatarUrl(
+    userId: string,
+    avatarUrl: string | null,
+  ): Promise<void> {
+    await this.db.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+    });
+  }
+
+  async findPasswordHashByUserId(userId: string): Promise<string | null> {
+    const row = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true, status: true },
+    });
+    if (!row || row.status === "DISABLED") {
+      return null;
+    }
+    return row.passwordHash;
+  }
+
+  async updatePasswordHash(
+    userId: string,
+    passwordHash: string,
+  ): Promise<void> {
+    await this.db.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+  }
+
   async listDirectReportUserIds(managerUserId: string): Promise<string[]> {
     const rows = await this.db.user.findMany({
       where: { managerId: managerUserId },

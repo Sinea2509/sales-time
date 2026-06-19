@@ -70,7 +70,11 @@ export function MeetingCreateForm({
                   ? "Contact introuvable. Rechargez la page ou choisissez un autre contact."
                   : res.error === "QUOTA_EXHAUSTED"
                     ? "Quota d'analyses épuisé — passez au plan pour continuer."
-                    : res.error,
+                    : res.error === "UNSUPPORTED_FORMAT"
+                      ? "Format de fichier non pris en charge (.txt, .vtt, .srt, .md)."
+                      : res.error === "TRANSCRIPT_TOO_SHORT"
+                        ? "Le transcript est trop court (minimum 20 caractères)."
+                        : res.error,
             );
             return;
           }

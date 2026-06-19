@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { updateOrganizationProcess } from "@/app/[locale]/company/settings/actions";
@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 import {
   ProcessStringListSection,
   processItemsFromStrings,
+  trimProcessStringListValues,
   type ProcessStringListItem,
+  type ProcessStringListSectionHandle,
 } from "@/components/molecules/process-string-list-section";
 
 export type OrgProcessFormInitial = {
@@ -24,6 +26,8 @@ export function OrgSettingsProcessForm({
   canEdit?: boolean;
 }) {
   const router = useRouter();
+  const meetingTypesRef = useRef<ProcessStringListSectionHandle>(null);
+  const pipelineStagesRef = useRef<ProcessStringListSectionHandle>(null);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<{
     type: "ok" | "err";
@@ -42,8 +46,12 @@ export function OrgSettingsProcessForm({
     setMessage(null);
     startTransition(async () => {
       const r = await updateOrganizationProcess({
-        meetingTypes: meetingTypeItems.map((x) => x.value).filter(Boolean),
-        pipelineStages: pipelineStageItems.map((x) => x.value).filter(Boolean),
+        meetingTypes:
+          meetingTypesRef.current?.resolveValues() ??
+          trimProcessStringListValues(meetingTypeItems),
+        pipelineStages:
+          pipelineStagesRef.current?.resolveValues() ??
+          trimProcessStringListValues(pipelineStageItems),
       });
       if (!r.ok) {
         setMessage({ type: "err", text: r.message });
@@ -71,6 +79,7 @@ export function OrgSettingsProcessForm({
       ) : null}
 
       <ProcessStringListSection
+        ref={meetingTypesRef}
         label="Type de RDV"
         addButtonLabel="+ Ajouter un type"
         draftPlaceholder="Nouveau type de RDV"
@@ -80,6 +89,7 @@ export function OrgSettingsProcessForm({
       />
 
       <ProcessStringListSection
+        ref={pipelineStagesRef}
         label="Étapes du pipeline"
         addButtonLabel="+ Ajouter une étape"
         draftPlaceholder="Nouvelle étape"

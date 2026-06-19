@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { prospectInitials } from "@/lib/prospect-initials";
+import { orgBlobProxyUrl } from "@/lib/blob-paths";
 import { cn } from "@/lib/utils";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
 
@@ -45,9 +46,9 @@ function OrgMark({
   const trimmed = logoUrl?.trim();
   if (trimmed) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- org logos are external blob/CDN URLs
+      // eslint-disable-next-line @next/next/no-img-element -- proxied org blob asset
       <img
-        src={trimmed}
+        src={orgBlobProxyUrl(trimmed)}
         alt=""
         className={cn(
           "shrink-0 rounded-lg border border-sidebar-border object-cover",

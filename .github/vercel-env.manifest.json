@@ -41,8 +41,13 @@
       "type": "plain"
     },
     {
+      "key": "BLOB_STORE_ID",
+      "target": ["production", "preview", "development"],
+      "type": "plain"
+    },
+    {
       "key": "BLOB_READ_WRITE_TOKEN",
-      "target": ["production", "preview"],
+      "target": ["production", "preview", "development"],
       "type": "encrypted"
     },
     {

@@ -131,6 +131,8 @@ model User {
   signupWebsiteNormalized      String?
   firstName                    String?
   lastName                     String?
+  /** Profile picture (Vercel Blob URL). */
+  avatarUrl                    String? @db.Text
   profileRole                  UserProfileRole?
   registerProfileCompletedAt   DateTime?
   tamObjectiveMinutesPerMonth  Int?

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState, useTransition } from "react";
+import { Fragment, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,7 +27,9 @@ import { SignupFlowIllustration } from "@/components/molecules/signup-flow-illus
 import {
   ProcessStringListSection,
   processItemsFromStrings,
+  trimProcessStringListValues,
   type ProcessStringListItem,
+  type ProcessStringListSectionHandle,
 } from "@/components/molecules/process-string-list-section";
 import { cn } from "@/lib/utils";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
@@ -174,6 +176,9 @@ export function OnboardingWizard({ initial }: Props) {
     ProcessStringListItem[]
   >(() => processItemsFromStrings("pl", initial.pipelineStages));
 
+  const meetingTypesRef = useRef<ProcessStringListSectionHandle>(null);
+  const pipelineStagesRef = useRef<ProcessStringListSectionHandle>(null);
+
   const [inviteRows, setInviteRows] = useState<OnboardingInviteRow[]>(
     initial.invites,
   );
@@ -235,10 +240,12 @@ export function OnboardingWizard({ initial }: Props) {
       }
       if (step === 3) {
         const r = await submitOnboardingStep3({
-          meetingTypes: meetingTypeItems.map((x) => x.value).filter(Boolean),
-          pipelineStages: pipelineStageItems
-            .map((x) => x.value)
-            .filter(Boolean),
+          meetingTypes:
+            meetingTypesRef.current?.resolveValues() ??
+            trimProcessStringListValues(meetingTypeItems),
+          pipelineStages:
+            pipelineStagesRef.current?.resolveValues() ??
+            trimProcessStringListValues(pipelineStageItems),
         });
         if (!r.ok) {
           setError(r.message);
@@ -528,6 +535,7 @@ export function OnboardingWizard({ initial }: Props) {
               <OnboardingStepRail step={step} />
               <div className="flex flex-col gap-6">
                 <ProcessStringListSection
+                  ref={meetingTypesRef}
                   label="Type de RDV"
                   addButtonLabel="+ Ajouter un type"
                   draftPlaceholder="Nouveau type de RDV"
@@ -535,6 +543,7 @@ export function OnboardingWizard({ initial }: Props) {
                   setItems={setMeetingTypeItems}
                 />
                 <ProcessStringListSection
+                  ref={pipelineStagesRef}
                   label="Étapes du pipeline"
                   addButtonLabel="+ Ajouter une étape"
                   draftPlaceholder="Nouvelle étape"

@@ -1,4 +1,5 @@
 import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "@/lib/default-analysis-prompts";
+import { resolveMeetingTranscriptForAnalysis } from "@/lib/meeting-transcript-for-analysis";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type {
   MeetingAnalysisKind,
@@ -61,6 +62,13 @@ export async function runMeetingAnalysis(
     return { ok: false, error: "MEETING_NOT_FOUND" };
   }
 
+  const transcriptForAnalysis = await resolveMeetingTranscriptForAnalysis({
+    organizationId: input.organizationId,
+    transcript: meeting.transcript,
+    sourceBlobUrl: meeting.sourceBlobUrl,
+    sourceType: meeting.sourceType,
+  });
+
   let promptVersion;
   try {
     promptVersion = await resolvePromptVersion(deps.prompts, input.kind);
@@ -80,7 +88,7 @@ export async function runMeetingAnalysis(
           : deps.analysis.analyzeDisc;
       const { result } = await analyze({
         systemMarkdown: promptVersion.markdown,
-        transcript: meeting.transcript,
+        transcript: transcriptForAnalysis,
         notes: meeting.notes,
         model: input.model,
       });
@@ -120,7 +128,7 @@ export async function runMeetingAnalysis(
 
     const { result } = await deps.analysis.analyzeKiss({
       systemMarkdown: kissSystemMarkdown,
-      transcript: meeting.transcript,
+      transcript: transcriptForAnalysis,
       notes: meeting.notes,
       model: input.model,
       priorSoncasResult: priorSoncas?.result,

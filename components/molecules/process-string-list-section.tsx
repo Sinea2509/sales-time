@@ -22,7 +22,11 @@ import type {
   DraggableSyntheticListeners,
 } from "@dnd-kit/core";
 import type { CSSProperties, Dispatch, SetStateAction } from "react";
-import { useState } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useState,
+} from "react";
 import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +59,29 @@ export function newProcessRowId(): string {
   return crypto.randomUUID();
 }
 
+export function trimProcessStringListValues(
+  items: ProcessStringListItem[],
+): string[] {
+  return items.map((item) => item.value.trim()).filter(Boolean);
+}
+
+export function resolveProcessStringListValues(
+  items: ProcessStringListItem[],
+  opts?: { draftOpen?: boolean; draft?: string; maxItems?: number },
+): string[] {
+  const values = trimProcessStringListValues(items);
+  if (!opts?.draftOpen) return values;
+
+  const draft = opts.draft?.trim();
+  if (!draft || values.length >= (opts.maxItems ?? 40)) return values;
+
+  return [...values, draft];
+}
+
+export type ProcessStringListSectionHandle = {
+  resolveValues: () => string[];
+};
+
 const draftToolbarSecondaryClass = cn(
   "px-4 text-sm shadow-none",
   "border border-neutral-200 bg-[#F5F5F5] text-foreground hover:bg-[#EBEBEB] dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700",
@@ -85,13 +112,22 @@ function ProcessSortableRow({
   const [draft, setDraft] = useState(value);
 
   function commit() {
-    const t = draft.trim();
-    if (t.length === 0) {
+    const trimmed = draft.trim();
+    if (trimmed.length === 0) {
+      onSave(value);
       setDraft(value);
       setEditing(false);
       return;
     }
-    onSave(t.slice(0, maxLen));
+    const next = trimmed.slice(0, maxLen);
+    onSave(next);
+    setDraft(next);
+    setEditing(false);
+  }
+
+  function cancelEdit() {
+    onSave(value);
+    setDraft(value);
     setEditing(false);
   }
 
@@ -112,15 +148,16 @@ function ProcessSortableRow({
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
             <Input
               value={draft}
-              onChange={(e) => setDraft(e.target.value.slice(0, maxLen))}
+              onChange={(e) => {
+                const next = e.target.value.slice(0, maxLen);
+                setDraft(next);
+                onSave(next);
+              }}
               className="flex-1"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter") commit();
-                if (e.key === "Escape") {
-                  setDraft(value);
-                  setEditing(false);
-                }
+                if (e.key === "Escape") cancelEdit();
               }}
             />
             <div className="flex shrink-0 gap-1">
@@ -130,16 +167,13 @@ function ProcessSortableRow({
                 variant="secondary"
                 onClick={commit}
               >
-                Enregistrer
+                Valider
               </Button>
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  setDraft(value);
-                  setEditing(false);
-                }}
+                onClick={cancelEdit}
               >
                 Annuler
               </Button>
@@ -333,18 +367,37 @@ export type ProcessStringListSectionProps = {
 /**
  * Liste ordonnable + ajout (même flux que l’étape Process de l’onboarding).
  */
-export function ProcessStringListSection({
-  label,
-  addButtonLabel,
-  draftPlaceholder,
-  items,
-  setItems,
-  maxItems = 40,
-  maxLen = 120,
-  canEdit = true,
-}: ProcessStringListSectionProps) {
+export const ProcessStringListSection = forwardRef<
+  ProcessStringListSectionHandle,
+  ProcessStringListSectionProps
+>(function ProcessStringListSection(
+  {
+    label,
+    addButtonLabel,
+    draftPlaceholder,
+    items,
+    setItems,
+    maxItems = 40,
+    maxLen = 120,
+    canEdit = true,
+  },
+  ref,
+) {
   const [draftOpen, setDraftOpen] = useState(false);
   const [draft, setDraft] = useState("");
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      resolveValues: () =>
+        resolveProcessStringListValues(items, {
+          draftOpen,
+          draft,
+          maxItems,
+        }),
+    }),
+    [items, draftOpen, draft, maxItems],
+  );
 
   function addFromDraft() {
     const v = draft.trim().slice(0, maxLen);
@@ -426,4 +479,4 @@ export function ProcessStringListSection({
       ) : null}
     </div>
   );
-}
+});

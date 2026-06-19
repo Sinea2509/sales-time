@@ -5,6 +5,8 @@ import { z } from "zod";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { uploadMeetingTranscriptFile } from "@/lib/meeting-transcript-upload";
+import { blobUrlBelongsToOrg } from "@/lib/blob-paths";
+import { mergeMeetingTranscriptSources } from "@/lib/transcript-extract";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createMeetingForOrg } from "@/src/core/application/create-meeting";
@@ -121,17 +123,38 @@ export async function createMeetingAction(formData: FormData) {
   let transcriptFromFile = "";
 
   if (file instanceof File && file.size > 0) {
-    const uploaded = await uploadMeetingTranscriptFile({ file });
+    const uploaded = await uploadMeetingTranscriptFile({
+      organizationId: ctx.activeOrganizationId,
+      file,
+    });
+    if (!uploaded.ok) {
+      return {
+        ok: false as const,
+        error:
+          uploaded.error === "UNSUPPORTED_FORMAT"
+            ? ("UNSUPPORTED_FORMAT" as const)
+            : ("TRANSCRIPT_TOO_SHORT" as const),
+      };
+    }
     transcriptFromFile = uploaded.transcript;
     sourceBlobUrl = uploaded.blobUrl || null;
     sourceType = "UPLOAD";
   }
 
   const pastedTranscript = String(formData.get("transcript") ?? "").trim();
-  const transcript =
-    pastedTranscript.length > 0 ? pastedTranscript : transcriptFromFile;
+  const transcript = mergeMeetingTranscriptSources(
+    transcriptFromFile,
+    pastedTranscript,
+  );
 
   if (transcript.length < 1) {
+    return { ok: false as const, error: "VALIDATION" };
+  }
+
+  if (
+    sourceBlobUrl &&
+    !blobUrlBelongsToOrg(sourceBlobUrl, ctx.activeOrganizationId)
+  ) {
     return { ok: false as const, error: "VALIDATION" };
   }
 

@@ -58,5 +58,25 @@ export interface UserRepositoryPort {
     profileRole: UserProfileRole;
   }): Promise<void>;
 
+  findAccountProfileByUserId(userId: string): Promise<{
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatarUrl: string | null;
+  } | null>;
+
+  updateAccountProfile(input: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<void>;
+
+  updateAvatarUrl(userId: string, avatarUrl: string | null): Promise<void>;
+
+  findPasswordHashByUserId(userId: string): Promise<string | null>;
+
+  updatePasswordHash(userId: string, passwordHash: string): Promise<void>;
+
   listDirectReportUserIds(managerUserId: string): Promise<string[]>;
 }

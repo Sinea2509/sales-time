@@ -1,5 +1,18 @@
 const TEXT_EXTENSIONS = [".txt", ".vtt", ".srt", ".md"];
 
+/** Combines file extraction with optional pasted complement (upload form). */
+export function mergeMeetingTranscriptSources(
+  fromFile: string,
+  pasted: string,
+): string {
+  const file = fromFile.trim();
+  const paste = pasted.trim();
+  if (file && paste) {
+    return `${file}\n\n---\n\n${paste}`;
+  }
+  return paste || file;
+}
+
 export function extractTranscriptFromUpload(input: {
   filename: string;
   bytes: Buffer;

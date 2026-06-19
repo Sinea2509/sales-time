@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { put } from "@vercel/blob";
+import { blobPutOptions, resolveBlobPutAuth } from "@/lib/blob-config";
+import { blobUrlBelongsToOrg, buildOrgBlobPath } from "@/lib/blob-paths";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createFeedback } from "@/src/core/application/create-feedback";
@@ -32,6 +34,15 @@ export async function submitFeedbackAction(input: z.infer<typeof feedbackSchema>
     { auth: deps.auth },
     { superAdminElevation: superAdminOrg },
   );
+
+  if (
+    parsed.data.screenshotUrl &&
+    (ctx.kind !== "authenticated" ||
+      !ctx.activeOrganizationId ||
+      !blobUrlBelongsToOrg(parsed.data.screenshotUrl, ctx.activeOrganizationId))
+  ) {
+    return { ok: false as const };
+  }
 
   let companyName: string | null = null;
   if (ctx.kind === "authenticated" && ctx.activeOrganizationId) {
@@ -67,17 +78,34 @@ export async function submitFeedbackAction(input: z.infer<typeof feedbackSchema>
 }
 
 export async function uploadFeedbackScreenshotAction(formData: FormData) {
+  const deps = getApplicationDeps();
+  const principal = await deps.auth.getAuthenticatedPrincipal();
+  if (!principal) {
+    return { ok: false as const };
+  }
+
+  const superAdminOrg = await readSuperAdminOrgCookie();
+  const ctx = await getCurrentActorContext(
+    { auth: deps.auth },
+    { superAdminElevation: superAdminOrg },
+  );
+  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
+    return { ok: false as const };
+  }
+
   const file = formData.get("file");
   if (!(file instanceof File)) {
     return { ok: false as const };
   }
-  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
-  if (!token) {
+  const auth = resolveBlobPutAuth();
+  if (!auth) {
     return { ok: false as const };
   }
-  const blob = await put(`feedbacks/${Date.now()}.png`, file, {
-    access: "public",
-    token,
-  });
+  const pathname = buildOrgBlobPath(
+    ctx.activeOrganizationId,
+    "feedbacks",
+    `${Date.now()}.png`,
+  );
+  const blob = await put(pathname, file, blobPutOptions(auth, { addRandomSuffix: true }));
   return { ok: true as const, url: blob.url };
 }

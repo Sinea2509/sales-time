@@ -1,25 +1,62 @@
 import { put } from "@vercel/blob";
+import {
+  blobPutOptions,
+  isBlobConfigured,
+  resolveBlobPutAuth,
+} from "@/lib/blob-config";
+import {
+  buildOrgBlobPath,
+  sanitizeBlobFilename,
+} from "@/lib/blob-paths";
 import { extractTranscriptFromUpload } from "@/lib/transcript-extract";
 
-export async function uploadMeetingTranscriptFile(input: {
-  file: File;
-}): Promise<{ transcript: string; blobUrl: string }> {
-  const bytes = Buffer.from(await input.file.arrayBuffer());
-  const transcript = extractTranscriptFromUpload({
-    filename: input.file.name,
-    bytes,
-  });
+export type UploadMeetingTranscriptError =
+  | "UNSUPPORTED_FORMAT"
+  | "TRANSCRIPT_TOO_SHORT";
 
-  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
-  if (!token) {
-    return { transcript, blobUrl: "" };
+export type UploadMeetingTranscriptResult =
+  | { ok: true; transcript: string; blobUrl: string }
+  | { ok: false; error: UploadMeetingTranscriptError };
+
+export async function uploadMeetingTranscriptFile(input: {
+  organizationId: string;
+  file: File;
+}): Promise<UploadMeetingTranscriptResult> {
+  const bytes = Buffer.from(await input.file.arrayBuffer());
+
+  let transcript: string;
+  try {
+    transcript = extractTranscriptFromUpload({
+      filename: input.file.name,
+      bytes,
+    });
+  } catch (err) {
+    const code = err instanceof Error ? err.message : "";
+    if (code === "UNSUPPORTED_FORMAT" || code === "TRANSCRIPT_TOO_SHORT") {
+      return { ok: false, error: code };
+    }
+    throw err;
   }
 
-  const blob = await put(
-    `meetings/transcripts/${Date.now()}-${input.file.name}`,
-    bytes,
-    { access: "public", token },
-  );
+  const auth = resolveBlobPutAuth();
+  if (!auth) {
+    return { ok: true, transcript, blobUrl: "" };
+  }
 
-  return { transcript, blobUrl: blob.url };
+  try {
+    const pathname = buildOrgBlobPath(
+      input.organizationId,
+      "meetings/transcripts",
+      `${Date.now()}-${sanitizeBlobFilename(input.file.name)}`,
+    );
+    const blob = await put(pathname, bytes, blobPutOptions(auth, { addRandomSuffix: true }));
+    return { ok: true, transcript, blobUrl: blob.url };
+  } catch (err) {
+    console.error("uploadMeetingTranscriptFile", err);
+    return { ok: true, transcript, blobUrl: "" };
+  }
+}
+
+export function isMeetingTranscriptBlobConfigured(): boolean {
+  return isBlobConfigured();
 }

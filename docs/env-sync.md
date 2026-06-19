@@ -43,6 +43,7 @@ ENV_FILE=.env.production.staging npm run sync:vercel-env
 | `APP_BASE_URL` | e.g. `https://sales-time-mytradeshowai.vercel.app` |
 | `RESEND_API_KEY` | [Resend](https://resend.com) API key |
 | `EMAIL_FROM` | e.g. `Sales Time <onboarding@yourdomain.com>` |
+| `BLOB_STORE_ID` | Vercel Blob store id (e.g. `store_…`) |
 | `BLOB_READ_WRITE_TOKEN` | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) read/write token |
 | `SUPERADMIN_EMAILS` | Comma-separated admin emails for plan upgrade alerts |
 | `AUTH_SESSION_VERSION` | Bump on release to force re-login (or rely on deploy SHA) |

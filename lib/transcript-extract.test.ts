@@ -1,5 +1,21 @@
 import { describe, expect, it } from "@jest/globals";
-import { extractTranscriptFromUpload } from "./transcript-extract";
+import {
+  extractTranscriptFromUpload,
+  mergeMeetingTranscriptSources,
+} from "./transcript-extract";
+
+describe("mergeMeetingTranscriptSources", () => {
+  it("prefers file then pasted complement", () => {
+    expect(
+      mergeMeetingTranscriptSources("from file", "extra notes"),
+    ).toBe("from file\n\n---\n\nextra notes");
+  });
+
+  it("returns whichever side is present", () => {
+    expect(mergeMeetingTranscriptSources("", "paste only")).toBe("paste only");
+    expect(mergeMeetingTranscriptSources("file only", "")).toBe("file only");
+  });
+});
 
 describe("extractTranscriptFromUpload", () => {
   it("extracts plain text from .txt files", () => {
