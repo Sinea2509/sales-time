@@ -24,6 +24,7 @@ export function MeetingEditDialog({
   meeting,
   formOptions,
   onOpenChange,
+  onSuccess,
 }: {
   prospectName: string;
   open: boolean;
@@ -32,8 +33,18 @@ export function MeetingEditDialog({
   meeting: MeetingEditPayload | null;
   formOptions: MeetingFormOptions;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }) {
   const router = useRouter();
+
+  function handleSuccess() {
+    onOpenChange(false);
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      router.refresh();
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,10 +85,7 @@ export function MeetingEditDialog({
               meetingTypeOptions={formOptions.meetingTypeOptions}
               pipelineStageOptions={formOptions.pipelineStageOptions}
               onCancel={() => onOpenChange(false)}
-              onSuccess={() => {
-                onOpenChange(false);
-                router.refresh();
-              }}
+              onSuccess={handleSuccess}
             />
           ) : null}
         </div>

@@ -44,7 +44,8 @@ export type TeamMemberPerformanceShellProps = {
   nbRdvs: number;
   decouverte: number;
   proposition: number;
-  tamMinutes: number | null;
+  /** TAM cumulé — somme des durées de conversation utile sur la fenêtre. */
+  tamCumuleMinutes: number;
   performanceForces: string | null;
   performanceAxes: string | null;
   performanceStop: string | null;
@@ -63,7 +64,7 @@ export function TeamMemberPerformanceShell({
   nbRdvs,
   decouverte,
   proposition,
-  tamMinutes,
+  tamCumuleMinutes,
   performanceForces,
   performanceAxes,
   performanceStop,
@@ -116,12 +117,12 @@ export function TeamMemberPerformanceShell({
           })}
           {statColumn({
             value:
-              tamMinutes != null
-                ? formatDurationHoursMinutes(tamMinutes)
+              tamCumuleMinutes > 0
+                ? formatDurationHoursMinutes(tamCumuleMinutes)
                 : "—",
-            label: "TAM",
+            label: "TAM cumulé",
             title:
-              "Temps d'appel moyen sur l'ensemble des RDV connectés de ce commercial (durée renseignée)",
+              "Temps de conversation utile cumulé sur les RDV connectés de ce commercial (durée renseignée)",
           })}
         </div>
       </div>

@@ -1,15 +1,13 @@
 "use client";
 
 import { useRouter } from "@/i18n/navigation";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { Eye, MoreHorizontal, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { deleteMeetingAction } from "@/app/[locale]/company/rendez-vous/actions";
 import {
-  deleteMeetingAction,
-  getMeetingForEditAction,
-  getOrgMeetingFormOptionsAction,
-  type MeetingEditPayload,
-} from "@/app/[locale]/company/rendez-vous/actions";
-import { MeetingEditDialog } from "@/components/organisms/meeting-edit-dialog";
+  MeetingEditDialogHost,
+  useMeetingEditDialog,
+} from "@/components/organisms/meeting-edit-trigger";
 import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,16 +27,7 @@ export function RendezVousMeetingRowActions({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [editOpen, setEditOpen] = useState(false);
-  const [editLoading, setEditLoading] = useState(false);
-  const [editLoadError, setEditLoadError] = useState<string | null>(null);
-  const [editMeeting, setEditMeeting] = useState<MeetingEditPayload | null>(
-    null,
-  );
-  const [formOptions, setFormOptions] = useState({
-    meetingTypeOptions: [] as string[],
-    pipelineStageOptions: [] as string[],
-  });
+  const edit = useMeetingEditDialog(meetingId);
 
   const handleDelete = () => {
     if (pending) return;
@@ -55,43 +44,6 @@ export function RendezVousMeetingRowActions({
       router.refresh();
     });
   };
-
-  async function openEditDialog() {
-    setEditOpen(true);
-    setEditLoading(true);
-    setEditLoadError(null);
-    setEditMeeting(null);
-
-    const [meetingRes, optionsRes] = await Promise.all([
-      getMeetingForEditAction(meetingId),
-      getOrgMeetingFormOptionsAction(),
-    ]);
-
-    if (!meetingRes.ok) {
-      setEditLoadError(
-        meetingRes.error === "FORBIDDEN"
-          ? "Vous n'avez pas le droit de modifier ce rendez-vous."
-          : "Impossible de charger ce rendez-vous.",
-      );
-    } else {
-      setEditMeeting(meetingRes.meeting);
-    }
-
-    if (optionsRes.ok) {
-      setFormOptions({
-        meetingTypeOptions: optionsRes.meetingTypeOptions,
-        pipelineStageOptions: optionsRes.pipelineStageOptions,
-      });
-    }
-
-    setEditLoading(false);
-  }
-
-  function closeEditDialog() {
-    setEditOpen(false);
-    setEditLoadError(null);
-    setEditMeeting(null);
-  }
 
   return (
     <>
@@ -113,7 +65,7 @@ export function RendezVousMeetingRowActions({
             <Eye className="size-4" />
             Ouvrir
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => void openEditDialog()}>
+          <DropdownMenuItem onClick={() => void edit.openEditDialog()}>
             <Pencil className="size-4" />
             Modifier
           </DropdownMenuItem>
@@ -137,18 +89,7 @@ export function RendezVousMeetingRowActions({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <MeetingEditDialog
-        prospectName={prospectName}
-        open={editOpen}
-        loading={editLoading}
-        loadError={editLoadError}
-        meeting={editMeeting}
-        formOptions={formOptions}
-        onOpenChange={(next) => {
-          if (!next) closeEditDialog();
-          else void openEditDialog();
-        }}
-      />
+      <MeetingEditDialogHost prospectName={prospectName} edit={edit} />
     </>
   );
 }

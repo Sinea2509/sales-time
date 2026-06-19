@@ -59,6 +59,7 @@ export default async function RendezVousDetailPage({
   const isSeller =
     actor.internalUserId != null &&
     meeting.sellerUserId === actor.internalUserId;
+  const canEdit = isSeller || actor.canManageOrganization;
 
   const processingLooksStuck = isMeetingAnalysisStuck({
     status: meeting.status,
@@ -91,6 +92,7 @@ export default async function RendezVousDetailPage({
       discResult={discParsed?.success ? discParsed.data : null}
       kissResult={kissParsed?.success ? kissParsed.data : null}
       showKissCoaching={isSeller}
+      canEdit={canEdit}
       processingLooksStuck={processingLooksStuck}
     />
   );

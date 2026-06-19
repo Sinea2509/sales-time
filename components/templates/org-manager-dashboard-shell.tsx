@@ -7,6 +7,7 @@ import {
   LineChart,
   Settings,
   Users,
+  UsersRound,
 } from "lucide-react";
 import {
   OrgDashboardShellFrame,
@@ -47,6 +48,12 @@ export function OrgManagerDashboardShell(props: Props) {
     {
       label: tWorkspace("managerNavTeam"),
       items: [
+        {
+          href: "/company/equipe",
+          label: tNav("myTeam"),
+          icon: UsersRound,
+          match: "prefix",
+        },
         {
           href: "/company/rendez-vous",
           label: tNav("meetingsTeam"),

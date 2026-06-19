@@ -5,6 +5,7 @@ import { ContentCard } from "@/components/molecules/content-card";
 import { InfoCard } from "@/components/molecules/info-card";
 import { NavLinkButton } from "@/components/molecules/nav-link-button";
 import { MeetingAnalysisButtons } from "@/components/organisms/meeting-analysis-buttons";
+import { MeetingEditButton } from "@/components/organisms/meeting-edit-trigger";
 import { MeetingFollowUpEmailBlock } from "@/components/organisms/meeting-follow-up-email";
 import { MeetingOneClickAnalyze } from "@/components/organisms/meeting-one-click-analyze";
 import { MeetingTranscriptPreview } from "@/components/molecules/meeting-transcript-preview";
@@ -46,6 +47,7 @@ export type MeetingDetailShellProps = {
   discResult: DiscAnalysisResult | null;
   kissResult: KissAnalysisResult | null;
   showKissCoaching: boolean;
+  canEdit?: boolean;
   processingLooksStuck?: boolean;
 };
 
@@ -56,6 +58,7 @@ export function MeetingDetailShell({
   discResult,
   kissResult,
   showKissCoaching,
+  canEdit = false,
   processingLooksStuck = false,
 }: MeetingDetailShellProps) {
   const soncas = analyses.find((a) => a.kind === "SONCAS");
@@ -91,9 +94,17 @@ export function MeetingDetailShell({
               : ""}
           </p>
         </div>
-        <NavLinkButton href="/company/rendez-vous" variant="ghost" size="sm">
-          Retour
-        </NavLinkButton>
+        <div className="flex flex-wrap items-center gap-2">
+          {canEdit ? (
+            <MeetingEditButton
+              meetingId={meeting.id}
+              prospectName={meeting.prospectName}
+            />
+          ) : null}
+          <NavLinkButton href="/company/rendez-vous" variant="ghost" size="sm">
+            Retour
+          </NavLinkButton>
+        </div>
       </div>
 
       {meeting.status === "FAILED" && meeting.errorMessage ? (

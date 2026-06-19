@@ -69,7 +69,7 @@ export default async function ManagerCommercialViewPage({
   const orgId = actor.activeOrganizationId;
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
 
-  const [member, home, globalKissJson, tamMinutes] = await Promise.all([
+  const [member, home, globalKissJson] = await Promise.all([
     deps.organizationTeam.findMembershipForManagerView(orgId, userId),
     getOrgDashboardHome(
       {
@@ -83,10 +83,6 @@ export default async function ManagerCommercialViewPage({
       },
     ),
     deps.globalKissCoachingPrompts.getPrompts(),
-    deps.meetings.averageDurationMinForMeetingsInWindow({
-      organizationId: orgId,
-      sellerUserId: userId,
-    }),
   ]);
 
   if (!member) notFound();
@@ -194,7 +190,7 @@ export default async function ManagerCommercialViewPage({
       nbRdvs={home.nbRdvs}
       decouverte={decouverte}
       proposition={proposition}
-      tamMinutes={tamMinutes}
+      tamCumuleMinutes={home.tamCumuleMinutes}
       performanceForces={performanceParagraphText(
         performanceSummary?.forces,
         paragraphOptions,
