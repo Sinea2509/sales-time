@@ -1,16 +1,8 @@
-import UAParserModule from "ua-parser-js";
+import { UAParser } from "ua-parser-js";
 import { z } from "zod";
 import type { FeedbackType } from "@/src/core/ports/feedback-repository-port";
 import type { FeedbackPriority } from "@/src/core/ports/feedback-repository-port";
 import { defaultFeedbackPriorityForType } from "@/src/core/domain/feedback-target-element";
-
-type UAParserInstance = {
-  getBrowser(): { name?: string; version?: string };
-  getOS(): { name?: string; version?: string };
-  getDevice(): { type?: string };
-};
-
-const Parser = UAParserModule as unknown as new (ua: string) => UAParserInstance;
 
 export const feedbackPrioritySchema = z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]);
 
@@ -25,7 +17,7 @@ export function parseFeedbackUserAgent(userAgent: string | null | undefined): Pa
     return { browser: null, os: null, deviceType: null };
   }
 
-  const parser = new Parser(userAgent);
+  const parser = new UAParser(userAgent);
   const browser = parser.getBrowser();
   const osInfo = parser.getOS();
   const device = parser.getDevice();
