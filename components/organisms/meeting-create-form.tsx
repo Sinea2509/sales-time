@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
 
-const TRANSCRIPT_ACCEPT = ".txt,.vtt,.srt,.md,text/plain";
+const TRANSCRIPT_ACCEPT =
+  ".txt,.csv,.md,.vtt,.srt,.doc,.docx,.pdf,text/plain";
 const TRANSCRIPT_MAX_BYTES = 4 * 1024 * 1024;
 
 const outcomes = [
@@ -76,10 +77,12 @@ export function MeetingCreateForm({
                     : res.error === "QUOTA_EXHAUSTED"
                       ? "Quota d'analyses épuisé — passez au plan pour continuer."
                       : res.error === "UNSUPPORTED_FORMAT"
-                        ? "Format de fichier non pris en charge (.txt, .vtt, .srt, .md)."
+                        ? "Format non pris en charge (.txt, .csv, .md, .vtt, .srt, .doc, .docx, .pdf)."
                         : res.error === "TRANSCRIPT_TOO_SHORT"
                           ? "Le transcript est trop court (minimum 20 caractères)."
-                          : res.error,
+                          : res.error === "EXTRACTION_FAILED"
+                            ? "Impossible de lire le contenu du fichier. Vérifiez qu'il n'est pas protégé ou corrompu, ou collez le texte."
+                            : res.error,
               );
               return;
             }
@@ -212,7 +215,7 @@ export function MeetingCreateForm({
               checked={useUpload}
               onChange={() => setUseUpload(true)}
             />
-            Importer un fichier (.txt, .vtt, .srt, .md)
+            Importer un fichier (.txt, .csv, .doc, .docx, .pdf…)
           </label>
         </div>
         {useUpload ? (
@@ -225,7 +228,7 @@ export function MeetingCreateForm({
               file={file}
               onFileChange={setFile}
               disabled={pending}
-              hint="Formats acceptés : .txt, .vtt, .srt, .md — 4 Mo max."
+              hint="Formats : .txt, .csv, .md, .vtt, .srt, .doc, .docx, .pdf — 4 Mo max."
             />
             <Textarea
               id="transcript"

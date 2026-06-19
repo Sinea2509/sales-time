@@ -1,14 +1,15 @@
 import { describe, expect, it } from "@jest/globals";
 import {
-  extractTranscriptFromUpload,
+  extractTextTranscript,
+  hasTextTranscriptExtension,
   mergeMeetingTranscriptSources,
 } from "./transcript-extract";
 
 describe("mergeMeetingTranscriptSources", () => {
   it("prefers file then pasted complement", () => {
-    expect(
-      mergeMeetingTranscriptSources("from file", "extra notes"),
-    ).toBe("from file\n\n---\n\nextra notes");
+    expect(mergeMeetingTranscriptSources("from file", "extra notes")).toBe(
+      "from file\n\n---\n\nextra notes",
+    );
   });
 
   it("returns whichever side is present", () => {
@@ -17,14 +18,32 @@ describe("mergeMeetingTranscriptSources", () => {
   });
 });
 
-describe("extractTranscriptFromUpload", () => {
+describe("hasTextTranscriptExtension", () => {
+  it("recognizes text formats including csv", () => {
+    expect(hasTextTranscriptExtension("a.txt")).toBe(true);
+    expect(hasTextTranscriptExtension("a.CSV")).toBe(true);
+    expect(hasTextTranscriptExtension("a.md")).toBe(true);
+    expect(hasTextTranscriptExtension("a.pdf")).toBe(false);
+    expect(hasTextTranscriptExtension("a.docx")).toBe(false);
+  });
+});
+
+describe("extractTextTranscript", () => {
   it("extracts plain text from .txt files", () => {
     const text = "A".repeat(25);
-    const result = extractTranscriptFromUpload({
-      filename: "call.txt",
-      bytes: Buffer.from(text, "utf8"),
-    });
-    expect(result).toBe(text);
+    expect(
+      extractTextTranscript({
+        filename: "call.txt",
+        bytes: Buffer.from(text, "utf8"),
+      }),
+    ).toBe(text);
+  });
+
+  it("reads .csv as text", () => {
+    const csv = "speaker,line\nAlice,Bonjour à tous merci\nBob,Avec plaisir";
+    expect(
+      extractTextTranscript({ filename: "call.csv", bytes: Buffer.from(csv) }),
+    ).toContain("Bonjour à tous");
   });
 
   it("strips VTT timestamps and headers", () => {
@@ -40,7 +59,7 @@ describe("extractTranscriptFromUpload", () => {
       "Merci beaucoup pour votre temps.",
     ].join("\n");
 
-    const result = extractTranscriptFromUpload({
+    const result = extractTextTranscript({
       filename: "call.vtt",
       bytes: Buffer.from(vtt, "utf8"),
     });
@@ -51,9 +70,9 @@ describe("extractTranscriptFromUpload", () => {
     expect(result).not.toContain("-->");
   });
 
-  it("throws UNSUPPORTED_FORMAT for unknown extensions", () => {
+  it("throws UNSUPPORTED_FORMAT for non-text extensions", () => {
     expect(() =>
-      extractTranscriptFromUpload({
+      extractTextTranscript({
         filename: "notes.pdf",
         bytes: Buffer.from("x".repeat(30)),
       }),
@@ -62,7 +81,7 @@ describe("extractTranscriptFromUpload", () => {
 
   it("throws TRANSCRIPT_TOO_SHORT when content is too small", () => {
     expect(() =>
-      extractTranscriptFromUpload({
+      extractTextTranscript({
         filename: "short.txt",
         bytes: Buffer.from("too short", "utf8"),
       }),

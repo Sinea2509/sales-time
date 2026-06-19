@@ -128,13 +128,7 @@ export async function createMeetingAction(formData: FormData) {
       file,
     });
     if (!uploaded.ok) {
-      return {
-        ok: false as const,
-        error:
-          uploaded.error === "UNSUPPORTED_FORMAT"
-            ? ("UNSUPPORTED_FORMAT" as const)
-            : ("TRANSCRIPT_TOO_SHORT" as const),
-      };
+      return { ok: false as const, error: uploaded.error };
     }
     transcriptFromFile = uploaded.transcript;
     sourceBlobUrl = uploaded.blobUrl || null;

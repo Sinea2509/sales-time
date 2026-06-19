@@ -1,7 +1,5 @@
-import {
-  extractTranscriptFromUpload,
-  mergeMeetingTranscriptSources,
-} from "@/lib/transcript-extract";
+import { mergeMeetingTranscriptSources } from "@/lib/transcript-extract";
+import { extractTranscriptFromUpload } from "@/lib/extract-transcript-from-upload";
 import { fetchOrgBlobBytes } from "@/lib/blob-access";
 import type { MeetingSourceType } from "@/src/core/domain/meeting-status";
 
@@ -46,7 +44,7 @@ async function fetchTranscriptTextFromOrgBlob(input: {
   const filename = decodeURIComponent(pathname.split("/").pop() ?? "transcript.txt");
 
   try {
-    return extractTranscriptFromUpload({ filename, bytes: file.bytes });
+    return await extractTranscriptFromUpload({ filename, bytes: file.bytes });
   } catch {
     return null;
   }

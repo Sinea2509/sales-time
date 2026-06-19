@@ -8,11 +8,10 @@ import {
   buildOrgBlobPath,
   sanitizeBlobFilename,
 } from "@/lib/blob-paths";
-import { extractTranscriptFromUpload } from "@/lib/transcript-extract";
+import { extractTranscriptFromUpload } from "@/lib/extract-transcript-from-upload";
+import type { TranscriptExtractionError } from "@/lib/transcript-extract";
 
-export type UploadMeetingTranscriptError =
-  | "UNSUPPORTED_FORMAT"
-  | "TRANSCRIPT_TOO_SHORT";
+export type UploadMeetingTranscriptError = TranscriptExtractionError;
 
 export type UploadMeetingTranscriptResult =
   | { ok: true; transcript: string; blobUrl: string }
@@ -26,13 +25,17 @@ export async function uploadMeetingTranscriptFile(input: {
 
   let transcript: string;
   try {
-    transcript = extractTranscriptFromUpload({
+    transcript = await extractTranscriptFromUpload({
       filename: input.file.name,
       bytes,
     });
   } catch (err) {
     const code = err instanceof Error ? err.message : "";
-    if (code === "UNSUPPORTED_FORMAT" || code === "TRANSCRIPT_TOO_SHORT") {
+    if (
+      code === "UNSUPPORTED_FORMAT" ||
+      code === "TRANSCRIPT_TOO_SHORT" ||
+      code === "EXTRACTION_FAILED"
+    ) {
       return { ok: false, error: code };
     }
     throw err;
