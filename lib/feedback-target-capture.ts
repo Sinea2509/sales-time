@@ -18,7 +18,37 @@ export function resolveMeaningfulPickerTarget(element: Element | null): Element 
   while (current && isFeedbackPickerExcludedElement(current)) {
     current = current.parentElement;
   }
+  if (!current) return null;
+
+  const feedbackMarked = current.closest("[data-feedback-id]");
+  if (feedbackMarked && !isFeedbackPickerExcludedElement(feedbackMarked)) {
+    return feedbackMarked;
+  }
+
+  const interactive = current.closest(
+    "button, a, input, select, textarea, label[for], [role='button'], [role='link'], [role='menuitem'], [role='tab']",
+  );
+  if (interactive && !isFeedbackPickerExcludedElement(interactive)) {
+    return interactive;
+  }
+
   return current;
+}
+
+export function pickElementAtPoint(clientX: number, clientY: number): Element | null {
+  if (typeof document === "undefined") return null;
+
+  const stack =
+    typeof document.elementsFromPoint === "function"
+      ? document.elementsFromPoint(clientX, clientY)
+      : ([document.elementFromPoint(clientX, clientY)].filter(Boolean) as Element[]);
+
+  for (const candidate of stack) {
+    const resolved = resolveMeaningfulPickerTarget(candidate);
+    if (resolved) return resolved;
+  }
+
+  return null;
 }
 
 export function readDataFeedbackIdFromDom(element: Element): string | null {

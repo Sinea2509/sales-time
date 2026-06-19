@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState, useTransition } from "react";
-import { MessageSquarePlus } from "lucide-react";
+import { MessageSquarePlus, MousePointerClick, PenLine } from "lucide-react";
 import { submitFeedbackAction } from "@/app/[locale]/company/feedback-actions";
 import { FeedbackElementPickerOverlay } from "@/components/molecules/feedback-element-picker-overlay";
 import { FeedbackScreenshotPreview } from "@/components/molecules/feedback-screenshot-preview";
@@ -29,7 +29,7 @@ import { buildClientTechnicalContextSnapshot } from "@/src/core/domain/feedback-
 import type { FeedbackTargetElement } from "@/src/core/domain/feedback-target-element";
 import type { FeedbackPriority, FeedbackType } from "@/src/core/ports/feedback-repository-port";
 
-type WidgetPhase = "idle" | "picking" | "form";
+type WidgetPhase = "idle" | "choose" | "picking" | "form";
 
 export function FeedbackWidget() {
   const [phase, setPhase] = useState<WidgetPhase>("idle");
@@ -63,7 +63,13 @@ export function FeedbackWidget() {
     setError(null);
   }
 
-  function openPicker() {
+  function openChoose() {
+    setDone(false);
+    setError(null);
+    setPhase("choose");
+  }
+
+  function startPicker() {
     setDone(false);
     setError(null);
     setPhase("picking");
@@ -131,7 +137,7 @@ export function FeedbackWidget() {
         size="sm"
         className="h-8 gap-1.5"
         data-feedback-id="feedback-open"
-        onClick={openPicker}
+        onClick={openChoose}
       >
         <MessageSquarePlus className="size-3.5" />
         Feedback
@@ -140,40 +146,82 @@ export function FeedbackWidget() {
       {phase === "picking" ? (
         <FeedbackElementPickerOverlay
           onSelect={(target) => openForm(target)}
-          onSkip={() => openForm(null)}
-          onCancel={() => setPhase("idle")}
+          onCancel={() => setPhase("choose")}
         />
       ) : null}
 
       <Dialog
-        open={phase === "form"}
+        open={phase === "choose" || phase === "form"}
         onOpenChange={(open) => {
           if (!open) resetWidget();
         }}
       >
-        <DialogContent className="max-w-md" data-feedback-dialog>
-          <DialogHeader>
-            <DialogTitle>Envoyer un feedback</DialogTitle>
-          </DialogHeader>
-          {done ? (
-            <p className="text-sm text-emerald-700">
-              Merci — votre retour a été enregistré.
-            </p>
+        <DialogContent className="max-h-[calc(100vh-2rem)] max-w-md overflow-y-auto" data-feedback-dialog>
+          {phase === "choose" ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Envoyer un feedback</DialogTitle>
+              </DialogHeader>
+              <p className="text-muted-foreground text-sm">
+                Ciblez un élément de la page ou envoyez un retour général.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-auto flex-col items-start gap-2 px-4 py-4 text-left"
+                  data-feedback-id="feedback-choose-element"
+                  onClick={startPicker}
+                >
+                  <MousePointerClick className="size-5 shrink-0 text-blue-600" />
+                  <span className="flex flex-col gap-0.5">
+                    <span className="font-medium">Sélectionner un élément</span>
+                    <span className="text-muted-foreground text-xs font-normal">
+                      Survolez la page avec le curseur et cliquez sur la zone concernée.
+                    </span>
+                  </span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-auto flex-col items-start gap-2 px-4 py-4 text-left"
+                  data-feedback-id="feedback-choose-form"
+                  onClick={() => openForm(null)}
+                >
+                  <PenLine className="size-5 shrink-0" />
+                  <span className="flex flex-col gap-0.5">
+                    <span className="font-medium">Remplir le formulaire</span>
+                    <span className="text-muted-foreground text-xs font-normal">
+                      Décrivez votre retour sans cibler un élément précis.
+                    </span>
+                  </span>
+                </Button>
+              </div>
+            </>
           ) : (
-            <div className="space-y-4">
+            <>
+              <DialogHeader>
+                <DialogTitle>Envoyer un feedback</DialogTitle>
+              </DialogHeader>
+              {done ? (
+                <p className="text-sm text-emerald-700">
+                  Merci — votre retour a été enregistré.
+                </p>
+              ) : (
+                <div className="min-w-0 space-y-4">
               {targetElement ? (
-                <div className="bg-muted/40 rounded-lg border p-3 text-xs">
+                <div className="bg-muted/40 min-w-0 overflow-hidden rounded-lg border p-3 text-xs">
                   <p className="font-medium">Élément ciblé</p>
-                  <p className="text-muted-foreground mt-1">
+                  <p className="text-muted-foreground mt-1 break-words">
                     {targetElement.tagName}
                     {targetElement.dataFeedbackId
                       ? ` · ${targetElement.dataFeedbackId}`
                       : ""}
                   </p>
                   {targetElement.textSnippet ? (
-                    <p className="mt-1 truncate">&quot;{targetElement.textSnippet}&quot;</p>
+                    <p className="mt-1 break-words">&quot;{targetElement.textSnippet}&quot;</p>
                   ) : null}
-                  <p className="text-muted-foreground mt-1 truncate font-mono">
+                  <p className="text-muted-foreground mt-1 break-all font-mono text-[11px] leading-relaxed">
                     {targetElement.cssSelector}
                   </p>
                 </div>
@@ -248,7 +296,9 @@ export function FeedbackWidget() {
               >
                 {pending ? "Envoi…" : "Envoyer"}
               </Button>
-            </div>
+                </div>
+              )}
+            </>
           )}
         </DialogContent>
       </Dialog>
