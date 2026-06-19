@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { runAllMeetingAnalysesAction } from "@/app/[locale]/company/rendez-vous/[id]/actions";
+import { formatMeetingAnalysisActionError } from "@/lib/analysis-action-errors";
 import { Button } from "@/components/ui/button";
 
 export function MeetingOneClickAnalyze({ meetingId }: { meetingId: string }) {
@@ -21,10 +22,7 @@ export function MeetingOneClickAnalyze({ meetingId }: { meetingId: string }) {
           startTransition(async () => {
             const r = await runAllMeetingAnalysesAction(meetingId);
             if (!r.ok) {
-              setMsg(
-                r.message ??
-                  `${r.error}${"failedKind" in r && r.failedKind ? ` (${r.failedKind})` : ""}`,
-              );
+              setMsg(formatMeetingAnalysisActionError(r));
               return;
             }
             router.refresh();

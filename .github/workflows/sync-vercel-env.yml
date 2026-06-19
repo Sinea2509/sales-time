@@ -1,0 +1,40 @@
+name: Sync Vercel env
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - .github/vercel-env.manifest.json
+      - .github/workflows/sync-vercel-env.yml
+      - scripts/sync-vercel-env.mjs
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Sync secrets to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
+          SUPER_ADMIN_ORG_COOKIE_SECRET: ${{ secrets.SUPER_ADMIN_ORG_COOKIE_SECRET }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          SUPERADMIN_EMAILS: ${{ secrets.SUPERADMIN_EMAILS }}
+          AUTH_SESSION_VERSION: ${{ secrets.AUTH_SESSION_VERSION }}
+        run: node scripts/sync-vercel-env.mjs

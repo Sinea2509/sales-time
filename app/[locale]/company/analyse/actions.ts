@@ -1,141 +1,62 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
-import { requireAiGatewayApiKey } from "@/lib/env";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { getApplicationDeps } from "@/lib/application-deps";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
-import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
-import { runMeetingAnalysis } from "@/src/core/application/run-meeting-analysis";
+import { requireAnalysisActor } from "@/lib/analysis-server-context";
+import { loadCommercialKissAppendix } from "@/lib/kiss-commercial-appendix";
+import { meetingIdSchema } from "@/lib/schemas/meeting";
+import {
+  runMeetingAnalysis,
+  type AnalysisKindToRun,
+} from "@/src/core/application/run-meeting-analysis";
 
-const meetingIdSchema = z.string().trim().min(1).max(64);
+function revalidateMeetingAnalysisPaths(meetingId: string) {
+  revalidatePath("/company/analyse");
+  revalidatePath(`/company/rendez-vous/${meetingId}`);
+  revalidatePath("/company");
+}
 
-export async function runSoncasAnalysisAction(meetingId: string) {
+export async function runMeetingAnalysisAction(
+  meetingId: string,
+  kind: AnalysisKindToRun,
+) {
   const parsedId = meetingIdSchema.safeParse(meetingId);
   if (!parsedId.success) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
+  const actor = await requireAnalysisActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
-  requireAiGatewayApiKey();
+  const kissSystemMarkdownAppendix =
+    kind === "KISS"
+      ? await loadCommercialKissAppendix(actor.deps)
+      : undefined;
 
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    {
-      superAdminElevatedOrganizationId: superAdminOrg,
-    },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" };
-  }
-
-  const result = await runMeetingAnalysis(deps, {
-    organizationId: ctx.activeOrganizationId,
+  const result = await runMeetingAnalysis(actor.deps, {
+    organizationId: actor.organizationId,
     meetingId: parsedId.data,
-    kind: "SONCAS",
+    kind,
     model: ANALYSIS_GATEWAY_MODEL,
+    kissSystemMarkdownAppendix,
   });
 
   if (!result.ok) {
     return { ok: false as const, error: result.error, message: result.message };
   }
 
-  revalidatePath("/company/analyse");
-  revalidatePath(`/company/rendez-vous/${parsedId.data}`);
-  revalidatePath("/company");
+  revalidateMeetingAnalysisPaths(parsedId.data);
   return { ok: true as const, analysisId: result.analysisId };
+}
+
+export async function runSoncasAnalysisAction(meetingId: string) {
+  return runMeetingAnalysisAction(meetingId, "SONCAS");
 }
 
 export async function runDiscAnalysisAction(meetingId: string) {
-  const parsedId = meetingIdSchema.safeParse(meetingId);
-  if (!parsedId.success) {
-    return { ok: false as const, error: "VALIDATION" };
-  }
-
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
-
-  requireAiGatewayApiKey();
-
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    {
-      superAdminElevatedOrganizationId: superAdminOrg,
-    },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" };
-  }
-
-  const result = await runMeetingAnalysis(deps, {
-    organizationId: ctx.activeOrganizationId,
-    meetingId: parsedId.data,
-    kind: "DISC",
-    model: ANALYSIS_GATEWAY_MODEL,
-  });
-
-  if (!result.ok) {
-    return { ok: false as const, error: result.error, message: result.message };
-  }
-
-  revalidatePath("/company/analyse");
-  revalidatePath(`/company/rendez-vous/${parsedId.data}`);
-  revalidatePath("/company");
-  return { ok: true as const, analysisId: result.analysisId };
+  return runMeetingAnalysisAction(meetingId, "DISC");
 }
 
 export async function runKissAnalysisAction(meetingId: string) {
-  const parsedId = meetingIdSchema.safeParse(meetingId);
-  if (!parsedId.success) {
-    return { ok: false as const, error: "VALIDATION" };
-  }
-
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
-
-  requireAiGatewayApiKey();
-
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    {
-      superAdminElevatedOrganizationId: superAdminOrg,
-    },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" };
-  }
-
-  const orgId = ctx.activeOrganizationId;
-  const globalKissJson = await deps.globalKissCoachingPrompts.getPrompts();
-  const kissAppendix = kissMarkdownAppendixForAudience(
-    globalKissJson,
-    "commercial",
-  );
-
-  const result = await runMeetingAnalysis(deps, {
-    organizationId: orgId,
-    meetingId: parsedId.data,
-    kind: "KISS",
-    model: ANALYSIS_GATEWAY_MODEL,
-    kissSystemMarkdownAppendix: kissAppendix,
-  });
-
-  if (!result.ok) {
-    return { ok: false as const, error: result.error, message: result.message };
-  }
-
-  revalidatePath("/company/analyse");
-  revalidatePath(`/company/rendez-vous/${parsedId.data}`);
-  revalidatePath("/company");
-  return { ok: true as const, analysisId: result.analysisId };
+  return runMeetingAnalysisAction(meetingId, "KISS");
 }

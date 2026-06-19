@@ -36,6 +36,12 @@ export interface PromptTemplateRepositoryPort {
     kind: AnalysisKindSlug;
   }): Promise<PromptTemplateVersionRow | null>;
 
+  /** Ensures a DB prompt version exists (seeds from default markdown when missing). */
+  ensureCurrentVersion(input: {
+    kind: AnalysisKindSlug;
+    defaultMarkdown: string;
+  }): Promise<PromptTemplateVersionRow>;
+
   listVersions(input: {
     kind: AnalysisKindSlug;
     limit?: number;

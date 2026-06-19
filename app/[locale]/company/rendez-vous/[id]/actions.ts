@@ -1,47 +1,29 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
-import { requireAiGatewayApiKey } from "@/lib/env";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { getApplicationDeps } from "@/lib/application-deps";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import {
+  requireAnalysisActor,
+  requireOrgActor,
+} from "@/lib/analysis-server-context";
+import { loadCommercialKissAppendix } from "@/lib/kiss-commercial-appendix";
+import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { generateFollowUpEmailForMeeting } from "@/src/core/application/generate-follow-up-email";
-import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { runMeetingAnalysis } from "@/src/core/application/run-meeting-analysis";
-
-const meetingIdSchema = z.string().cuid();
+import { formatFollowUpEmailDraft } from "@/src/core/domain/format-follow-up-email-draft";
 
 export async function runAllMeetingAnalysesAction(meetingId: string) {
   const parsed = meetingIdSchema.safeParse(meetingId);
   if (!parsed.success)
     return { ok: false as const, error: "VALIDATION" as const };
 
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal)
-    return { ok: false as const, error: "UNAUTHENTICATED" as const };
-  requireAiGatewayApiKey();
+  const actor = await requireAnalysisActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    { superAdminElevatedOrganizationId: superAdminOrg },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" as const };
-  }
-
-  const orgId = ctx.activeOrganizationId;
-  const globalKissJson = await deps.globalKissCoachingPrompts.getPrompts();
-  const kissAppendix = kissMarkdownAppendixForAudience(
-    globalKissJson,
-    "commercial",
-  );
+  const kissAppendix = await loadCommercialKissAppendix(actor.deps);
   for (const kind of ["SONCAS", "DISC", "KISS"] as const) {
-    const r = await runMeetingAnalysis(deps, {
-      organizationId: orgId,
+    const r = await runMeetingAnalysis(actor.deps, {
+      organizationId: actor.organizationId,
       meetingId: parsed.data,
       kind,
       model: ANALYSIS_GATEWAY_MODEL,
@@ -68,57 +50,33 @@ export async function generateFollowUpEmailAction(meetingId: string) {
   if (!parsed.success)
     return { ok: false as const, error: "VALIDATION" as const };
 
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal)
-    return { ok: false as const, error: "UNAUTHENTICATED" as const };
-  requireAiGatewayApiKey();
+  const actor = await requireAnalysisActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    { superAdminElevatedOrganizationId: superAdminOrg },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" as const };
-  }
-
-  const meeting = await deps.meetings.findMeetingDetailWithAnalyses({
+  const meeting = await actor.deps.meetings.findMeetingDetailWithAnalyses({
     id: parsed.data,
-    organizationId: ctx.activeOrganizationId,
+    organizationId: actor.organizationId,
   });
   if (!meeting) return { ok: false as const, error: "NOT_FOUND" as const };
 
-  const settings = await deps.organizationSettings.findByOrganizationId(
-    ctx.activeOrganizationId,
+  const settings = await actor.deps.organizationSettings.findByOrganizationId(
+    actor.organizationId,
   );
 
   try {
     const email = await generateFollowUpEmailForMeeting(
-      { analysis: deps.analysis, prompts: deps.prompts },
+      { analysis: actor.deps.analysis, prompts: actor.deps.prompts },
       {
         meeting,
         organizationSettings: settings,
         model: ANALYSIS_GATEWAY_MODEL,
       },
     );
-    const draft = [
-      `Objet : ${email.subject}`,
-      "",
-      email.greeting,
-      "",
-      email.painPoints,
-      "",
-      email.proposedSolutions,
-      "",
-      email.nextSteps,
-      "",
-      email.closing,
-    ].join("\n");
+    const draft = formatFollowUpEmailDraft(email);
 
-    await deps.meetings.updateMeetingFollowUpDraft({
+    await actor.deps.meetings.updateMeetingFollowUpDraft({
       id: parsed.data,
-      organizationId: ctx.activeOrganizationId,
+      organizationId: actor.organizationId,
       followUpEmailDraft: draft,
     });
 
@@ -138,23 +96,12 @@ export async function saveFollowUpEmailDraftAction(
   if (!parsed.success)
     return { ok: false as const, error: "VALIDATION" as const };
 
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal)
-    return { ok: false as const, error: "UNAUTHENTICATED" as const };
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    { superAdminElevatedOrganizationId: superAdminOrg },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" as const };
-  }
-
-  const ok = await deps.meetings.updateMeetingFollowUpDraft({
+  const ok = await actor.deps.meetings.updateMeetingFollowUpDraft({
     id: parsed.data,
-    organizationId: ctx.activeOrganizationId,
+    organizationId: actor.organizationId,
     followUpEmailDraft: draft.trim() || null,
   });
   if (!ok) return { ok: false as const, error: "NOT_FOUND" as const };

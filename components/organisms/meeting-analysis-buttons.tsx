@@ -2,11 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import {
-  runDiscAnalysisAction,
-  runKissAnalysisAction,
-  runSoncasAnalysisAction,
-} from "@/app/[locale]/company/analyse/actions";
+import { runMeetingAnalysisAction } from "@/app/[locale]/company/analyse/actions";
+import { formatMeetingAnalysisActionError } from "@/lib/analysis-action-errors";
 import { Button } from "@/components/ui/button";
 
 type Props = { meetingId: string };
@@ -19,19 +16,9 @@ export function MeetingAnalysisButtons({ meetingId }: Props) {
   function run(kind: "SONCAS" | "DISC" | "KISS") {
     setMsg(null);
     startTransition(async () => {
-      const res =
-        kind === "SONCAS"
-          ? await runSoncasAnalysisAction(meetingId)
-          : kind === "DISC"
-            ? await runDiscAnalysisAction(meetingId)
-            : await runKissAnalysisAction(meetingId);
+      const res = await runMeetingAnalysisAction(meetingId, kind);
       if (!res.ok) {
-        setMsg(
-          res.message ??
-            (res.error === "PROMPT_NOT_CONFIGURED"
-              ? "Exécutez le seed Prisma (prompts manquants)."
-              : res.error),
-        );
+        setMsg(formatMeetingAnalysisActionError(res));
         return;
       }
       router.refresh();

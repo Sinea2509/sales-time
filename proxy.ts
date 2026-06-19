@@ -1,4 +1,12 @@
-import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
+import {
+  ACTIVE_ORG_COOKIE_NAME,
+  SESSION_COOKIE_NAME,
+  SESSION_VERSION_COOKIE_NAME,
+} from "@/lib/auth/constants";
+import {
+  buildSignInRedirectPath,
+  isSessionVersionCurrent,
+} from "@/lib/auth/session-version";
 import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -36,20 +44,49 @@ function isPublicPath(pathname: string): boolean {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+function buildReturnPath(request: NextRequest, pathForAuth: string): string {
+  return `${pathForAuth}${request.nextUrl.search}`;
+}
+
+function clearAuthCookies(response: NextResponse): void {
+  response.cookies.delete(SESSION_COOKIE_NAME);
+  response.cookies.delete(SESSION_VERSION_COOKIE_NAME);
+  response.cookies.delete(ACTIVE_ORG_COOKIE_NAME);
+}
+
+function redirectToSignIn(
+  request: NextRequest,
+  returnPath: string,
+  reason?: "new_version",
+): NextResponse {
+  const signIn = new URL(
+    buildSignInRedirectPath(returnPath, reason),
+    request.url,
+  );
+  const response = NextResponse.redirect(signIn);
+  clearAuthCookies(response);
+  return response;
+}
+
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const pathForAuth = stripLocalePrefix(pathname);
+  const returnPath = buildReturnPath(request, pathForAuth);
+
   if (!isPublicPath(pathForAuth)) {
     const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
     if (!token) {
-      const signIn = new URL("/sign-in", request.url);
-      signIn.searchParams.set(
-        "next",
-        `${pathForAuth}${request.nextUrl.search}`,
-      );
-      return NextResponse.redirect(signIn);
+      return redirectToSignIn(request, returnPath);
+    }
+
+    const sessionVersion = request.cookies.get(
+      SESSION_VERSION_COOKIE_NAME,
+    )?.value;
+    if (!isSessionVersionCurrent(sessionVersion)) {
+      return redirectToSignIn(request, returnPath, "new_version");
     }
   }
+
   return intlMiddleware(request);
 }
 

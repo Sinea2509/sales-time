@@ -86,6 +86,7 @@ export type MeetingDetailWithAnalyses = {
   followUpEmailDraft: string | null;
   transcript: string;
   notes: string | null;
+  updatedAt: Date;
   analyses: Array<{
     kind: MeetingAnalysisKind;
     model: string;

@@ -10,6 +10,8 @@ import {
   KeyRound,
   TimerOff,
   MailPlus,
+  Cog,
+  AlertTriangle,
 } from "lucide-react";
 import { cardTitleClass } from "@/lib/page-typography";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
@@ -60,6 +62,12 @@ export type AdminHealthDashboardProps = {
     pendingOrgInvitations: number;
     pendingSuperAdminInvitations: number;
   };
+  pipeline: {
+    jobsQueued: number;
+    jobsProcessing: number;
+    jobsDead: number;
+    meetingsProcessingStuck: number;
+  };
   now: Date;
   region: string;
   nodeEnv: string;
@@ -69,6 +77,7 @@ export type AdminHealthDashboardProps = {
 export function AdminHealthDashboard({
   dbHealth,
   counts,
+  pipeline,
   now,
   region,
   nodeEnv,
@@ -181,6 +190,38 @@ export function AdminHealthDashboard({
           label="Sessions (total)"
           value={sessionCount}
           accent="blue"
+        />
+      </div>
+
+      {/* Analysis pipeline */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <AdminKpiCard
+          icon={Cog}
+          label="Jobs analyse (file)"
+          value={pipeline.jobsQueued}
+          footer="AnalysisJob QUEUED"
+          accent="blue"
+        />
+        <AdminKpiCard
+          icon={Cog}
+          label="Jobs analyse (cours)"
+          value={pipeline.jobsProcessing}
+          footer="AnalysisJob PROCESSING"
+          accent="amber"
+        />
+        <AdminKpiCard
+          icon={AlertTriangle}
+          label="Jobs analyse (morts)"
+          value={pipeline.jobsDead}
+          footer="AnalysisJob DEAD — relancer manuellement"
+          accent="violet"
+        />
+        <AdminKpiCard
+          icon={AlertTriangle}
+          label="RDV bloqués (PROCESSING)"
+          value={pipeline.meetingsProcessingStuck}
+          footer=">15 min sans analyse — vérifier cron / AI key"
+          accent="emerald"
         />
       </div>
 

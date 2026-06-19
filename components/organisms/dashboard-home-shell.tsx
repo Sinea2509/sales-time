@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
+import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
@@ -26,9 +27,13 @@ const dateShort = new Intl.DateTimeFormat("fr-FR", {
 export function DashboardHomeShell({
   home,
   personOutreach = [],
+  meetingTypeOptions,
+  pipelineStageOptions,
 }: {
   home: OrgDashboardHome;
   personOutreach?: PersonOutreachSummaryRow[];
+  meetingTypeOptions: string[];
+  pipelineStageOptions: string[];
 }) {
   return (
     <div className="space-y-8">
@@ -136,14 +141,10 @@ export function DashboardHomeShell({
         >
           Préparer un RDV
         </BrandCtaLink>
-        <BrandCtaLink
-          href="/company/analyse"
-          variant="primary"
-          className="h-10 gap-1 rounded-md"
-        >
-          <span className="text-lg leading-none">+</span>
-          Analyser un nouveau RDV
-        </BrandCtaLink>
+        <MeetingCreateDialog
+          meetingTypeOptions={meetingTypeOptions}
+          pipelineStageOptions={pipelineStageOptions}
+        />
       </div>
 
       <section className="space-y-3">

@@ -1,8 +1,11 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
 import type {
   AdminHealthCounts,
+  AnalysisPipelineHealth,
   PlatformHealthRepositoryPort,
 } from "@/src/core/ports/platform-health-repository-port";
+
+const STUCK_PROCESSING_MINUTES = 15;
 
 export class PrismaPlatformHealthRepository implements PlatformHealthRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
@@ -58,6 +61,33 @@ export class PrismaPlatformHealthRepository implements PlatformHealthRepositoryP
       expiredSessions,
       pendingOrgInvitations,
       pendingSuperAdminInvitations,
+    };
+  }
+
+  async getAnalysisPipelineHealth(now: Date): Promise<AnalysisPipelineHealth> {
+    const staleBefore = new Date(
+      now.getTime() - STUCK_PROCESSING_MINUTES * 60_000,
+    );
+
+    const [jobsQueued, jobsProcessing, jobsDead, meetingsProcessingStuck] =
+      await Promise.all([
+        this.db.analysisJob.count({ where: { status: "QUEUED" } }),
+        this.db.analysisJob.count({ where: { status: "PROCESSING" } }),
+        this.db.analysisJob.count({ where: { status: "DEAD" } }),
+        this.db.meeting.count({
+          where: {
+            status: "PROCESSING",
+            updatedAt: { lt: staleBefore },
+            analyses: { none: {} },
+          },
+        }),
+      ]);
+
+    return {
+      jobsQueued,
+      jobsProcessing,
+      jobsDead,
+      meetingsProcessingStuck,
     };
   }
 }

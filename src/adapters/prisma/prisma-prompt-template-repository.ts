@@ -33,6 +33,28 @@ export class PrismaPromptTemplateRepository implements PromptTemplateRepositoryP
     };
   }
 
+  async ensureCurrentVersion(input: {
+    kind: AnalysisKindSlug;
+    defaultMarkdown: string;
+  }): Promise<PromptTemplateVersionRow> {
+    const current = await this.getCurrentVersion({ kind: input.kind });
+    if (current) return current;
+
+    const author = await this.db.user.findFirst({
+      orderBy: { createdAt: "asc" },
+      select: { id: true },
+    });
+    if (!author) {
+      throw new Error("Cannot seed prompt template: no user in database");
+    }
+
+    return this.publishNewVersion({
+      kind: input.kind,
+      markdown: input.defaultMarkdown,
+      authorUserId: author.id,
+    });
+  }
+
   async listVersions(input: {
     kind: AnalysisKindSlug;
     limit?: number;

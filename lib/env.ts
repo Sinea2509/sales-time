@@ -40,3 +40,16 @@ export function requireAiGatewayApiKey(): string {
   }
   return e.AI_GATEWAY_API_KEY;
 }
+
+export type AiGatewayConfigured =
+  | { ok: true; apiKey: string }
+  | { ok: false; error: "AI_NOT_CONFIGURED" };
+
+/** Non-throwing check for server actions and workers. */
+export function checkAiGatewayConfigured(): AiGatewayConfigured {
+  const key = getEnv().AI_GATEWAY_API_KEY;
+  if (!key) {
+    return { ok: false, error: "AI_NOT_CONFIGURED" };
+  }
+  return { ok: true, apiKey: key };
+}

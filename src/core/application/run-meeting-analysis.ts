@@ -1,9 +1,13 @@
+import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "@/lib/default-analysis-prompts";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type {
   MeetingAnalysisKind,
   MeetingRepositoryPort,
 } from "@/src/core/ports/meeting-repository-port";
-import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
+import type {
+  AnalysisKindSlug,
+  PromptTemplateRepositoryPort,
+} from "@/src/core/ports/prompt-template-repository-port";
 
 export type RunMeetingAnalysisResult =
   | { ok: true; analysisId: string }
@@ -18,6 +22,17 @@ export type RunMeetingAnalysisResult =
     };
 
 export type AnalysisKindToRun = MeetingAnalysisKind;
+
+async function resolvePromptVersion(
+  prompts: PromptTemplateRepositoryPort,
+  kind: AnalysisKindSlug,
+) {
+  const defaultMarkdown = DEFAULT_ANALYSIS_PROMPT_MARKDOWN[kind];
+  if (!defaultMarkdown?.trim()) {
+    return null;
+  }
+  return prompts.ensureCurrentVersion({ kind, defaultMarkdown });
+}
 
 export async function runMeetingAnalysis(
   deps: {
@@ -46,16 +61,24 @@ export async function runMeetingAnalysis(
     return { ok: false, error: "MEETING_NOT_FOUND" };
   }
 
-  const promptVersion = await deps.prompts.getCurrentVersion({
-    kind: input.kind,
-  });
+  let promptVersion;
+  try {
+    promptVersion = await resolvePromptVersion(deps.prompts, input.kind);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: "PROMPT_NOT_CONFIGURED", message };
+  }
   if (!promptVersion) {
     return { ok: false, error: "PROMPT_NOT_CONFIGURED" };
   }
 
   try {
-    if (input.kind === "SONCAS") {
-      const { result } = await deps.analysis.analyzeSoncas({
+    if (input.kind === "SONCAS" || input.kind === "DISC") {
+      const analyze =
+        input.kind === "SONCAS"
+          ? deps.analysis.analyzeSoncas
+          : deps.analysis.analyzeDisc;
+      const { result } = await analyze({
         systemMarkdown: promptVersion.markdown,
         transcript: meeting.transcript,
         notes: meeting.notes,
@@ -63,7 +86,7 @@ export async function runMeetingAnalysis(
       });
       const row = await deps.meetings.createAnalysis({
         meetingId: meeting.id,
-        kind: "SONCAS",
+        kind: input.kind,
         promptVersionId: promptVersion.id,
         model: input.model,
         result,
@@ -71,21 +94,9 @@ export async function runMeetingAnalysis(
       return { ok: true, analysisId: row.id };
     }
 
-    if (input.kind === "DISC") {
-      const { result } = await deps.analysis.analyzeDisc({
-        systemMarkdown: promptVersion.markdown,
-        transcript: meeting.transcript,
-        notes: meeting.notes,
-        model: input.model,
-      });
-      const row = await deps.meetings.createAnalysis({
-        meetingId: meeting.id,
-        kind: "DISC",
-        promptVersionId: promptVersion.id,
-        model: input.model,
-        result,
-      });
-      return { ok: true, analysisId: row.id };
+    if (input.kind !== "KISS") {
+      const unhandledKind: never = input.kind;
+      throw new Error(`Unhandled analysis kind: ${unhandledKind}`);
     }
 
     const [priorSoncas, priorDisc] = await Promise.all([

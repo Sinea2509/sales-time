@@ -5,7 +5,7 @@ import { z } from "zod";
 import { hashPassword } from "@/lib/auth/password";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { generateOpaqueToken } from "@/lib/auth/tokens";
-import { setSessionCookie } from "@/lib/auth/session-cookie";
+import { setSessionCookie, setActiveOrganizationCookie } from "@/lib/auth/session-cookie";
 import { tryNormalizeWebsiteForOrgKey } from "@/lib/website/normalize-website";
 import { verifyWebsiteReachable } from "@/lib/website/verify-website-reachable";
 import { USER_PROFILE_ROLES } from "@/src/core/domain/user-profile-role";
@@ -98,11 +98,11 @@ export async function signUpAction(
   });
 
   if (!reg.ok) {
-    if (reg.error === "WEBSITE_TAKEN") {
+    if (reg.error === "EMAIL_DOMAIN_MISMATCH") {
       return {
         ok: false,
         message:
-          "Une organisation est déjà enregistrée avec ce site web. Connectez-vous ou contactez votre administrateur.",
+          "Votre adresse e-mail doit correspondre au domaine du site web de l'entreprise. Utilisez une adresse professionnelle ou demandez une invitation à votre administrateur.",
       };
     }
     return {
@@ -118,6 +118,11 @@ export async function signUpAction(
     userAgent: null,
   });
   await setSessionCookie(raw);
+
+  if (reg.flow === "join_existing_organization") {
+    await setActiveOrganizationCookie(reg.organizationId);
+    redirect("/company");
+  }
 
   redirect("/onboarding");
 }

@@ -7,6 +7,7 @@ import { NavLinkButton } from "@/components/molecules/nav-link-button";
 import { MeetingAnalysisButtons } from "@/components/organisms/meeting-analysis-buttons";
 import { MeetingFollowUpEmailBlock } from "@/components/organisms/meeting-follow-up-email";
 import { MeetingOneClickAnalyze } from "@/components/organisms/meeting-one-click-analyze";
+import { MeetingTranscriptPreview } from "@/components/molecules/meeting-transcript-preview";
 import { Badge } from "@/components/ui/badge";
 import { meetingStatusBadgeClass,
   meetingStatusLabel,
@@ -38,12 +39,14 @@ export type MeetingDetailShellProps = {
     transcript: string;
     notes: string | null;
     followUpEmailDraft: string | null;
+    errorMessage: string | null;
   };
   analyses: MeetingAnalysisSummary[];
   soncasResult: SoncasAnalysisResult | null;
   discResult: DiscAnalysisResult | null;
   kissResult: KissAnalysisResult | null;
   showKissCoaching: boolean;
+  processingLooksStuck?: boolean;
 };
 
 export function MeetingDetailShell({
@@ -53,6 +56,7 @@ export function MeetingDetailShell({
   discResult,
   kissResult,
   showKissCoaching,
+  processingLooksStuck = false,
 }: MeetingDetailShellProps) {
   const soncas = analyses.find((a) => a.kind === "SONCAS");
   const disc = analyses.find((a) => a.kind === "DISC");
@@ -92,7 +96,23 @@ export function MeetingDetailShell({
         </NavLinkButton>
       </div>
 
+      {meeting.status === "FAILED" && meeting.errorMessage ? (
+        <InfoCard
+          title="Échec de l'analyse"
+          description={meeting.errorMessage}
+          className="border-destructive/50 bg-destructive/5"
+        />
+      ) : null}
+
+      {processingLooksStuck ? (
+        <InfoCard
+          title="Analyse bloquée"
+          description="L'analyse semble bloquée depuis plus de 15 minutes. Utilisez le bouton ci-dessous pour relancer, ou vérifiez que CRON_SECRET et AI_GATEWAY_API_KEY sont configurés sur Vercel (voir docs/env-sync.md)."
+        />
+      ) : null}
+
       <ContentCard
+        id="analyse"
         title="Analyse IA"
         description={
           <>
@@ -148,9 +168,7 @@ export function MeetingDetailShell({
       </ContentCard>
 
       <ContentCard title="Transcript">
-        <pre className="bg-muted max-h-[320px] overflow-auto rounded-lg p-4 text-xs whitespace-pre-wrap">
-          {meeting.transcript}
-        </pre>
+        <MeetingTranscriptPreview transcript={meeting.transcript} />
       </ContentCard>
 
       {meeting.notes ? (

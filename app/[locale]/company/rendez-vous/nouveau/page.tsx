@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { MeetingCreatePageShell } from "@/components/organisms/meeting-create-page-shell";
-import { stringArrayFromOrgJson } from "@/lib/org-settings-json";
+import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getApplicationDeps } from "@/lib/application-deps";
 
@@ -16,16 +16,8 @@ export default async function NouveauRendezVousPage() {
   const settings = await deps.organizationSettings.findByOrganizationId(
     actor.activeOrganizationId,
   );
-  const meetingTypeOptions = stringArrayFromOrgJson(settings?.meetingTypes, [
-    "Découverte",
-    "Démo",
-    "Proposition",
-    "Négociation",
-  ]);
-  const pipelineStageOptions = stringArrayFromOrgJson(
-    settings?.pipelineStages,
-    ["Lead", "Qualifié", "Proposition", "Gagné"],
-  );
+  const { meetingTypeOptions, pipelineStageOptions } =
+    orgMeetingFormOptionsFromSettings(settings);
 
   return (
     <MeetingCreatePageShell

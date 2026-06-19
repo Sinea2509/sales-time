@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { DashboardAddMemberPopover } from "@/components/organisms/dashboard-add-member-popover";
+import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
@@ -39,9 +40,13 @@ function monEquipePersonLines(row: OrgAdminMonEquipeRow) {
 export function DashboardAdminShell({
   admin,
   kissTeamStrengthsNarrative,
+  meetingTypeOptions,
+  pipelineStageOptions,
 }: {
   admin: OrgAdminDashboard;
   kissTeamStrengthsNarrative?: string | null;
+  meetingTypeOptions: string[];
+  pipelineStageOptions: string[];
 }) {
   const { home, monEquipe, discPie, soncasPie, kissTeamRollup } = admin;
   const jours = admin.statsWindowDays;
@@ -69,6 +74,10 @@ export function DashboardAdminShell({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <DashboardAddMemberPopover />
+        <MeetingCreateDialog
+          meetingTypeOptions={meetingTypeOptions}
+          pipelineStageOptions={pipelineStageOptions}
+        />
       </div>
 
       <section className="space-y-3">

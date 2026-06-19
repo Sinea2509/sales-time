@@ -5,6 +5,7 @@ import { z } from "zod";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { uploadMeetingTranscriptFile } from "@/lib/meeting-transcript-upload";
+import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createMeetingForOrg } from "@/src/core/application/create-meeting";
 
@@ -63,8 +64,6 @@ const createMeetingSchema = z.object({
   outcome: meetingOutcomeSchema,
   feeling: z.coerce.number().int().min(1).max(5).optional().nullable(),
 });
-
-const meetingIdSchema = z.string().trim().min(1).max(64);
 
 export async function createMeetingAction(formData: FormData) {
   const deps = getApplicationDeps();

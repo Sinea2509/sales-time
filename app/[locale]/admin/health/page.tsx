@@ -7,15 +7,17 @@ export default async function HealthPage() {
   const now = new Date();
   const deps = getApplicationDeps();
 
-  const [dbHealth, counts] = await Promise.all([
+  const [dbHealth, counts, pipeline] = await Promise.all([
     deps.platformHealth.measureSelectOneLatency(),
     deps.platformHealth.getAdminHealthCounts(now),
+    deps.platformHealth.getAnalysisPipelineHealth(now),
   ]);
 
   return (
     <AdminHealthDashboard
       dbHealth={dbHealth}
       counts={counts}
+      pipeline={pipeline}
       now={now}
       region={process.env.VERCEL_REGION ?? "local"}
       nodeEnv={process.env.NODE_ENV ?? "unknown"}

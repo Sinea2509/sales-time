@@ -11,8 +11,14 @@ export type RegisterNewUserInput = {
 };
 
 export type RegisterNewUserResult =
-  | { ok: true; userId: string }
-  | { ok: false; error: "EMAIL_TAKEN" | "WEBSITE_TAKEN" };
+  | { ok: true; userId: string; flow: "new_organization" }
+  | {
+      ok: true;
+      userId: string;
+      organizationId: string;
+      flow: "join_existing_organization";
+    }
+  | { ok: false; error: "EMAIL_TAKEN" | "EMAIL_DOMAIN_MISMATCH" };
 
 export type RegisterFromOrganizationInvitationInput = {
   tokenPlaintext: string;

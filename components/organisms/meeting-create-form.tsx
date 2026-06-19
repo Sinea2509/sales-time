@@ -5,9 +5,11 @@ import { useRef, useState, useTransition } from "react";
 import { createMeetingAction } from "@/app/[locale]/company/rendez-vous/actions";
 import { ContactPicker } from "@/components/organisms/contact-picker";
 import { Button } from "@/components/ui/button";
+import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
 
 const outcomes = [
@@ -26,19 +28,28 @@ const feelingLabels = [
   "Très satisfait",
 ];
 
+type MeetingCreateFormProps = {
+  meetingTypeOptions: string[];
+  pipelineStageOptions: string[];
+  variant?: "page" | "dialog";
+  onSuccess?: (meetingId: string) => void;
+  onCancel?: () => void;
+};
+
 export function MeetingCreateForm({
   meetingTypeOptions,
   pipelineStageOptions,
-}: {
-  meetingTypeOptions: string[];
-  pipelineStageOptions: string[];
-}) {
+  variant = "page",
+  onSuccess,
+  onCancel,
+}: MeetingCreateFormProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [feeling, setFeeling] = useState(3);
   const [useUpload, setUseUpload] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const isDialog = variant === "dialog";
 
   return (
     <form
@@ -63,8 +74,12 @@ export function MeetingCreateForm({
             );
             return;
           }
-          router.push(`/company/rendez-vous/${res.meetingId}`);
-          router.refresh();
+          if (onSuccess) {
+            onSuccess(res.meetingId);
+          } else {
+            router.push(`/company/rendez-vous/${res.meetingId}`);
+            router.refresh();
+          }
         });
       }}
     >
@@ -225,9 +240,33 @@ export function MeetingCreateForm({
           {error}
         </p>
       ) : null}
-      <Button type="submit" disabled={pending}>
-        {pending ? "Enregistrement…" : "Enregistrer et lancer l'analyse"}
-      </Button>
+      {isDialog ? (
+        <DialogFooter className="-mx-4 -mb-4 mt-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={pending}
+            onClick={onCancel}
+          >
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            disabled={pending}
+            className="bg-brand text-white hover:bg-brand-hover"
+          >
+            {pending ? "Enregistrement…" : "Enregistrer et lancer l'analyse"}
+          </Button>
+        </DialogFooter>
+      ) : (
+        <Button
+          type="submit"
+          disabled={pending}
+          className={cn("bg-brand text-white hover:bg-brand-hover")}
+        >
+          {pending ? "Enregistrement…" : "Enregistrer et lancer l'analyse"}
+        </Button>
+      )}
     </form>
   );
 }

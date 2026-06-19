@@ -1,0 +1,66 @@
+{
+  "variables": [
+    {
+      "key": "DATABASE_URL",
+      "target": ["production", "preview"],
+      "type": "encrypted",
+      "optional": true
+    },
+    {
+      "key": "DIRECT_URL",
+      "target": ["production", "preview"],
+      "type": "encrypted",
+      "optional": true
+    },
+    {
+      "key": "CRON_SECRET",
+      "target": ["production", "preview", "development"],
+      "type": "encrypted"
+    },
+    {
+      "key": "AI_GATEWAY_API_KEY",
+      "target": ["production", "preview", "development"],
+      "type": "encrypted"
+    },
+    {
+      "key": "SUPER_ADMIN_ORG_COOKIE_SECRET",
+      "target": ["production"],
+      "type": "encrypted"
+    },
+    {
+      "key": "APP_BASE_URL",
+      "target": ["production", "preview"],
+      "type": "plain"
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "target": ["production"],
+      "type": "encrypted",
+      "optional": true
+    },
+    {
+      "key": "EMAIL_FROM",
+      "target": ["production"],
+      "type": "plain",
+      "optional": true
+    },
+    {
+      "key": "BLOB_READ_WRITE_TOKEN",
+      "target": ["production", "preview"],
+      "type": "encrypted",
+      "optional": true
+    },
+    {
+      "key": "SUPERADMIN_EMAILS",
+      "target": ["production"],
+      "type": "plain",
+      "optional": true
+    },
+    {
+      "key": "AUTH_SESSION_VERSION",
+      "target": ["production", "preview"],
+      "type": "plain",
+      "optional": true
+    }
+  ]
+}

@@ -1,4 +1,7 @@
-import type { MeetingStatus } from "@/src/core/domain/meeting-status";
+import {
+  isMeetingStatus,
+  type MeetingStatus,
+} from "@/src/core/domain/meeting-status";
 
 const LABELS: Record<MeetingStatus, string> = {
   PENDING: "En attente",
@@ -14,10 +17,12 @@ const CLASSES: Record<MeetingStatus, string> = {
   FAILED: "bg-red-100 text-red-800",
 };
 
-export function meetingStatusLabel(status: MeetingStatus): string {
-  return LABELS[status];
+export function meetingStatusLabel(status: MeetingStatus | string): string {
+  if (isMeetingStatus(status)) return LABELS[status];
+  return String(status);
 }
 
-export function meetingStatusBadgeClass(status: MeetingStatus): string {
-  return CLASSES[status];
+export function meetingStatusBadgeClass(status: MeetingStatus | string): string {
+  if (isMeetingStatus(status)) return CLASSES[status];
+  return "bg-neutral-100 text-neutral-700";
 }

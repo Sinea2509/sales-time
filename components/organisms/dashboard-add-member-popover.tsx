@@ -4,15 +4,12 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { inviteMemberAction } from "@/app/[locale]/company/settings/equipe/actions";
+import { BrandCtaButton } from "@/components/molecules/brand-cta-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
 import { cn } from "@/lib/utils";
-
-/** Même style que « Voir tous les plans » (sidebar) : brand + texte blanc. */
-const triggerClass =
-  "inline-flex h-10 shrink-0 items-center justify-center gap-1 rounded-md bg-brand px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover focus-visible:ring-2 focus-visible:ring-brand-ring focus-visible:outline-none";
 
 export function DashboardAddMemberPopover() {
   const router = useRouter();
@@ -37,9 +34,9 @@ export function DashboardAddMemberPopover() {
 
   return (
     <div ref={rootRef} className="relative inline-flex">
-      <button
+      <BrandCtaButton
         type="button"
-        className={triggerClass}
+        className="shrink-0 gap-1 shadow-sm"
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={() => {
@@ -49,7 +46,7 @@ export function DashboardAddMemberPopover() {
       >
         <Plus className="size-4 shrink-0" aria-hidden />
         Ajouter un membre
-      </button>
+      </BrandCtaButton>
       {open ? (
         <div
           className="absolute top-full left-0 z-50 mt-1.5 w-[min(calc(100vw-2rem),20rem)] rounded-lg border border-zinc-200 bg-popover p-4 text-popover-foreground shadow-lg ring-1 ring-black/5 sm:left-auto sm:right-0 dark:border-zinc-700 dark:ring-white/10"

@@ -4,9 +4,11 @@ import { pageTitleClass } from "@/lib/page-typography";
 
 type SignInPageShellProps = {
   next?: string;
+  reason?: string;
 };
 
-export function SignInPageShell({ next }: SignInPageShellProps) {
+export function SignInPageShell({ next, reason }: SignInPageShellProps) {
+  const showVersionNotice = reason === "new_version";
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
       <div className="w-full max-w-md space-y-8 rounded-xl border border-border p-8 shadow-sm">
@@ -15,6 +17,12 @@ export function SignInPageShell({ next }: SignInPageShellProps) {
           <p className="text-muted-foreground text-sm">
             Accédez à votre espace Sales Time.
           </p>
+          {showVersionNotice ? (
+            <p className="text-muted-foreground text-sm" role="status">
+              Une nouvelle version est disponible. Reconnectez-vous pour
+              continuer.
+            </p>
+          ) : null}
         </div>
         <SignInForm next={next} />
         <div className="flex flex-col gap-2 text-center text-sm">

@@ -534,6 +534,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       followUpEmailDraft: row.followUpEmailDraft,
       transcript: row.transcript,
       notes: row.notes,
+      updatedAt: row.updatedAt,
       analyses: row.analyses.map((a) => ({
         kind: a.kind as MeetingAnalysisKind,
         model: a.model,

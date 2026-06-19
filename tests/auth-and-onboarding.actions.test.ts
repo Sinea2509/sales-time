@@ -33,6 +33,7 @@ jest.mock("@/lib/prisma", () => ({
       findUnique: jest.fn(),
       update: jest.fn(),
       upsert: jest.fn(),
+      create: jest.fn(),
     },
     passwordResetToken: {
       findFirst: jest.fn(),
@@ -46,6 +47,7 @@ jest.mock("@/lib/prisma", () => ({
     },
     organizationMembership: {
       upsert: jest.fn(),
+      create: jest.fn(),
     },
     $transaction: jest.fn(),
   },
@@ -138,16 +140,54 @@ jest.mock("@/lib/application-deps", () => {
       signupWebsiteNormalized: string;
     }) => {
       const { prisma: prismaMock } = await import("@/lib/prisma");
-      const existingOrg = await prismaMock.organization.findUnique({
-        where: { websiteNormalized: input.signupWebsiteNormalized },
-      });
-      if (existingOrg)
-        return { ok: false as const, error: "WEBSITE_TAKEN" as const };
+      const { emailDomainMatchesOrgWebsite } = await import(
+        "@/src/core/domain/email-domain-matches-org-website"
+      );
       const existing = await prismaMock.user.findUnique({
         where: { email: input.email },
       });
       if (existing)
         return { ok: false as const, error: "EMAIL_TAKEN" as const };
+      if (
+        !emailDomainMatchesOrgWebsite(
+          input.email,
+          input.signupWebsiteNormalized,
+        )
+      ) {
+        return { ok: false as const, error: "EMAIL_DOMAIN_MISMATCH" as const };
+      }
+      const existingOrg = await prismaMock.organization.findUnique({
+        where: { websiteNormalized: input.signupWebsiteNormalized },
+      });
+      if (existingOrg) {
+        const user = await prismaMock.user.create({
+          data: {
+            email: input.email,
+            passwordHash: input.passwordHash,
+            signupWebsiteNormalized: null,
+            firstName: input.firstName,
+            lastName: input.lastName,
+            profileRole: input.profileRole as UserProfileRole,
+            registerProfileCompletedAt: new Date(),
+          },
+        });
+        await prismaMock.onboardingProfile.create({
+          data: { userId: user.id, companyName: existingOrg.name },
+        });
+        await prismaMock.organizationMembership.create({
+          data: {
+            userId: user.id,
+            organizationId: existingOrg.id,
+            role: "MEMBER",
+          },
+        });
+        return {
+          ok: true as const,
+          userId: user.id,
+          organizationId: existingOrg.id,
+          flow: "join_existing_organization" as const,
+        };
+      }
       const user = await prismaMock.user.create({
         data: {
           email: input.email,
@@ -164,7 +204,11 @@ jest.mock("@/lib/application-deps", () => {
         create: { userId: user.id, companyName: input.companyName },
         update: { companyName: input.companyName },
       });
-      return { ok: true as const, userId: user.id };
+      return {
+        ok: true as const,
+        userId: user.id,
+        flow: "new_organization" as const,
+      };
     },
   );
   signInFindUserMock = jest.fn(async (email: string) => {
@@ -340,6 +384,7 @@ type AuthActionsPrismaMock = {
     findUnique: jest.Mock;
     update: jest.Mock;
     upsert: jest.Mock;
+    create: jest.Mock;
   };
   passwordResetToken: {
     findFirst: jest.Mock;
@@ -351,7 +396,7 @@ type AuthActionsPrismaMock = {
     update: jest.Mock;
     create: jest.Mock;
   };
-  organizationMembership: { upsert: jest.Mock };
+  organizationMembership: { upsert: jest.Mock; create: jest.Mock };
   $transaction: jest.Mock;
 };
 
@@ -517,15 +562,9 @@ describe("signUpAction", () => {
     expect(prismaMock.user.create).not.toHaveBeenCalled();
   });
 
-  it("returns error when organization already exists for hostname", async () => {
-    prismaMock.organization.findUnique.mockImplementation(
-      async ({ where }: { where: Record<string, unknown> }) => {
-        if ("websiteNormalized" in where) {
-          return { id: "org1" } as never;
-        }
-        return null;
-      },
-    );
+  it("returns error when email domain does not match website", async () => {
+    prismaMock.organization.findUnique.mockResolvedValue(null);
+    prismaMock.user.findUnique.mockResolvedValue(null);
     const r = await signUpAction(
       null,
       form({
@@ -533,15 +572,90 @@ describe("signUpAction", () => {
         lastName: "Lovelace",
         companyName: "Analytical Engines Ltd",
         profileRole: "COMMERCIAL",
-        email: "new@b.co",
+        email: "user@gmail.com",
         website: "https://acme.com",
         password: "password12",
         confirmPassword: "password12",
       }),
     );
     expect(r?.ok).toBe(false);
-    expect(r?.message).toContain("déjà enregistrée");
+    expect(r?.message).toMatch(/domaine|professionnelle|invitation/i);
     expect(prismaMock.user.create).not.toHaveBeenCalled();
+  });
+
+  it("returns error when email domain does not match existing organization website", async () => {
+    prismaMock.organization.findUnique.mockImplementation(
+      async ({ where }: { where: Record<string, unknown> }) => {
+        if ("websiteNormalized" in where) {
+          return { id: "org1", name: "Acme" } as never;
+        }
+        return null;
+      },
+    );
+    prismaMock.user.findUnique.mockResolvedValue(null);
+    const r = await signUpAction(
+      null,
+      form({
+        firstName: "Ada",
+        lastName: "Lovelace",
+        companyName: "Analytical Engines Ltd",
+        profileRole: "COMMERCIAL",
+        email: "new@gmail.com",
+        website: "https://acme.com",
+        password: "password12",
+        confirmPassword: "password12",
+      }),
+    );
+    expect(r?.ok).toBe(false);
+    expect(r?.message).toMatch(/domaine|professionnelle|invitation/i);
+    expect(prismaMock.user.create).not.toHaveBeenCalled();
+  });
+
+  it("joins existing organization when email subdomain matches website", async () => {
+    prismaMock.organization.findUnique.mockImplementation(
+      async ({ where }: { where: Record<string, unknown> }) => {
+        if ("websiteNormalized" in where) {
+          return { id: "org-acme", name: "Acme Corp" } as never;
+        }
+        return null;
+      },
+    );
+    prismaMock.user.findUnique.mockResolvedValue(null);
+    prismaMock.user.create.mockResolvedValue({
+      id: "user-join",
+      email: "hire@mail.acme.com",
+    } as never);
+    prismaMock.onboardingProfile.create.mockResolvedValue({} as never);
+    prismaMock.organizationMembership.create.mockResolvedValue({} as never);
+    hashPasswordMock.mockResolvedValue("hash");
+    createSessionRecordMock.mockResolvedValue(undefined);
+    setSessionCookieMock.mockResolvedValue(undefined);
+    setActiveOrganizationCookieMock.mockResolvedValue(undefined);
+
+    await expect(
+      signUpAction(
+        null,
+        form({
+          firstName: "Jane",
+          lastName: "Doe",
+          companyName: "Acme Corp",
+          profileRole: "COMMERCIAL",
+          email: "hire@mail.acme.com",
+          website: "https://acme.com",
+          password: "password12",
+          confirmPassword: "password12",
+        }),
+      ),
+    ).rejects.toThrow("REDIRECT:/company");
+
+    expect(prismaMock.organizationMembership.create).toHaveBeenCalledWith({
+      data: {
+        userId: "user-join",
+        organizationId: "org-acme",
+        role: "MEMBER",
+      },
+    });
+    expect(setActiveOrganizationCookieMock).toHaveBeenCalledWith("org-acme");
   });
 
   it("returns error when email is already registered", async () => {
@@ -554,7 +668,7 @@ describe("signUpAction", () => {
         lastName: "Lovelace",
         companyName: "Analytical Engines Ltd",
         profileRole: "COMMERCIAL",
-        email: "exists@b.co",
+        email: "exists@newco.io",
         website: "https://newco.io",
         password: "password12",
         confirmPassword: "password12",
@@ -571,7 +685,7 @@ describe("signUpAction", () => {
     prismaMock.user.findUnique.mockResolvedValue(null);
     prismaMock.user.create.mockResolvedValue({
       id: "user-new",
-      email: "hi@b.co",
+      email: "hi@example.com",
     } as never);
     hashPasswordMock.mockResolvedValue("hash");
     createSessionRecordMock.mockResolvedValue(undefined);
@@ -585,7 +699,7 @@ describe("signUpAction", () => {
           lastName: "Doe",
           companyName: "Example Inc",
           profileRole: "SALES_MANAGER",
-          email: "Hi@B.co",
+          email: "Hi@Example.com",
           website: "WWW.Example.COM/path",
           password: "password12",
           confirmPassword: "password12",
@@ -595,7 +709,7 @@ describe("signUpAction", () => {
 
     expect(prismaMock.user.create).toHaveBeenCalledWith({
       data: {
-        email: "hi@b.co",
+        email: "hi@example.com",
         passwordHash: "hash",
         signupWebsiteNormalized: "example.com",
         firstName: "Jane",

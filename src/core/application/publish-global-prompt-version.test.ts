@@ -6,6 +6,7 @@ describe("publishGlobalPromptVersion", () => {
   it("rejects when actor id is missing", async () => {
     const prompts = {
       getCurrentVersion: jest.fn(),
+      ensureCurrentVersion: jest.fn(),
       listVersions: jest.fn(),
       publishNewVersion: jest.fn(),
     };
@@ -29,6 +30,7 @@ describe("publishGlobalPromptVersion", () => {
   it("rejects non–super admin", async () => {
     const prompts = {
       getCurrentVersion: jest.fn(),
+      ensureCurrentVersion: jest.fn(),
       listVersions: jest.fn(),
       publishNewVersion: jest.fn(),
     };
@@ -52,6 +54,7 @@ describe("publishGlobalPromptVersion", () => {
   it("publishes version and audits", async () => {
     const prompts = {
       getCurrentVersion: jest.fn(),
+      ensureCurrentVersion: jest.fn(),
       listVersions: jest.fn(),
       publishNewVersion: jest.fn().mockResolvedValue({
         id: "v2",

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { makeApplicationDeps } from "@/src/adapters/composition";
+import { getApplicationDeps } from "@/lib/application-deps";
 
 /**
  * Liveness: always 200 JSON `{ ok: true }`.
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true });
   }
   try {
-    await makeApplicationDeps().platformHealth.pingSelectOne();
+    await getApplicationDeps().platformHealth.pingSelectOne();
     return NextResponse.json({ ok: true, db: true });
   } catch {
     return NextResponse.json(

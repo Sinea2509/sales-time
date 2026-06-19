@@ -6,7 +6,7 @@ describe("runMeetingAnalysis", () => {
     const meetings = {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue(null),
     };
-    const prompts = { getCurrentVersion: jest.fn() };
+    const prompts = { ensureCurrentVersion: jest.fn() };
     const analysis = {
       analyzeSoncas: jest.fn(),
       analyzeDisc: jest.fn(),
@@ -24,10 +24,10 @@ describe("runMeetingAnalysis", () => {
     );
 
     expect(result).toEqual({ ok: false, error: "MEETING_NOT_FOUND" });
-    expect(prompts.getCurrentVersion).not.toHaveBeenCalled();
+    expect(prompts.ensureCurrentVersion).not.toHaveBeenCalled();
   });
 
-  it("returns PROMPT_NOT_CONFIGURED when no template version", async () => {
+  it("returns PROMPT_NOT_CONFIGURED when prompt bootstrap fails", async () => {
     const meetings = {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue({
         id: "m1",
@@ -36,7 +36,11 @@ describe("runMeetingAnalysis", () => {
         notes: null,
       }),
     };
-    const prompts = { getCurrentVersion: jest.fn().mockResolvedValue(null) };
+    const prompts = {
+      ensureCurrentVersion: jest
+        .fn()
+        .mockRejectedValue(new Error("Cannot seed prompt template")),
+    };
     const analysis = {
       analyzeSoncas: jest.fn(),
       analyzeDisc: jest.fn(),
@@ -53,7 +57,11 @@ describe("runMeetingAnalysis", () => {
       },
     );
 
-    expect(result).toEqual({ ok: false, error: "PROMPT_NOT_CONFIGURED" });
+    expect(result).toEqual({
+      ok: false,
+      error: "PROMPT_NOT_CONFIGURED",
+      message: "Cannot seed prompt template",
+    });
   });
 
   it("persists SONCAS analysis on success", async () => {
@@ -74,7 +82,7 @@ describe("runMeetingAnalysis", () => {
       }),
     };
     const prompts = {
-      getCurrentVersion: jest.fn().mockResolvedValue({
+      ensureCurrentVersion: jest.fn().mockResolvedValue({
         id: "pv1",
         markdown: "sys",
         templateId: "t1",
@@ -128,7 +136,7 @@ describe("runMeetingAnalysis", () => {
     const result = await runMeetingAnalysis(
       {
         meetings: { findMeetingByIdForOrg: jest.fn() },
-        prompts: { getCurrentVersion: jest.fn() },
+        prompts: { ensureCurrentVersion: jest.fn() },
         analysis: {
           analyzeSoncas: jest.fn(),
           analyzeDisc: jest.fn(),
@@ -164,7 +172,7 @@ describe("runMeetingAnalysis", () => {
       findLatestAnalysisForMeeting: jest.fn(),
     };
     const prompts = {
-      getCurrentVersion: jest.fn().mockResolvedValue({
+      ensureCurrentVersion: jest.fn().mockResolvedValue({
         id: "pv2",
         markdown: "disc",
         templateId: "t2",
@@ -212,7 +220,7 @@ describe("runMeetingAnalysis", () => {
       findLatestAnalysisForMeeting: jest.fn().mockResolvedValue(null),
     };
     const prompts = {
-      getCurrentVersion: jest.fn().mockResolvedValue({
+      ensureCurrentVersion: jest.fn().mockResolvedValue({
         id: "pvk",
         markdown: "base",
         templateId: "tk",
@@ -292,7 +300,7 @@ describe("runMeetingAnalysis", () => {
       createAnalysis: jest.fn(),
     };
     const prompts = {
-      getCurrentVersion: jest.fn().mockResolvedValue({
+      ensureCurrentVersion: jest.fn().mockResolvedValue({
         id: "pv",
         markdown: "m",
         templateId: "t",

@@ -7,6 +7,7 @@ import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
 import { parseStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import {
   appendOrganizationKissPromptAppendix,
@@ -58,7 +59,7 @@ export default async function DashboardHomePage({
       canManageOrganization: actor.canManageOrganization,
       internalUserId: actor.internalUserId,
     });
-    const [admin, globalKissJson] = await Promise.all([
+    const [admin, globalKissJson, settings] = await Promise.all([
       getOrgAdminDashboard(deps, {
         organizationId: actor.activeOrganizationId,
         statsWindowDays,
@@ -66,7 +67,12 @@ export default async function DashboardHomePage({
         teamUserIds,
       }),
       deps.globalKissCoachingPrompts.getPrompts(),
+      deps.organizationSettings.findByOrganizationId(
+        actor.activeOrganizationId,
+      ),
     ]);
+    const { meetingTypeOptions, pipelineStageOptions } =
+      orgMeetingFormOptionsFromSettings(settings);
     let kissTeamStrengthsNarrative: string | null = null;
     if (admin && getEnv().AI_GATEWAY_API_KEY) {
       try {
@@ -93,6 +99,8 @@ export default async function DashboardHomePage({
           <DashboardAdminShell
             admin={admin}
             kissTeamStrengthsNarrative={kissTeamStrengthsNarrative}
+            meetingTypeOptions={meetingTypeOptions}
+            pipelineStageOptions={pipelineStageOptions}
           />
         )}
       </div>
@@ -111,7 +119,7 @@ export default async function DashboardHomePage({
   }
 
   const sellerId = actor.internalUserId!;
-  const [home, personOutreach] = await Promise.all([
+  const [home, personOutreach, settings] = await Promise.all([
     getOrgDashboardHome(deps, {
       organizationId: actor.activeOrganizationId,
       statsWindowDays,
@@ -122,12 +130,20 @@ export default async function DashboardHomePage({
       sellerUserId: sellerId,
       limit: 12,
     }),
+    deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
   ]);
+  const { meetingTypeOptions, pipelineStageOptions } =
+    orgMeetingFormOptionsFromSettings(settings);
 
   return (
     <div className="space-y-6">
       {!home ? null : (
-        <DashboardHomeShell home={home} personOutreach={personOutreach} />
+        <DashboardHomeShell
+          home={home}
+          personOutreach={personOutreach}
+          meetingTypeOptions={meetingTypeOptions}
+          pipelineStageOptions={pipelineStageOptions}
+        />
       )}
     </div>
   );
