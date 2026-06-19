@@ -22,12 +22,14 @@ export type MembershipForAuth = {
 export function resolveActorAuthorization(input: {
   sessionActiveOrganizationId: string | null;
   superAdminElevatedOrganizationId: string | null;
+  superAdminElevatedRole: OrganizationMembershipRole | null;
   memberships: MembershipForAuth[];
   isSuperAdmin: boolean;
 }): ResolvedAuthorization {
   const {
     sessionActiveOrganizationId,
     superAdminElevatedOrganizationId,
+    superAdminElevatedRole,
     memberships,
     isSuperAdmin,
   } = input;
@@ -50,8 +52,14 @@ export function resolveActorAuthorization(input: {
   const isOrgAdminForTenant =
     membership !== undefined && membership.role === "ADMIN";
 
+  const elevatedAsManager = Boolean(
+    isElevatedSuperAdmin &&
+      (superAdminElevatedRole === "ADMIN" || superAdminElevatedRole === null),
+  );
+
   const canManageOrganization = Boolean(
-    activeOrganizationId && (isElevatedSuperAdmin || isOrgAdminForTenant),
+    activeOrganizationId &&
+      (elevatedAsManager || (!isElevatedSuperAdmin && isOrgAdminForTenant)),
   );
 
   return {

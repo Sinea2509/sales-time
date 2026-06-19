@@ -32,11 +32,11 @@ export default async function DashboardLayout({
     redirect("/onboarding");
   }
 
-  const superAdminOrgCookie = await readSuperAdminOrgCookie();
+  const superAdminElevation = await readSuperAdminOrgCookie();
   const actor = await getCurrentActorContext(
     { auth: deps.auth },
     {
-      superAdminElevatedOrganizationId: superAdminOrgCookie,
+      superAdminElevation,
     },
   );
 
@@ -83,7 +83,7 @@ export default async function DashboardLayout({
       organizationSwitcherMemberships.unshift({
         organizationId: actor.activeOrganizationId,
         name: org.name,
-        role: "ADMIN",
+        role: actor.superAdminElevatedRole ?? "ADMIN",
         logoUrl: org.logoUrl ?? null,
       });
     }
@@ -92,7 +92,7 @@ export default async function DashboardLayout({
   return (
     <AuthenticatedAppShell
       actor={actor}
-      superAdminOrgCookie={superAdminOrgCookie}
+      superAdminOrgCookie={superAdminElevation?.organizationId ?? null}
       trialAnalysesLeft={trialAnalysesLeft}
       trialLimit={DEFAULT_TRIAL_LIMIT}
       unreadNotificationCount={unreadNotificationCount}

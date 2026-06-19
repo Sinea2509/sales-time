@@ -40,6 +40,7 @@ import {
 } from "@/app/[locale]/admin/users/actions";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { AdminExportButton } from "@/components/molecules/admin-export-button";
+import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
 
 type UserRow = {
   id: string;
@@ -623,8 +624,12 @@ export function AdminUserTable({ users, organizations }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MEMBER">Membre</SelectItem>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="MEMBER">
+                    {organizationMembershipRoleLabel("MEMBER")}
+                  </SelectItem>
+                  <SelectItem value="ADMIN">
+                    {organizationMembershipRoleLabel("ADMIN")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

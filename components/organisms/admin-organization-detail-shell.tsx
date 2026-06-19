@@ -11,6 +11,7 @@ import {
 import { meetingOutcomeConfig } from "@/lib/meeting-outcome-config";
 import { cardTitleClass } from "@/lib/page-typography";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
+import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
 import { AdminKpiCard } from "@/components/molecules/admin-kpi-card";
 import { PageDetailHeader } from "@/components/molecules/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -152,7 +153,7 @@ export function AdminOrganizationDetailShell({
                             }
                             className="text-xs"
                           >
-                            {m.role === "ADMIN" ? "Admin" : "Membre"}
+                            {organizationMembershipRoleLabel(m.role)}
                           </Badge>
                         </td>
                         <td className="whitespace-nowrap px-4 py-2.5 text-zinc-500">

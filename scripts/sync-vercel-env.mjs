@@ -1,15 +1,106 @@
 #!/usr/bin/env node
 /**
- * Upserts GitHub Actions secrets (passed as env vars) into Vercel project env.
+ * Upserts env vars into Vercel project env.
+ * Local: loads `.env.production` (or ENV_FILE), Vercel link IDs, and CLI token.
+ * CI: values come from GitHub Actions secrets via process.env.
  * See docs/env-sync.md and .github/vercel-env.manifest.json.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const MANIFEST_PATH = join(ROOT, ".github/vercel-env.manifest.json");
+const DEFAULT_ENV_FILE = join(ROOT, ".env.production");
+
+function fail(message) {
+  console.error(`sync-vercel-env: ${message}`);
+  process.exit(1);
+}
+
+function stripQuotes(value) {
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    return value.slice(1, -1);
+  }
+  return value;
+}
+
+/** @param {string} filePath */
+function loadEnvFile(filePath) {
+  if (!existsSync(filePath)) return false;
+
+  const content = readFileSync(filePath, "utf8");
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+
+    const key = trimmed.slice(0, eq).trim();
+    const rawValue = trimmed.slice(eq + 1).trim();
+    if (!key || process.env[key] !== undefined) continue;
+
+    process.env[key] = stripQuotes(rawValue);
+  }
+
+  console.log(`loaded ${filePath}`);
+  return true;
+}
+
+function loadVercelProjectFromLink() {
+  const projectJsonPath = join(ROOT, ".vercel/project.json");
+  if (existsSync(projectJsonPath)) {
+    const project = JSON.parse(readFileSync(projectJsonPath, "utf8"));
+    if (!process.env.VERCEL_ORG_ID && project.orgId) {
+      process.env.VERCEL_ORG_ID = project.orgId;
+    }
+    if (!process.env.VERCEL_PROJECT_ID && project.projectId) {
+      process.env.VERCEL_PROJECT_ID = project.projectId;
+    }
+    return;
+  }
+
+  const repoJsonPath = join(ROOT, ".vercel/repo.json");
+  if (!existsSync(repoJsonPath)) return;
+
+  const repo = JSON.parse(readFileSync(repoJsonPath, "utf8"));
+  const linked = repo.projects?.find((p) => p.name === "sales-time") ?? repo.projects?.[0];
+  if (!linked) return;
+
+  if (!process.env.VERCEL_ORG_ID && linked.orgId) {
+    process.env.VERCEL_ORG_ID = linked.orgId;
+  }
+  if (!process.env.VERCEL_PROJECT_ID && linked.id) {
+    process.env.VERCEL_PROJECT_ID = linked.id;
+  }
+}
+
+function loadVercelCliToken() {
+  if (process.env.CI || process.env.VERCEL_TOKEN) return;
+
+  const authPath = join(
+    process.env.XDG_DATA_HOME ?? join(homedir(), ".local/share"),
+    "com.vercel.cli/auth.json",
+  );
+  if (!existsSync(authPath)) return;
+
+  const auth = JSON.parse(readFileSync(authPath, "utf8"));
+  if (typeof auth.token === "string" && auth.token.trim()) {
+    process.env.VERCEL_TOKEN = auth.token.trim();
+    console.log("using Vercel CLI auth token");
+  }
+}
+
+const envFile = process.env.ENV_FILE?.trim() || DEFAULT_ENV_FILE;
+loadEnvFile(envFile);
+loadVercelProjectFromLink();
+loadVercelCliToken();
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN?.trim();
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID?.trim();
@@ -18,14 +109,17 @@ const DRY_RUN = process.env.DRY_RUN === "1";
 const SKIP_DEPLOY = process.env.SKIP_DEPLOY === "1";
 const DEPLOY_HOOK_URL = process.env.VERCEL_DEPLOY_HOOK_URL?.trim();
 
-function fail(message) {
-  console.error(`sync-vercel-env: ${message}`);
-  process.exit(1);
+if (!VERCEL_TOKEN) {
+  fail(
+    "VERCEL_TOKEN is required — set it in .env.production, export it, or run `vercel login`",
+  );
 }
-
-if (!VERCEL_TOKEN) fail("VERCEL_TOKEN is required");
-if (!VERCEL_PROJECT_ID) fail("VERCEL_PROJECT_ID is required");
-if (!VERCEL_ORG_ID) fail("VERCEL_ORG_ID is required");
+if (!VERCEL_PROJECT_ID) {
+  fail("VERCEL_PROJECT_ID is required — run `vercel link` in this repo");
+}
+if (!VERCEL_ORG_ID) {
+  fail("VERCEL_ORG_ID is required — run `vercel link` in this repo");
+}
 
 /** @type {{ variables: Array<{ key: string; target: string[]; type: string; optional?: boolean }> }} */
 const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
@@ -84,6 +178,12 @@ async function triggerDeploy() {
 }
 
 async function main() {
+  if (!existsSync(envFile) && process.env.CI) {
+    fail(
+      "GitHub Actions secrets are empty — add VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID, and app secrets (see docs/env-sync.md)",
+    );
+  }
+
   let synced = 0;
   let skipped = 0;
 
@@ -95,7 +195,9 @@ async function main() {
         console.log(`skip ${entry.key} (optional, unset)`);
         continue;
       }
-      fail(`missing required secret/env: ${entry.key}`);
+      fail(
+        `missing required value: ${entry.key} — set it in .env.production or GitHub Secrets`,
+      );
     }
 
     await upsertEnvVar(entry, value);

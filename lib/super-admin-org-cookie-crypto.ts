@@ -1,4 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import type { OrganizationMembershipRole } from "@/src/core/domain/organization-membership-role";
+import type { SuperAdminOrgElevation } from "@/src/core/domain/super-admin-org-elevation";
 
 const PAYLOAD_VERSION = 1 as const;
 
@@ -8,6 +10,8 @@ type CookiePayload = {
   uid: string;
   /** Internal organization id being operated in. */
   org: string;
+  /** Workspace role while elevated; omitted on legacy cookies → Manager. */
+  role?: OrganizationMembershipRole;
   /** Unix seconds (UTC). */
   exp: number;
 };
@@ -33,6 +37,12 @@ function hmacSecretForVerification(): string | null {
   return null;
 }
 
+function normalizeElevationRole(
+  role: unknown,
+): OrganizationMembershipRole {
+  return role === "MEMBER" ? "MEMBER" : "ADMIN";
+}
+
 /**
  * Signed cookie value: base64url(payloadJson).base64url(hmacSha256(payloadB64)).
  * Legacy unsigned values (no dot) are rejected so users re-enter after deploy.
@@ -40,6 +50,7 @@ function hmacSecretForVerification(): string | null {
 export function signSuperAdminOrgCookieValue(input: {
   actorUserId: string;
   targetOrganizationId: string;
+  role: OrganizationMembershipRole;
   maxAgeSec: number;
 }): string {
   const exp = Math.floor(Date.now() / 1000) + input.maxAgeSec;
@@ -47,6 +58,7 @@ export function signSuperAdminOrgCookieValue(input: {
     v: PAYLOAD_VERSION,
     uid: input.actorUserId,
     org: input.targetOrganizationId,
+    role: input.role,
     exp,
   };
   const payloadJson = JSON.stringify(payload);
@@ -60,7 +72,7 @@ export function signSuperAdminOrgCookieValue(input: {
 export function verifySuperAdminOrgCookieValue(
   raw: string,
   currentActorUserId: string,
-): string | null {
+): SuperAdminOrgElevation | null {
   const parts = raw.split(".");
   if (parts.length !== 2) return null;
   const [payloadB64, sigB64] = parts;
@@ -99,5 +111,8 @@ export function verifySuperAdminOrgCookieValue(
     return null;
   }
 
-  return parsed.org;
+  return {
+    organizationId: parsed.org,
+    role: normalizeElevationRole(parsed.role),
+  };
 }

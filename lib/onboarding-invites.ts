@@ -1,4 +1,9 @@
-export type OnboardingInviteRole = "ADMIN" | "MEMBER";
+import {
+  organizationMembershipRoleLabel,
+  type OrganizationMembershipRole,
+} from "@/src/core/domain/organization-membership-role";
+
+export type OnboardingInviteRole = OrganizationMembershipRole;
 
 export type OnboardingInviteRow = {
   email: string;
@@ -9,8 +14,8 @@ export const ONBOARDING_INVITE_ROLE_OPTIONS: {
   value: OnboardingInviteRole;
   label: string;
 }[] = [
-  { value: "ADMIN", label: "Administrateur" },
-  { value: "MEMBER", label: "Membre" },
+  { value: "ADMIN", label: organizationMembershipRoleLabel("ADMIN") },
+  { value: "MEMBER", label: organizationMembershipRoleLabel("MEMBER") },
 ];
 
 function normalizeRole(raw: unknown): OnboardingInviteRole {

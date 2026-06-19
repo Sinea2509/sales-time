@@ -18,6 +18,16 @@
     "orgSettings": "Paramètres",
     "superAdmin": "Super admin"
   },
+  "workspace": {
+    "managerBadge": "Manager",
+    "commercialBadge": "Commercial",
+    "managerNavPilotage": "Pilotage",
+    "managerNavTeam": "Équipe",
+    "managerNavAdmin": "Administration",
+    "commercialNavActivity": "Mon activité",
+    "commercialDashboard": "Mon tableau de bord",
+    "emptyOrganizationHint": "Choisissez une organisation pour accéder à votre espace."
+  },
   "elevated": {
     "badge": "Mode super admin"
   },
@@ -40,7 +50,7 @@
   },
   "superAdminOrgList": {
     "title": "Super admin — organisations",
-    "description": "Entrer dans une organisation enregistre une trace d’audit et accorde les droits d’admin d’organisation pour cette organisation tant que le cookie d’élévation est défini.",
+    "description": "Entrer dans une organisation enregistre une trace d’audit. Choisissez le rôle Manager ou Commercial avant d’entrer.",
     "reasonLabel": "Motif (optionnel)",
     "reasonPlaceholder": "Référence ticket / incident",
     "operateButton": "Opérer dans cette organisation"

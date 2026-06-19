@@ -47,6 +47,7 @@ describe("super-admin-org-cookie-crypto", () => {
       signSuperAdminOrgCookieValue({
         actorUserId: "u1",
         targetOrganizationId: "org1",
+        role: "ADMIN",
         maxAgeSec: 60,
       }),
     ).toThrow(/SUPER_ADMIN_ORG_COOKIE_SECRET/);
@@ -58,10 +59,37 @@ describe("super-admin-org-cookie-crypto", () => {
     const raw = signSuperAdminOrgCookieValue({
       actorUserId: "user-a",
       targetOrganizationId: "org-z",
+      role: "MEMBER",
       maxAgeSec: 3600,
     });
-    expect(verifySuperAdminOrgCookieValue(raw, "user-a")).toBe("org-z");
+    expect(verifySuperAdminOrgCookieValue(raw, "user-a")).toEqual({
+      organizationId: "org-z",
+      role: "MEMBER",
+    });
     expect(verifySuperAdminOrgCookieValue(raw, "other-user")).toBeNull();
+  });
+
+  it("defaults missing role to manager on legacy payloads", () => {
+    setEnv("NODE_ENV", "production");
+    setEnv("SUPER_ADMIN_ORG_COOKIE_SECRET", "test-secret-key");
+    const payload = Buffer.from(
+      JSON.stringify({
+        v: 1,
+        uid: "user-a",
+        org: "org-legacy",
+        exp: 9_999_999_999,
+      }),
+      "utf8",
+    ).toString("base64url");
+    const sig = createHmac("sha256", "test-secret-key")
+      .update(payload)
+      .digest("base64url");
+    expect(verifySuperAdminOrgCookieValue(`${payload}.${sig}`, "user-a")).toEqual(
+      {
+        organizationId: "org-legacy",
+        role: "ADMIN",
+      },
+    );
   });
 
   it("uses dev secret in non-production when env secret unset", () => {
@@ -70,9 +98,13 @@ describe("super-admin-org-cookie-crypto", () => {
     const raw = signSuperAdminOrgCookieValue({
       actorUserId: "u1",
       targetOrganizationId: "org-dev",
+      role: "ADMIN",
       maxAgeSec: 120,
     });
-    expect(verifySuperAdminOrgCookieValue(raw, "u1")).toBe("org-dev");
+    expect(verifySuperAdminOrgCookieValue(raw, "u1")).toEqual({
+      organizationId: "org-dev",
+      role: "ADMIN",
+    });
   });
 
   it("verify rejects single-segment cookie", () => {

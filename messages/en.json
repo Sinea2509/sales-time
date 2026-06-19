@@ -9,14 +9,24 @@
     "exitSuperAdminOrg": "Exit super admin org"
   },
   "nav": {
-    "dashboard": "Tableau de bord",
-    "meetingsTeam": "Rendez-vous",
-    "meetingsMine": "Mes rendez-vous",
+    "dashboard": "Dashboard",
+    "meetingsTeam": "Meetings",
+    "meetingsMine": "My meetings",
     "analyseTeam": "Performance",
     "analyseMine": "My performance",
     "contacts": "Contacts",
     "orgSettings": "Settings",
     "superAdmin": "Super admin"
+  },
+  "workspace": {
+    "managerBadge": "Manager",
+    "commercialBadge": "Commercial",
+    "managerNavPilotage": "Overview",
+    "managerNavTeam": "Team",
+    "managerNavAdmin": "Administration",
+    "commercialNavActivity": "My activity",
+    "commercialDashboard": "My dashboard",
+    "emptyOrganizationHint": "Select an organization to access your workspace."
   },
   "elevated": {
     "badge": "Super admin mode"
@@ -40,7 +50,7 @@
   },
   "superAdminOrgList": {
     "title": "Super admin — organizations",
-    "description": "Entering an organization records an audit log and grants org-admin capabilities for that organization while the elevation cookie is set.",
+    "description": "Entering an organization records an audit log. Choose Manager or Commercial role before entering.",
     "reasonLabel": "Reason (optional)",
     "reasonPlaceholder": "Ticket / incident reference",
     "operateButton": "Operate in this organization"

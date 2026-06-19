@@ -13,7 +13,7 @@ export async function searchOrgAction(query: string) {
   const superAdminOrg = await readSuperAdminOrgCookie();
   const ctx = await getCurrentActorContext(
     { auth: deps.auth },
-    { superAdminElevatedOrganizationId: superAdminOrg },
+    { superAdminElevation: superAdminOrg },
   );
   if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
     return { ok: false as const };

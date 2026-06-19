@@ -12,6 +12,6 @@ export async function requireDashboardActor(): Promise<ActorContext> {
   const superAdminOrg = await readSuperAdminOrgCookie();
   return getCurrentActorContext(
     { auth: deps.auth },
-    { superAdminElevatedOrganizationId: superAdminOrg },
+    { superAdminElevation: superAdminOrg },
   );
 }

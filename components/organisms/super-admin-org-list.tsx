@@ -1,10 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { enterSuperAdminOrganizationAction } from "@/app/[locale]/company/super-admin-actions";
 import type { OrganizationSummary } from "@/src/core/ports/organization-directory-port";
-import { Button } from "@/components/ui/button";
+import { SuperAdminEnterOrgButton } from "@/components/molecules/super-admin-enter-org-control";
 import {
   Card,
   CardContent,
@@ -16,12 +15,46 @@ import { cardTitleClass, pageTitleClass } from "@/lib/page-typography";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+function SuperAdminOrgCard({ org }: { org: OrganizationSummary }) {
+  const t = useTranslations("superAdminOrgList");
+  const [reason, setReason] = useState("");
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className={cardTitleClass}>{org.name}</CardTitle>
+        <CardDescription className="font-mono text-xs">
+          {org.id}
+          {org.slug ? ` · ${org.slug}` : ""}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor={`reason-${org.id}`}>{t("reasonLabel")}</Label>
+          <Input
+            id={`reason-${org.id}`}
+            name="reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={t("reasonPlaceholder")}
+          />
+        </div>
+        <SuperAdminEnterOrgButton
+          targetOrganizationId={org.id}
+          organizationName={org.name}
+          reason={reason.trim() || null}
+          buttonLabel={t("operateButton")}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
 type Props = {
   organizations: OrganizationSummary[];
 };
 
 export function SuperAdminOrgList({ organizations }: Props) {
-  const [pending, startTransition] = useTransition();
   const t = useTranslations("superAdminOrgList");
 
   return (
@@ -32,44 +65,7 @@ export function SuperAdminOrgList({ organizations }: Props) {
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         {organizations.map((org) => (
-          <Card key={org.id}>
-            <CardHeader>
-              <CardTitle className={cardTitleClass}>{org.name}</CardTitle>
-              <CardDescription className="font-mono text-xs">
-                {org.id}
-                {org.slug ? ` · ${org.slug}` : ""}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor={`reason-${org.id}`}>{t("reasonLabel")}</Label>
-                <Input
-                  id={`reason-${org.id}`}
-                  name="reason"
-                  placeholder={t("reasonPlaceholder")}
-                  disabled={pending}
-                />
-              </div>
-              <Button
-                type="button"
-                disabled={pending}
-                onClick={() => {
-                  const input = document.getElementById(
-                    `reason-${org.id}`,
-                  ) as HTMLInputElement | null;
-                  const reason = input?.value?.trim() || null;
-                  startTransition(() => {
-                    void enterSuperAdminOrganizationAction({
-                      targetOrganizationId: org.id,
-                      reason,
-                    });
-                  });
-                }}
-              >
-                {t("operateButton")}
-              </Button>
-            </CardContent>
-          </Card>
+          <SuperAdminOrgCard key={org.id} org={org} />
         ))}
       </div>
     </div>

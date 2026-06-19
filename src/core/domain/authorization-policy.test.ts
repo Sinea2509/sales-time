@@ -9,6 +9,7 @@ describe("resolveActorAuthorization", () => {
     const r = resolveActorAuthorization({
       sessionActiveOrganizationId: "org_1",
       superAdminElevatedOrganizationId: null,
+      superAdminElevatedRole: null,
       memberships: [{ organizationId: "org_1", role: "ADMIN" }],
       isSuperAdmin: false,
     });
@@ -21,16 +22,18 @@ describe("resolveActorAuthorization", () => {
     const r = resolveActorAuthorization({
       sessionActiveOrganizationId: "org_1",
       superAdminElevatedOrganizationId: null,
+      superAdminElevatedRole: null,
       memberships: [{ organizationId: "org_1", role: "MEMBER" }],
       isSuperAdmin: false,
     });
     expect(r.canManageOrganization).toBe(false);
   });
 
-  it("elevates super admin when cookie org is set", () => {
+  it("elevates super admin as manager when cookie org is set", () => {
     const r = resolveActorAuthorization({
       sessionActiveOrganizationId: "org_other",
       superAdminElevatedOrganizationId: "org_target",
+      superAdminElevatedRole: "ADMIN",
       memberships: [{ organizationId: "org_other", role: "MEMBER" }],
       isSuperAdmin: true,
     });
@@ -39,10 +42,24 @@ describe("resolveActorAuthorization", () => {
     expect(r.canManageOrganization).toBe(true);
   });
 
+  it("elevates super admin as commercial without manage rights", () => {
+    const r = resolveActorAuthorization({
+      sessionActiveOrganizationId: "org_other",
+      superAdminElevatedOrganizationId: "org_target",
+      superAdminElevatedRole: "MEMBER",
+      memberships: [{ organizationId: "org_other", role: "ADMIN" }],
+      isSuperAdmin: true,
+    });
+    expect(r.activeOrganizationId).toBe("org_target");
+    expect(r.isElevatedSuperAdmin).toBe(true);
+    expect(r.canManageOrganization).toBe(false);
+  });
+
   it("does not elevate super admin without cookie", () => {
     const r = resolveActorAuthorization({
       sessionActiveOrganizationId: "org_1",
       superAdminElevatedOrganizationId: null,
+      superAdminElevatedRole: null,
       memberships: [{ organizationId: "org_1", role: "MEMBER" }],
       isSuperAdmin: true,
     });
@@ -55,6 +72,7 @@ describe("resolveActorAuthorization", () => {
     const r = resolveActorAuthorization({
       sessionActiveOrganizationId: "org_same",
       superAdminElevatedOrganizationId: "org_same",
+      superAdminElevatedRole: "ADMIN",
       memberships: [{ organizationId: "org_same", role: "ADMIN" }],
       isSuperAdmin: true,
     });
@@ -63,10 +81,22 @@ describe("resolveActorAuthorization", () => {
     expect(r.canManageOrganization).toBe(true);
   });
 
+  it("treats legacy elevation cookies without role as manager", () => {
+    const r = resolveActorAuthorization({
+      sessionActiveOrganizationId: "org_other",
+      superAdminElevatedOrganizationId: "org_target",
+      superAdminElevatedRole: null,
+      memberships: [],
+      isSuperAdmin: true,
+    });
+    expect(r.canManageOrganization).toBe(true);
+  });
+
   it("returns no tenant when session has no org and no elevation cookie", () => {
     const r = resolveActorAuthorization({
       sessionActiveOrganizationId: null,
       superAdminElevatedOrganizationId: null,
+      superAdminElevatedRole: null,
       memberships: [],
       isSuperAdmin: true,
     });

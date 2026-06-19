@@ -3,6 +3,7 @@ import {
   resolveActorAuthorization,
   resolveWorkspaceRoleMode,
 } from "../domain/authorization-policy";
+import type { SuperAdminOrgElevation } from "../domain/super-admin-org-elevation";
 import type { AuthSessionPort } from "../ports/auth-session-port";
 
 function membershipRoleForOrg(
@@ -31,7 +32,7 @@ function resolveSessionOrganizationId(input: {
 
 export async function getCurrentActorContext(
   deps: { auth: AuthSessionPort },
-  params: { superAdminElevatedOrganizationId: string | null },
+  params: { superAdminElevation: SuperAdminOrgElevation | null },
 ): Promise<ActorContext> {
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) {
@@ -43,18 +44,32 @@ export async function getCurrentActorContext(
     memberships: principal.memberships,
   });
 
-  const { activeOrganizationId, canManageOrganization, isElevatedSuperAdmin } =
-    resolveActorAuthorization({
-      sessionActiveOrganizationId: sessionOrganizationId,
-      superAdminElevatedOrganizationId: params.superAdminElevatedOrganizationId,
-      memberships: principal.memberships,
-      isSuperAdmin: principal.systemRoles.includes("SUPER_ADMIN"),
-    });
+  const {
+    activeOrganizationId,
+    canManageOrganization,
+    isElevatedSuperAdmin,
+  } = resolveActorAuthorization({
+    sessionActiveOrganizationId: sessionOrganizationId,
+    superAdminElevatedOrganizationId:
+      params.superAdminElevation?.organizationId ?? null,
+    superAdminElevatedRole: params.superAdminElevation?.role ?? null,
+    memberships: principal.memberships,
+    isSuperAdmin: principal.systemRoles.includes("SUPER_ADMIN"),
+  });
 
   const workspaceRoleMode = resolveWorkspaceRoleMode({
     activeOrganizationId,
     canManageOrganization,
   });
+
+  const membershipRole = membershipRoleForOrg(
+    principal.memberships,
+    activeOrganizationId,
+  );
+  const organizationMembershipRole =
+    isElevatedSuperAdmin && params.superAdminElevation
+      ? params.superAdminElevation.role
+      : membershipRole;
 
   return {
     kind: "authenticated",
@@ -64,13 +79,12 @@ export async function getCurrentActorContext(
     firstName: principal.firstName,
     lastName: principal.lastName,
     sessionOrganizationId: principal.activeOrganizationIdFromCookie,
-    organizationMembershipRole: membershipRoleForOrg(
-      principal.memberships,
-      activeOrganizationId,
-    ),
+    organizationMembershipRole,
     activeOrganizationId,
     systemRoles: principal.systemRoles,
-    superAdminElevatedOrganizationId: params.superAdminElevatedOrganizationId,
+    superAdminElevatedOrganizationId:
+      params.superAdminElevation?.organizationId ?? null,
+    superAdminElevatedRole: params.superAdminElevation?.role ?? null,
     canManageOrganization,
     isElevatedSuperAdmin,
     workspaceRoleMode,

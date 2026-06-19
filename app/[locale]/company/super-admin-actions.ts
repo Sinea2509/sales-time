@@ -30,8 +30,12 @@ const reasonSchema = z
   .nullable()
   .optional();
 
+import type { OrganizationMembershipRole } from "@/src/core/domain/organization-membership-role";
+import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
+
 const enterOrgSchema = z.object({
   targetOrganizationId: z.string().trim().min(1).max(120),
+  role: z.enum(["ADMIN", "MEMBER"]),
   reason: reasonSchema,
 });
 
@@ -50,6 +54,14 @@ export async function enterSuperAdminOrganizationAction(
   }
 
   const deps = getApplicationDeps();
+  const role: OrganizationMembershipRole = parsed.data.role;
+  const auditReason = [
+    parsed.data.reason,
+    `Rôle : ${organizationMembershipRoleLabel(role)}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const result = await enterOrganizationAsSuperAdmin(
     {
       auth: deps.auth,
@@ -58,7 +70,7 @@ export async function enterSuperAdminOrganizationAction(
     },
     {
       targetOrganizationId: parsed.data.targetOrganizationId,
-      reason: parsed.data.reason ?? null,
+      reason: auditReason || null,
     },
   );
   if (!result.ok) return result;
@@ -74,6 +86,7 @@ export async function enterSuperAdminOrganizationAction(
     signSuperAdminOrgCookieValue({
       actorUserId: principal.userId,
       targetOrganizationId: parsed.data.targetOrganizationId,
+      role,
       maxAgeSec: cookieOptions().maxAge,
     }),
     cookieOptions(),
@@ -91,13 +104,13 @@ export async function exitSuperAdminOrganizationAction(
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const verifiedOrg = await readSuperAdminOrgCookie();
-  if (!verifiedOrg) {
+  const verifiedElevation = await readSuperAdminOrgCookie();
+  if (!verifiedElevation) {
     return { ok: false as const, error: "NO_ELEVATION" as const };
   }
   if (
     parsed.data.organizationId !== undefined &&
-    parsed.data.organizationId !== verifiedOrg
+    parsed.data.organizationId !== verifiedElevation.organizationId
   ) {
     return { ok: false as const, error: "ORG_MISMATCH" as const };
   }
@@ -106,7 +119,7 @@ export async function exitSuperAdminOrganizationAction(
   const result = await exitSuperAdminOrganizationContext(
     { auth: deps.auth, audit: deps.audit },
     {
-      organizationId: verifiedOrg,
+      organizationId: verifiedElevation.organizationId,
       reason: parsed.data.reason ?? null,
     },
   );

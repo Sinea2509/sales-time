@@ -11,7 +11,7 @@ export async function exampleOrgAdminOnlyAction() {
   const ctx = await getCurrentActorContext(
     { auth: deps.auth },
     {
-      superAdminElevatedOrganizationId: superAdminOrg,
+      superAdminElevation: superAdminOrg,
     },
   );
   if (ctx.kind !== "authenticated" || !ctx.canManageOrganization) {

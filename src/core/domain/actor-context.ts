@@ -20,6 +20,7 @@ export type ActorContext =
       activeOrganizationId: string | null;
       systemRoles: SystemRoleType[];
       superAdminElevatedOrganizationId: string | null;
+      superAdminElevatedRole: OrganizationMembershipRoleSlug;
       canManageOrganization: boolean;
       isElevatedSuperAdmin: boolean;
       workspaceRoleMode: WorkspaceRoleMode | null;

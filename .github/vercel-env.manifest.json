@@ -3,14 +3,12 @@
     {
       "key": "DATABASE_URL",
       "target": ["production", "preview"],
-      "type": "encrypted",
-      "optional": true
+      "type": "encrypted"
     },
     {
       "key": "DIRECT_URL",
       "target": ["production", "preview"],
-      "type": "encrypted",
-      "optional": true
+      "type": "encrypted"
     },
     {
       "key": "CRON_SECRET",
@@ -35,32 +33,27 @@
     {
       "key": "RESEND_API_KEY",
       "target": ["production"],
-      "type": "encrypted",
-      "optional": true
+      "type": "encrypted"
     },
     {
       "key": "EMAIL_FROM",
       "target": ["production"],
-      "type": "plain",
-      "optional": true
+      "type": "plain"
     },
     {
       "key": "BLOB_READ_WRITE_TOKEN",
       "target": ["production", "preview"],
-      "type": "encrypted",
-      "optional": true
+      "type": "encrypted"
     },
     {
       "key": "SUPERADMIN_EMAILS",
       "target": ["production"],
-      "type": "plain",
-      "optional": true
+      "type": "plain"
     },
     {
       "key": "AUTH_SESSION_VERSION",
       "target": ["production", "preview"],
-      "type": "plain",
-      "optional": true
+      "type": "plain"
     }
   ]
 }

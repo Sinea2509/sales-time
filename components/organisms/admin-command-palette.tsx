@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { searchAdminAction } from "@/app/[locale]/admin/search-actions";
-import { enterSuperAdminOrganizationAction } from "@/app/[locale]/company/super-admin-actions";
+import { SuperAdminEnterOrgRoleDialog } from "@/components/molecules/super-admin-enter-org-control";
 
 type Props = {
   open: boolean;
@@ -139,6 +139,10 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
     }[];
     organizations: { id: string; name: string; slug: string | null }[];
   }>({ users: [], organizations: [] });
+  const [pendingOrgEnter, setPendingOrgEnter] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -226,14 +230,9 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
     (item: ResultItem) => {
       if (item.organizationId) {
         onOpenChange(false);
-        startTransition(async () => {
-          const result = await enterSuperAdminOrganizationAction({
-            targetOrganizationId: item.organizationId!,
-            reason: "Sélection depuis la recherche admin",
-          });
-          if (result && !result.ok) {
-            router.push("/admin/organizations");
-          }
+        setPendingOrgEnter({
+          id: item.organizationId,
+          name: item.label,
         });
         return;
       }
@@ -242,7 +241,7 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
         router.push(item.href);
       }
     },
-    [router, onOpenChange, startTransition],
+    [router, onOpenChange],
   );
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -275,7 +274,8 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
   }, [allResults]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg gap-0 p-0 overflow-hidden">
         <DialogHeader className="sr-only">
           <DialogTitle>Recherche admin</DialogTitle>
@@ -337,5 +337,17 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
         </div>
       </DialogContent>
     </Dialog>
+      {pendingOrgEnter ? (
+        <SuperAdminEnterOrgRoleDialog
+          open
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setPendingOrgEnter(null);
+          }}
+          targetOrganizationId={pendingOrgEnter.id}
+          organizationName={pendingOrgEnter.name}
+          reason="Sélection depuis la recherche admin"
+        />
+      ) : null}
+    </>
   );
 }

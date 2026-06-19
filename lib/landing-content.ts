@@ -180,7 +180,7 @@ export const landingFaqItems = [
   },
   {
     q: "Puis-je inviter toute l'équipe ?",
-    a: "Oui. Créez votre organisation, définissez les rôles admin / membre et invitez vos collègues par e-mail depuis l'espace équipe.",
+    a: "Oui. Créez votre organisation, définissez les rôles manager / commercial et invitez vos collègues par e-mail depuis l'espace équipe.",
   },
 ] as const;
 

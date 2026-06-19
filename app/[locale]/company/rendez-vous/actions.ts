@@ -74,7 +74,7 @@ export async function createMeetingAction(formData: FormData) {
   const ctx = await getCurrentActorContext(
     { auth: deps.auth },
     {
-      superAdminElevatedOrganizationId: superAdminOrg,
+      superAdminElevation: superAdminOrg,
     },
   );
   if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
@@ -168,7 +168,7 @@ export async function deleteMeetingAction(meetingId: string) {
   const ctx = await getCurrentActorContext(
     { auth: deps.auth },
     {
-      superAdminElevatedOrganizationId: superAdminOrg,
+      superAdminElevation: superAdminOrg,
     },
   );
   if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {

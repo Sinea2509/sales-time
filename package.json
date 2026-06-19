@@ -24,7 +24,8 @@
     "db:seed": "prisma db seed",
     "postinstall": "prisma generate",
     "e2e": "playwright test",
-    "e2e:install": "playwright install --with-deps chromium"
+    "e2e:install": "playwright install --with-deps chromium",
+    "sync:vercel-env": "node scripts/sync-vercel-env.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

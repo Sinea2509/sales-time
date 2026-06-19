@@ -14,7 +14,7 @@ export default async function OrganizationSettingsLayout({
   const actor = await getCurrentActorContext(
     { auth: deps.auth },
     {
-      superAdminElevatedOrganizationId: superAdminOrgCookie,
+      superAdminElevation: superAdminOrgCookie,
     },
   );
 

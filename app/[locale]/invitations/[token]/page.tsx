@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { pageTitleClass } from "@/lib/page-typography";
 import { AcceptInvitationClient } from "@/components/organisms/accept-invitation-client";
+import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
 
 type Props = { params: Promise<{ token: string }> };
 
@@ -33,7 +34,7 @@ export default async function InvitationPage({ params }: Props) {
         <p className="text-muted-foreground text-sm">
           Vous avez été invité en tant que{" "}
           <span className="font-medium text-foreground">
-            {inv.role === "ADMIN" ? "administrateur" : "membre"}
+            {organizationMembershipRoleLabel(inv.role).toLowerCase()}
           </span>{" "}
           pour l&apos;adresse{" "}
           <span className="font-mono text-foreground">{inv.email}</span>.

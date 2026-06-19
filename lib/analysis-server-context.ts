@@ -19,7 +19,7 @@ export async function requireOrgActor(): Promise<
   const superAdminOrg = await readSuperAdminOrgCookie();
   const ctx = await getCurrentActorContext(
     { auth: deps.auth },
-    { superAdminElevatedOrganizationId: superAdminOrg },
+    { superAdminElevation: superAdminOrg },
   );
   if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
     return { ok: false, error: "NO_ORG" };

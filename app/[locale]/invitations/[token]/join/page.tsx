@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { pageTitleClass } from "@/lib/page-typography";
 import { JoinInvitationForm } from "@/components/organisms/join-invitation-form";
+import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
 
 type Props = { params: Promise<{ token: string }> };
 
@@ -64,7 +65,7 @@ export default async function JoinInvitationPage({ params }: Props) {
           </span>{" "}
           en tant que{" "}
           <span className="font-medium text-foreground">
-            {inv.role === "ADMIN" ? "administrateur" : "membre"}
+            {organizationMembershipRoleLabel(inv.role).toLowerCase()}
           </span>
           .
         </p>

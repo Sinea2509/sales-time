@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/native-select-class";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
+import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
 
 export type TeamMemberRow = {
   membershipId: string;
@@ -137,8 +138,12 @@ export function OrgSettingsTeamList({
                     "dark:bg-transparent",
                   )}
                 >
-                  <option value="MEMBER">Membre</option>
-                  <option value="ADMIN">Administrateur</option>
+                  <option value="MEMBER">
+                    {organizationMembershipRoleLabel("MEMBER")}
+                  </option>
+                  <option value="ADMIN">
+                    {organizationMembershipRoleLabel("ADMIN")}
+                  </option>
                 </select>
               </div>
               <Button
@@ -200,8 +205,12 @@ export function OrgSettingsTeamList({
                         });
                       }}
                     >
-                      <option value="MEMBER">Membre</option>
-                      <option value="ADMIN">Administrateur</option>
+                      <option value="MEMBER">
+                        {organizationMembershipRoleLabel("MEMBER")}
+                      </option>
+                      <option value="ADMIN">
+                        {organizationMembershipRoleLabel("ADMIN")}
+                      </option>
                     </select>
                   </TableCell>
                   <TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
@@ -258,7 +267,7 @@ export function OrgSettingsTeamList({
                   <TableRow key={inv.id}>
                     <TableCell>{inv.email}</TableCell>
                     <TableCell>
-                      {inv.role === "ADMIN" ? "Administrateur" : "Membre"}
+                      {organizationMembershipRoleLabel(inv.role)}
                     </TableCell>
                     <TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
                       {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}

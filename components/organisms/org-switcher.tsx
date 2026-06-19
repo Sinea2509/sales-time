@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { cn } from "@/lib/utils";
+import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
 
 export type OrgSwitcherMembership = {
   organizationId: string;
@@ -134,7 +135,9 @@ export function OrgSwitcher({ memberships, currentOrganizationId }: Props) {
         <DropdownMenuContent align="start" className="min-w-56">
           {memberships.map((m) => {
             const isActive = m.organizationId === currentOrganizationId;
-            const roleLabel = m.role === "ADMIN" ? "admin" : "membre";
+            const roleLabel = organizationMembershipRoleLabel(
+              m.role === "ADMIN" ? "ADMIN" : "MEMBER",
+            ).toLowerCase();
             return (
               <DropdownMenuItem
                 key={m.organizationId}

@@ -30,7 +30,7 @@ export async function submitFeedbackAction(input: z.infer<typeof feedbackSchema>
   const superAdminOrg = await readSuperAdminOrgCookie();
   const ctx = await getCurrentActorContext(
     { auth: deps.auth },
-    { superAdminElevatedOrganizationId: superAdminOrg },
+    { superAdminElevation: superAdminOrg },
   );
 
   let companyName: string | null = null;

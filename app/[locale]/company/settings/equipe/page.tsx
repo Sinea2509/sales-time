@@ -19,7 +19,7 @@ export default async function OrganizationSettingsEquipePage() {
   const superAdminOrg = await readSuperAdminOrgCookie();
   const ctx = await getCurrentActorContext(
     { auth: deps.auth },
-    { superAdminElevatedOrganizationId: superAdminOrg },
+    { superAdminElevation: superAdminOrg },
   );
   if (
     ctx.kind !== "authenticated" ||

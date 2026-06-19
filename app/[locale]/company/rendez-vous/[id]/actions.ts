@@ -4,13 +4,15 @@ import { revalidatePath } from "next/cache";
 import { ANALYSIS_GATEWAY_MODEL } from "@/lib/analysis-model";
 import {
   requireAnalysisActor,
-  requireOrgActor,
 } from "@/lib/analysis-server-context";
 import { loadCommercialKissAppendix } from "@/lib/kiss-commercial-appendix";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { generateFollowUpEmailForMeeting } from "@/src/core/application/generate-follow-up-email";
 import { runMeetingAnalysis } from "@/src/core/application/run-meeting-analysis";
-import { formatFollowUpEmailDraft } from "@/src/core/domain/format-follow-up-email-draft";
+import {
+  formatFollowUpEmailBody,
+  formatFollowUpEmailDraft,
+} from "@/src/core/domain/format-follow-up-email-draft";
 
 export async function runAllMeetingAnalysesAction(meetingId: string) {
   const parsed = meetingIdSchema.safeParse(meetingId);
@@ -72,6 +74,8 @@ export async function generateFollowUpEmailAction(meetingId: string) {
         model: ANALYSIS_GATEWAY_MODEL,
       },
     );
+    const subject = email.subject;
+    const body = formatFollowUpEmailBody(email);
     const draft = formatFollowUpEmailDraft(email);
 
     await actor.deps.meetings.updateMeetingFollowUpDraft({
@@ -81,31 +85,10 @@ export async function generateFollowUpEmailAction(meetingId: string) {
     });
 
     revalidatePath(`/company/rendez-vous/${parsed.data}`);
-    return { ok: true as const, draft };
+    return { ok: true as const, subject, body, draft };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return { ok: false as const, error: "FAILED" as const, message };
   }
 }
 
-export async function saveFollowUpEmailDraftAction(
-  meetingId: string,
-  draft: string,
-) {
-  const parsed = meetingIdSchema.safeParse(meetingId);
-  if (!parsed.success)
-    return { ok: false as const, error: "VALIDATION" as const };
-
-  const actor = await requireOrgActor();
-  if (!actor.ok) return { ok: false as const, error: actor.error };
-
-  const ok = await actor.deps.meetings.updateMeetingFollowUpDraft({
-    id: parsed.data,
-    organizationId: actor.organizationId,
-    followUpEmailDraft: draft.trim() || null,
-  });
-  if (!ok) return { ok: false as const, error: "NOT_FOUND" as const };
-
-  revalidatePath(`/company/rendez-vous/${parsed.data}`);
-  return { ok: true as const };
-}

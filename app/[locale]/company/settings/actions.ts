@@ -13,7 +13,7 @@ async function requireOrgAdminOrganizationId(): Promise<string | null> {
   const ctx = await getCurrentActorContext(
     { auth: deps.auth },
     {
-      superAdminElevatedOrganizationId: superAdminOrgCookie,
+      superAdminElevation: superAdminOrgCookie,
     },
   );
   if (

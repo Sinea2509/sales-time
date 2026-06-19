@@ -15,7 +15,7 @@ export default async function OrganizationSettingsProcessPage() {
   const actor = await getCurrentActorContext(
     { auth: deps.auth },
     {
-      superAdminElevatedOrganizationId: superAdminOrgCookie,
+      superAdminElevation: superAdminOrgCookie,
     },
   );
   const orgId =

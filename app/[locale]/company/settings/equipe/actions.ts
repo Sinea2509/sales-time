@@ -18,7 +18,7 @@ async function requireOrgAdmin() {
   const superAdminOrg = await readSuperAdminOrgCookie();
   const ctx = await getCurrentActorContext(
     { auth: deps.auth },
-    { superAdminElevatedOrganizationId: superAdminOrg },
+    { superAdminElevation: superAdminOrg },
   );
   if (
     ctx.kind !== "authenticated" ||
@@ -152,7 +152,7 @@ export async function changeRoleAction(
       return {
         ok: false,
         message:
-          "Impossible de retirer le dernier administrateur de l’organisation.",
+          "Impossible de retirer le dernier manager de l’organisation.",
       };
     }
   }
@@ -197,7 +197,7 @@ export async function removeMemberAction(
     if (adminCount <= 1) {
       return {
         ok: false,
-        message: "Impossible de retirer le dernier administrateur.",
+        message: "Impossible de retirer le dernier manager.",
       };
     }
   }
