@@ -50,11 +50,13 @@ export function OrgSettingsTeamList({
   invitations,
   currentUserId,
   currentUserEmail,
+  canManageTeam,
 }: {
   members: TeamMemberRow[];
   invitations: TeamInvitationRow[];
   currentUserId: string;
   currentUserEmail: string;
+  canManageTeam: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -82,7 +84,7 @@ export function OrgSettingsTeamList({
 
       const r = await inviteMemberAction({
         email: inviteEmail.trim(),
-        role: inviteRole,
+        role: canManageTeam ? inviteRole : "MEMBER",
       });
       if (!r.ok) {
         setMsg(r.message);
@@ -111,7 +113,12 @@ export function OrgSettingsTeamList({
           </CardHeader>
           <CardContent className="pt-0">
             <div className="flex w-full flex-nowrap items-stretch overflow-hidden rounded-md border border-input bg-background">
-              <div className="flex min-w-0 flex-1 border-r border-input">
+              <div
+                className={cn(
+                  "flex min-w-0 flex-1",
+                  canManageTeam ? "border-r border-input" : "",
+                )}
+              >
                 <Input
                   id="equipe-invite-email"
                   type="email"
@@ -123,29 +130,31 @@ export function OrgSettingsTeamList({
                   className="h-10 min-w-0 flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:outline-none"
                 />
               </div>
-              <div className="flex shrink-0 border-r border-input">
-                <select
-                  id="equipe-invite-role"
-                  value={inviteRole}
-                  aria-label="Rôle du membre invité"
-                  onChange={(e) =>
-                    setInviteRole(e.target.value as "ADMIN" | "MEMBER")
-                  }
-                  className={cn(
-                    nativeSelectChevronClasses,
-                    "h-10 min-w-[9.5rem] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-3 pr-10 text-sm outline-none",
-                    "focus-visible:ring-0",
-                    "dark:bg-transparent",
-                  )}
-                >
-                  <option value="MEMBER">
-                    {organizationMembershipRoleLabel("MEMBER")}
-                  </option>
-                  <option value="ADMIN">
-                    {organizationMembershipRoleLabel("ADMIN")}
-                  </option>
-                </select>
-              </div>
+              {canManageTeam ? (
+                <div className="flex shrink-0 border-r border-input">
+                  <select
+                    id="equipe-invite-role"
+                    value={inviteRole}
+                    aria-label="Rôle du membre invité"
+                    onChange={(e) =>
+                      setInviteRole(e.target.value as "ADMIN" | "MEMBER")
+                    }
+                    className={cn(
+                      nativeSelectChevronClasses,
+                      "h-10 min-w-[9.5rem] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-3 pr-10 text-sm outline-none",
+                      "focus-visible:ring-0",
+                      "dark:bg-transparent",
+                    )}
+                  >
+                    <option value="MEMBER">
+                      {organizationMembershipRoleLabel("MEMBER")}
+                    </option>
+                    <option value="ADMIN">
+                      {organizationMembershipRoleLabel("ADMIN")}
+                    </option>
+                  </select>
+                </div>
+              ) : null}
               <Button
                 type="button"
                 disabled={pending}
@@ -171,7 +180,9 @@ export function OrgSettingsTeamList({
                 <TableHead className="hidden sm:table-cell">
                   Rejoint le
                 </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">
+                  {canManageTeam ? "Actions" : ""}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -184,61 +195,69 @@ export function OrgSettingsTeamList({
                     {m.email}
                   </TableCell>
                   <TableCell>
-                    <select
-                      className={nativeSelectCompactClassName}
-                      value={m.role}
-                      disabled={pending || m.userId === currentUserId}
-                      onChange={(e) => {
-                        const role = e.target.value as "ADMIN" | "MEMBER";
-                        startTransition(async () => {
-                          setMsg(null);
-                          const r = await changeRoleAction(
-                            m.membershipId,
-                            role,
-                          );
-                          if (!r.ok) {
-                            setMsg(r.message);
-                            e.target.value = m.role;
-                            return;
-                          }
-                          router.refresh();
-                        });
-                      }}
-                    >
-                      <option value="MEMBER">
-                        {organizationMembershipRoleLabel("MEMBER")}
-                      </option>
-                      <option value="ADMIN">
-                        {organizationMembershipRoleLabel("ADMIN")}
-                      </option>
-                    </select>
+                    {canManageTeam ? (
+                      <select
+                        className={nativeSelectCompactClassName}
+                        value={m.role}
+                        disabled={pending || m.userId === currentUserId}
+                        onChange={(e) => {
+                          const role = e.target.value as "ADMIN" | "MEMBER";
+                          startTransition(async () => {
+                            setMsg(null);
+                            const r = await changeRoleAction(
+                              m.membershipId,
+                              role,
+                            );
+                            if (!r.ok) {
+                              setMsg(r.message);
+                              e.target.value = m.role;
+                              return;
+                            }
+                            router.refresh();
+                          });
+                        }}
+                      >
+                        <option value="MEMBER">
+                          {organizationMembershipRoleLabel("MEMBER")}
+                        </option>
+                        <option value="ADMIN">
+                          {organizationMembershipRoleLabel("ADMIN")}
+                        </option>
+                      </select>
+                    ) : (
+                      organizationMembershipRoleLabel(m.role)
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
                     {new Date(m.joinedAt).toLocaleDateString("fr-FR")}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive h-8"
-                      disabled={pending || m.userId === currentUserId}
-                      onClick={() => {
-                        if (!confirm(`Retirer ${m.email} de l’organisation ?`))
-                          return;
-                        startTransition(async () => {
-                          setMsg(null);
-                          const r = await removeMemberAction(m.membershipId);
-                          if (!r.ok) {
-                            setMsg(r.message);
+                    {canManageTeam ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive h-8"
+                        disabled={pending || m.userId === currentUserId}
+                        onClick={() => {
+                          if (
+                            !confirm(`Retirer ${m.email} de l’organisation ?`)
+                          )
                             return;
-                          }
-                          router.refresh();
-                        });
-                      }}
-                    >
-                      Retirer
-                    </Button>
+                          startTransition(async () => {
+                            setMsg(null);
+                            const r = await removeMemberAction(m.membershipId);
+                            if (!r.ok) {
+                              setMsg(r.message);
+                              return;
+                            }
+                            router.refresh();
+                          });
+                        }}
+                      >
+                        Retirer
+                      </Button>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               ))}
@@ -259,7 +278,9 @@ export function OrgSettingsTeamList({
                   <TableHead className="hidden sm:table-cell">
                     Expire le
                   </TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead className="text-right">
+                    {canManageTeam ? "Action" : ""}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -273,26 +294,28 @@ export function OrgSettingsTeamList({
                       {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8"
-                        disabled={pending}
-                        onClick={() => {
-                          startTransition(async () => {
-                            setMsg(null);
-                            const r = await revokeInvitationAction(inv.id);
-                            if (!r.ok) {
-                              setMsg(r.message);
-                              return;
-                            }
-                            router.refresh();
-                          });
-                        }}
-                      >
-                        Révoquer
-                      </Button>
+                      {canManageTeam ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8"
+                          disabled={pending}
+                          onClick={() => {
+                            startTransition(async () => {
+                              setMsg(null);
+                              const r = await revokeInvitationAction(inv.id);
+                              if (!r.ok) {
+                                setMsg(r.message);
+                                return;
+                              }
+                              router.refresh();
+                            });
+                          }}
+                        >
+                          Révoquer
+                        </Button>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}

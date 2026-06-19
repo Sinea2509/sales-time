@@ -6,6 +6,7 @@ import {
   ContactRound,
   LayoutDashboard,
   LineChart,
+  Settings,
 } from "lucide-react";
 import {
   OrgDashboardShellFrame,
@@ -50,6 +51,17 @@ export function OrgCommercialDashboardShell(props: Props) {
           href: "/company/contacts",
           label: tNav("contacts"),
           icon: ContactRound,
+        },
+      ],
+    },
+    {
+      label: tWorkspace("managerNavAdmin"),
+      items: [
+        {
+          href: "/company/settings",
+          label: tNav("orgSettings"),
+          icon: Settings,
+          match: "prefix",
         },
       ],
     },

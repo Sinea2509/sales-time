@@ -21,7 +21,7 @@ export default async function OrganizationSettingsLayout({
   if (
     actor.kind !== "authenticated" ||
     !actor.activeOrganizationId ||
-    !actor.canManageOrganization
+    !actor.canAccessOrganizationSettings
   ) {
     redirect("/company");
   }

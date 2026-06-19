@@ -731,14 +731,15 @@ describe("signUpAction", () => {
 });
 
 describe("signInAction", () => {
-  it("returns generic error for invalid payload", async () => {
+  it("returns field errors for invalid payload", async () => {
     const r = await signInAction(
       null,
       form({ email: "bad", password: "x", next: "" }),
     );
     expect(r).toEqual({
       ok: false,
-      message: "E-mail ou mot de passe invalide.",
+      message: "Adresse e-mail invalide.",
+      fieldErrors: { email: "Adresse e-mail invalide." },
     });
   });
 

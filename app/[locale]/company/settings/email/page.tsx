@@ -11,7 +11,7 @@ export default async function OrgSettingsEmailPage() {
   if (
     actor.kind !== "authenticated" ||
     !actor.activeOrganizationId ||
-    !actor.canManageOrganization
+    !actor.canAccessOrganizationSettings
   ) {
     redirect("/company");
   }

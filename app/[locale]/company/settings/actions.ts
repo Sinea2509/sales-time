@@ -7,7 +7,7 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { uploadOrgLogoToBlob } from "@/lib/org-logo-upload";
 
-async function requireOrgAdminOrganizationId(): Promise<string | null> {
+async function requireOrgSettingsOrganizationId(): Promise<string | null> {
   const superAdminOrgCookie = await readSuperAdminOrgCookie();
   const deps = getApplicationDeps();
   const ctx = await getCurrentActorContext(
@@ -18,7 +18,7 @@ async function requireOrgAdminOrganizationId(): Promise<string | null> {
   );
   if (
     ctx.kind !== "authenticated" ||
-    !ctx.canManageOrganization ||
+    !ctx.canAccessOrganizationSettings ||
     !ctx.activeOrganizationId
   ) {
     return null;
@@ -57,7 +57,7 @@ export type OrgLogoUploadResult =
 export async function updateOrganizationContext(
   raw: z.input<typeof orgContextSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -81,7 +81,7 @@ export async function updateOrganizationContext(
 export async function updateOrganizationCoach(
   raw: z.input<typeof orgCoachSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -104,7 +104,7 @@ export async function updateOrganizationCoach(
 export async function updateOrganizationProcess(
   raw: z.input<typeof orgProcessSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -134,7 +134,7 @@ const orgEmailSchema = z.object({
 export async function uploadOrganizationLogo(
   formData: FormData,
 ): Promise<OrgLogoUploadResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -153,7 +153,7 @@ export async function uploadOrganizationLogo(
 }
 
 export async function removeOrganizationLogo(): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -166,7 +166,7 @@ export async function removeOrganizationLogo(): Promise<OrgSettingsActionResult>
 export async function updateOrganizationEmailSettings(
   raw: z.input<typeof orgEmailSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgAdminOrganizationId();
+  const organizationId = await requireOrgSettingsOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }

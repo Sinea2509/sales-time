@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
+import { TeamMemberInviteDialog } from "@/components/organisms/team-member-invite-dialog";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
@@ -41,11 +42,13 @@ export function DashboardAdminShell({
   kissTeamStrengthsNarrative,
   meetingTypeOptions,
   pipelineStageOptions,
+  currentUserEmail,
 }: {
   admin: OrgAdminDashboard;
   kissTeamStrengthsNarrative?: string | null;
   meetingTypeOptions: string[];
   pipelineStageOptions: string[];
+  currentUserEmail: string;
 }) {
   const { home, monEquipe, discPie, soncasPie, kissTeamRollup } = admin;
   const jours = admin.statsWindowDays;
@@ -79,7 +82,10 @@ export function DashboardAdminShell({
       </div>
 
       <section className="space-y-3">
-        <h2 className={sectionHeadingClass}>Mon équipe</h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className={sectionHeadingClass}>Mon équipe</h2>
+          <TeamMemberInviteDialog currentUserEmail={currentUserEmail} />
+        </div>
         <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px] text-left text-sm">

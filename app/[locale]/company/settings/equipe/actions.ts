@@ -8,8 +8,10 @@ import { buildInvitationEmailHtml } from "@/lib/invite-email-html";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { resolveOrganizationInviteRole } from "@/src/core/domain/organization-invite-policy";
+import type { OrganizationMembershipRole } from "@/src/core/domain/organization-membership-role";
 
-async function requireOrgAdmin() {
+async function requireOrgSettingsAccess() {
   const deps = getApplicationDeps();
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal)
@@ -23,7 +25,8 @@ async function requireOrgAdmin() {
   if (
     ctx.kind !== "authenticated" ||
     !ctx.activeOrganizationId ||
-    !ctx.canManageOrganization
+    !ctx.canAccessOrganizationSettings ||
+    !ctx.organizationMembershipRole
   ) {
     return { ok: false as const, error: "FORBIDDEN" as const };
   }
@@ -31,7 +34,17 @@ async function requireOrgAdmin() {
     ok: true as const,
     organizationId: ctx.activeOrganizationId,
     actorUserId: principal.userId,
+    actorRole: ctx.organizationMembershipRole,
   };
+}
+
+async function requireOrgAdmin() {
+  const gate = await requireOrgSettingsAccess();
+  if (!gate.ok) return gate;
+  if (gate.actorRole !== "ADMIN") {
+    return { ok: false as const, error: "FORBIDDEN" as const };
+  }
+  return gate;
 }
 
 export type TeamActionResult = { ok: true } | { ok: false; message: string };
@@ -48,12 +61,23 @@ const inviteSchema = z.object({
 export async function inviteMemberAction(
   raw: z.input<typeof inviteSchema>,
 ): Promise<TeamActionResult> {
-  const gate = await requireOrgAdmin();
+  const gate = await requireOrgSettingsAccess();
   if (!gate.ok) return { ok: false, message: "Accès refusé." };
 
   const parsed = inviteSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, message: "E-mail ou rôle invalide." };
+  }
+
+  const inviteRole = resolveOrganizationInviteRole({
+    actorRole: gate.actorRole,
+    requestedRole: parsed.data.role,
+  });
+  if (!inviteRole) {
+    return {
+      ok: false,
+      message: "Vous ne pouvez inviter que des membres de votre rôle.",
+    };
   }
 
   const deps = getApplicationDeps();
@@ -98,7 +122,7 @@ export async function inviteMemberAction(
   await deps.organizationTeam.createPendingInvitation({
     organizationId: gate.organizationId,
     email,
-    role: parsed.data.role,
+    role: inviteRole,
     tokenHash: hashToken(rawToken),
     expiresAt,
     invitedByUserId: gate.actorUserId,
@@ -125,7 +149,7 @@ export async function inviteMemberAction(
 
 export async function changeRoleAction(
   membershipId: string,
-  role: "ADMIN" | "MEMBER",
+  role: OrganizationMembershipRole,
 ): Promise<TeamActionResult> {
   const gate = await requireOrgAdmin();
   if (!gate.ok) return { ok: false, message: "Accès refusé." };

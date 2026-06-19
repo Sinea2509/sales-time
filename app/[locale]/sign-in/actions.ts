@@ -11,13 +11,43 @@ const schema = z.object({
   email: z
     .string()
     .trim()
-    .email()
+    .min(1, "Adresse e-mail requise.")
+    .email("Adresse e-mail invalide.")
     .transform((e) => e.toLowerCase()),
-  password: z.string().min(1).max(200),
+  password: z
+    .string()
+    .min(1, "Mot de passe requis.")
+    .max(200, "Mot de passe trop long."),
   next: z.string().max(2000).optional().nullable(),
 });
 
-export type SignInState = { ok: false; message: string } | null;
+export type SignInFieldErrors = Partial<
+  Record<"email" | "password", string>
+>;
+
+export type SignInState =
+  | { ok: false; message: string; fieldErrors?: SignInFieldErrors }
+  | null;
+
+function validationError(flat: {
+  fieldErrors: {
+    email?: string[];
+    password?: string[];
+  };
+}) {
+  const fieldErrors: SignInFieldErrors = {};
+  const emailMsg = flat.fieldErrors.email?.[0];
+  const passwordMsg = flat.fieldErrors.password?.[0];
+  if (emailMsg) {
+    fieldErrors.email = emailMsg;
+  }
+  if (passwordMsg) {
+    fieldErrors.password = passwordMsg;
+  }
+  const message =
+    emailMsg ?? passwordMsg ?? "E-mail ou mot de passe invalide.";
+  return { ok: false as const, message, fieldErrors };
+}
 
 export async function signInAction(
   _prev: SignInState,
@@ -29,7 +59,7 @@ export async function signInAction(
     next: formData.get("next"),
   });
   if (!parsed.success) {
-    return { ok: false, message: "E-mail ou mot de passe invalide." };
+    return validationError(parsed.error.flatten());
   }
 
   const deps = getApplicationDeps();

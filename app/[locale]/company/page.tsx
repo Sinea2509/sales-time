@@ -101,6 +101,7 @@ export default async function DashboardHomePage({
             kissTeamStrengthsNarrative={kissTeamStrengthsNarrative}
             meetingTypeOptions={meetingTypeOptions}
             pipelineStageOptions={pipelineStageOptions}
+            currentUserEmail={actor.email}
           />
         )}
       </div>

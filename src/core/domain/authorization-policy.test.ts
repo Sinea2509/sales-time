@@ -15,6 +15,7 @@ describe("resolveActorAuthorization", () => {
     });
     expect(r.activeOrganizationId).toBe("org_1");
     expect(r.canManageOrganization).toBe(true);
+    expect(r.canAccessOrganizationSettings).toBe(true);
     expect(r.isElevatedSuperAdmin).toBe(false);
   });
 
@@ -27,6 +28,7 @@ describe("resolveActorAuthorization", () => {
       isSuperAdmin: false,
     });
     expect(r.canManageOrganization).toBe(false);
+    expect(r.canAccessOrganizationSettings).toBe(true);
   });
 
   it("elevates super admin as manager when cookie org is set", () => {
@@ -40,6 +42,7 @@ describe("resolveActorAuthorization", () => {
     expect(r.activeOrganizationId).toBe("org_target");
     expect(r.isElevatedSuperAdmin).toBe(true);
     expect(r.canManageOrganization).toBe(true);
+    expect(r.canAccessOrganizationSettings).toBe(true);
   });
 
   it("elevates super admin as commercial without manage rights", () => {
@@ -53,6 +56,7 @@ describe("resolveActorAuthorization", () => {
     expect(r.activeOrganizationId).toBe("org_target");
     expect(r.isElevatedSuperAdmin).toBe(true);
     expect(r.canManageOrganization).toBe(false);
+    expect(r.canAccessOrganizationSettings).toBe(true);
   });
 
   it("does not elevate super admin without cookie", () => {
@@ -66,6 +70,7 @@ describe("resolveActorAuthorization", () => {
     expect(r.activeOrganizationId).toBe("org_1");
     expect(r.isElevatedSuperAdmin).toBe(false);
     expect(r.canManageOrganization).toBe(false);
+    expect(r.canAccessOrganizationSettings).toBe(true);
   });
 
   it("uses session org when super admin cookie matches session org", () => {
@@ -79,6 +84,7 @@ describe("resolveActorAuthorization", () => {
     expect(r.activeOrganizationId).toBe("org_same");
     expect(r.isElevatedSuperAdmin).toBe(true);
     expect(r.canManageOrganization).toBe(true);
+    expect(r.canAccessOrganizationSettings).toBe(true);
   });
 
   it("treats legacy elevation cookies without role as manager", () => {
@@ -90,6 +96,7 @@ describe("resolveActorAuthorization", () => {
       isSuperAdmin: true,
     });
     expect(r.canManageOrganization).toBe(true);
+    expect(r.canAccessOrganizationSettings).toBe(true);
   });
 
   it("returns no tenant when session has no org and no elevation cookie", () => {
@@ -102,6 +109,7 @@ describe("resolveActorAuthorization", () => {
     });
     expect(r.activeOrganizationId).toBeNull();
     expect(r.canManageOrganization).toBe(false);
+    expect(r.canAccessOrganizationSettings).toBe(false);
     expect(r.isElevatedSuperAdmin).toBe(false);
   });
 });

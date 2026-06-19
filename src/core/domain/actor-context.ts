@@ -22,6 +22,7 @@ export type ActorContext =
       superAdminElevatedOrganizationId: string | null;
       superAdminElevatedRole: OrganizationMembershipRoleSlug;
       canManageOrganization: boolean;
+      canAccessOrganizationSettings: boolean;
       isElevatedSuperAdmin: boolean;
       workspaceRoleMode: WorkspaceRoleMode | null;
     };

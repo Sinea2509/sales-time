@@ -24,12 +24,13 @@ export default async function OrganizationSettingsEquipePage() {
   if (
     ctx.kind !== "authenticated" ||
     !ctx.activeOrganizationId ||
-    !ctx.canManageOrganization
+    !ctx.canAccessOrganizationSettings
   ) {
     redirect("/company");
   }
 
   const orgId = ctx.activeOrganizationId;
+  const canManageTeam = ctx.canManageOrganization;
 
   const { members, invitations } =
     await deps.organizationTeam.listMembersAndPendingInvitations(orgId);
@@ -61,6 +62,7 @@ export default async function OrganizationSettingsEquipePage() {
         invitations={invRows}
         currentUserId={principal.userId}
         currentUserEmail={principal.email}
+        canManageTeam={canManageTeam}
       />
     </div>
   );

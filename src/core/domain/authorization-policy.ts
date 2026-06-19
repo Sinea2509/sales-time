@@ -6,6 +6,8 @@ export type ResolvedAuthorization = {
   /** Tenant boundary for org-scoped operations (internal organization id). */
   activeOrganizationId: string | null;
   canManageOrganization: boolean;
+  /** Org settings (contexte, coach, process, email, équipe) for any tenant member. */
+  canAccessOrganizationSettings: boolean;
   isElevatedSuperAdmin: boolean;
 };
 
@@ -62,9 +64,14 @@ export function resolveActorAuthorization(input: {
       (elevatedAsManager || (!isElevatedSuperAdmin && isOrgAdminForTenant)),
   );
 
+  const canAccessOrganizationSettings = Boolean(
+    activeOrganizationId && (membership !== undefined || isElevatedSuperAdmin),
+  );
+
   return {
     activeOrganizationId,
     canManageOrganization,
+    canAccessOrganizationSettings,
     isElevatedSuperAdmin,
   };
 }

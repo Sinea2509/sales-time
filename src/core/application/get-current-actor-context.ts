@@ -47,6 +47,7 @@ export async function getCurrentActorContext(
   const {
     activeOrganizationId,
     canManageOrganization,
+    canAccessOrganizationSettings,
     isElevatedSuperAdmin,
   } = resolveActorAuthorization({
     sessionActiveOrganizationId: sessionOrganizationId,
@@ -86,6 +87,7 @@ export async function getCurrentActorContext(
       params.superAdminElevation?.organizationId ?? null,
     superAdminElevatedRole: params.superAdminElevation?.role ?? null,
     canManageOrganization,
+    canAccessOrganizationSettings,
     isElevatedSuperAdmin,
     workspaceRoleMode,
   };
