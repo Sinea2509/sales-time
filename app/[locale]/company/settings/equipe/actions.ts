@@ -5,43 +5,36 @@ import { z } from "zod";
 import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 import { buildInvitationEmailHtml } from "@/lib/invite-email-html";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
 import { resolveOrganizationInviteRole } from "@/src/core/domain/organization-invite-policy";
 import type { OrganizationMembershipRole } from "@/src/core/domain/organization-membership-role";
 
 async function requireOrgSettingsAccess() {
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal)
-    return { ok: false as const, error: "UNAUTHENTICATED" as const };
-
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    { superAdminElevation: superAdminOrg },
-  );
-  if (
-    ctx.kind !== "authenticated" ||
-    !ctx.activeOrganizationId ||
-    !ctx.canAccessOrganizationSettings ||
-    !ctx.organizationMembershipRole
-  ) {
+  const access = await loadOrgSettingsAccess();
+  if (!access || !access.actor.organizationMembershipRole) {
     return { ok: false as const, error: "FORBIDDEN" as const };
   }
+
+  const principal = await getApplicationDeps().auth.getAuthenticatedPrincipal();
+  if (!principal) {
+    return { ok: false as const, error: "UNAUTHENTICATED" as const };
+  }
+
   return {
     ok: true as const,
-    organizationId: ctx.activeOrganizationId,
+    organizationId: access.actor.activeOrganizationId!,
     actorUserId: principal.userId,
-    actorRole: ctx.organizationMembershipRole,
+    actorRole: access.actor.organizationMembershipRole,
+    canManageOrganizationSettings: access.canManageOrganizationSettings,
+    organizationHasManager: access.organizationHasManager,
   };
 }
 
 async function requireOrgAdmin() {
   const gate = await requireOrgSettingsAccess();
   if (!gate.ok) return gate;
-  if (gate.actorRole !== "ADMIN") {
+  if (!gate.canManageOrganizationSettings) {
     return { ok: false as const, error: "FORBIDDEN" as const };
   }
   return gate;
@@ -72,6 +65,7 @@ export async function inviteMemberAction(
   const inviteRole = resolveOrganizationInviteRole({
     actorRole: gate.actorRole,
     requestedRole: parsed.data.role,
+    organizationHasManager: gate.organizationHasManager,
   });
   if (!inviteRole) {
     return {

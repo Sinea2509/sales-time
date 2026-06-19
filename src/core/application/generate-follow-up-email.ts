@@ -4,7 +4,7 @@ import {
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { MeetingDetailWithAnalyses } from "@/src/core/ports/meeting-repository-port";
-import type { OrganizationSettingsRow } from "@/src/core/ports/organization-settings-repository-port";
+import type { ResolvedFollowUpEmailPreferences } from "@/src/core/domain/follow-up-email-preferences";
 
 function xml(tag: string, body: string) {
   return `<${tag}>\n${body}\n</${tag}>`;
@@ -17,19 +17,18 @@ export async function generateFollowUpEmailForMeeting(
   },
   input: {
     meeting: MeetingDetailWithAnalyses;
-    organizationSettings: OrganizationSettingsRow | null;
+    emailPreferences: ResolvedFollowUpEmailPreferences;
     model: string;
   },
 ) {
-  const s = input.organizationSettings;
   const prefs = [
     xml(
       "email_preferences",
       [
-        `emailTone: ${s?.emailTone ?? "formal"}`,
-        `emailVouvoiement: ${s?.emailVouvoiement !== false ? "true" : "false"}`,
-        s?.emailSignature
-          ? `emailSignature:\n${s.emailSignature}`
+        `emailTone: ${input.emailPreferences.emailTone}`,
+        `emailVouvoiement: ${input.emailPreferences.emailVouvoiement ? "true" : "false"}`,
+        input.emailPreferences.emailSignature
+          ? `emailSignature:\n${input.emailPreferences.emailSignature}`
           : "emailSignature: (none)",
       ].join("\n"),
     ),

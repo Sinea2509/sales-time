@@ -2,28 +2,32 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
 import { uploadOrgLogoToBlob } from "@/lib/org-logo-upload";
 
-async function requireOrgSettingsOrganizationId(): Promise<string | null> {
-  const superAdminOrgCookie = await readSuperAdminOrgCookie();
-  const deps = getApplicationDeps();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    {
-      superAdminElevation: superAdminOrgCookie,
-    },
-  );
-  if (
-    ctx.kind !== "authenticated" ||
-    !ctx.canAccessOrganizationSettings ||
-    !ctx.activeOrganizationId
-  ) {
-    return null;
-  }
-  return ctx.activeOrganizationId;
+type OrgSettingsActor =
+  | {
+      organizationId: string;
+      userId: string;
+      canManageOrganizationSettings: boolean;
+    }
+  | null;
+
+async function requireOrgSettingsActor(): Promise<OrgSettingsActor> {
+  const access = await loadOrgSettingsAccess();
+  if (!access) return null;
+  return {
+    organizationId: access.actor.activeOrganizationId!,
+    userId: access.actor.internalUserId,
+    canManageOrganizationSettings: access.canManageOrganizationSettings,
+  };
+}
+
+async function requireOrgAdminOrganizationId(): Promise<string | null> {
+  const actor = await requireOrgSettingsActor();
+  if (!actor?.canManageOrganizationSettings) return null;
+  return actor.organizationId;
 }
 
 const orgContextSchema = z.object({
@@ -57,7 +61,7 @@ export type OrgLogoUploadResult =
 export async function updateOrganizationContext(
   raw: z.input<typeof orgContextSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgSettingsOrganizationId();
+  const organizationId = await requireOrgAdminOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -81,7 +85,7 @@ export async function updateOrganizationContext(
 export async function updateOrganizationCoach(
   raw: z.input<typeof orgCoachSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgSettingsOrganizationId();
+  const organizationId = await requireOrgAdminOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -104,7 +108,7 @@ export async function updateOrganizationCoach(
 export async function updateOrganizationProcess(
   raw: z.input<typeof orgProcessSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgSettingsOrganizationId();
+  const organizationId = await requireOrgAdminOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -122,10 +126,13 @@ export async function updateOrganizationProcess(
   const deps = getApplicationDeps();
   await deps.organizationSettings.upsertProcessFields(organizationId, data);
   revalidatePath("/company/settings", "layout");
+  revalidatePath("/company");
+  revalidatePath("/company/rendez-vous/nouveau");
+  revalidatePath("/company/preparer");
   return { ok: true };
 }
 
-const orgEmailSchema = z.object({
+const followUpEmailSchema = z.object({
   emailTone: z.enum(["formal", "informal"]).nullable(),
   emailVouvoiement: z.boolean(),
   emailSignature: z.string().max(10_000).nullable(),
@@ -134,7 +141,7 @@ const orgEmailSchema = z.object({
 export async function uploadOrganizationLogo(
   formData: FormData,
 ): Promise<OrgLogoUploadResult> {
-  const organizationId = await requireOrgSettingsOrganizationId();
+  const organizationId = await requireOrgAdminOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -153,7 +160,7 @@ export async function uploadOrganizationLogo(
 }
 
 export async function removeOrganizationLogo(): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgSettingsOrganizationId();
+  const organizationId = await requireOrgAdminOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
@@ -164,13 +171,13 @@ export async function removeOrganizationLogo(): Promise<OrgSettingsActionResult>
 }
 
 export async function updateOrganizationEmailSettings(
-  raw: z.input<typeof orgEmailSchema>,
+  raw: z.input<typeof followUpEmailSchema>,
 ): Promise<OrgSettingsActionResult> {
-  const organizationId = await requireOrgSettingsOrganizationId();
+  const organizationId = await requireOrgAdminOrganizationId();
   if (!organizationId) {
     return { ok: false, message: "Accès refusé." };
   }
-  const parsed = orgEmailSchema.safeParse(raw);
+  const parsed = followUpEmailSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, message: "Données invalides." };
   }
@@ -180,6 +187,31 @@ export async function updateOrganizationEmailSettings(
     emailVouvoiement: parsed.data.emailVouvoiement,
     emailSignature: parsed.data.emailSignature?.trim() || null,
   });
+  revalidatePath("/company/settings", "layout");
+  return { ok: true };
+}
+
+export async function updatePersonalFollowUpEmailSettings(
+  raw: z.input<typeof followUpEmailSchema>,
+): Promise<OrgSettingsActionResult> {
+  const actor = await requireOrgSettingsActor();
+  if (!actor || actor.canManageOrganizationSettings) {
+    return { ok: false, message: "Accès refusé." };
+  }
+  const parsed = followUpEmailSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, message: "Données invalides." };
+  }
+  const deps = getApplicationDeps();
+  await deps.organizationTeam.upsertMembershipFollowUpEmailPreferences(
+    actor.userId,
+    actor.organizationId,
+    {
+      emailTone: parsed.data.emailTone,
+      emailVouvoiement: parsed.data.emailVouvoiement,
+      emailSignature: parsed.data.emailSignature?.trim() || null,
+    },
+  );
   revalidatePath("/company/settings", "layout");
   return { ok: true };
 }

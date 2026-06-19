@@ -1,41 +1,58 @@
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { requireDashboardActor } from "@/lib/dashboard-server-context";
+import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
 import { OrgSettingsEmailForm } from "@/components/organisms/org-settings-email-form";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
+import { loadResolvedFollowUpEmailPreferences } from "@/src/core/application/load-resolved-follow-up-email-preferences";
+import type { FollowUpEmailTone } from "@/src/core/domain/follow-up-email-preferences";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrgSettingsEmailPage() {
-  const actor = await requireDashboardActor();
-  if (
-    actor.kind !== "authenticated" ||
-    !actor.activeOrganizationId ||
-    !actor.canAccessOrganizationSettings
-  ) {
+  const access = await loadOrgSettingsAccess();
+  if (!access) {
     redirect("/company");
   }
 
   const deps = getApplicationDeps();
-  const row = await deps.organizationSettings.findByOrganizationId(
-    actor.activeOrganizationId,
-  );
+  const orgId = access.actor.activeOrganizationId!;
+  const orgRow = await deps.organizationSettings.findByOrganizationId(orgId);
+  const useOrganizationSettings = access.canManageOrganizationSettings;
 
-  const tone =
-    row?.emailTone === "informal" || row?.emailTone === "formal"
-      ? row.emailTone
-      : null;
+  const effective: {
+    emailTone: FollowUpEmailTone;
+    emailVouvoiement: boolean;
+    emailSignature: string | null;
+  } = useOrganizationSettings
+    ? {
+        emailTone: orgRow?.emailTone === "informal" ? "informal" : "formal",
+        emailVouvoiement: orgRow?.emailVouvoiement ?? true,
+        emailSignature: orgRow?.emailSignature ?? null,
+      }
+    : await loadResolvedFollowUpEmailPreferences(
+        { organizationTeam: deps.organizationTeam },
+        {
+          organizationId: orgId,
+          sellerUserId: access.actor.internalUserId,
+          organizationSettings: orgRow,
+        },
+      );
 
   return (
     <div className="space-y-6">
       <PageHeaderSimple
         title="E-mail de suivi"
-        description="Paramètres utilisés pour la génération du mail de relance (ton, vouvoiement, signature)."
+        description={
+          useOrganizationSettings
+            ? "Paramètres organisation utilisés pour la génération du mail de relance (ton, vouvoiement, signature)."
+            : "Personnalisez votre ton, vouvoiement et signature pour vos mails de relance. Les valeurs par défaut de l’organisation s’appliquent tant que vous ne les remplacez pas."
+        }
       />
       <OrgSettingsEmailForm
-        initialTone={tone}
-        initialVouvoiement={row?.emailVouvoiement ?? true}
-        initialSignature={row?.emailSignature ?? null}
+        mode={useOrganizationSettings ? "organization" : "personal"}
+        initialTone={effective.emailTone}
+        initialVouvoiement={effective.emailVouvoiement}
+        initialSignature={effective.emailSignature}
       />
     </div>
   );

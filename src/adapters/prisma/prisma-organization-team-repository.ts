@@ -229,4 +229,51 @@ export class PrismaOrganizationTeamRepository implements OrganizationTeamReposit
       user: member.user,
     };
   }
+
+  async findMembershipFollowUpEmailPreferences(
+    userId: string,
+    organizationId: string,
+  ): Promise<{
+    emailTone: string | null;
+    emailVouvoiement: boolean | null;
+    emailSignature: string | null;
+  } | null> {
+    const membership = await this.db.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: { userId, organizationId },
+      },
+      select: {
+        followUpEmailTone: true,
+        followUpEmailVouvoiement: true,
+        followUpEmailSignature: true,
+      },
+    });
+    if (!membership) return null;
+    return {
+      emailTone: membership.followUpEmailTone,
+      emailVouvoiement: membership.followUpEmailVouvoiement,
+      emailSignature: membership.followUpEmailSignature,
+    };
+  }
+
+  async upsertMembershipFollowUpEmailPreferences(
+    userId: string,
+    organizationId: string,
+    data: {
+      emailTone: string | null;
+      emailVouvoiement: boolean;
+      emailSignature: string | null;
+    },
+  ): Promise<void> {
+    await this.db.organizationMembership.update({
+      where: {
+        userId_organizationId: { userId, organizationId },
+      },
+      data: {
+        followUpEmailTone: data.emailTone,
+        followUpEmailVouvoiement: data.emailVouvoiement,
+        followUpEmailSignature: data.emailSignature,
+      },
+    });
+  }
 }

@@ -1,6 +1,15 @@
 import { redirect } from "next/navigation";
+import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
 
-/** La page d’aperçu des paramètres a été retirée ; entrée directe sur Contexte. */
-export default function OrganizationSettingsIndexPage() {
-  redirect("/company/settings/contexte");
+export default async function OrganizationSettingsIndexPage() {
+  const access = await loadOrgSettingsAccess();
+  if (!access) {
+    redirect("/company");
+  }
+
+  if (access.canManageOrganizationSettings) {
+    redirect("/company/settings/contexte");
+  }
+
+  redirect("/company/settings/email");
 }

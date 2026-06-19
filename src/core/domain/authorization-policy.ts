@@ -6,7 +6,7 @@ export type ResolvedAuthorization = {
   /** Tenant boundary for org-scoped operations (internal organization id). */
   activeOrganizationId: string | null;
   canManageOrganization: boolean;
-  /** Org settings (contexte, coach, process, email, équipe) for any tenant member. */
+  /** Settings area for tenant members; org-wide edits remain manager-only. */
   canAccessOrganizationSettings: boolean;
   isElevatedSuperAdmin: boolean;
 };

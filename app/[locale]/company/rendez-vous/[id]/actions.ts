@@ -8,6 +8,7 @@ import {
 import { loadCommercialKissAppendix } from "@/lib/kiss-commercial-appendix";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { generateFollowUpEmailForMeeting } from "@/src/core/application/generate-follow-up-email";
+import { loadResolvedFollowUpEmailPreferences } from "@/src/core/application/load-resolved-follow-up-email-preferences";
 import { runMeetingAnalysis } from "@/src/core/application/run-meeting-analysis";
 import {
   formatFollowUpEmailBody,
@@ -64,13 +65,21 @@ export async function generateFollowUpEmailAction(meetingId: string) {
   const settings = await actor.deps.organizationSettings.findByOrganizationId(
     actor.organizationId,
   );
+  const emailPreferences = await loadResolvedFollowUpEmailPreferences(
+    { organizationTeam: actor.deps.organizationTeam },
+    {
+      organizationId: actor.organizationId,
+      sellerUserId: meeting.sellerUserId,
+      organizationSettings: settings,
+    },
+  );
 
   try {
     const email = await generateFollowUpEmailForMeeting(
       { analysis: actor.deps.analysis, prompts: actor.deps.prompts },
       {
         meeting,
-        organizationSettings: settings,
+        emailPreferences,
         model: ANALYSIS_GATEWAY_MODEL,
       },
     );

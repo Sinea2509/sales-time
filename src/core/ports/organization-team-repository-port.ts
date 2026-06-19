@@ -89,4 +89,23 @@ export interface OrganizationTeamRepositoryPort {
     role: OrganizationMembershipRole;
     user: { email: string; firstName: string | null; lastName: string | null };
   } | null>;
+
+  findMembershipFollowUpEmailPreferences(
+    userId: string,
+    organizationId: string,
+  ): Promise<{
+    emailTone: string | null;
+    emailVouvoiement: boolean | null;
+    emailSignature: string | null;
+  } | null>;
+
+  upsertMembershipFollowUpEmailPreferences(
+    userId: string,
+    organizationId: string,
+    data: {
+      emailTone: string | null;
+      emailVouvoiement: boolean;
+      emailSignature: string | null;
+    },
+  ): Promise<void>;
 }

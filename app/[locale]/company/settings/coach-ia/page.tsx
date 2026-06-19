@@ -1,26 +1,18 @@
 import { OrgSettingsCoachForm } from "@/components/organisms/org-settings-coach-form";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { asStringArray } from "@/lib/as-string-array";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
+import { requireOrgSettingsManager } from "@/lib/require-org-settings-manager";
 
 export default async function OrganizationSettingsCoachPage() {
-  const superAdminOrgCookie = await readSuperAdminOrgCookie();
-  const deps = getApplicationDeps();
-  const actor = await getCurrentActorContext(
-    { auth: deps.auth },
-    {
-      superAdminElevation: superAdminOrgCookie,
-    },
-  );
-  const orgId =
-    actor.kind === "authenticated" ? actor.activeOrganizationId : null;
+  const access = await loadOrgSettingsAccess();
+  if (!access) return null;
+  requireOrgSettingsManager(access);
 
-  const row =
-    orgId != null
-      ? await deps.organizationSettings.findByOrganizationId(orgId)
-      : null;
+  const orgId = access.actor.activeOrganizationId!;
+  const deps = getApplicationDeps();
+  const row = await deps.organizationSettings.findByOrganizationId(orgId);
 
   return (
     <div className="space-y-6">

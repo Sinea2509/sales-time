@@ -1,30 +1,22 @@
 import { redirect } from "next/navigation";
 import { OrgSettingsShell } from "@/components/templates/org-settings-shell";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { getApplicationDeps } from "@/lib/application-deps";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
 
 export default async function OrganizationSettingsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const deps = getApplicationDeps();
-  const superAdminOrgCookie = await readSuperAdminOrgCookie();
-  const actor = await getCurrentActorContext(
-    { auth: deps.auth },
-    {
-      superAdminElevation: superAdminOrgCookie,
-    },
-  );
-
-  if (
-    actor.kind !== "authenticated" ||
-    !actor.activeOrganizationId ||
-    !actor.canAccessOrganizationSettings
-  ) {
+  const access = await loadOrgSettingsAccess();
+  if (!access) {
     redirect("/company");
   }
 
-  return <OrgSettingsShell>{children}</OrgSettingsShell>;
+  return (
+    <OrgSettingsShell
+      canManageOrganizationSettings={access.canManageOrganizationSettings}
+    >
+      {children}
+    </OrgSettingsShell>
+  );
 }

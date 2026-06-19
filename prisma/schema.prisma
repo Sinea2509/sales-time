@@ -217,6 +217,9 @@ model OrganizationMembership {
   organizationId String
   organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   role           OrganizationMembershipRole
+  followUpEmailTone        String?
+  followUpEmailVouvoiement Boolean?
+  followUpEmailSignature   String? @db.Text
   createdAt      DateTime                   @default(now())
 
   @@unique([userId, organizationId])

@@ -7,28 +7,42 @@ describe("resolveOrganizationInviteRole", () => {
       resolveOrganizationInviteRole({
         actorRole: "ADMIN",
         requestedRole: "MEMBER",
+        organizationHasManager: true,
       }),
     ).toBe("MEMBER");
     expect(
       resolveOrganizationInviteRole({
         actorRole: "ADMIN",
         requestedRole: "ADMIN",
+        organizationHasManager: true,
       }),
     ).toBe("ADMIN");
   });
 
-  it("allows commercials to invite only commercials", () => {
+  it("allows commercials to invite only commercials when a manager exists", () => {
     expect(
       resolveOrganizationInviteRole({
         actorRole: "MEMBER",
         requestedRole: "MEMBER",
+        organizationHasManager: true,
       }),
     ).toBe("MEMBER");
     expect(
       resolveOrganizationInviteRole({
         actorRole: "MEMBER",
         requestedRole: "ADMIN",
+        organizationHasManager: true,
       }),
     ).toBeNull();
+  });
+
+  it("allows commercials to invite any role when no manager exists", () => {
+    expect(
+      resolveOrganizationInviteRole({
+        actorRole: "MEMBER",
+        requestedRole: "ADMIN",
+        organizationHasManager: false,
+      }),
+    ).toBe("ADMIN");
   });
 });

@@ -8,6 +8,7 @@ import { uploadMeetingTranscriptFile } from "@/lib/meeting-transcript-upload";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createMeetingForOrg } from "@/src/core/application/create-meeting";
+import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 
 const meetingOutcomeSchema = z.enum([
   "WON",
@@ -64,6 +65,39 @@ const createMeetingSchema = z.object({
   outcome: meetingOutcomeSchema,
   feeling: z.coerce.number().int().min(1).max(5).optional().nullable(),
 });
+
+export async function getOrgMeetingFormOptionsAction(): Promise<
+  | {
+      ok: true;
+      meetingTypeOptions: string[];
+      pipelineStageOptions: string[];
+    }
+  | { ok: false; error: "UNAUTHENTICATED" | "NO_ORG" }
+> {
+  const deps = getApplicationDeps();
+  const principal = await deps.auth.getAuthenticatedPrincipal();
+  if (!principal) return { ok: false, error: "UNAUTHENTICATED" };
+
+  const superAdminOrg = await readSuperAdminOrgCookie();
+  const ctx = await getCurrentActorContext(
+    { auth: deps.auth },
+    {
+      superAdminElevation: superAdminOrg,
+    },
+  );
+  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
+    return { ok: false, error: "NO_ORG" };
+  }
+
+  const settings = await deps.organizationSettings.findByOrganizationId(
+    ctx.activeOrganizationId,
+  );
+
+  return {
+    ok: true,
+    ...orgMeetingFormOptionsFromSettings(settings),
+  };
+}
 
 export async function createMeetingAction(formData: FormData) {
   const deps = getApplicationDeps();

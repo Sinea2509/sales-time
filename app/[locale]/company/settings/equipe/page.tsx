@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
 import {
   OrgSettingsTeamList,
@@ -16,21 +15,12 @@ export default async function OrganizationSettingsEquipePage() {
   const principal = await deps.auth.getAuthenticatedPrincipal();
   if (!principal) redirect("/sign-in");
 
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    { superAdminElevation: superAdminOrg },
-  );
-  if (
-    ctx.kind !== "authenticated" ||
-    !ctx.activeOrganizationId ||
-    !ctx.canAccessOrganizationSettings
-  ) {
+  const access = await loadOrgSettingsAccess();
+  if (!access) {
     redirect("/company");
   }
 
-  const orgId = ctx.activeOrganizationId;
-  const canManageTeam = ctx.canManageOrganization;
+  const orgId = access.actor.activeOrganizationId!;
 
   const { members, invitations } =
     await deps.organizationTeam.listMembersAndPendingInvitations(orgId);
@@ -62,7 +52,7 @@ export default async function OrganizationSettingsEquipePage() {
         invitations={invRows}
         currentUserId={principal.userId}
         currentUserEmail={principal.email}
-        canManageTeam={canManageTeam}
+        canManageTeam={access.canManageOrganizationSettings}
       />
     </div>
   );

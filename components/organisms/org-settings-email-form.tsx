@@ -2,7 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateOrganizationEmailSettings } from "@/app/[locale]/company/settings/actions";
+import {
+  updateOrganizationEmailSettings,
+  updatePersonalFollowUpEmailSettings,
+} from "@/app/[locale]/company/settings/actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,10 +13,12 @@ import { cn } from "@/lib/utils";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
 
 export function OrgSettingsEmailForm({
+  mode,
   initialTone,
   initialVouvoiement,
   initialSignature,
 }: {
+  mode: "organization" | "personal";
   initialTone: "formal" | "informal" | null;
   initialVouvoiement: boolean;
   initialSignature: string | null;
@@ -34,11 +39,15 @@ export function OrgSettingsEmailForm({
         e.preventDefault();
         setMsg(null);
         startTransition(async () => {
-          const r = await updateOrganizationEmailSettings({
+          const payload = {
             emailTone: tone,
             emailVouvoiement: vouv,
             emailSignature: sig.trim() || null,
-          });
+          };
+          const r =
+            mode === "organization"
+              ? await updateOrganizationEmailSettings(payload)
+              : await updatePersonalFollowUpEmailSettings(payload);
           setMsg(
             r.ok
               ? { ok: true, text: "Enregistré." }
