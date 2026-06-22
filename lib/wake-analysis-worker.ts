@@ -1,3 +1,5 @@
+import { after } from "next/server";
+
 /**
  * Starts analysis immediately after a job is enqueued. Uses a separate worker
  * request so the create/update action returns quickly while AI runs (up to 300s).
@@ -24,17 +26,37 @@ export function wakeAnalysisWorker(): void {
     method: "GET",
     headers,
     signal: AbortSignal.timeout(290_000),
-  }).catch((cause) => {
-    console.error("wakeAnalysisWorker: fetch failed", cause);
+  })
+    .then(async (res) => {
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        console.error(
+          "wakeAnalysisWorker: worker returned",
+          res.status,
+          body.slice(0, 500),
+        );
+      }
+    })
+    .catch((cause) => {
+      console.error("wakeAnalysisWorker: fetch failed", cause);
+    });
+}
+
+/** Schedules worker wake after the server action response (Next.js request scope). */
+export function scheduleAnalysisWorkerWake(): void {
+  after(() => {
+    wakeAnalysisWorker();
   });
 }
 
 function resolveWorkerBaseUrl(): string | null {
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) {
+    return `https://${vercelUrl.replace(/^https?:\/\//, "")}`;
+  }
+
   const appBase = process.env.APP_BASE_URL?.trim();
   if (appBase) return appBase.replace(/\/$/, "");
-
-  const vercelUrl = process.env.VERCEL_URL?.trim();
-  if (vercelUrl) return `https://${vercelUrl.replace(/^https?:\/\//, "")}`;
 
   if (process.env.NODE_ENV !== "production") {
     const port = process.env.PORT?.trim() || "3000";

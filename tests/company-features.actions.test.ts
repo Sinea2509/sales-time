@@ -102,6 +102,13 @@ jest.mock("@/lib/blob-paths", () => ({
   blobUrlBelongsToOrg: jest.fn(() => true),
 }));
 
+// eslint-disable-next-line no-var
+var scheduleAnalysisWorkerWakeMock: JestFn;
+jest.mock("@/lib/wake-analysis-worker", () => {
+  scheduleAnalysisWorkerWakeMock = jest.fn();
+  return { scheduleAnalysisWorkerWake: scheduleAnalysisWorkerWakeMock };
+});
+
 import { blobUrlBelongsToOrg } from "@/lib/blob-paths";
 
 // eslint-disable-next-line no-var
@@ -985,6 +992,7 @@ describe("rendez-vous actions", () => {
       sellerUserId: USER_ID,
     });
     expect(createMeetingForOrgMock).toHaveBeenCalled();
+    expect(scheduleAnalysisWorkerWakeMock).toHaveBeenCalled();
     expect(revalidateTeamMemberPerformancePathsMock).toHaveBeenCalledWith(
       USER_ID,
     );
@@ -1250,6 +1258,7 @@ describe("rendez-vous actions", () => {
       sellerUserId: USER_ID,
     });
     expect(analysisJobsMock.enqueueMeetingAnalysis).toHaveBeenCalled();
+    expect(scheduleAnalysisWorkerWakeMock).toHaveBeenCalled();
   });
 });
 
