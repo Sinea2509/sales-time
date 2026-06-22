@@ -32,6 +32,22 @@ Prefer reusing atoms/molecules before duplicating markup in organisms or `app/` 
 
 **Rule**: Dependencies point inward. Outer layers implement interfaces declared inward — never import adapters into domain.
 
+Delivery-only concerns (`after()`, `revalidatePath`, cron routes) stay in `app/` or delivery helpers — not in `src/core/application/`. Meeting analysis runs in-process via `after()` (`scheduleAnalysisJobsAfterResponse`) with a daily cron backup at `/api/cron/process-analysis-jobs`.
+
+## Authorization (IDOR)
+
+- Never load org-owned rows by ID alone — always pass **`activeOrganizationId`** from session into `*ForOrg` repository methods.
+- Reuse shared access helpers (e.g. `lib/meeting-mutation-access.ts`) instead of copy-pasting seller/manager checks in server actions.
+- See `.cursor/rules/idor-authorization.mdc`.
+
+## UI (atomic design)
+
+- **Molecules** — presentation only; no server actions.
+- **Organisms** — feature blocks; client components may call server actions.
+- **`app/` routes** — thin; pass props to organisms/templates; do not import `components/ui/` (root layout exception).
+
+See `.cursor/rules/atomic-design.mdc`, `.cursor/rules/kiss-dry.mdc`.
+
 ## Validation
 
 Validate **`unknown`** at boundaries with **Zod** (`safeParse` + structured errors for UX where applicable). Prefer collocated `*.ts` schemas exporting `z.infer`.

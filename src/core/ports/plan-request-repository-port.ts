@@ -30,7 +30,7 @@ export interface PlanRequestRepositoryPort {
     limit?: number,
   ): Promise<PlanRequestRow[]>;
 
-  countPending(): Promise<number>;
+  findById(id: string): Promise<PlanRequestRow | null>;
 
   updateStatus(input: {
     id: string;

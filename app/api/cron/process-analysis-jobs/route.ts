@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const ai = checkAiGatewayConfigured();
   if (!ai.ok) {
     console.error(
-      "process-jobs: AI_GATEWAY_API_KEY is missing — analysis worker cannot run",
+      "process-analysis-jobs: AI_GATEWAY_API_KEY is missing — analysis worker cannot run",
     );
     return NextResponse.json(
       { ok: false, error: "AI_NOT_CONFIGURED" },

@@ -4,9 +4,29 @@ globs: app/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
-# Delivery layer (`app/`)
+# Delivery layer (`app/` + delivery helpers)
 
-- **Thin**: Parse requests, call application use cases with injected deps from the composition root, map results to HTTP/redirect/JSON/UI.
-- **Validation**: Use Zod for body/query/form **`unknown`** before crossing into core. Prefer `.safeParse` + structured errors for user-facing flows.
-- **No Prisma in UI/route handlers** except through adapters already composed — prefer a single `getDeps()` or similar pattern over ad-hoc `prisma` imports in random route files.
-- **Imports**: Routes/actions may import `src/core/application`, port types, and adapter composition — not deep adapter internals unless wiring tests.
+## Thin delivery
+
+- Parse/validate with **Zod** at the boundary (`safeParse` + structured errors).
+- Compose deps via `getApplicationDeps()` — **no ad-hoc Prisma** in routes/actions.
+- Call **one** application use case per action when possible; map result to UI/JSON/redirect.
+- Side effects tied to HTTP lifecycle (`after()`, `revalidatePath`) stay in delivery — not in `src/core/application/`.
+
+## File placement
+
+| Kind | Location |
+|------|----------|
+| Routes, layouts, server actions | `app/` |
+| Colocated delivery helpers (`schedule-analysis-jobs.ts`, action-only utils) | `app/[feature]/` next to actions |
+| Shared server helpers (cookies, auth context) | `lib/*-server-context.ts`, `lib/*-access.ts` |
+| Pure utilities | `lib/` (no `next/*`, no React) |
+
+## Imports
+
+- May import: `src/core/application`, port types, `lib/application-deps`, Zod schemas.
+- Must not import: deep adapter internals (except composition/tests).
+
+## IDOR
+
+Follow [`idor-authorization.mdc`](idor-authorization.mdc) on every org-owned resource.

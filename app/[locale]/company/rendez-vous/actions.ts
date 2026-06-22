@@ -2,15 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { getApplicationDeps } from "@/lib/application-deps";
 import { revalidateTeamMemberPerformancePaths } from "@/lib/revalidate-team-member-paths";
 import { uploadMeetingTranscriptFile } from "@/lib/meeting-transcript-upload";
 import { blobUrlBelongsToOrg } from "@/lib/blob-paths";
 import { mergeMeetingTranscriptSources } from "@/lib/transcript-extract";
-import { scheduleAnalysisWorkerWake } from "@/lib/wake-analysis-worker";
+import { scheduleAnalysisJobsAfterResponse } from "@/app/[locale]/company/rendez-vous/schedule-analysis-jobs";
+import { requireOrgActor } from "@/lib/analysis-server-context";
+import { requireMeetingMutationAccess } from "@/lib/meeting-mutation-access";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createMeetingForOrg } from "@/src/core/application/create-meeting";
 import { updateMeetingForOrg } from "@/src/core/application/update-meeting-for-org";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
@@ -79,23 +78,11 @@ export async function getOrgMeetingFormOptionsAction(): Promise<
     }
   | { ok: false; error: "UNAUTHENTICATED" | "NO_ORG" }
 > {
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false, error: "UNAUTHENTICATED" };
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false, error: actor.error };
 
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    {
-      superAdminElevation: superAdminOrg,
-    },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false, error: "NO_ORG" };
-  }
-
-  const settings = await deps.organizationSettings.findByOrganizationId(
-    ctx.activeOrganizationId,
+  const settings = await actor.deps.organizationSettings.findByOrganizationId(
+    actor.organizationId,
   );
 
   return {
@@ -105,20 +92,8 @@ export async function getOrgMeetingFormOptionsAction(): Promise<
 }
 
 export async function createMeetingAction(formData: FormData) {
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
-
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    {
-      superAdminElevation: superAdminOrg,
-    },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" };
-  }
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
   const file = formData.get("transcriptFile");
   let sourceType: "TRANSCRIPT" | "UPLOAD" = "TRANSCRIPT";
@@ -127,7 +102,7 @@ export async function createMeetingAction(formData: FormData) {
 
   if (file instanceof File && file.size > 0) {
     const uploaded = await uploadMeetingTranscriptFile({
-      organizationId: ctx.activeOrganizationId,
+      organizationId: actor.organizationId,
       file,
     });
     if (!uploaded.ok) {
@@ -150,7 +125,7 @@ export async function createMeetingAction(formData: FormData) {
 
   if (
     sourceBlobUrl &&
-    !blobUrlBelongsToOrg(sourceBlobUrl, ctx.activeOrganizationId)
+    !blobUrlBelongsToOrg(sourceBlobUrl, actor.organizationId)
   ) {
     return { ok: false as const, error: "VALIDATION" };
   }
@@ -172,9 +147,9 @@ export async function createMeetingAction(formData: FormData) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const result = await createMeetingForOrg(deps, {
-    organizationId: ctx.activeOrganizationId,
-    sellerInternalUserId: principal.userId,
+  const result = await createMeetingForOrg(actor.deps, {
+    organizationId: actor.organizationId,
+    sellerInternalUserId: actor.actorUserId,
     personId: parsed.data.personId,
     prospectName: parsed.data.prospectName,
     meetingAt: parsed.data.meetingAt,
@@ -202,16 +177,16 @@ export async function createMeetingAction(formData: FormData) {
     };
   }
 
-  scheduleAnalysisWorkerWake();
+  scheduleAnalysisJobsAfterResponse();
 
   revalidatePath("/company/rendez-vous");
   revalidatePath("/company/analyse");
   revalidatePath("/company");
-  revalidateTeamMemberPerformancePaths(principal.userId);
+  revalidateTeamMemberPerformancePaths(actor.actorUserId);
   return {
     ok: true as const,
     meetingId: result.meetingId,
-    sellerUserId: principal.userId,
+    sellerUserId: actor.actorUserId,
   };
 }
 
@@ -230,30 +205,6 @@ export type MeetingEditPayload = {
   notes: string | null;
 };
 
-async function assertCanMutateMeeting(input: {
-  deps: ReturnType<typeof getApplicationDeps>;
-  ctx: Awaited<ReturnType<typeof getCurrentActorContext>>;
-  principalUserId: string;
-  meetingId: string;
-  organizationId: string;
-}) {
-  const existing = await input.deps.meetings.findMeetingByIdForOrg({
-    id: input.meetingId,
-    organizationId: input.organizationId,
-  });
-  if (!existing) return { ok: false as const, error: "NOT_FOUND" as const };
-
-  if (
-    input.ctx.kind === "authenticated" &&
-    !input.ctx.canManageOrganization &&
-    existing.sellerUserId !== input.principalUserId
-  ) {
-    return { ok: false as const, error: "FORBIDDEN" as const };
-  }
-
-  return { ok: true as const, meeting: existing };
-}
-
 export async function getMeetingForEditAction(meetingId: string): Promise<
   | { ok: true; meeting: MeetingEditPayload }
   | {
@@ -266,26 +217,14 @@ export async function getMeetingForEditAction(meetingId: string): Promise<
     return { ok: false, error: "VALIDATION" };
   }
 
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false, error: "UNAUTHENTICATED" };
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false, error: actor.error };
 
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    { superAdminElevation: superAdminOrg },
+  const access = await requireMeetingMutationAccess(
+    actor.deps.meetings,
+    actor,
+    parsedId.data,
   );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false, error: "NO_ORG" };
-  }
-
-  const access = await assertCanMutateMeeting({
-    deps,
-    ctx,
-    principalUserId: principal.userId,
-    meetingId: parsedId.data,
-    organizationId: ctx.activeOrganizationId,
-  });
   if (!access.ok) return { ok: false, error: access.error };
 
   const m = access.meeting;
@@ -309,18 +248,8 @@ export async function getMeetingForEditAction(meetingId: string): Promise<
 }
 
 export async function updateMeetingAction(formData: FormData) {
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
-
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    { superAdminElevation: superAdminOrg },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" };
-  }
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
   const meetingIdRaw = formData.get("meetingId");
   const parsedId = meetingIdSchema.safeParse(meetingIdRaw);
@@ -328,13 +257,11 @@ export async function updateMeetingAction(formData: FormData) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const access = await assertCanMutateMeeting({
-    deps,
-    ctx,
-    principalUserId: principal.userId,
-    meetingId: parsedId.data,
-    organizationId: ctx.activeOrganizationId,
-  });
+  const access = await requireMeetingMutationAccess(
+    actor.deps.meetings,
+    actor,
+    parsedId.data,
+  );
   if (!access.ok) {
     return {
       ok: false as const,
@@ -349,7 +276,7 @@ export async function updateMeetingAction(formData: FormData) {
 
   if (file instanceof File && file.size > 0) {
     const uploaded = await uploadMeetingTranscriptFile({
-      organizationId: ctx.activeOrganizationId,
+      organizationId: actor.organizationId,
       file,
     });
     if (!uploaded.ok) {
@@ -372,7 +299,7 @@ export async function updateMeetingAction(formData: FormData) {
 
   if (
     sourceBlobUrl &&
-    !blobUrlBelongsToOrg(sourceBlobUrl, ctx.activeOrganizationId)
+    !blobUrlBelongsToOrg(sourceBlobUrl, actor.organizationId)
   ) {
     return { ok: false as const, error: "VALIDATION" };
   }
@@ -394,8 +321,8 @@ export async function updateMeetingAction(formData: FormData) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const result = await updateMeetingForOrg(deps, {
-    organizationId: ctx.activeOrganizationId,
+  const result = await updateMeetingForOrg(actor.deps, {
+    organizationId: actor.organizationId,
     meetingId: parsedId.data,
     personId: parsed.data.personId,
     prospectName: parsed.data.prospectName,
@@ -429,24 +356,24 @@ export async function updateMeetingAction(formData: FormData) {
     (access.meeting.notes?.trim() ? access.meeting.notes.trim() : null);
 
   if (transcriptChanged || notesChanged) {
-    const left = await deps.organizationQuota.getTrialAnalysesLeft(
-      ctx.activeOrganizationId,
+    const left = await actor.deps.organizationQuota.getTrialAnalysesLeft(
+      actor.organizationId,
     );
     if (left > 0) {
-      await deps.organizationQuota.decrementTrialAnalysesLeft(
-        ctx.activeOrganizationId,
+      await actor.deps.organizationQuota.decrementTrialAnalysesLeft(
+        actor.organizationId,
       );
-      await deps.meetings.updateMeetingStatus({
+      await actor.deps.meetings.updateMeetingStatus({
         id: parsedId.data,
-        organizationId: ctx.activeOrganizationId,
+        organizationId: actor.organizationId,
         status: "PROCESSING",
         errorMessage: null,
       });
-      await deps.analysisJobs.enqueueMeetingAnalysis({
-        organizationId: ctx.activeOrganizationId,
+      await actor.deps.analysisJobs.enqueueMeetingAnalysis({
+        organizationId: actor.organizationId,
         meetingId: parsedId.data,
       });
-      scheduleAnalysisWorkerWake();
+      scheduleAnalysisJobsAfterResponse();
     }
   }
 
@@ -468,38 +395,23 @@ export async function deleteMeetingAction(meetingId: string) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" };
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    {
-      superAdminElevation: superAdminOrg,
-    },
+  const access = await requireMeetingMutationAccess(
+    actor.deps.meetings,
+    actor,
+    parsedId.data,
   );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" };
+  if (!access.ok) {
+    return { ok: false as const, error: access.error };
   }
 
-  const existing = await deps.meetings.findMeetingByIdForOrg({
-    id: parsedId.data,
-    organizationId: ctx.activeOrganizationId,
-  });
-  if (!existing) return { ok: false as const, error: "NOT_FOUND" };
+  const sellerUserId = access.meeting.sellerUserId;
 
-  if (!ctx.canManageOrganization) {
-    if (existing.sellerUserId !== principal.userId) {
-      return { ok: false as const, error: "FORBIDDEN" };
-    }
-  }
-
-  const sellerUserId = existing.sellerUserId;
-
-  await deps.meetings.deleteMeetingByIdForOrg({
-    id: existing.id,
-    organizationId: ctx.activeOrganizationId,
+  await actor.deps.meetings.deleteMeetingByIdForOrg({
+    id: access.meeting.id,
+    organizationId: actor.organizationId,
   });
 
   revalidatePath("/company/rendez-vous");

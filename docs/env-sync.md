@@ -73,16 +73,16 @@ Sync credentials (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) are read
 
    If secrets are missing, the job fails with a setup hint (empty `VERCEL_TOKEN`).
 
-4. **Verify analysis worker** (manual smoke test; production may require deployment protection bypass):
+4. **Verify analysis reconciliation cron** (optional smoke test):
 
    ```bash
    curl -s -H "Authorization: Bearer $CRON_SECRET" \
-     https://sales-time-mytradeshowai.vercel.app/api/worker/process-jobs
+     https://sales-time-mytradeshowai.vercel.app/api/cron/process-analysis-jobs
    ```
 
    Expect `{ "ok": true, ... }`, not `{ "error": "Unauthorized" }`.
 
-   An hourly cron also runs `/api/worker/process-jobs` as a backup reconcile (`vercel.json`).
+   RDV create/update/retry runs analysis **in-process** via Next.js `after()`. A **daily** cron (`0 4 * * *` in `vercel.json`) runs `/api/cron/process-analysis-jobs` as a reconciliation backup for stuck or orphaned jobs.
 
 ## Rotate a secret
 

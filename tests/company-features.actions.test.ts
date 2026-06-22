@@ -103,10 +103,10 @@ jest.mock("@/lib/blob-paths", () => ({
 }));
 
 // eslint-disable-next-line no-var
-var scheduleAnalysisWorkerWakeMock: JestFn;
-jest.mock("@/lib/wake-analysis-worker", () => {
-  scheduleAnalysisWorkerWakeMock = jest.fn();
-  return { scheduleAnalysisWorkerWake: scheduleAnalysisWorkerWakeMock };
+var scheduleAnalysisJobsAfterResponseMock: JestFn;
+jest.mock("@/app/[locale]/company/rendez-vous/schedule-analysis-jobs", () => {
+  scheduleAnalysisJobsAfterResponseMock = jest.fn();
+  return { scheduleAnalysisJobsAfterResponse: scheduleAnalysisJobsAfterResponseMock };
 });
 
 import { blobUrlBelongsToOrg } from "@/lib/blob-paths";
@@ -166,8 +166,15 @@ jest.mock(
 // eslint-disable-next-line no-var
 var requireAnalysisActorMock: JestFn;
 jest.mock("@/lib/analysis-server-context", () => {
+  const actual = jest.requireActual<
+    typeof import("@/lib/analysis-server-context")
+  >("@/lib/analysis-server-context");
   requireAnalysisActorMock = jest.fn();
-  return { requireAnalysisActor: requireAnalysisActorMock };
+  return {
+    ...actual,
+    requireAnalysisActor: (...args: unknown[]) =>
+      requireAnalysisActorMock(...args),
+  };
 });
 
 type CompanyDepsMocks = {
@@ -276,6 +283,7 @@ function mockAuthenticatedActorContext(
   getCurrentActorContextMock.mockResolvedValue({
     kind: "authenticated",
     userId: USER_ID,
+    internalUserId: USER_ID,
     email: canManageOrganization ? "admin@test.com" : "seller@test.com",
     activeOrganizationId: ORG_ID,
     canManageOrganization,
@@ -355,7 +363,14 @@ function prismaUniqueError() {
   });
 }
 
-function mockAnalysisActor(depsOverrides: Record<string, unknown> = {}) {
+function mockAnalysisActor(
+  depsOverrides: Record<string, unknown> = {},
+  actorOverrides: {
+    actorUserId?: string;
+    email?: string;
+    canManageOrganization?: boolean;
+  } = {},
+) {
   const deps = {
     meetings: meetingsMock,
     organizationSettings: organizationSettingsMock,
@@ -367,6 +382,11 @@ function mockAnalysisActor(depsOverrides: Record<string, unknown> = {}) {
   requireAnalysisActorMock.mockResolvedValue({
     ok: true,
     organizationId: ORG_ID,
+    actorUserId: actorOverrides.actorUserId ?? USER_ID,
+    internalUserId: actorOverrides.actorUserId ?? USER_ID,
+    email: actorOverrides.email ?? "admin@test.com",
+    canManageOrganization: actorOverrides.canManageOrganization ?? true,
+    workspaceRoleMode: actorOverrides.canManageOrganization === false ? "member" : "admin",
     deps,
   });
   return deps;
@@ -396,6 +416,10 @@ beforeEach(() => {
     bodyMarkdown: "Body",
   });
   mockAnalysisActor();
+  meetingsMock.findMeetingByIdForOrg.mockResolvedValue({
+    id: MEETING_ID,
+    sellerUserId: USER_ID,
+  });
   createMeetingForOrgMock.mockResolvedValue({
     ok: true,
     meetingId: MEETING_ID,
@@ -525,12 +549,18 @@ describe("coach shared phrases actions", () => {
 describe("search org action", () => {
   it("searchOrgAction rejects guests", async () => {
     getAuthenticatedPrincipalMock.mockResolvedValue(null);
-    await expect(searchOrgAction("query")).resolves.toEqual({ ok: false });
+    await expect(searchOrgAction("query")).resolves.toEqual({
+      ok: false,
+      error: "UNAUTHENTICATED",
+    });
   });
 
   it("searchOrgAction rejects missing org", async () => {
     mockNoOrgPrincipal();
-    await expect(searchOrgAction("query")).resolves.toEqual({ ok: false });
+    await expect(searchOrgAction("query")).resolves.toEqual({
+      ok: false,
+      error: "NO_ORG",
+    });
   });
 
   it("searchOrgAction returns empty results for short query", async () => {
@@ -992,7 +1022,7 @@ describe("rendez-vous actions", () => {
       sellerUserId: USER_ID,
     });
     expect(createMeetingForOrgMock).toHaveBeenCalled();
-    expect(scheduleAnalysisWorkerWakeMock).toHaveBeenCalled();
+    expect(scheduleAnalysisJobsAfterResponseMock).toHaveBeenCalled();
     expect(revalidateTeamMemberPerformancePathsMock).toHaveBeenCalledWith(
       USER_ID,
     );
@@ -1258,7 +1288,7 @@ describe("rendez-vous actions", () => {
       sellerUserId: USER_ID,
     });
     expect(analysisJobsMock.enqueueMeetingAnalysis).toHaveBeenCalled();
-    expect(scheduleAnalysisWorkerWakeMock).toHaveBeenCalled();
+    expect(scheduleAnalysisJobsAfterResponseMock).toHaveBeenCalled();
   });
 });
 
@@ -1308,6 +1338,18 @@ describe("meeting detail actions", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith(
       `/company/rendez-vous/${MEETING_ID}`,
     );
+  });
+
+  it("runAllMeetingAnalysesAction forbids non-seller member", async () => {
+    mockOrgMemberPrincipal();
+    mockAnalysisActor({}, { canManageOrganization: false });
+    meetingsMock.findMeetingByIdForOrg.mockResolvedValue({
+      id: MEETING_ID,
+      sellerUserId: SELLER_ID,
+    });
+    const result = await runAllMeetingAnalysesAction(MEETING_ID);
+    expect(result).toEqual({ ok: false, error: "FORBIDDEN" });
+    expect(runAllMeetingAnalysesForOrgMock).not.toHaveBeenCalled();
   });
 
   it("generateFollowUpEmailAction validates meeting id", async () => {

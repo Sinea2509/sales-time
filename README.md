@@ -79,4 +79,4 @@ Use **`activeOrganizationId`** for org-scoped queries and mutations.
 
 ## Middleware
 
-[`proxy.ts`](proxy.ts) requires a session cookie on non-public routes (sign-in, sign-up, password reset, invitations, health, webhooks, etc.) and chains **next-intl** locale handling (`fr` default, `en` optional, `localePrefix: never`).
+[`proxy.ts`](proxy.ts) requires a session cookie on non-public routes (sign-in, sign-up, password reset, invitations, health, cron, etc.) and chains **next-intl** locale handling (`fr` default, `en` optional, `localePrefix: never`).

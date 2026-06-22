@@ -1,6 +1,7 @@
 import { KissResultView } from "@/components/molecules/kiss-result-view";
 import { MeetingAnalysisStatusBanner } from "@/components/molecules/meeting-analysis-status-banner";
 import { MeetingAnalysisStatusPoller } from "@/components/molecules/meeting-analysis-status-poller";
+import { MeetingAnalysisRecoverySection } from "@/components/organisms/meeting-analysis-recovery-section";
 import { ContentCard } from "@/components/molecules/content-card";
 import { InfoCard } from "@/components/molecules/info-card";
 import { NavLinkButton } from "@/components/molecules/nav-link-button";
@@ -45,6 +46,7 @@ export type MeetingDetailShellProps = {
   kissResult: KissAnalysisResult | null;
   showKissCoaching: boolean;
   canEdit?: boolean;
+  processingLooksSlow?: boolean;
   processingLooksStuck?: boolean;
 };
 
@@ -61,6 +63,7 @@ export function MeetingDetailShell({
   kissResult,
   showKissCoaching,
   canEdit = false,
+  processingLooksSlow = false,
   processingLooksStuck = false,
 }: MeetingDetailShellProps) {
   return (
@@ -102,11 +105,18 @@ export function MeetingDetailShell({
         />
       ) : null}
 
-      {processingLooksStuck ? (
+      {canEdit && processingLooksStuck ? (
         <InfoCard
           title="Analyse bloquée"
-          description="L'analyse semble bloquée depuis plus de 15 minutes. Rechargez la page ou modifiez le rendez-vous pour relancer l'analyse automatique."
+          description="L'analyse semble bloquée depuis plus de 15 minutes. Relancez l'analyse, rechargez la page, ou attendez la réconciliation quotidienne automatique."
         />
+      ) : null}
+
+      {canEdit &&
+      ((meeting.status === "PROCESSING" &&
+        (processingLooksSlow || processingLooksStuck)) ||
+        meeting.status === "FAILED") ? (
+        <MeetingAnalysisRecoverySection meetingId={meeting.id} />
       ) : null}
 
       <MeetingSynthesisSection

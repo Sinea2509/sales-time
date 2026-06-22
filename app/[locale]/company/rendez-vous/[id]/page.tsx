@@ -11,7 +11,10 @@ import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-sc
 import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
 import { summarizeMeetingDetail } from "@/src/core/application/summarize-meeting-detail";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { isMeetingAnalysisStuck } from "@/src/core/domain/meeting-analysis-stuck";
+import {
+  isMeetingAnalysisSlow,
+  isMeetingAnalysisStuck,
+} from "@/src/core/domain/meeting-analysis-stuck";
 
 export const dynamic = "force-dynamic";
 
@@ -114,6 +117,10 @@ export default async function RendezVousDetailPage({
     meeting.sellerUserId === actor.internalUserId;
   const canEdit = isSeller || actor.canManageOrganization;
 
+  const processingLooksSlow = isMeetingAnalysisSlow({
+    status: meeting.status,
+    updatedAt: meeting.updatedAt,
+  });
   const processingLooksStuck = isMeetingAnalysisStuck({
     status: meeting.status,
     updatedAt: meeting.updatedAt,
@@ -158,6 +165,7 @@ export default async function RendezVousDetailPage({
       kissResult={kissParsed?.success ? kissParsed.data : null}
       showKissCoaching={canViewKissCoaching}
       canEdit={canEdit}
+      processingLooksSlow={processingLooksSlow}
       processingLooksStuck={processingLooksStuck}
     />
   );

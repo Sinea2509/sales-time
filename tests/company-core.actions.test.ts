@@ -40,12 +40,18 @@ jest.mock("@/src/core/application/create-plan-request", () => {
   return { createPlanRequest: createPlanRequestMock };
 });
 
+// eslint-disable-next-line no-var
+var updatePlanRequestStatusMock: JestFn;
+jest.mock("@/src/core/application/update-plan-request-status", () => {
+  updatePlanRequestStatusMock = jest.fn().mockResolvedValue({ ok: true });
+  return { updatePlanRequestStatus: updatePlanRequestStatusMock };
+});
+
 type CompanyDepsMocks = {
   getAuthenticatedPrincipalMock: JestFn;
   findByIdMock: JestFn;
   notificationsMock: Record<string, JestFn>;
   orgDirectoryMock: Record<string, JestFn>;
-  planRequestsMock: Record<string, JestFn>;
 };
 
 jest.mock("@/lib/application-deps", () => {
@@ -59,16 +65,12 @@ jest.mock("@/lib/application-deps", () => {
     orgDirectoryMock: {
       getOrganizationById: jest.fn(),
     },
-    planRequestsMock: {
-      updateStatus: jest.fn().mockResolvedValue(undefined),
-    },
   };
   const graph = {
     auth: { getAuthenticatedPrincipal: mocks.getAuthenticatedPrincipalMock },
     users: { findById: mocks.findByIdMock },
     notifications: mocks.notificationsMock,
     orgDirectory: mocks.orgDirectoryMock,
-    planRequests: mocks.planRequestsMock,
   };
   (graph as { __companyTestMocks?: CompanyDepsMocks }).__companyTestMocks =
     mocks;
@@ -92,7 +94,6 @@ const {
   findByIdMock,
   notificationsMock,
   orgDirectoryMock,
-  planRequestsMock,
 } = (getApplicationDeps() as unknown as { __companyTestMocks: CompanyDepsMocks })
   .__companyTestMocks;
 
@@ -111,9 +112,11 @@ function mockOrgAdminPrincipal() {
 beforeEach(() => {
   jest.clearAllMocks();
   readSuperAdminOrgCookieMock.mockResolvedValue(null);
+  updatePlanRequestStatusMock.mockResolvedValue({ ok: true });
   getCurrentActorContextMock.mockResolvedValue({
     kind: "authenticated",
     userId: USER_ID,
+    internalUserId: USER_ID,
     email: "admin@test.com",
     activeOrganizationId: ORG_ID,
     canManageOrganization: true,
@@ -221,18 +224,21 @@ describe("company core actions", () => {
     const result = await submitPlanRequestAction({
       desiredPlan: "x".repeat(100),
     });
-    expect(result).toEqual({ ok: false });
+    expect(result).toEqual({ ok: false, error: "VALIDATION" });
   });
 
   it("submitPlanRequestAction rejects missing org context", async () => {
     getCurrentActorContextMock.mockResolvedValue({ kind: "guest" });
     const result = await submitPlanRequestAction({ message: "Need plan" });
-    expect(result).toEqual({ ok: false });
+    expect(result).toEqual({ ok: false, error: "NO_ORG" });
   });
 
   it("submitPlanRequestAction requires authentication", async () => {
     getAuthenticatedPrincipalMock.mockResolvedValue(null);
-    await expect(submitPlanRequestAction({})).resolves.toEqual({ ok: false });
+    await expect(submitPlanRequestAction({})).resolves.toEqual({
+      ok: false,
+      error: "UNAUTHENTICATED",
+    });
   });
 
   it("submitPlanRequestAction creates plan request for org member", async () => {
@@ -259,7 +265,18 @@ describe("company core actions", () => {
     });
     await expect(
       updatePlanRequestStatusAction({ id: "pr1", status: "NEW" }),
-    ).resolves.toEqual({ ok: false });
+    ).resolves.toEqual({ ok: false, error: "FORBIDDEN" });
+  });
+
+  it("updatePlanRequestStatusAction returns NOT_FOUND from use case", async () => {
+    findByIdMock.mockResolvedValue({
+      id: USER_ID,
+      systemRoles: ["SUPER_ADMIN"],
+    });
+    updatePlanRequestStatusMock.mockResolvedValue({ ok: false, error: "NOT_FOUND" });
+    await expect(
+      updatePlanRequestStatusAction({ id: "pr-missing", status: "CONVERTED" }),
+    ).resolves.toEqual({ ok: false, error: "NOT_FOUND" });
   });
 
   it("updatePlanRequestStatusAction updates status for super admin", async () => {
@@ -272,9 +289,12 @@ describe("company core actions", () => {
       status: "CONTACTED",
     });
     expect(result).toEqual({ ok: true });
-    expect(planRequestsMock.updateStatus).toHaveBeenCalledWith({
-      id: "pr1",
-      status: "CONTACTED",
-    });
+    expect(updatePlanRequestStatusMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        id: "pr1",
+        status: "CONTACTED",
+      },
+    );
   });
 });

@@ -1,0 +1,39 @@
+---
+description: Prevent IDOR — always scope reads/writes by active organization and role
+globs: app/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# IDOR prevention (delivery layer)
+
+Every mutation or sensitive read of org-owned data **must** be scoped to the authenticated actor's active organization. Never trust client-supplied `organizationId` alone.
+
+## Required pattern
+
+1. Resolve actor via `getCurrentActorContext` / `requireOrgActor` / `requireAnalysisActor`.
+2. Use **`ctx.activeOrganizationId`** (or equivalent) from server session — not from form/query/body.
+3. Load entities with org-scoped repository methods: `findMeetingByIdForOrg`, `findById({ id, organizationId })`, etc.
+4. Enforce row-level auth (seller vs manager) with a shared helper when the rule repeats — e.g. [`lib/meeting-mutation-access.ts`](lib/meeting-mutation-access.ts).
+
+```ts
+const access = await assertCanMutateMeetingForOrg(deps.meetings, {
+  organizationId: ctx.activeOrganizationId,
+  meetingId: parsedId,
+  actorUserId: principal.userId,
+  canManageOrganization: ctx.canManageOrganization,
+});
+if (!access.ok) return { ok: false, error: access.error };
+```
+
+## Forbidden
+
+- `findUnique({ where: { id } })` without `organizationId` on tenant data.
+- Returning `404` vs `403` inconsistently on cross-tenant IDs — prefer **NOT_FOUND** for wrong org (no leak) or explicit **FORBIDDEN** when same org but wrong role (document per feature).
+- Blob URLs / file paths without `blobUrlBelongsToOrg` (or equivalent) check.
+
+## Checklist (server actions & API routes)
+
+- [ ] Input IDs validated with Zod (`cuid`, etc.).
+- [ ] Query uses **active org** from session.
+- [ ] Seller-only resources check `sellerUserId` unless `canManageOrganization`.
+- [ ] Super-admin elevation uses explicit cookie + audit when impersonating org.

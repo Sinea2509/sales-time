@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { generateOpaqueToken } from "@/lib/auth/tokens";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { getAppBaseUrl } from "@/lib/app-base-url";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 
 const schema = z.object({
@@ -40,8 +41,7 @@ export async function forgotPasswordAction(
     expiresAt,
   });
 
-  const base =
-    process.env.APP_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+  const base = getAppBaseUrl();
   const link = `${base}/reset-password/${raw}`;
 
   await sendTransactionalEmail({

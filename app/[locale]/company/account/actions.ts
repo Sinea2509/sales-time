@@ -6,6 +6,7 @@ import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { generateOpaqueToken } from "@/lib/auth/tokens";
 import { blobUrlBelongsToUser } from "@/lib/blob-paths";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { getAppBaseUrl } from "@/lib/app-base-url";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 import { uploadUserAvatarToBlob } from "@/lib/user-avatar-upload";
 
@@ -166,8 +167,7 @@ export async function sendAccountPasswordResetEmailAction(): Promise<AccountActi
     expiresAt,
   });
 
-  const base =
-    process.env.APP_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+  const base = getAppBaseUrl();
   const link = `${base}/reset-password/${raw}`;
 
   await sendTransactionalEmail({

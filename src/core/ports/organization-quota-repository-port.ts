@@ -1,10 +1,9 @@
 export interface OrganizationQuotaRepositoryPort {
   getTrialAnalysesLeft(organizationId: string): Promise<number>;
 
-  decrementTrialAnalysesLeft(organizationId: string): Promise<number | null>;
+  isPlanUnlocked(organizationId: string): Promise<boolean>;
 
-  setTrialAnalysesLeft(input: {
-    organizationId: string;
-    trialAnalysesLeft: number;
-  }): Promise<void>;
+  unlockPlan(organizationId: string): Promise<void>;
+
+  decrementTrialAnalysesLeft(organizationId: string): Promise<number | null>;
 }

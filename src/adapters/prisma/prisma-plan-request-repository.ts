@@ -74,8 +74,8 @@ export class PrismaPlanRequestRepository implements PlanRequestRepositoryPort {
     }));
   }
 
-  async countPending(): Promise<number> {
-    return this.db.planRequest.count({ where: { status: "NEW" } });
+  async findById(id: string): Promise<PlanRequestRow | null> {
+    return this.mapRow(id);
   }
 
   async updateStatus(input: {

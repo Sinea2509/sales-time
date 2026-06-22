@@ -1,29 +1,17 @@
 "use server";
 
-import { getApplicationDeps } from "@/lib/application-deps";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { requireOrgActor } from "@/lib/analysis-server-context";
 import { searchOrgEntities } from "@/src/core/application/search-org-entities";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 
 export async function searchOrgAction(query: string) {
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const };
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    { superAdminElevation: superAdminOrg },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const };
-  }
-
-  const results = await searchOrgEntities(deps, {
-    organizationId: ctx.activeOrganizationId,
+  const results = await searchOrgEntities(actor.deps, {
+    organizationId: actor.organizationId,
     query,
-    sellerUserId: ctx.internalUserId ?? undefined,
-    canManageOrganization: ctx.canManageOrganization,
+    sellerUserId: actor.internalUserId,
+    canManageOrganization: actor.canManageOrganization,
   });
 
   return { ok: true as const, results };

@@ -2,36 +2,71 @@
 name: code-quality
 description: >-
   Run before declaring feature/fix complete — verifies hexagonal boundaries,
-  Zod usage, tests, and quality gates for sales-time.
+  atomic design, IDOR, Zod, tests, KISS/DRY, and quality gates for sales-time.
 disable-model-invocation: false
 ---
 
 # Code quality gate (sales-time)
 
-Apply after substantive edits to `src/`, `lib/`, or `app/`.
+Apply after substantive edits to `src/`, `lib/`, `app/`, or `components/`.
 
-## 1. Architecture (hexagonal)
+## 1. Hexagonal architecture
 
-- **`src/core/domain`**: No adapters, Next, Prisma, React.
-- **`src/core/application`**: Use ports + domain only — deps injected.
-- **`src/adapters`**: Implements ports; maps IO shapes ↔ domain/port types.
-- **`app/`**: Thin delivery — Zod-parse boundaries then call application with composed deps.
+| Layer | Rule |
+|-------|------|
+| `src/core/domain` | Pure — no Next, Prisma, React, adapters |
+| `src/core/application` | Ports + domain only; deps injected |
+| `src/core/ports` | Interfaces only |
+| `src/adapters` | Implement ports |
+| `app/` + delivery `lib/` | Zod, compose deps, call application |
 
-## 2. Validation
+- Dependencies point **inward**.
+- No `after()` / cron triggers / `revalidatePath` inside application layer.
 
-- Unknown/external payloads parsed with **Zod** before entering core.
-- Prefer exported `z.infer` types paired with schemas.
+## 2. Atomic design (frontend)
 
-## 3. Tests and coverage
+- `app/` → organisms/templates only (no `components/ui/`).
+- **Molecules**: no server actions.
+- **Organisms**: feature UI + client actions.
+- Extract duplicate markup on **second** copy.
 
-- Add/update **`*.test.ts`** for behavior changes.
-- Run **`npm run verify`** (typecheck + lint + Jest).
-- Run **`npm run test:coverage`** when touching logic-heavy modules; aim **≥75% lines** on `jest.config.js` → `collectCoverageFrom` paths (aggregate).
+## 3. IDOR & authorization
 
-## 4. Clean code quick scan
+- Scope all tenant reads/writes with **session `activeOrganizationId`**.
+- Use `*ForOrg` repository methods; reuse access helpers (`lib/meeting-mutation-access.ts`).
+- Validate IDs with Zod at boundaries.
 
-- No scope creep in diff; clear naming; meaningful errors with cause where applicable.
+## 4. Validation
 
-## Output
+- Parse **`unknown`** with Zod before core.
+- Export `z.infer` types with schemas.
 
-Reply with a short checklist table — pass/fail per section — and list commands actually run.
+## 5. KISS & DRY
+
+- One clear path; no premature abstraction.
+- Extract repeated **auth/org checks** and **markup**, not accidental similarity.
+
+## 6. Clean code
+
+- Small functions; verb/noun naming; preserve error `cause`; focused diffs.
+
+## 7. Tests & verify
+
+- Colocate `*.test.ts` for behavior changes.
+- Run **`npm run verify`** (typecheck → lint → jest).
+- Coverage **`npm run test:coverage`** on logic-heavy paths (≥75% aggregate on `collectCoverageFrom`).
+
+## Output checklist
+
+Reply with pass/fail:
+
+| Area | Pass? |
+|------|-------|
+| Hexagonal boundaries | |
+| Atomic design / no molecule actions | |
+| IDOR / org scope | |
+| Zod at boundaries | |
+| KISS / DRY | |
+| Tests + verify | |
+
+List commands actually run.

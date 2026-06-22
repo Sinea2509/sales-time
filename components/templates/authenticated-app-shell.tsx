@@ -9,6 +9,7 @@ type Props = {
   superAdminOrgCookie: string | null;
   trialAnalysesLeft: number;
   trialLimit: number;
+  planUnlocked: boolean;
   unreadNotificationCount: number;
   notifications: NotificationItem[];
   organizationSwitcherMemberships?: OrgSwitcherMembership[];
@@ -20,6 +21,7 @@ export function AuthenticatedAppShell({
   superAdminOrgCookie,
   trialAnalysesLeft,
   trialLimit,
+  planUnlocked,
   unreadNotificationCount,
   notifications,
   organizationSwitcherMemberships = [],
@@ -41,6 +43,7 @@ export function AuthenticatedAppShell({
         workspaceRoleMode={actor.workspaceRoleMode}
         trialAnalysesLeft={trialAnalysesLeft}
         trialLimit={trialLimit}
+        planUnlocked={planUnlocked}
         unreadNotificationCount={unreadNotificationCount}
         notifications={notifications}
         organizationSwitcherMemberships={organizationSwitcherMemberships}

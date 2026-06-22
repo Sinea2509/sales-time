@@ -33,19 +33,31 @@ jest.mock("@/lib/kiss-commercial-appendix", () => {
   return { loadCommercialKissAppendix: loadCommercialKissAppendixMock };
 });
 
-import {
-  runDiscAnalysisAction,
-  runKissAnalysisAction,
-  runMeetingAnalysisAction,
-  runSoncasAnalysisAction,
-} from "@/app/[locale]/company/analyse/actions";
+// eslint-disable-next-line no-var
+var requireMeetingMutationAccessMock: JestFn;
+jest.mock("@/lib/meeting-mutation-access", () => {
+  requireMeetingMutationAccessMock = jest.fn();
+  return {
+    requireMeetingMutationAccess: (...args: unknown[]) =>
+      requireMeetingMutationAccessMock(...args),
+  };
+});
+
+import { runMeetingAnalysisAction } from "@/app/[locale]/company/analyse/actions";
 
 beforeEach(() => {
   jest.clearAllMocks();
   requireAnalysisActorMock.mockResolvedValue({
     ok: true,
     organizationId: ORG_ID,
-    deps: {},
+    actorUserId: "user_1",
+    email: "seller@test.com",
+    canManageOrganization: true,
+    deps: { meetings: {} },
+  });
+  requireMeetingMutationAccessMock.mockResolvedValue({
+    ok: true,
+    meeting: { sellerUserId: "user_1" },
   });
   runMeetingAnalysisMock.mockResolvedValue({
     ok: true,
@@ -65,15 +77,15 @@ describe("company analyse actions", () => {
       ok: false,
       error: "UNAUTHENTICATED",
     });
-    const result = await runSoncasAnalysisAction(MEETING_ID);
+    const result = await runMeetingAnalysisAction(MEETING_ID, "SONCAS");
     expect(result).toEqual({ ok: false, error: "UNAUTHENTICATED" });
   });
 
   it("runs SONCAS analysis and revalidates paths", async () => {
-    const result = await runSoncasAnalysisAction(MEETING_ID);
+    const result = await runMeetingAnalysisAction(MEETING_ID, "SONCAS");
     expect(result).toEqual({ ok: true, analysisId: "analysis_1" });
     expect(runMeetingAnalysisMock).toHaveBeenCalledWith(
-      {},
+      expect.anything(),
       expect.objectContaining({
         organizationId: ORG_ID,
         meetingId: MEETING_ID,
@@ -84,7 +96,7 @@ describe("company analyse actions", () => {
   });
 
   it("runs DISC analysis", async () => {
-    await runDiscAnalysisAction(MEETING_ID);
+    await runMeetingAnalysisAction(MEETING_ID, "DISC");
     expect(runMeetingAnalysisMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ kind: "DISC" }),
@@ -92,7 +104,7 @@ describe("company analyse actions", () => {
   });
 
   it("runs KISS analysis with commercial appendix", async () => {
-    await runKissAnalysisAction(MEETING_ID);
+    await runMeetingAnalysisAction(MEETING_ID, "KISS");
     expect(loadCommercialKissAppendixMock).toHaveBeenCalled();
     expect(runMeetingAnalysisMock).toHaveBeenCalledWith(
       expect.anything(),
@@ -115,5 +127,15 @@ describe("company analyse actions", () => {
       error: "ANALYSIS_FAILED",
       message: "boom",
     });
+  });
+
+  it("returns forbidden when mutation access is denied", async () => {
+    requireMeetingMutationAccessMock.mockResolvedValue({
+      ok: false,
+      error: "FORBIDDEN",
+    });
+    const result = await runMeetingAnalysisAction(MEETING_ID, "SONCAS");
+    expect(result).toEqual({ ok: false, error: "FORBIDDEN" });
+    expect(runMeetingAnalysisMock).not.toHaveBeenCalled();
   });
 });

@@ -12,7 +12,7 @@ describe("verifyCronSecret", () => {
     process.env = { ...originalEnv, NODE_ENV: "development" };
     delete process.env.CRON_SECRET;
 
-    const ok = verifyCronSecret(new Request("http://localhost/api/worker"));
+    const ok = verifyCronSecret(new Request("http://localhost/api/cron/purge-retention"));
     expect(ok).toBe(true);
   });
 
@@ -20,7 +20,7 @@ describe("verifyCronSecret", () => {
     process.env = { ...originalEnv, NODE_ENV: "production" };
     delete process.env.CRON_SECRET;
 
-    const ok = verifyCronSecret(new Request("http://localhost/api/worker"));
+    const ok = verifyCronSecret(new Request("http://localhost/api/cron/purge-retention"));
     expect(ok).toBe(false);
   });
 
@@ -32,7 +32,7 @@ describe("verifyCronSecret", () => {
     };
 
     const ok = verifyCronSecret(
-      new Request("http://localhost/api/worker", {
+      new Request("http://localhost/api/cron/purge-retention", {
         headers: { authorization: "Bearer secret-token" },
       }),
     );
@@ -47,7 +47,7 @@ describe("verifyCronSecret", () => {
     };
 
     const ok = verifyCronSecret(
-      new Request("http://localhost/api/worker", {
+      new Request("http://localhost/api/cron/purge-retention", {
         headers: { authorization: "Bearer wrong" },
       }),
     );

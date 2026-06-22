@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
+import { getAppBaseUrl } from "@/lib/app-base-url";
 import { uniqueOrganizationSlug } from "@/lib/org-slug";
 import type {
   CompleteOnboardingStep4Input,
@@ -88,9 +89,7 @@ export class PrismaOnboardingCompletionRepository implements OnboardingCompletio
               invitedByUserId: input.userId,
             },
           });
-          const base =
-            process.env.APP_BASE_URL?.replace(/\/$/, "") ??
-            "http://localhost:3000";
+          const base = getAppBaseUrl();
           mailPayloads.push({
             to: inv.email,
             link: `${base}/invitations/${encodeURIComponent(raw)}`,

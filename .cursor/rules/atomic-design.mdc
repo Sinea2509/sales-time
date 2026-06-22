@@ -1,14 +1,31 @@
+---
+description: Atomic UI component layers and import rules
+globs: components/**/*.{ts,tsx}
+alwaysApply: false
+---
+
 # Atomic UI components
 
-- **`components/ui/`** — shadcn primitives (buttons, cards, inputs). Used only inside atoms/molecules/organisms/templates — not in `app/` routes.
-- **`components/atoms/`** — tiny reusable presentational pieces with no business logic.
-- **`components/molecules/`** — compose atoms/ui into named patterns (headers, subnav, KPI tiles). No server actions.
-- **`components/organisms/`** — feature blocks; may call server actions and hold state.
-- **`components/templates/`** — page shells (admin sidebar, org dashboard, settings layout).
+| Layer | Path | May import | Must not |
+|-------|------|------------|----------|
+| Primitives | `components/ui/` | — | Used in `app/` routes |
+| Atoms | `components/atoms/` | ui | server actions, business state |
+| Molecules | `components/molecules/` | atoms, ui | **server actions**, `"use client"` fetch to APIs |
+| Organisms | `components/organisms/` | atoms, molecules, ui, other organisms (sparingly) | Direct Prisma / raw `getApplicationDeps` |
+| Templates | `components/templates/` | atoms, molecules, organisms | Feature-specific server actions |
 
-When adding UI:
+`app/` routes: fetch on server, pass props to organisms/templates — **no** `components/ui/` imports (root layout providers excepted).
 
-1. Check atoms/molecules for an existing pattern before inlining markup.
-2. Extract duplicated markup after the second copy (not before the first).
-3. Keep `app/` routes thin — fetch data, pass props to organisms/templates; do not import `components/ui/` (root layout providers excepted).
-4. Pure formatting helpers belong in `lib/` (e.g. `lib/markdown-to-html.ts`).
+## Composition rules
+
+1. **Reuse before invent** — search atoms/molecules before new markup.
+2. **Extract on second copy** — not before the first (KISS).
+3. **One feature block per organism** — e.g. `MeetingAnalysisRecoverySection` groups retry + manual analyze; `MeetingDetailShell` composes sections, not every button inline.
+4. **Client + server actions live in organisms** (or route), never molecules.
+5. Pure formatting → `lib/`; no JSX.
+
+## Examples
+
+- OK: `MeetingAnalysisRetryButton` in `organisms/` calling `retryMeetingAnalysisAction`.
+- Bad: molecule importing `@/app/.../actions`.
+- OK: `app/[locale]/company/rendez-vous/schedule-analysis-jobs.ts` for `after()` + application deps (delivery colocated with actions).

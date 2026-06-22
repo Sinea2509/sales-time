@@ -175,11 +175,11 @@ describe("GET /api/cron/purge-retention", () => {
   });
 });
 
-describe("GET /api/worker/process-jobs", () => {
-  let GET: typeof import("@/app/api/worker/process-jobs/route").GET;
+describe("GET /api/cron/process-analysis-jobs", () => {
+  let GET: typeof import("@/app/api/cron/process-analysis-jobs/route").GET;
 
   beforeAll(async () => {
-    ({ GET } = await import("@/app/api/worker/process-jobs/route"));
+    ({ GET } = await import("@/app/api/cron/process-analysis-jobs/route"));
   });
 
   beforeEach(() => {
@@ -194,14 +194,16 @@ describe("GET /api/worker/process-jobs", () => {
     delete process.env.CRON_SECRET;
   });
 
-  it("rejects unauthorized worker requests in production", async () => {
+  it("rejects unauthorized cron requests in production", async () => {
     process.env = {
       ...originalEnv,
       NODE_ENV: "production",
       AI_GATEWAY_API_KEY: "gw-test",
     };
     delete process.env.CRON_SECRET;
-    const response = await GET(new Request("http://localhost/api/worker/process-jobs"));
+    const response = await GET(
+      new Request("http://localhost/api/cron/process-analysis-jobs"),
+    );
     expect(response.status).toBe(401);
     expect(processAnalysisJobsMock).not.toHaveBeenCalled();
   });
@@ -211,7 +213,9 @@ describe("GET /api/worker/process-jobs", () => {
       ok: false,
       error: "AI_NOT_CONFIGURED",
     });
-    const response = await GET(new Request("http://localhost/api/worker/process-jobs"));
+    const response = await GET(
+      new Request("http://localhost/api/cron/process-analysis-jobs"),
+    );
     expect(response.status).toBe(503);
     await expect(response.json()).resolves.toEqual({
       ok: false,
@@ -221,7 +225,9 @@ describe("GET /api/worker/process-jobs", () => {
   });
 
   it("processes analysis jobs when authorized", async () => {
-    const response = await GET(new Request("http://localhost/api/worker/process-jobs"));
+    const response = await GET(
+      new Request("http://localhost/api/cron/process-analysis-jobs"),
+    );
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true, processed: 1 });
     expect(processAnalysisJobsMock).toHaveBeenCalled();

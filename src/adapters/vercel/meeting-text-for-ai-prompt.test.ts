@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   buildDelimitedMeetingUserContent,
   sanitizeMeetingTextForAi,
-} from "./meeting-text-for-ai-prompt";
+} from "@/lib/meeting-text-for-ai-prompt";
 
 describe("sanitizeMeetingTextForAi", () => {
   it("removes zero-width and control characters", () => {

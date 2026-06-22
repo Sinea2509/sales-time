@@ -53,11 +53,16 @@ export async function createMeetingForOrg(
   }
 
   if (input.enqueueAnalysis !== false) {
-    const left = await deps.organizationQuota.getTrialAnalysesLeft(
+    const planUnlocked = await deps.organizationQuota.isPlanUnlocked(
       input.organizationId,
     );
-    if (left <= 0) {
-      return { ok: false, error: "QUOTA_EXHAUSTED" };
+    if (!planUnlocked) {
+      const left = await deps.organizationQuota.getTrialAnalysesLeft(
+        input.organizationId,
+      );
+      if (left <= 0) {
+        return { ok: false, error: "QUOTA_EXHAUSTED" };
+      }
     }
   }
 
@@ -112,9 +117,14 @@ export async function createMeetingForOrg(
   });
 
   if (input.enqueueAnalysis !== false) {
-    await deps.organizationQuota.decrementTrialAnalysesLeft(
+    const planUnlocked = await deps.organizationQuota.isPlanUnlocked(
       input.organizationId,
     );
+    if (!planUnlocked) {
+      await deps.organizationQuota.decrementTrialAnalysesLeft(
+        input.organizationId,
+      );
+    }
     await deps.analysisJobs.enqueueMeetingAnalysis({
       organizationId: input.organizationId,
       meetingId: meeting.id,

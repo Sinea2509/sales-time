@@ -1,9 +1,4 @@
 import { describe, expect, it, jest } from "@jest/globals";
-
-jest.mock("@/lib/wake-analysis-worker", () => ({
-  wakeAnalysisWorker: () => undefined,
-}));
-
 import { createMeetingForOrg } from "./create-meeting";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- jest mock
@@ -37,6 +32,7 @@ function makeDeps() {
     },
     organizationQuota: {
       getTrialAnalysesLeft: jest.fn() as JestFn,
+      isPlanUnlocked: jest.fn() as JestFn,
       decrementTrialAnalysesLeft: jest.fn() as JestFn,
     },
   };
@@ -45,6 +41,7 @@ function makeDeps() {
 function initDeps(
   over: Partial<{
     trialLeft: number;
+    planUnlocked: boolean;
     person: { id: string } | null;
     meetingId: string;
   }> = {},
@@ -56,6 +53,9 @@ function initDeps(
   deps.contacts.findById.mockResolvedValue(over.person ?? null);
   deps.contacts.findUniqueByCompanyName.mockResolvedValue(null);
   deps.analysisJobs.enqueueMeetingAnalysis.mockResolvedValue(undefined);
+  deps.organizationQuota.isPlanUnlocked.mockResolvedValue(
+    over.planUnlocked ?? false,
+  );
   deps.organizationQuota.getTrialAnalysesLeft.mockResolvedValue(
     over.trialLeft ?? 3,
   );
@@ -85,6 +85,14 @@ describe("createMeetingForOrg", () => {
     const result = await createMeetingForOrg(deps as never, baseInput);
     expect(result).toEqual({ ok: false, error: "QUOTA_EXHAUSTED" });
     expect(deps.meetings.createMeeting).not.toHaveBeenCalled();
+  });
+
+  it("allows analysis when plan is unlocked even with zero trial left", async () => {
+    const deps = initDeps({ trialLeft: 0, planUnlocked: true, meetingId: "meet_paid" });
+    const result = await createMeetingForOrg(deps as never, baseInput);
+    expect(result).toEqual({ ok: true, meetingId: "meet_paid" });
+    expect(deps.organizationQuota.getTrialAnalysesLeft).not.toHaveBeenCalled();
+    expect(deps.organizationQuota.decrementTrialAnalysesLeft).not.toHaveBeenCalled();
   });
 
   it("returns INVALID_PERSON when personId does not exist in org", async () => {
@@ -165,6 +173,7 @@ describe("createMeetingForOrg", () => {
     });
 
     expect(result.ok).toBe(true);
+    expect(deps.organizationQuota.isPlanUnlocked).not.toHaveBeenCalled();
     expect(deps.organizationQuota.getTrialAnalysesLeft).not.toHaveBeenCalled();
     expect(deps.meetings.createMeeting).toHaveBeenCalledWith(
       expect.objectContaining({ status: "PENDING" }),

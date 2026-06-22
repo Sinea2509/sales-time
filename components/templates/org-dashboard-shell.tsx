@@ -17,6 +17,7 @@ type OrgDashboardShellProps = {
   workspaceRoleMode: WorkspaceRoleMode | null;
   trialAnalysesLeft: number;
   trialLimit: number;
+  planUnlocked: boolean;
   unreadNotificationCount: number;
   notifications: NotificationItem[];
   organizationSwitcherMemberships: OrgSwitcherMembership[];

@@ -7,6 +7,7 @@ import { getCurrentActorContext } from "@/src/core/application/get-current-actor
 import { DEFAULT_TRIAL_LIMIT } from "@/lib/team-seller-scope";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 export default async function DashboardLayout({
   children,
@@ -46,6 +47,10 @@ export default async function DashboardLayout({
           actor.activeOrganizationId,
         )
       : DEFAULT_TRIAL_LIMIT;
+  const planUnlocked =
+    actor.kind === "authenticated" && actor.activeOrganizationId
+      ? await deps.organizationQuota.isPlanUnlocked(actor.activeOrganizationId)
+      : false;
 
   const notificationItems =
     actor.kind === "authenticated"
@@ -95,6 +100,7 @@ export default async function DashboardLayout({
       superAdminOrgCookie={superAdminElevation?.organizationId ?? null}
       trialAnalysesLeft={trialAnalysesLeft}
       trialLimit={DEFAULT_TRIAL_LIMIT}
+      planUnlocked={planUnlocked}
       unreadNotificationCount={unreadNotificationCount}
       notifications={notificationItems.map((n) => ({
         id: n.id,

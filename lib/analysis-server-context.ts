@@ -3,7 +3,18 @@ import { checkAiGatewayConfigured } from "@/lib/env";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 
-type OrgActorSuccess = { ok: true; deps: ApplicationDeps; organizationId: string };
+import type { WorkspaceRoleMode } from "@/src/core/domain/authorization-policy";
+
+export type OrgActorSuccess = {
+  ok: true;
+  deps: ApplicationDeps;
+  organizationId: string;
+  actorUserId: string;
+  internalUserId: string;
+  email: string;
+  canManageOrganization: boolean;
+  workspaceRoleMode: WorkspaceRoleMode | null;
+};
 type OrgActorFailure = { ok: false; error: "UNAUTHENTICATED" | "NO_ORG" };
 type AnalysisActorFailure =
   | OrgActorFailure
@@ -24,7 +35,16 @@ export async function requireOrgActor(): Promise<
   if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
     return { ok: false, error: "NO_ORG" };
   }
-  return { ok: true, deps, organizationId: ctx.activeOrganizationId };
+  return {
+    ok: true,
+    deps,
+    organizationId: ctx.activeOrganizationId,
+    actorUserId: principal.userId,
+    internalUserId: ctx.internalUserId,
+    email: ctx.email,
+    canManageOrganization: ctx.canManageOrganization,
+    workspaceRoleMode: ctx.workspaceRoleMode,
+  };
 }
 
 export async function requireAnalysisActor(): Promise<

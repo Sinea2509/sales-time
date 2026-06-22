@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAnalysisActor } from "@/lib/analysis-server-context";
+import { scheduleAnalysisJobsAfterResponse } from "@/app/[locale]/company/rendez-vous/schedule-analysis-jobs";
+import { requireMeetingMutationAccess } from "@/lib/meeting-mutation-access";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { generateFollowUpEmailForMeeting } from "@/src/core/application/generate-follow-up-email";
 import { loadResolvedFollowUpEmailPreferences } from "@/src/core/application/load-resolved-follow-up-email-preferences";
@@ -18,6 +20,15 @@ export async function runAllMeetingAnalysesAction(meetingId: string) {
 
   const actor = await requireAnalysisActor();
   if (!actor.ok) return { ok: false as const, error: actor.error };
+
+  const access = await requireMeetingMutationAccess(
+    actor.deps.meetings,
+    actor,
+    parsed.data,
+  );
+  if (!access.ok) {
+    return { ok: false as const, error: access.error };
+  }
 
   const result = await runAllMeetingAnalysesForOrg(actor.deps, {
     organizationId: actor.organizationId,
@@ -40,6 +51,48 @@ export async function runAllMeetingAnalysesAction(meetingId: string) {
   return { ok: true as const };
 }
 
+export async function retryMeetingAnalysisAction(meetingId: string) {
+  const parsed = meetingIdSchema.safeParse(meetingId);
+  if (!parsed.success) {
+    return { ok: false as const, error: "VALIDATION" as const };
+  }
+
+  const actor = await requireAnalysisActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
+
+  const access = await requireMeetingMutationAccess(
+    actor.deps.meetings,
+    actor,
+    parsed.data,
+  );
+  if (!access.ok) {
+    return { ok: false as const, error: access.error };
+  }
+
+  const meeting = access.meeting;
+
+  if (meeting.status !== "PROCESSING" && meeting.status !== "FAILED") {
+    return { ok: false as const, error: "NOT_RETRYABLE" as const };
+  }
+
+  await actor.deps.meetings.updateMeetingStatus({
+    id: meeting.id,
+    organizationId: actor.organizationId,
+    status: "PROCESSING",
+    errorMessage: null,
+  });
+  await actor.deps.analysisJobs.enqueueMeetingAnalysis({
+    organizationId: actor.organizationId,
+    meetingId: meeting.id,
+  });
+  scheduleAnalysisJobsAfterResponse();
+
+  revalidatePath(`/company/rendez-vous/${parsed.data}`);
+  revalidatePath("/company/analyse");
+  revalidatePath("/company");
+  return { ok: true as const };
+}
+
 export async function generateFollowUpEmailAction(meetingId: string) {
   const parsed = meetingIdSchema.safeParse(meetingId);
   if (!parsed.success)
@@ -47,6 +100,15 @@ export async function generateFollowUpEmailAction(meetingId: string) {
 
   const actor = await requireAnalysisActor();
   if (!actor.ok) return { ok: false as const, error: actor.error };
+
+  const access = await requireMeetingMutationAccess(
+    actor.deps.meetings,
+    actor,
+    parsed.data,
+  );
+  if (!access.ok) {
+    return { ok: false as const, error: access.error };
+  }
 
   const meeting = await actor.deps.meetings.findMeetingDetailWithAnalyses({
     id: parsed.data,

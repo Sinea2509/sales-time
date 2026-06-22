@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAnalysisActor } from "@/lib/analysis-server-context";
 import { loadCommercialKissAppendix } from "@/lib/kiss-commercial-appendix";
+import { requireMeetingMutationAccess } from "@/lib/meeting-mutation-access";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import {
   runMeetingAnalysis,
@@ -27,6 +28,15 @@ export async function runMeetingAnalysisAction(
   const actor = await requireAnalysisActor();
   if (!actor.ok) return { ok: false as const, error: actor.error };
 
+  const access = await requireMeetingMutationAccess(
+    actor.deps.meetings,
+    actor,
+    parsedId.data,
+  );
+  if (!access.ok) {
+    return { ok: false as const, error: access.error };
+  }
+
   const kissSystemMarkdownAppendix =
     kind === "KISS"
       ? await loadCommercialKissAppendix(actor.deps)
@@ -45,16 +55,4 @@ export async function runMeetingAnalysisAction(
 
   revalidateMeetingAnalysisPaths(parsedId.data);
   return { ok: true as const, analysisId: result.analysisId };
-}
-
-export async function runSoncasAnalysisAction(meetingId: string) {
-  return runMeetingAnalysisAction(meetingId, "SONCAS");
-}
-
-export async function runDiscAnalysisAction(meetingId: string) {
-  return runMeetingAnalysisAction(meetingId, "DISC");
-}
-
-export async function runKissAnalysisAction(meetingId: string) {
-  return runMeetingAnalysisAction(meetingId, "KISS");
 }

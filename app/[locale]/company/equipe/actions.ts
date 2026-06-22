@@ -1,8 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { getApplicationDeps } from "@/lib/application-deps";
+import { requireOrgActor } from "@/lib/analysis-server-context";
 import { getTeamMemberPerformanceProfile } from "@/src/core/application/get-team-member-performance-profile";
 import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
 import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-admin-dashboard";
@@ -11,24 +10,14 @@ import {
   partitionMeetingsByStatsWindow,
   previousMeetingAtWindowStart,
 } from "@/src/core/domain/dashboard-stats-window";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 
 const userIdSchema = z.string().cuid();
 
 async function assertManagerCanViewSeller(userId: string) {
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal) return { ok: false as const, error: "UNAUTHENTICATED" as const };
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    { superAdminElevation: superAdminOrg },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" as const };
-  }
-  if (ctx.workspaceRoleMode !== "admin") {
+  if (actor.workspaceRoleMode !== "admin") {
     return { ok: false as const, error: "FORBIDDEN" as const };
   }
 
@@ -37,8 +26,8 @@ async function assertManagerCanViewSeller(userId: string) {
     return { ok: false as const, error: "VALIDATION" as const };
   }
 
-  const member = await deps.organizationTeam.findMembershipForManagerView(
-    ctx.activeOrganizationId,
+  const member = await actor.deps.organizationTeam.findMembershipForManagerView(
+    actor.organizationId,
     parsedUserId.data,
   );
   if (!member) {
@@ -53,8 +42,8 @@ async function assertManagerCanViewSeller(userId: string) {
 
   return {
     ok: true as const,
-    deps,
-    organizationId: ctx.activeOrganizationId,
+    deps: actor.deps,
+    organizationId: actor.organizationId,
     userId: parsedUserId.data,
     sellerDisplayName: nameLine,
   };

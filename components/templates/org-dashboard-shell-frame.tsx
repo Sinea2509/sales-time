@@ -55,6 +55,7 @@ export type OrgDashboardShellFrameProps = {
   activeOrganizationId: string | null;
   trialAnalysesLeft: number;
   trialLimit: number;
+  planUnlocked: boolean;
   unreadNotificationCount: number;
   notifications: NotificationItem[];
   organizationSwitcherMemberships: OrgSwitcherMembership[];
@@ -81,6 +82,7 @@ export function OrgDashboardShellFrame({
   activeOrganizationId,
   trialAnalysesLeft,
   trialLimit,
+  planUnlocked,
   unreadNotificationCount,
   notifications,
   organizationSwitcherMemberships,
@@ -100,8 +102,9 @@ export function OrgDashboardShellFrame({
       ]
     : [];
   const [showQuotaPopup, setShowQuotaPopup] = useState(false);
+  const showTrialQuota = !planUnlocked;
   const analysesUsed = Math.max(0, trialLimit - trialAnalysesLeft);
-  const quotaReached = trialAnalysesLeft <= 0;
+  const quotaReached = showTrialQuota && trialAnalysesLeft <= 0;
   const progressPercent = Math.min(
     100,
     Math.max(0, (analysesUsed / trialLimit) * 100),
@@ -207,41 +210,43 @@ export function OrgDashboardShellFrame({
               </SidebarMenu>
             ) : null}
 
-            <div
-              className={cn(
-                "group-data-[collapsible=icon]:hidden px-2 pb-3",
-                footerNav.length > 0 ? "pt-1" : "pt-2",
-              )}
-            >
-              <div className="rounded-xl border border-[#404040]/20 bg-[#F5F5F5] p-3">
-                <p className="text-sm font-semibold text-[#171717]">
-                  Essai gratuit
-                </p>
-                <p className="mt-1 text-xs leading-snug text-[#404040]">
-                  {trialAnalysesLeft > 0
-                    ? `Plus que ${trialAnalysesLeft} analyse${trialAnalysesLeft > 1 ? "s" : ""} — passez au plan pour continuer`
-                    : "Quota épuisé — passez au plan pour continuer"}
-                </p>
-                <div className="mt-3">
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#171717]/20">
-                    <div
-                      className="h-full rounded-full bg-brand"
-                      style={{ width: `${progressPercent}%` }}
-                      aria-hidden
-                    />
+            {showTrialQuota ? (
+              <div
+                className={cn(
+                  "group-data-[collapsible=icon]:hidden px-2 pb-3",
+                  footerNav.length > 0 ? "pt-1" : "pt-2",
+                )}
+              >
+                <div className="rounded-xl border border-[#404040]/20 bg-[#F5F5F5] p-3">
+                  <p className="text-sm font-semibold text-[#171717]">
+                    Essai gratuit
+                  </p>
+                  <p className="mt-1 text-xs leading-snug text-[#404040]">
+                    {trialAnalysesLeft > 0
+                      ? `Plus que ${trialAnalysesLeft} analyse${trialAnalysesLeft > 1 ? "s" : ""} — passez au plan pour continuer`
+                      : "Quota épuisé — passez au plan pour continuer"}
+                  </p>
+                  <div className="mt-3">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#171717]/20">
+                      <div
+                        className="h-full rounded-full bg-brand"
+                        style={{ width: `${progressPercent}%` }}
+                        aria-hidden
+                      />
+                    </div>
                   </div>
+                  <Link
+                    href="/company/plan"
+                    className={cn(
+                      buttonVariants({ size: "sm" }),
+                      "mt-3 h-8 w-full rounded-md bg-brand px-3 text-xs text-white hover:bg-brand-hover",
+                    )}
+                  >
+                    Voir tous les plans
+                  </Link>
                 </div>
-                <Link
-                  href="/company/plan"
-                  className={cn(
-                    buttonVariants({ size: "sm" }),
-                    "mt-3 h-8 w-full rounded-md bg-brand px-3 text-xs text-white hover:bg-brand-hover",
-                  )}
-                >
-                  Voir tous les plans
-                </Link>
               </div>
-            </div>
+            ) : null}
           </SidebarFooter>
         </div>
       </Sidebar>

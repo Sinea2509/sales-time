@@ -210,6 +210,8 @@ model Organization {
   memberships  OrganizationMembership[]
   invitations  OrganizationInvitation[]
   trialAnalysesLeft Int @default(5)
+  /** Set when a plan upgrade request is converted — unlimited analyses, no trial UI. */
+  planUnlockedAt DateTime?
 
   people       Person[]
   meetings     Meeting[]

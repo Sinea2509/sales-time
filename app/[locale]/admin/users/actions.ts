@@ -5,6 +5,7 @@ import { z } from "zod";
 import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { getAppBaseUrl } from "@/lib/app-base-url";
 import { requireSuperAdminActor } from "@/src/core/application/require-super-admin";
 
 type ActionResult = { ok: true } | { ok: false; message: string };
@@ -187,8 +188,7 @@ export async function inviteUserToOrgAction(
     invitedByUserId: gate.actorUserId,
   });
 
-  const base =
-    process.env.APP_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+  const base = getAppBaseUrl();
   const link = `${base}/invitations/${encodeURIComponent(rawToken)}`;
 
   await sendTransactionalEmail({

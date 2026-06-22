@@ -2,43 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
-import { getApplicationDeps } from "@/lib/application-deps";
-import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
+import { requireOrgActor } from "@/lib/analysis-server-context";
 import { searchContactsByPrefix } from "@/src/core/application/search-contacts";
 import { Prisma } from "@/lib/generated/prisma/client";
-import type { ApplicationDeps } from "@/lib/application-deps";
-
-type RequireOrgContextResult =
-  | { ok: false; error: "UNAUTHENTICATED" | "NO_ORG" }
-  | {
-      ok: true;
-      deps: ApplicationDeps;
-      organizationId: string;
-      principal: { userId: string; email: string };
-    };
-
-async function requireOrgContext(): Promise<RequireOrgContextResult> {
-  const deps = getApplicationDeps();
-  const principal = await deps.auth.getAuthenticatedPrincipal();
-  if (!principal)
-    return { ok: false as const, error: "UNAUTHENTICATED" as const };
-
-  const superAdminOrg = await readSuperAdminOrgCookie();
-  const ctx = await getCurrentActorContext(
-    { auth: deps.auth },
-    { superAdminElevation: superAdminOrg },
-  );
-  if (ctx.kind !== "authenticated" || !ctx.activeOrganizationId) {
-    return { ok: false as const, error: "NO_ORG" as const };
-  }
-  return {
-    ok: true as const,
-    deps,
-    organizationId: ctx.activeOrganizationId,
-    principal: { userId: principal.userId, email: principal.email },
-  };
-}
 
 const contactFields = z.object({
   displayName: z.string().trim().min(1).max(200),
@@ -58,13 +24,13 @@ function emptyToNull(s: string | null | undefined) {
 }
 
 export async function searchContactsPickerAction(prefix: string) {
-  const gate = await requireOrgContext();
-  if (!gate.ok) return { ok: false as const, error: gate.error, items: [] };
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error, items: [] };
 
   const items = await searchContactsByPrefix(
-    { contacts: gate.deps.contacts },
+    { contacts: actor.deps.contacts },
     {
-      organizationId: gate.organizationId,
+      organizationId: actor.organizationId,
       prefix,
       limit: 10,
     },
@@ -76,8 +42,8 @@ export async function createContactInlineAction(raw: {
   displayName: string;
   company?: string | null;
 }) {
-  const gate = await requireOrgContext();
-  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
   const parsed = z
     .object({
@@ -90,8 +56,8 @@ export async function createContactInlineAction(raw: {
   }
 
   try {
-    const row = await gate.deps.contacts.create({
-      organizationId: gate.organizationId,
+    const row = await actor.deps.contacts.create({
+      organizationId: actor.organizationId,
       displayName: parsed.data.displayName,
       company: emptyToNull(parsed.data.company ?? null),
     });
@@ -113,8 +79,8 @@ export async function createContactInlineAction(raw: {
 }
 
 export async function createContactAction(raw: z.input<typeof contactFields>) {
-  const gate = await requireOrgContext();
-  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
   const parsed = contactFields.safeParse(raw);
   if (!parsed.success) {
@@ -126,8 +92,8 @@ export async function createContactAction(raw: z.input<typeof contactFields>) {
     emailRaw == null || emailRaw === "" ? null : emailRaw.trim().toLowerCase();
 
   try {
-    const row = await gate.deps.contacts.create({
-      organizationId: gate.organizationId,
+    const row = await actor.deps.contacts.create({
+      organizationId: actor.organizationId,
       displayName: parsed.data.displayName,
       company: emptyToNull(parsed.data.company ?? null),
       email,
@@ -152,8 +118,8 @@ export async function updateContactAction(
   id: string,
   raw: z.input<typeof contactFields>,
 ) {
-  const gate = await requireOrgContext();
-  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
 
   const idParsed = z.string().cuid().safeParse(id);
   if (!idParsed.success) {
@@ -169,9 +135,9 @@ export async function updateContactAction(
   const email =
     emailRaw == null || emailRaw === "" ? null : emailRaw.trim().toLowerCase();
 
-  const row = await gate.deps.contacts.update({
+  const row = await actor.deps.contacts.update({
     id: idParsed.data,
-    organizationId: gate.organizationId,
+    organizationId: actor.organizationId,
     patch: {
       displayName: parsed.data.displayName,
       company: emptyToNull(parsed.data.company ?? null),

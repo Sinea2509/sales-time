@@ -6,6 +6,7 @@ import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 import { buildInvitationEmailHtml } from "@/lib/invite-email-html";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { getAppBaseUrl } from "@/lib/app-base-url";
 import { loadOrgSettingsActor } from "@/lib/load-org-settings-access";
 import { resolveOrganizationInviteRole } from "@/src/core/domain/organization-invite-policy";
 import type { OrganizationMembershipRole } from "@/src/core/domain/organization-membership-role";
@@ -117,8 +118,7 @@ export async function inviteMemberAction(
     invitedByUserId: gate.actorUserId,
   });
 
-  const base =
-    process.env.APP_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+  const base = getAppBaseUrl();
   const link = `${base}/invitations/${encodeURIComponent(rawToken)}`;
 
   await sendTransactionalEmail({
