@@ -13,10 +13,10 @@ import {
 import { prospectInitials } from "@/lib/prospect-initials";
 import {
   countMeetingTypes,
-  performanceParagraphText,
   postureLabelFromMeetings,
 } from "@/lib/team-member-performance-helpers";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { getTeamMemberPerformanceProfile } from "@/src/core/application/get-team-member-performance-profile";
 import {
   buildKissTeamRollupFromMeetings,
   ORG_ADMIN_DASHBOARD_MEETING_CAP,
@@ -38,10 +38,7 @@ import {
 } from "@/src/core/domain/dashboard-stats-window";
 import { buildQualificationPotentialMatrixPoints } from "@/src/core/domain/meeting-analyse-matrices";
 import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-profile-from-meetings";
-import type {
-  SellerCommercialPerformanceSummary,
-  SellerRelationalAffinitySummary,
-} from "@/src/core/ports/analysis-port";
+import type { SellerRelationalAffinitySummary } from "@/src/core/ports/analysis-port";
 
 export const dynamic = "force-dynamic";
 
@@ -147,35 +144,28 @@ export default async function ManagerCommercialViewPage({
       .trim() || member.user.email;
 
   const meetingDigests = buildMeetingDigestsForAiSummary(meetings);
-  let performanceSummary: SellerCommercialPerformanceSummary | null = null;
+  const performanceProfile = await getTeamMemberPerformanceProfile(deps, {
+    organizationId: orgId,
+    sellerUserId: userId,
+    sellerDisplayName: nameLine,
+    statsWindowDays,
+  });
   let relationalAffinity: SellerRelationalAffinitySummary | null = null;
   if (aiEnabled && meetingDigests.length > 0) {
-    const [performancePrompt, affinityPrompt, performanceModel, affinityModel] =
-      await Promise.all([
-      loadAnalysisPromptMarkdown(deps.prompts, "SELLER_PERFORMANCE"),
+    const [affinityPrompt, affinityModel] = await Promise.all([
       loadAnalysisPromptMarkdown(deps.prompts, "SELLER_AFFINITY"),
-      resolvePromptGatewayModel(deps.prompts, "SELLER_PERFORMANCE"),
       resolvePromptGatewayModel(deps.prompts, "SELLER_AFFINITY"),
     ]);
-    const aiPayload = {
-      sellerDisplayName: nameLine,
-      meetings: meetingDigests,
-    };
-    const [perfRes, affinityRes] = await Promise.allSettled([
-      deps.analysis.summarizeSellerCommercialPerformance({
-        ...aiPayload,
-        systemMarkdown: performancePrompt,
-        model: performanceModel,
-      }),
-      deps.analysis.summarizeSellerRelationalAffinity({
-        ...aiPayload,
+    try {
+      relationalAffinity = await deps.analysis.summarizeSellerRelationalAffinity({
+        sellerDisplayName: nameLine,
+        meetings: meetingDigests,
         systemMarkdown: affinityPrompt,
         model: affinityModel,
-      }),
-    ]);
-    if (perfRes.status === "fulfilled") performanceSummary = perfRes.value;
-    if (affinityRes.status === "fulfilled")
-      relationalAffinity = affinityRes.value;
+      });
+    } catch {
+      relationalAffinity = null;
+    }
   }
 
   const kissSellerRollup = buildKissTeamRollupFromMeetings(meetings);
@@ -204,12 +194,6 @@ export default async function ManagerCommercialViewPage({
     }
   }
 
-  const paragraphOptions = {
-    hasSummary: performanceSummary != null,
-    meetingCount: meetingDigests.length,
-    aiEnabled,
-  };
-
   const discAffinityBars = aggregateDiscAffinityBarsFromMeetings(meetings);
   const soncasAffinityBars = aggregateSoncasAffinityBarsFromMeetings(meetings);
   const discBarSource =
@@ -223,6 +207,9 @@ export default async function ManagerCommercialViewPage({
 
   return (
     <TeamMemberPerformanceShell
+      sellerUserId={userId}
+      statsWindowDays={statsWindowDays}
+      performanceFingerprint={performanceProfile.fingerprint}
       nameLine={nameLine}
       initials={prospectInitials(nameLine)}
       posture={posture}
@@ -230,18 +217,9 @@ export default async function ManagerCommercialViewPage({
       decouverte={decouverte}
       proposition={proposition}
       tamCumuleMinutes={home.tamCumuleMinutes}
-      performanceForces={performanceParagraphText(
-        performanceSummary?.forces,
-        paragraphOptions,
-      )}
-      performanceAxes={performanceParagraphText(
-        performanceSummary?.axesAmelioration,
-        paragraphOptions,
-      )}
-      performanceStop={performanceParagraphText(
-        performanceSummary?.aStopper,
-        paragraphOptions,
-      )}
+      performanceForces={performanceProfile.performanceForces}
+      performanceAxes={performanceProfile.performanceAxes}
+      performanceStop={performanceProfile.performanceStop}
       discBarItems={discBarSource.map((d) => ({
         key: d.key,
         label: d.label,

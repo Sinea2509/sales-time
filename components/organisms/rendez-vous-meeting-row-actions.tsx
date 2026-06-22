@@ -9,6 +9,7 @@ import {
   useMeetingEditDialog,
 } from "@/components/organisms/meeting-edit-trigger";
 import { buttonVariants } from "@/components/ui/button";
+import { dispatchMeetingMutation } from "@/lib/meeting-mutation-event";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +41,9 @@ export function RendezVousMeetingRowActions({
       if (!res.ok) {
         window.alert("La suppression a échoué.");
         return;
+      }
+      if (res.sellerUserId) {
+        dispatchMeetingMutation({ sellerUserId: res.sellerUserId });
       }
       router.refresh();
     });

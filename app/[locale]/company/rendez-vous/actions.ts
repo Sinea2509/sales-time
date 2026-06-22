@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { revalidateTeamMemberPerformancePaths } from "@/lib/revalidate-team-member-paths";
 import { uploadMeetingTranscriptFile } from "@/lib/meeting-transcript-upload";
 import { blobUrlBelongsToOrg } from "@/lib/blob-paths";
 import { mergeMeetingTranscriptSources } from "@/lib/transcript-extract";
@@ -210,7 +211,12 @@ export async function createMeetingAction(formData: FormData) {
   revalidatePath("/company/rendez-vous");
   revalidatePath("/company/analyse");
   revalidatePath("/company");
-  return { ok: true as const, meetingId: result.meetingId };
+  revalidateTeamMemberPerformancePaths(principal.userId);
+  return {
+    ok: true as const,
+    meetingId: result.meetingId,
+    sellerUserId: principal.userId,
+  };
 }
 
 export type MeetingEditPayload = {
@@ -446,7 +452,12 @@ export async function updateMeetingAction(formData: FormData) {
   revalidatePath(`/company/rendez-vous/${parsedId.data}`);
   revalidatePath("/company/analyse");
   revalidatePath("/company");
-  return { ok: true as const, meetingId: result.meetingId };
+  revalidateTeamMemberPerformancePaths(access.meeting.sellerUserId);
+  return {
+    ok: true as const,
+    meetingId: result.meetingId,
+    sellerUserId: access.meeting.sellerUserId,
+  };
 }
 
 export async function deleteMeetingAction(meetingId: string) {
@@ -482,6 +493,8 @@ export async function deleteMeetingAction(meetingId: string) {
     }
   }
 
+  const sellerUserId = existing.sellerUserId;
+
   await deps.meetings.deleteMeetingByIdForOrg({
     id: existing.id,
     organizationId: ctx.activeOrganizationId,
@@ -490,5 +503,6 @@ export async function deleteMeetingAction(meetingId: string) {
   revalidatePath("/company/rendez-vous");
   revalidatePath("/company/analyse");
   revalidatePath("/company");
-  return { ok: true as const };
+  revalidateTeamMemberPerformancePaths(sellerUserId);
+  return { ok: true as const, sellerUserId };
 }

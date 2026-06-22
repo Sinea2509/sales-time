@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
@@ -8,11 +7,11 @@ import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analy
 import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-quadrant-grid";
 import type { SalesProfileScores } from "@/components/organisms/sales-profile-radar";
 import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
+import { TeamMemberPerformanceProfileCard } from "@/components/organisms/team-member-performance-profile-card";
 import type { OrgAdminKissTeamRollup } from "@/src/core/application/get-org-admin-dashboard";
 import type { QualificationPotentialMatrixPoint } from "@/src/core/domain/meeting-analyse-matrices";
 import {
   cardProseBodyClass,
-  cardSubsectionTitleClass,
   cardTitleClass,
   pageTitleClass,
   sectionHeadingClass,
@@ -43,6 +42,9 @@ function statColumn({
   );
 }
 export type TeamMemberPerformanceShellProps = {
+  sellerUserId: string;
+  statsWindowDays: number;
+  performanceFingerprint: string;
   nameLine: string;
   initials: string;
   posture: string | null;
@@ -70,6 +72,9 @@ export type TeamMemberPerformanceShellProps = {
 };
 
 export function TeamMemberPerformanceShell({
+  sellerUserId,
+  statsWindowDays,
+  performanceFingerprint,
   nameLine,
   initials,
   posture,
@@ -146,66 +151,17 @@ export function TeamMemberPerformanceShell({
         </div>
       </div>
 
-      <Card
-        size="sm"
-        className="overflow-hidden border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-      >
-        <CardHeader className="pb-3">
-          <CardTitle
-            className={cn(cardTitleClass, "flex flex-row items-center gap-2")}
-          >
-            Profil de performance
-            <span
-              className="flex size-6 shrink-0 items-center justify-center rounded-full bg-violet-100/90 ring-1 ring-violet-300/50 dark:bg-violet-950/60 dark:ring-violet-700/40"
-              aria-hidden
-            >
-              <Sparkles
-                className="size-3 text-violet-600 drop-shadow-[0_0_6px_rgba(139,92,246,0.4)] dark:text-violet-300 dark:drop-shadow-[0_0_8px_rgba(167,139,250,0.3)]"
-                strokeWidth={2}
-              />
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-          <div className="space-y-8">
-            <section>
-              <h3 className={cardSubsectionTitleClass}>Forces</h3>
-              <p
-                className={cn(
-                  cardProseBodyClass,
-                  "mt-2 whitespace-pre-wrap dark:text-zinc-200/90",
-                )}
-              >
-                {performanceForces}
-              </p>
-            </section>
-            <section>
-              <h3 className={cardSubsectionTitleClass}>
-                Axes d&apos;amélioration
-              </h3>
-              <p
-                className={cn(
-                  cardProseBodyClass,
-                  "mt-2 whitespace-pre-wrap dark:text-zinc-200/90",
-                )}
-              >
-                {performanceAxes}
-              </p>
-            </section>
-            <section>
-              <h3 className={cardSubsectionTitleClass}>À stopper</h3>
-              <p
-                className={cn(
-                  cardProseBodyClass,
-                  "mt-2 whitespace-pre-wrap dark:text-zinc-200/90",
-                )}
-              >
-                {performanceStop}
-              </p>
-            </section>
-          </div>
-        </CardContent>
-      </Card>
+      <TeamMemberPerformanceProfileCard
+        key={performanceFingerprint}
+        sellerUserId={sellerUserId}
+        statsWindowDays={statsWindowDays}
+        initialFingerprint={performanceFingerprint}
+        initialPerformance={{
+          performanceForces,
+          performanceAxes,
+          performanceStop,
+        }}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card
