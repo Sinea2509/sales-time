@@ -1,11 +1,5 @@
-"use client";
-
 import type { ComponentType, ReactNode } from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { KpiTileHintShell } from "@/components/molecules/kpi-tile-hint-shell";
 import {
   statAccentStyles,
   type StatAccent,
@@ -39,12 +33,11 @@ export function KpiTile({
 
   const shellClass = cn(
     "rounded-2xl border border-zinc-200/10 bg-white p-5 text-zinc-900 shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50",
-    labelTooltip && "cursor-help",
     className,
   );
 
-  const content = (
-    <>
+  const tile = (
+    <div className={shellClass}>
       <div className="flex min-w-0 items-center gap-2.5">
         <div
           className={cn(
@@ -76,28 +69,16 @@ export function KpiTile({
           {footer}
         </p>
       ) : null}
-    </>
+    </div>
   );
 
   if (!labelTooltip) {
-    return <div className={shellClass}>{content}</div>;
+    return tile;
   }
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={<div className={shellClass} tabIndex={0} />}
-        aria-label={`${label} — afficher l'explication`}
-      >
-        {content}
-      </TooltipTrigger>
-      <TooltipContent
-        side="top"
-        align="start"
-        className="max-w-sm text-left leading-relaxed"
-      >
-        {labelTooltip}
-      </TooltipContent>
-    </Tooltip>
+    <KpiTileHintShell label={label} hint={labelTooltip}>
+      {tile}
+    </KpiTileHintShell>
   );
 }
