@@ -1,8 +1,7 @@
-import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
+import { InterlocutorProfileTabs } from "@/components/molecules/interlocutor-profile-tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   cardProseBodyClass,
-  cardSubsectionTitleClass,
   pageTitleClass,
   sectionHeadingClass,
 } from "@/lib/page-typography";
@@ -57,32 +56,11 @@ export function MeetingInterlocutorSection({
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="space-y-3">
-              <h3 className={cardSubsectionTitleClass}>Profil DISC</h3>
-              {discBars ? (
-                <ProfileAffinityHorizontalBars items={discBars} />
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  {analysisPending
-                    ? "Analyse DISC en cours…"
-                    : "Profil DISC indisponible pour ce rendez-vous."}
-                </p>
-              )}
-            </div>
-            <div className="space-y-3">
-              <h3 className={cardSubsectionTitleClass}>Profil SONCAS</h3>
-              {soncasBars ? (
-                <ProfileAffinityHorizontalBars items={soncasBars} />
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  {analysisPending
-                    ? "Analyse SONCAS en cours…"
-                    : "Profil SONCAS indisponible pour ce rendez-vous."}
-                </p>
-              )}
-            </div>
-          </div>
+          <InterlocutorProfileTabs
+            discBars={discBars}
+            soncasBars={soncasBars}
+            analysisPending={analysisPending}
+          />
         </CardContent>
       </Card>
     </section>

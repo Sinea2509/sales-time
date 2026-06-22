@@ -4,7 +4,9 @@ import type {
 } from "@/src/core/domain/analysis-result-zod";
 import {
   DISC_BAR_CLASS,
+  DISC_PILL_CLASS,
   SONCAS_BAR_CLASS,
+  SONCAS_PILL_CLASS,
   type DiscBarDatum,
   type SoncasBarDatum,
 } from "@/src/core/domain/seller-affinity-from-meetings";
@@ -67,6 +69,7 @@ export function discBarItemsForUi(result: DiscAnalysisResult) {
   return discBarsFromResult(result).map((row) => ({
     ...row,
     barClass: DISC_BAR_CLASS[row.key],
+    pillClass: DISC_PILL_CLASS[row.key],
   }));
 }
 
@@ -74,5 +77,6 @@ export function soncasBarItemsForUi(result: SoncasAnalysisResult) {
   return soncasBarsFromResult(result).map((row) => ({
     ...row,
     barClass: SONCAS_BAR_CLASS[row.key],
+    pillClass: SONCAS_PILL_CLASS[row.key],
   }));
 }

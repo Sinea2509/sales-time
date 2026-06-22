@@ -2,12 +2,9 @@ import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { cardTitleClass } from "@/lib/page-typography";
 
 const blocks = [
   {
@@ -36,65 +33,25 @@ const blocks = [
   },
 ] as const;
 
-export function KissResultView({
-  result,
-  showCoachingScore = true,
-}: {
-  result: KissAnalysisResult;
-  /** Réservé au commercial propriétaire du RDV (masqué manager / autres). */
-  showCoachingScore?: boolean;
-}) {
+export function KissResultView({ result }: { result: KissAnalysisResult }) {
   return (
-    <div className="space-y-4">
-      {showCoachingScore ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <Badge variant="secondary" className="text-base font-semibold">
-            Score coaching : {result.coachingScore}/10
-          </Badge>
-        </div>
-      ) : null}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className={cardTitleClass}>Synthèse</CardTitle>
-          <CardDescription>{result.summary}</CardDescription>
-        </CardHeader>
-        {showCoachingScore ? (
-          <CardContent className="space-y-2 text-sm">
-            <p className="text-muted-foreground font-medium">
-              Justification du score
-            </p>
-            <p className="leading-relaxed">
-              {result.coachingScoreJustification}
-            </p>
+    <div className="grid gap-3 sm:grid-cols-2">
+      {blocks.map(({ key, title, className }) => (
+        <Card key={key} className={className}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold tracking-wide uppercase">
+              {title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-inside list-disc space-y-1 text-sm leading-relaxed">
+              {result[key].map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ul>
           </CardContent>
-        ) : null}
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className={cardTitleClass}>Golden question</CardTitle>
-          <CardDescription className="text-foreground font-medium">
-            {result.goldenQuestion}
-          </CardDescription>
-        </CardHeader>
-      </Card>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {blocks.map(({ key, title, className }) => (
-          <Card key={key} className={className}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold tracking-wide uppercase">
-                {title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="list-inside list-disc space-y-1 text-sm leading-relaxed">
-                {result[key].map((line, i) => (
-                  <li key={i}>{line}</li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        </Card>
+      ))}
     </div>
   );
 }

@@ -8,11 +8,6 @@ import { MeetingEditButton } from "@/components/organisms/meeting-edit-trigger";
 import { MeetingInterlocutorSection } from "@/components/organisms/meeting-interlocutor-section";
 import { MeetingSynthesisSection } from "@/components/organisms/meeting-synthesis-section";
 import { MeetingTranscriptPreview } from "@/components/molecules/meeting-transcript-preview";
-import { Badge } from "@/components/ui/badge";
-import {
-  meetingStatusBadgeClass,
-  meetingStatusLabel,
-} from "@/lib/meeting-status-label";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import type { MeetingStatus } from "@/src/core/domain/meeting-status";
 import type {
@@ -95,20 +90,6 @@ export function MeetingDetailShell({
         followUpEmailDraft={meeting.followUpEmailDraft}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge className={meetingStatusBadgeClass(meeting.status)}>
-          {meetingStatusLabel(meeting.status)}
-        </Badge>
-        {meeting.feeling != null ? (
-          <Badge variant="outline">Ressenti {meeting.feeling}/5</Badge>
-        ) : null}
-        <span className="text-muted-foreground text-sm">
-          {new Date(meeting.meetingAt).toLocaleString("fr-FR")} ·{" "}
-          {meeting.outcome}
-          {meeting.meetingType ? ` · ${meeting.meetingType}` : ""}
-        </span>
-      </div>
-
       <MeetingAnalysisStatusBanner status={meeting.status} />
 
       {meeting.status === "FAILED" && meeting.errorMessage ? (
@@ -144,12 +125,12 @@ export function MeetingDetailShell({
         showKissCoaching ? (
           <section className="space-y-3">
             <h2 className={sectionHeadingClass}>Coaching KISS</h2>
-            <KissResultView result={kissResult} showCoachingScore />
+            <KissResultView result={kissResult} />
           </section>
         ) : (
           <InfoCard
             title="Coaching KISS"
-            description="Le détail KISS et le score de coaching sont visibles par le commercial assigné à ce rendez-vous et les managers de l'organisation."
+            description="Le coaching KISS (Keep / Improve / Stop / Start) est visible par le commercial assigné à ce rendez-vous et les managers de l'organisation."
           />
         )
       ) : null}

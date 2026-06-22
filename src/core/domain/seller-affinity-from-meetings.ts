@@ -67,6 +67,26 @@ export const SONCAS_BAR_CLASS: Record<(typeof SONCAS_KEYS)[number], string> = {
   sympathie: "bg-rose-600",
 };
 
+/** Pastille tag — même palette que les barres DISC. */
+export const DISC_PILL_CLASS: Record<(typeof DISC_KEYS)[number], string> = {
+  D: "border-red-600/30 bg-red-600/10 text-red-800 dark:text-red-200",
+  I: "border-amber-500/35 bg-amber-400/15 text-amber-900 dark:text-amber-100",
+  S: "border-emerald-600/30 bg-emerald-600/10 text-emerald-800 dark:text-emerald-200",
+  C: "border-blue-600/30 bg-blue-600/10 text-blue-800 dark:text-blue-200",
+};
+
+/** Pastille tag — même palette que les barres SONCAS. */
+export const SONCAS_PILL_CLASS: Record<(typeof SONCAS_KEYS)[number], string> = {
+  securite: "border-cyan-600/30 bg-cyan-600/10 text-cyan-800 dark:text-cyan-200",
+  orgueil: "border-violet-600/30 bg-violet-600/10 text-violet-800 dark:text-violet-200",
+  nouveaute:
+    "border-amber-500/35 bg-amber-500/10 text-amber-900 dark:text-amber-100",
+  confort: "border-teal-600/30 bg-teal-600/10 text-teal-800 dark:text-teal-200",
+  argent:
+    "border-orange-600/30 bg-orange-600/10 text-orange-800 dark:text-orange-200",
+  sympathie: "border-rose-600/30 bg-rose-600/10 text-rose-800 dark:text-rose-200",
+};
+
 function clampPct(n: number): number {
   /* istanbul ignore if -- averages are finite for Zod-valid scores */
   if (!Number.isFinite(n)) return 0;
