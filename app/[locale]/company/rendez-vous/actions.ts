@@ -8,6 +8,7 @@ import { revalidateTeamMemberPerformancePaths } from "@/lib/revalidate-team-memb
 import { uploadMeetingTranscriptFile } from "@/lib/meeting-transcript-upload";
 import { blobUrlBelongsToOrg } from "@/lib/blob-paths";
 import { mergeMeetingTranscriptSources } from "@/lib/transcript-extract";
+import { wakeAnalysisWorker } from "@/lib/wake-analysis-worker";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createMeetingForOrg } from "@/src/core/application/create-meeting";
@@ -443,6 +444,7 @@ export async function updateMeetingAction(formData: FormData) {
         organizationId: ctx.activeOrganizationId,
         meetingId: parsedId.data,
       });
+      wakeAnalysisWorker();
     }
   }
 

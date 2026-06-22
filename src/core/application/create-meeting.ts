@@ -6,6 +6,7 @@ import type { OrganizationQuotaRepositoryPort } from "@/src/core/ports/organizat
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import type { MeetingSourceType } from "@/src/core/domain/meeting-status";
 import { resolveMeetingPersonLink } from "@/src/core/application/resolve-meeting-person-link";
+import { wakeAnalysisWorker } from "@/lib/wake-analysis-worker";
 
 export type CreateMeetingResult =
   | { ok: true; meetingId: string }
@@ -119,6 +120,7 @@ export async function createMeetingForOrg(
       organizationId: input.organizationId,
       meetingId: meeting.id,
     });
+    wakeAnalysisWorker();
   }
 
   await deps.audit?.logPlatformAction({

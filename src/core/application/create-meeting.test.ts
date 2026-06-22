@@ -1,5 +1,13 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, jest } from "@jest/globals";
+
+jest.mock("@/lib/wake-analysis-worker", () => ({
+  wakeAnalysisWorker: () => undefined,
+}));
+
 import { createMeetingForOrg } from "./create-meeting";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- jest mock
+type JestFn = jest.Mock<any>;
 
 const baseInput = {
   organizationId: "org_1",
@@ -15,31 +23,44 @@ const baseInput = {
   outcome: "FOLLOW_UP" as const,
 };
 
-function makeDeps(over: Partial<{
-  trialLeft: number;
-  person: { id: string } | null;
-  meetingId: string;
-}> = {}) {
+function makeDeps() {
   return {
     meetings: {
-      createMeeting: jest.fn().mockResolvedValue({
-        id: over.meetingId ?? "meet_1",
-      }),
+      createMeeting: jest.fn() as JestFn,
     },
     contacts: {
-      findById: jest.fn().mockResolvedValue(over.person ?? null),
-      findUniqueByCompanyName: jest.fn().mockResolvedValue(null),
+      findById: jest.fn() as JestFn,
+      findUniqueByCompanyName: jest.fn() as JestFn,
     },
     analysisJobs: {
-      enqueueMeetingAnalysis: jest.fn().mockResolvedValue(undefined),
+      enqueueMeetingAnalysis: jest.fn() as JestFn,
     },
     organizationQuota: {
-      getTrialAnalysesLeft: jest
-        .fn()
-        .mockResolvedValue(over.trialLeft ?? 3),
-      decrementTrialAnalysesLeft: jest.fn().mockResolvedValue(undefined),
+      getTrialAnalysesLeft: jest.fn() as JestFn,
+      decrementTrialAnalysesLeft: jest.fn() as JestFn,
     },
   };
+}
+
+function initDeps(
+  over: Partial<{
+    trialLeft: number;
+    person: { id: string } | null;
+    meetingId: string;
+  }> = {},
+) {
+  const deps = makeDeps();
+  deps.meetings.createMeeting.mockResolvedValue({
+    id: over.meetingId ?? "meet_1",
+  });
+  deps.contacts.findById.mockResolvedValue(over.person ?? null);
+  deps.contacts.findUniqueByCompanyName.mockResolvedValue(null);
+  deps.analysisJobs.enqueueMeetingAnalysis.mockResolvedValue(undefined);
+  deps.organizationQuota.getTrialAnalysesLeft.mockResolvedValue(
+    over.trialLeft ?? 3,
+  );
+  deps.organizationQuota.decrementTrialAnalysesLeft.mockResolvedValue(undefined);
+  return deps;
 }
 
 describe("createMeetingForOrg", () => {
@@ -60,14 +81,14 @@ describe("createMeetingForOrg", () => {
   });
 
   it("returns QUOTA_EXHAUSTED when trial analyses are depleted", async () => {
-    const deps = makeDeps({ trialLeft: 0 });
+    const deps = initDeps({ trialLeft: 0 });
     const result = await createMeetingForOrg(deps as never, baseInput);
     expect(result).toEqual({ ok: false, error: "QUOTA_EXHAUSTED" });
     expect(deps.meetings.createMeeting).not.toHaveBeenCalled();
   });
 
   it("returns INVALID_PERSON when personId does not exist in org", async () => {
-    const deps = makeDeps();
+    const deps = initDeps();
     const result = await createMeetingForOrg(deps as never, {
       ...baseInput,
       personId: "person_missing",
@@ -76,7 +97,7 @@ describe("createMeetingForOrg", () => {
   });
 
   it("creates meeting with PROCESSING status and decrements quota by default", async () => {
-    const deps = makeDeps({ person: { id: "person_1" }, meetingId: "meet_99" });
+    const deps = initDeps({ person: { id: "person_1" }, meetingId: "meet_99" });
     const result = await createMeetingForOrg(deps as never, {
       ...baseInput,
       personId: "person_1",
@@ -110,13 +131,13 @@ describe("createMeetingForOrg", () => {
   });
 
   it("links meeting to contact when prospect name matches a unique company", async () => {
-    const deps = makeDeps({ meetingId: "meet_co" });
-    deps.contacts.findUniqueByCompanyName = jest.fn().mockResolvedValue({
+    const deps = initDeps({ meetingId: "meet_co" });
+    deps.contacts.findUniqueByCompanyName.mockResolvedValue({
       id: "person_margaux",
       displayName: "Margaux JULIEN",
       company: "Doha",
     });
-    deps.contacts.findById = jest.fn().mockResolvedValue({
+    deps.contacts.findById.mockResolvedValue({
       id: "person_margaux",
       displayName: "Margaux JULIEN",
       company: "Doha",
@@ -137,7 +158,7 @@ describe("createMeetingForOrg", () => {
   });
 
   it("skips quota and queue when enqueueAnalysis is false", async () => {
-    const deps = makeDeps({ trialLeft: 0 });
+    const deps = initDeps({ trialLeft: 0 });
     const result = await createMeetingForOrg(deps as never, {
       ...baseInput,
       enqueueAnalysis: false,

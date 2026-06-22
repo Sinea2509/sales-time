@@ -1,10 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/worker/process-jobs",
-      "schedule": "* * * * *"
-    },
-    {
       "path": "/api/cron/purge-retention",
       "schedule": "0 3 * * *"
     }
