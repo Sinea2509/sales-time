@@ -1,14 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import {
-  requireAnalysisActor,
-} from "@/lib/analysis-server-context";
-import { loadCommercialKissAppendix } from "@/lib/kiss-commercial-appendix";
+import { requireAnalysisActor } from "@/lib/analysis-server-context";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { generateFollowUpEmailForMeeting } from "@/src/core/application/generate-follow-up-email";
 import { loadResolvedFollowUpEmailPreferences } from "@/src/core/application/load-resolved-follow-up-email-preferences";
-import { runMeetingAnalysis } from "@/src/core/application/run-meeting-analysis";
+import { runAllMeetingAnalysesForOrg } from "@/src/core/application/run-all-meeting-analyses-for-org";
 import {
   formatFollowUpEmailBody,
   formatFollowUpEmailDraft,
@@ -22,22 +19,19 @@ export async function runAllMeetingAnalysesAction(meetingId: string) {
   const actor = await requireAnalysisActor();
   if (!actor.ok) return { ok: false as const, error: actor.error };
 
-  const kissAppendix = await loadCommercialKissAppendix(actor.deps);
-  for (const kind of ["SONCAS", "DISC", "KISS"] as const) {
-    const r = await runMeetingAnalysis(actor.deps, {
-      organizationId: actor.organizationId,
-      meetingId: parsed.data,
-      kind,
-      kissSystemMarkdownAppendix: kind === "KISS" ? kissAppendix : undefined,
-    });
-    if (!r.ok) {
-      return {
-        ok: false as const,
-        error: r.error,
-        message: r.message,
-        failedKind: kind,
-      };
-    }
+  const result = await runAllMeetingAnalysesForOrg(actor.deps, {
+    organizationId: actor.organizationId,
+    meetingId: parsed.data,
+    notifyOnComplete: false,
+  });
+
+  if (!result.ok) {
+    return {
+      ok: false as const,
+      error: result.error as "ANALYSIS_FAILED",
+      message: result.message,
+      failedKind: result.failedKind,
+    };
   }
 
   revalidatePath(`/company/rendez-vous/${parsed.data}`);
@@ -97,4 +91,3 @@ export async function generateFollowUpEmailAction(meetingId: string) {
     return { ok: false as const, error: "FAILED" as const, message };
   }
 }
-

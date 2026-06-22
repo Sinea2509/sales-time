@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { TeamMemberPerformanceShell } from "@/components/organisms/team-member-performance-shell";
+import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analyse-priority-opportunities-table";
 import { buildMeetingDigestsForAiSummary } from "@/lib/meeting-ai-digest";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
@@ -21,6 +22,7 @@ import {
   ORG_ADMIN_DASHBOARD_MEETING_CAP,
 } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
+import { summarizeTeamCoachingRecommendations } from "@/src/core/application/summarize-team-coaching-recommendations";
 import {
   aggregateDiscAffinityBarsFromMeetings,
   aggregateSoncasAffinityBarsFromMeetings,
@@ -30,9 +32,12 @@ import {
   SONCAS_BAR_CLASS,
 } from "@/src/core/domain/seller-affinity-from-meetings";
 import {
-  meetingAtSinceForStatsWindow,
   parseStatsWindowDays,
+  partitionMeetingsByStatsWindow,
+  previousMeetingAtWindowStart,
 } from "@/src/core/domain/dashboard-stats-window";
+import { buildQualificationPotentialMatrixPoints } from "@/src/core/domain/meeting-analyse-matrices";
+import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-profile-from-meetings";
 import type {
   SellerCommercialPerformanceSummary,
   SellerRelationalAffinitySummary,
@@ -88,16 +93,50 @@ export default async function ManagerCommercialViewPage({
   if (!member) notFound();
   if (!home) redirect("/company");
 
-  const since = meetingAtSinceForStatsWindow(statsWindowDays);
-  const meetings = await deps.meetings.listRecentMeetingsForDashboard({
+  const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
+  const meetingsForWindow = await deps.meetings.listRecentMeetingsForDashboard({
     organizationId: orgId,
     limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
-    meetingAtSince: since,
+    meetingAtSince: sincePreviousWindow,
     sellerUserId: userId,
     includeLatestSoncasResult: true,
     includeLatestDiscResult: true,
     includeLatestKissResult: true,
   });
+
+  const { currentWindow: meetings, previousWindow: previousMeetings } =
+    partitionMeetingsByStatsWindow(meetingsForWindow, statsWindowDays);
+
+  const priorityOpportunities: AnalysePriorityOpportunityRow[] = [...meetings]
+    .filter((m) => m.potentialAmount != null && m.potentialAmount > 0)
+    .sort((a, b) => (b.potentialAmount ?? 0) - (a.potentialAmount ?? 0))
+    .slice(0, 10)
+    .map((m) => ({
+      id: m.id,
+      prospectName: m.prospectName,
+      potentialAmount: m.potentialAmount!,
+      salesScore: m.salesScore,
+      outcome: m.outcome,
+    }));
+
+  const qualificationPotentialPoints =
+    buildQualificationPotentialMatrixPoints(meetings);
+  const teamSalesProfile = aggregateTeamSalesProfileFromMeetings(meetings);
+  const previousSalesProfile =
+    aggregateTeamSalesProfileFromMeetings(previousMeetings);
+  const coachingBullets = await summarizeTeamCoachingRecommendations(deps, {
+    meetings,
+    previousMeetings,
+    teamSalesProfile,
+    previousSalesProfile,
+    statsWindowDays,
+    audience: "manager",
+    organizationKissPromptAppendix: aiEnabled
+      ? kissMarkdownAppendixForAudience(globalKissJson, "manager")
+      : null,
+    home,
+  });
+  const { progressBullets, improvementBullets } = coachingBullets;
 
   const { decouverte, proposition } = countMeetingTypes(meetings);
   const posture = postureLabelFromMeetings(meetings);
@@ -219,6 +258,13 @@ export default async function ManagerCommercialViewPage({
       soncasAffinityText={relationalAffinity?.soncasAffinity ?? null}
       kissSellerStrengthsNarrative={kissSellerStrengthsNarrative}
       kissSellerRollup={kissSellerRollup}
+      qualificationPotentialPoints={qualificationPotentialPoints}
+      priorityOpportunities={priorityOpportunities}
+      salesProfile={teamSalesProfile.scores}
+      previousSalesProfile={previousSalesProfile.scores}
+      salesProfileRdvCount={teamSalesProfile.rdvCount}
+      progressBullets={progressBullets}
+      improvementBullets={improvementBullets}
     />
   );
 }

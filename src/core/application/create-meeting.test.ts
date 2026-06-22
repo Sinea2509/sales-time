@@ -74,7 +74,7 @@ describe("createMeetingForOrg", () => {
     expect(result).toEqual({ ok: false, error: "INVALID_PERSON" });
   });
 
-  it("creates meeting, decrements quota, and enqueues analysis by default", async () => {
+  it("creates meeting with PROCESSING status and decrements quota by default", async () => {
     const deps = makeDeps({ person: { id: "person_1" }, meetingId: "meet_99" });
     const result = await createMeetingForOrg(deps as never, {
       ...baseInput,
@@ -102,10 +102,7 @@ describe("createMeetingForOrg", () => {
     expect(deps.organizationQuota.decrementTrialAnalysesLeft).toHaveBeenCalledWith(
       "org_1",
     );
-    expect(deps.analysisJobs.enqueueMeetingAnalysis).toHaveBeenCalledWith({
-      organizationId: "org_1",
-      meetingId: "meet_99",
-    });
+    expect(deps.analysisJobs.enqueueMeetingAnalysis).not.toHaveBeenCalled();
   });
 
   it("skips quota and queue when enqueueAnalysis is false", async () => {

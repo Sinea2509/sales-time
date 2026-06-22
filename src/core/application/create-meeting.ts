@@ -98,10 +98,6 @@ export async function createMeetingForOrg(
     await deps.organizationQuota.decrementTrialAnalysesLeft(
       input.organizationId,
     );
-    await deps.analysisJobs.enqueueMeetingAnalysis({
-      organizationId: input.organizationId,
-      meetingId: meeting.id,
-    });
   }
 
   await deps.audit?.logPlatformAction({

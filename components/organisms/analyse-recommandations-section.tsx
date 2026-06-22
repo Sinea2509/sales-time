@@ -24,6 +24,7 @@ export function AnalyseRecommandationsSection({
   progressBullets,
   improvementBullets,
   isOrgAdmin,
+  sellerScoped = false,
 }: {
   salesProfile: SalesProfileScores | null;
   previousSalesProfile?: SalesProfileScores | null;
@@ -31,20 +32,34 @@ export function AnalyseRecommandationsSection({
   progressBullets: string[];
   improvementBullets: string[];
   isOrgAdmin: boolean;
+  /** Manager view of one commercial — seller-specific copy instead of team/self. */
+  sellerScoped?: boolean;
 }) {
-  const profileTitle = isOrgAdmin
-    ? "Profil de vente de l'équipe"
-    : "Mon profil de vente";
-  const progressTitle = isOrgAdmin ? "Progrès de l'équipe" : "Mes progrès";
-  const progressSubtitle = isOrgAdmin
-    ? "Ce que l'équipe a amélioré"
-    : "Ce que vous avez amélioré";
-  const improvementSubtitle = isOrgAdmin
-    ? "Ce que l'équipe devrait commencer à faire"
-    : "Ce que vous devriez commencer à faire";
-  const improvementTitle = isOrgAdmin
-    ? "Axes d'amélioration de l'équipe"
-    : "Mes axes d'amélioration";
+  const profileTitle = sellerScoped
+    ? "Profil de vente du commercial"
+    : isOrgAdmin
+      ? "Profil de vente de l'équipe"
+      : "Mon profil de vente";
+  const progressTitle = sellerScoped
+    ? "Progrès du commercial"
+    : isOrgAdmin
+      ? "Progrès de l'équipe"
+      : "Mes progrès";
+  const progressSubtitle = sellerScoped
+    ? "Ce que le commercial a amélioré"
+    : isOrgAdmin
+      ? "Ce que l'équipe a amélioré"
+      : "Ce que vous avez amélioré";
+  const improvementSubtitle = sellerScoped
+    ? "Ce que le commercial devrait commencer à faire"
+    : isOrgAdmin
+      ? "Ce que l'équipe devrait commencer à faire"
+      : "Ce que vous devriez commencer à faire";
+  const improvementTitle = sellerScoped
+    ? "Axes d'amélioration du commercial"
+    : isOrgAdmin
+      ? "Axes d'amélioration de l'équipe"
+      : "Mes axes d'amélioration";
   const visibleProgressBullets = coachingProgressBulletsForDisplay(
     rdvCount,
     progressBullets,

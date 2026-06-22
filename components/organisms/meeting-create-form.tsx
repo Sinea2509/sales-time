@@ -341,10 +341,10 @@ export function MeetingCreateForm({
             data-feedback-id="meeting-create-submit"
           >
             {pending
-              ? "Enregistrement…"
+              ? "Enregistrement et analyse…"
               : isEdit
                 ? "Enregistrer les modifications"
-                : "Enregistrer et lancer l'analyse"}
+                : "Enregistrer le rendez-vous"}
           </Button>
         </DialogFooter>
       ) : (
@@ -355,10 +355,10 @@ export function MeetingCreateForm({
           data-feedback-id="meeting-create-submit"
         >
           {pending
-            ? "Enregistrement…"
+            ? "Enregistrement et analyse…"
             : isEdit
               ? "Enregistrer les modifications"
-              : "Enregistrer et lancer l'analyse"}
+              : "Enregistrer le rendez-vous"}
         </Button>
       )}
     </form>

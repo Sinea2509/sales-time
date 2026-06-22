@@ -2,7 +2,7 @@
 
 import { useRouter } from "@/i18n/navigation";
 import { useTransition } from "react";
-import { Eye, MoreHorizontal, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { deleteMeetingAction } from "@/app/[locale]/company/rendez-vous/actions";
 import {
   MeetingEditDialogHost,
@@ -68,14 +68,6 @@ export function RendezVousMeetingRowActions({
           <DropdownMenuItem onClick={() => void edit.openEditDialog()}>
             <Pencil className="size-4" />
             Modifier
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() =>
-              router.push(`/company/rendez-vous/${meetingId}#analyse`)
-            }
-          >
-            <Sparkles className="size-4" />
-            Analyser
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

@@ -7,6 +7,7 @@ import {
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
+import { meetingDetailSynthesisSchema } from "@/src/core/domain/meeting-detail-synthesis-zod";
 import { teamCoachingRecommendationsSchema } from "@/src/core/domain/team-coaching-recommendations-zod";
 import type {
   AnalysisPort,
@@ -275,6 +276,51 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       progressBullets: object.progressBullets.map((s) => s.trim()),
       improvementBullets: object.improvementBullets.map((s) => s.trim()),
     };
+  }
+
+  async summarizeMeetingDetail(input: {
+    systemMarkdown: string;
+    model: string;
+    prospectName: string;
+    prospectCompany: string | null;
+    meetingAt: string;
+    outcome: string;
+    meetingType: string | null;
+    pipelineStage: string | null;
+    transcriptExcerpt: string;
+    discResult: unknown;
+    soncasResult: unknown;
+    kissResult: unknown;
+  }) {
+    const system = withDataScopeSystemPrompt(input.systemMarkdown);
+    const userContent = [
+      "Contexte rendez-vous (JSON) :",
+      JSON.stringify(
+        {
+          prospect: input.prospectName,
+          entreprise: input.prospectCompany,
+          dateRdv: input.meetingAt,
+          resultat: input.outcome,
+          typeRdv: input.meetingType,
+          etape: input.pipelineStage,
+          extraitTranscript: input.transcriptExcerpt,
+          discResult: input.discResult,
+          soncasResult: input.soncasResult,
+          kissResult: input.kissResult,
+        },
+        null,
+        2,
+      ),
+    ].join("\n");
+
+    const { object } = await generateObject({
+      model: input.model,
+      system,
+      schema: meetingDetailSynthesisSchema,
+      prompt: userContent,
+      maxOutputTokens: 700,
+    });
+    return object;
   }
 
   async prepareMeetingBriefing(input: {

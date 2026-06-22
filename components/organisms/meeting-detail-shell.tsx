@@ -1,19 +1,19 @@
-import { DiscResultView } from "@/components/molecules/disc-result-view";
 import { KissResultView } from "@/components/molecules/kiss-result-view";
-import { SoncasResultView } from "@/components/molecules/soncas-result-view";
+import { MeetingAnalysisStatusBanner } from "@/components/molecules/meeting-analysis-status-banner";
 import { ContentCard } from "@/components/molecules/content-card";
 import { InfoCard } from "@/components/molecules/info-card";
 import { NavLinkButton } from "@/components/molecules/nav-link-button";
-import { MeetingAnalysisButtons } from "@/components/organisms/meeting-analysis-buttons";
+import { MeetingDetailHeader } from "@/components/organisms/meeting-detail-header";
 import { MeetingEditButton } from "@/components/organisms/meeting-edit-trigger";
-import { MeetingFollowUpEmailBlock } from "@/components/organisms/meeting-follow-up-email";
-import { MeetingOneClickAnalyze } from "@/components/organisms/meeting-one-click-analyze";
+import { MeetingInterlocutorSection } from "@/components/organisms/meeting-interlocutor-section";
+import { MeetingSynthesisSection } from "@/components/organisms/meeting-synthesis-section";
 import { MeetingTranscriptPreview } from "@/components/molecules/meeting-transcript-preview";
 import { Badge } from "@/components/ui/badge";
-import { meetingStatusBadgeClass,
+import {
+  meetingStatusBadgeClass,
   meetingStatusLabel,
 } from "@/lib/meeting-status-label";
-import { pageTitleClass } from "@/lib/page-typography";
+import { sectionHeadingClass } from "@/lib/page-typography";
 import type { MeetingStatus } from "@/src/core/domain/meeting-status";
 import type {
   DiscAnalysisResult,
@@ -21,15 +21,11 @@ import type {
 } from "@/src/core/domain/analysis-result-zod";
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 
-type MeetingAnalysisSummary = {
-  kind: string;
-  model: string;
-};
-
 export type MeetingDetailShellProps = {
   meeting: {
     id: string;
     prospectName: string;
+    prospectCompany: string | null;
     status: MeetingStatus;
     feeling: number | null;
     meetingAt: Date;
@@ -42,7 +38,12 @@ export type MeetingDetailShellProps = {
     followUpEmailDraft: string | null;
     errorMessage: string | null;
   };
-  analyses: MeetingAnalysisSummary[];
+  tamMinutesPerRdv: number;
+  salesScore: number | null;
+  salesScoreDelta: number | null;
+  meetingSynthesis: string;
+  synthesisFromAi: boolean;
+  interlocutorProfile: string;
   soncasResult: SoncasAnalysisResult | null;
   discResult: DiscAnalysisResult | null;
   kissResult: KissAnalysisResult | null;
@@ -53,7 +54,12 @@ export type MeetingDetailShellProps = {
 
 export function MeetingDetailShell({
   meeting,
-  analyses,
+  tamMinutesPerRdv,
+  salesScore,
+  salesScoreDelta,
+  meetingSynthesis,
+  synthesisFromAi,
+  interlocutorProfile,
   soncasResult,
   discResult,
   kissResult,
@@ -61,51 +67,49 @@ export function MeetingDetailShell({
   canEdit = false,
   processingLooksStuck = false,
 }: MeetingDetailShellProps) {
-  const soncas = analyses.find((a) => a.kind === "SONCAS");
-  const disc = analyses.find((a) => a.kind === "DISC");
-  const kiss = analyses.find((a) => a.kind === "KISS");
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            Fiche RDV
-          </p>
-          <h1 className={pageTitleClass}>{meeting.prospectName}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Badge className={meetingStatusBadgeClass(meeting.status)}>
-              {meetingStatusLabel(meeting.status)}
-            </Badge>
-            {meeting.feeling != null ? (
-              <Badge variant="outline">Ressenti {meeting.feeling}/5</Badge>
-            ) : null}
-          </div>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {new Date(meeting.meetingAt).toLocaleString()} · {meeting.outcome}
-            {meeting.meetingType ? ` · ${meeting.meetingType}` : ""}
-            {meeting.pipelineStage ? ` · ${meeting.pipelineStage}` : ""}
-            {meeting.potentialAmount != null
-              ? ` · ${new Intl.NumberFormat("fr-FR", {
-                  style: "currency",
-                  currency: "EUR",
-                  maximumFractionDigits: 0,
-                }).format(meeting.potentialAmount)}`
-              : ""}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {canEdit ? (
-            <MeetingEditButton
-              meetingId={meeting.id}
-              prospectName={meeting.prospectName}
-            />
-          ) : null}
-          <NavLinkButton href="/company/rendez-vous" variant="ghost" size="sm">
-            Retour
-          </NavLinkButton>
-        </div>
+        <NavLinkButton href="/company/rendez-vous" variant="ghost" size="sm">
+          Retour
+        </NavLinkButton>
+        {canEdit ? (
+          <MeetingEditButton
+            meetingId={meeting.id}
+            prospectName={meeting.prospectName}
+          />
+        ) : null}
       </div>
+
+      <MeetingDetailHeader
+        meetingId={meeting.id}
+        prospectName={meeting.prospectName}
+        prospectCompany={meeting.prospectCompany}
+        meetingAt={meeting.meetingAt}
+        meetingType={meeting.meetingType}
+        pipelineStage={meeting.pipelineStage}
+        potentialAmount={meeting.potentialAmount}
+        tamMinutesPerRdv={tamMinutesPerRdv}
+        salesScore={salesScore}
+        salesScoreDelta={salesScoreDelta}
+        followUpEmailDraft={meeting.followUpEmailDraft}
+      />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge className={meetingStatusBadgeClass(meeting.status)}>
+          {meetingStatusLabel(meeting.status)}
+        </Badge>
+        {meeting.feeling != null ? (
+          <Badge variant="outline">Ressenti {meeting.feeling}/5</Badge>
+        ) : null}
+        <span className="text-muted-foreground text-sm">
+          {new Date(meeting.meetingAt).toLocaleString("fr-FR")} ·{" "}
+          {meeting.outcome}
+          {meeting.meetingType ? ` · ${meeting.meetingType}` : ""}
+        </span>
+      </div>
+
+      <MeetingAnalysisStatusBanner status={meeting.status} />
 
       {meeting.status === "FAILED" && meeting.errorMessage ? (
         <InfoCard
@@ -118,65 +122,37 @@ export function MeetingDetailShell({
       {processingLooksStuck ? (
         <InfoCard
           title="Analyse bloquée"
-          description="L'analyse semble bloquée depuis plus de 15 minutes. Utilisez le bouton ci-dessous pour relancer, ou vérifiez que CRON_SECRET et AI_GATEWAY_API_KEY sont configurés sur Vercel (voir docs/env-sync.md)."
+          description="L'analyse semble bloquée depuis plus de 15 minutes. Rechargez la page ou modifiez le rendez-vous pour relancer l'analyse automatique. Vérifiez aussi que AI_GATEWAY_API_KEY est configuré (voir docs/env-sync.md)."
         />
       ) : null}
 
-      <ContentCard
-        id="analyse"
-        title="Analyse IA"
-        description={
-          <>
-            Vercel AI Gateway — modèle configuré côté serveur. Nécessite{" "}
-            <code className="text-xs">AI_GATEWAY_API_KEY</code>.
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <MeetingOneClickAnalyze meetingId={meeting.id} />
-          <div className="flex flex-wrap gap-2">
-            {soncas ? (
-              <Badge variant="secondary">SONCAS (v{soncas.model})</Badge>
-            ) : (
-              <Badge variant="outline">SONCAS — non lancé</Badge>
-            )}
-            {disc ? (
-              <Badge variant="secondary">DISC (v{disc.model})</Badge>
-            ) : (
-              <Badge variant="outline">DISC — non lancé</Badge>
-            )}
-            {kiss ? (
-              <Badge variant="secondary">KISS (v{kiss.model})</Badge>
-            ) : (
-              <Badge variant="outline">KISS — non lancé</Badge>
-            )}
-          </div>
-          <MeetingAnalysisButtons meetingId={meeting.id} />
-        </div>
-      </ContentCard>
+      <MeetingSynthesisSection
+        meetingSynthesis={meetingSynthesis}
+        fromAi={synthesisFromAi}
+      />
 
-      {soncasResult ? <SoncasResultView result={soncasResult} /> : null}
-      {discResult ? <DiscResultView result={discResult} /> : null}
+      <MeetingInterlocutorSection
+        prospectName={meeting.prospectName}
+        prospectCompany={meeting.prospectCompany}
+        interlocutorProfile={interlocutorProfile}
+        discResult={discResult}
+        soncasResult={soncasResult}
+        analysisPending={meeting.status === "PROCESSING"}
+      />
+
       {kissResult ? (
         showKissCoaching ? (
-          <KissResultView result={kissResult} showCoachingScore />
+          <section className="space-y-3">
+            <h2 className={sectionHeadingClass}>Coaching KISS</h2>
+            <KissResultView result={kissResult} showCoachingScore />
+          </section>
         ) : (
           <InfoCard
             title="Coaching KISS"
-            description="Le détail KISS et le score de coaching sont visibles uniquement par le commercial assigné à ce rendez-vous."
+            description="Le détail KISS et le score de coaching sont visibles par le commercial assigné à ce rendez-vous et les managers de l'organisation."
           />
         )
       ) : null}
-
-      <ContentCard
-        title="Mail de suivi client"
-        description="Généré à partir du transcript et des analyses — à relire avant envoi."
-      >
-        <MeetingFollowUpEmailBlock
-          meetingId={meeting.id}
-          initialDraft={meeting.followUpEmailDraft}
-        />
-      </ContentCard>
 
       <ContentCard title="Transcript">
         <MeetingTranscriptPreview transcript={meeting.transcript} />

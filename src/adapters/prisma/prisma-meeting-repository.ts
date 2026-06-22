@@ -517,6 +517,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       where: { id: input.id, organizationId: input.organizationId },
       include: {
         analyses: { orderBy: { createdAt: "desc" } },
+        person: { select: { company: true } },
       },
     });
     if (!row) return null;
@@ -525,6 +526,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       sellerUserId: row.sellerUserId,
       personId: row.personId,
       prospectName: row.prospectName,
+      prospectCompany: row.person.company,
       meetingAt: row.meetingAt,
       outcome: row.outcome,
       meetingType: row.meetingType,

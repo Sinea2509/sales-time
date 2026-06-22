@@ -5,6 +5,7 @@ import type {
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod";
 import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
+import type { MeetingDetailSynthesisResult } from "@/src/core/domain/meeting-detail-synthesis-zod";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import type { SalesProfileScores } from "@/src/core/domain/sales-profile-from-meetings";
 import type { TeamCoachingRecommendations } from "@/src/core/domain/team-coaching-recommendations-zod";
@@ -135,4 +136,20 @@ export interface AnalysisPort {
     previousSalesProfile: SalesProfileScores | null;
     kissRollup: OrgKissRollupForSummary;
   }): Promise<TeamCoachingRecommendations>;
+
+  /** Synthèse narrative du RDV + phrase profil interlocuteur (fiche RDV). */
+  summarizeMeetingDetail(input: {
+    systemMarkdown: string;
+    model: string;
+    prospectName: string;
+    prospectCompany: string | null;
+    meetingAt: string;
+    outcome: string;
+    meetingType: string | null;
+    pipelineStage: string | null;
+    transcriptExcerpt: string;
+    discResult: unknown;
+    soncasResult: unknown;
+    kissResult: unknown;
+  }): Promise<MeetingDetailSynthesisResult>;
 }

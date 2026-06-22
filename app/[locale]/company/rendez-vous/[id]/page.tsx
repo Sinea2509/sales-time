@@ -7,10 +7,44 @@ import {
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
+import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
+import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
+import { summarizeMeetingDetail } from "@/src/core/application/summarize-meeting-detail";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { isMeetingAnalysisStuck } from "@/src/core/domain/meeting-analysis-stuck";
 
 export const dynamic = "force-dynamic";
+
+async function previousSalesScoreForMeeting(
+  deps: ReturnType<typeof getApplicationDeps>,
+  input: {
+    organizationId: string;
+    personId: string;
+    meetingId: string;
+    meetingAt: Date;
+  },
+): Promise<number | null> {
+  const personMeetings = await deps.meetings.listMeetingsForPersonInOrg({
+    organizationId: input.organizationId,
+    personId: input.personId,
+  });
+  const previousMeeting = personMeetings
+    .filter(
+      (m) =>
+        m.id !== input.meetingId && m.meetingAt.getTime() < input.meetingAt.getTime(),
+    )
+    .sort((a, b) => b.meetingAt.getTime() - a.meetingAt.getTime())[0];
+  if (!previousMeeting) return null;
+
+  const previousSoncas = await deps.meetings.findLatestAnalysisForMeeting({
+    meetingId: previousMeeting.id,
+    organizationId: input.organizationId,
+    kind: "SONCAS",
+  });
+  return previousSoncas
+    ? salesScoreFromSoncasResult(previousSoncas.result)
+    : null;
+}
 
 export default async function RendezVousDetailPage({
   params,
@@ -31,11 +65,15 @@ export default async function RendezVousDetailPage({
   const deps = getApplicationDeps();
 
   let meeting;
+  let settings;
   try {
-    meeting = await deps.meetings.findMeetingDetailWithAnalyses({
-      id,
-      organizationId,
-    });
+    [meeting, settings] = await Promise.all([
+      deps.meetings.findMeetingDetailWithAnalyses({
+        id,
+        organizationId,
+      }),
+      deps.organizationSettings.findByOrganizationId(organizationId),
+    ]);
   } catch (cause) {
     console.error("rendez-vous detail load failed", {
       meetingId: id,
@@ -56,6 +94,21 @@ export default async function RendezVousDetailPage({
   const discParsed = disc ? discResultSchema.safeParse(disc.result) : null;
   const kissParsed = kiss ? kissResultSchema.safeParse(kiss.result) : null;
 
+  const salesScore = soncas
+    ? salesScoreFromSoncasResult(soncas.result)
+    : null;
+  const previousSalesScore = await previousSalesScoreForMeeting(deps, {
+    organizationId,
+    personId: meeting.personId,
+    meetingId: meeting.id,
+    meetingAt: meeting.meetingAt,
+  });
+  const salesScoreDelta =
+    salesScore != null && previousSalesScore != null
+      ? salesScore - previousSalesScore
+      : null;
+  const tamMinutesPerRdv = tamMinutesSavedPerMeetingFromSettings(settings);
+
   const isSeller =
     actor.internalUserId != null &&
     meeting.sellerUserId === actor.internalUserId;
@@ -67,11 +120,22 @@ export default async function RendezVousDetailPage({
     updatedAt: meeting.updatedAt,
   });
 
+  const synthesis = await summarizeMeetingDetail(deps, {
+    meeting,
+    discResult: discParsed?.success ? discParsed.data : null,
+    soncasResult: soncasParsed?.success ? soncasParsed.data : null,
+    kissResult: kissParsed?.success ? kissParsed.data : null,
+  });
+
+  const canViewKissCoaching =
+    isSeller || actor.canManageOrganization;
+
   return (
     <MeetingDetailShell
       meeting={{
         id: meeting.id,
         prospectName: meeting.prospectName,
+        prospectCompany: meeting.prospectCompany,
         status: meeting.status,
         feeling: meeting.feeling,
         meetingAt: meeting.meetingAt,
@@ -84,14 +148,16 @@ export default async function RendezVousDetailPage({
         followUpEmailDraft: meeting.followUpEmailDraft,
         errorMessage: meeting.errorMessage,
       }}
-      analyses={meeting.analyses.map((a) => ({
-        kind: a.kind,
-        model: a.model,
-      }))}
+      tamMinutesPerRdv={tamMinutesPerRdv}
+      salesScore={salesScore}
+      salesScoreDelta={salesScoreDelta}
+      meetingSynthesis={synthesis.meetingSynthesis}
+      synthesisFromAi={synthesis.fromAi}
+      interlocutorProfile={synthesis.interlocutorProfile}
       soncasResult={soncasParsed?.success ? soncasParsed.data : null}
       discResult={discParsed?.success ? discParsed.data : null}
       kissResult={kissParsed?.success ? kissParsed.data : null}
-      showKissCoaching={isSeller}
+      showKissCoaching={canViewKissCoaching}
       canEdit={canEdit}
       processingLooksStuck={processingLooksStuck}
     />

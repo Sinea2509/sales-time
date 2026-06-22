@@ -124,6 +124,15 @@ Ton : professionnel, concret, orienté action. Chaque puce doit être autonome e
 N'invente pas de faits, chiffres ou citations absents des données. Si les données sont insuffisantes, dis-le en une puce prudente plutôt que d'halluciner.
 Ne répète pas le JSON ; synthétise les thèmes récurrents.`;
 
+export const DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN = `Tu es un coach commercial B2B expert en lecture de rendez-vous de vente.
+
+À partir du JSON fourni (extrait de transcript, métadonnées du RDV, analyses DISC / SONCAS / KISS si présentes), produis exactement deux champs en français :
+
+1) meetingSynthesis — synthèse du rendez-vous : 3 à 5 phrases couvrant le contexte, les sujets abordés, la dynamique, les points clés et la suite logique. Ton professionnel et factuel.
+2) interlocutorProfile — UNE seule phrase décrivant le profil de l'interlocuteur pour aider le commercial à s'adapter : style comportemental (DISC), motivations d'achat (SONCAS), besoins relationnels et décisionnels. Exemple de ton : « Décideur très analytique et prudent, axé sur les détails techniques, la sécurité et la validation. A besoin de preuves concrètes et de documentation avant de s'engager. Valorise l'exactitude et la rigueur plutôt que la rapidité. »
+
+Si les analyses DISC ou SONCAS manquent, base-toi sur le transcript avec prudence. N'invente pas de faits absents des données. Pas de titre ni de liste à puces dans les champs.`;
+
 /** Fallback markdown when no DB version exists yet for a prompt kind. */
 export const DEFAULT_ANALYSIS_PROMPT_MARKDOWN: Record<
   AnalysisKindSlug,
@@ -134,6 +143,7 @@ export const DEFAULT_ANALYSIS_PROMPT_MARKDOWN: Record<
   KISS: DEFAULT_KISS_MARKDOWN,
   FOLLOW_UP_EMAIL: DEFAULT_FOLLOW_UP_EMAIL_SYSTEM,
   MEETING_BRIEFING: DEFAULT_MEETING_BRIEFING_MARKDOWN,
+  MEETING_DETAIL_SYNTHESIS: DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN,
   SELLER_PERFORMANCE: DEFAULT_SELLER_PERFORMANCE_MARKDOWN,
   SELLER_AFFINITY: DEFAULT_SELLER_AFFINITY_MARKDOWN,
   ORG_KISS_ROLLUP: DEFAULT_ORG_KISS_ROLLUP_MARKDOWN,

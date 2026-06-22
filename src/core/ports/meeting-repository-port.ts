@@ -77,6 +77,7 @@ export type MeetingDetailWithAnalyses = {
   sellerUserId: string;
   personId: string;
   prospectName: string;
+  prospectCompany: string | null;
   meetingAt: Date;
   outcome: MeetingOutcome;
   meetingType: string | null;

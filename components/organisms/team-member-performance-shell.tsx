@@ -2,9 +2,14 @@ import { Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
+import { AnalyseRecommandationsSection } from "@/components/organisms/analyse-recommandations-section";
+import { AnalyseStatistiquesGlobalesSection } from "@/components/organisms/analyse-statistiques-globales-section";
+import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analyse-priority-opportunities-table";
 import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-quadrant-grid";
+import type { SalesProfileScores } from "@/components/organisms/sales-profile-radar";
 import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
 import type { OrgAdminKissTeamRollup } from "@/src/core/application/get-org-admin-dashboard";
+import type { QualificationPotentialMatrixPoint } from "@/src/core/domain/meeting-analyse-matrices";
 import {
   cardProseBodyClass,
   cardSubsectionTitleClass,
@@ -55,6 +60,13 @@ export type TeamMemberPerformanceShellProps = {
   soncasAffinityText: string | null;
   kissSellerStrengthsNarrative: string | null;
   kissSellerRollup: OrgAdminKissTeamRollup;
+  qualificationPotentialPoints: QualificationPotentialMatrixPoint[];
+  priorityOpportunities: AnalysePriorityOpportunityRow[];
+  salesProfile: SalesProfileScores | null;
+  previousSalesProfile: SalesProfileScores | null;
+  salesProfileRdvCount: number;
+  progressBullets: string[];
+  improvementBullets: string[];
 };
 
 export function TeamMemberPerformanceShell({
@@ -74,6 +86,13 @@ export function TeamMemberPerformanceShell({
   soncasAffinityText,
   kissSellerStrengthsNarrative,
   kissSellerRollup,
+  qualificationPotentialPoints,
+  priorityOpportunities,
+  salesProfile,
+  previousSalesProfile,
+  salesProfileRdvCount,
+  progressBullets,
+  improvementBullets,
 }: TeamMemberPerformanceShellProps) {
   return (
     <div className="space-y-8">
@@ -237,6 +256,28 @@ export function TeamMemberPerformanceShell({
         <OrgAdminKissQuadrantGrid
           rollup={kissSellerRollup}
           presentation="managerMemberProfile"
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h2 className={sectionHeadingClass}>Statistiques globales</h2>
+        <AnalyseStatistiquesGlobalesSection
+          qualificationPotentialPoints={qualificationPotentialPoints}
+          priorityOpportunities={priorityOpportunities}
+          rdvCount={salesProfileRdvCount}
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h2 className={sectionHeadingClass}>Recommandations</h2>
+        <AnalyseRecommandationsSection
+          salesProfile={salesProfile}
+          previousSalesProfile={previousSalesProfile}
+          rdvCount={salesProfileRdvCount}
+          progressBullets={progressBullets}
+          improvementBullets={improvementBullets}
+          isOrgAdmin
+          sellerScoped
         />
       </section>
     </div>

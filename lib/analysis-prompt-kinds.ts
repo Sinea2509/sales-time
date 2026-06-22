@@ -16,6 +16,7 @@ export const SYNTHESIS_PROMPT_KINDS = [
 export const OTHER_PROMPT_KINDS = [
   "FOLLOW_UP_EMAIL",
   "MEETING_BRIEFING",
+  "MEETING_DETAIL_SYNTHESIS",
 ] as const satisfies readonly AnalysisKindSlug[];
 
 export const ALL_ANALYSIS_PROMPT_KINDS = [
@@ -72,6 +73,11 @@ export const ANALYSIS_PROMPT_TAB_META: Record<
   MEETING_BRIEFING: {
     label: "Briefing RDV",
     description: "Préparation du prochain rendez-vous (Préparer un RDV).",
+  },
+  MEETING_DETAIL_SYNTHESIS: {
+    label: "Synthèse fiche RDV",
+    description:
+      "Synthèse narrative du rendez-vous et phrase profil interlocuteur (page détail RDV).",
   },
 };
 

@@ -1,26 +1,18 @@
 import { describe, expect, it, beforeEach } from "@jest/globals";
 
-jest.mock("./run-meeting-analysis", () => ({
-  runMeetingAnalysis: jest.fn(),
+jest.mock("./run-all-meeting-analyses-for-org", () => ({
+  runAllMeetingAnalysesForOrg: jest.fn(),
 }));
 
 jest.mock("@/lib/email/mailer", () => ({
   sendTransactionalEmail: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock("@/lib/kiss-org-appendix-for-analysis", () => ({
-  kissMarkdownAppendixForAudience: jest.fn().mockReturnValue("kiss appendix"),
-}));
-
-import { runMeetingAnalysis } from "./run-meeting-analysis";
-import { sendTransactionalEmail } from "@/lib/email/mailer";
+import { runAllMeetingAnalysesForOrg } from "./run-all-meeting-analyses-for-org";
 import { processAnalysisJobs } from "./process-analysis-jobs";
 
-const mockedRun = runMeetingAnalysis as jest.MockedFunction<
-  typeof runMeetingAnalysis
->;
-const mockedEmail = sendTransactionalEmail as jest.MockedFunction<
-  typeof sendTransactionalEmail
+const mockedRunAll = runAllMeetingAnalysesForOrg as jest.MockedFunction<
+  typeof runAllMeetingAnalysesForOrg
 >;
 
 function makeDeps(over: {
@@ -92,8 +84,7 @@ function makeDeps(over: {
 
 describe("processAnalysisJobs", () => {
   beforeEach(() => {
-    mockedRun.mockReset();
-    mockedEmail.mockClear();
+    mockedRunAll.mockReset();
   });
 
   it("returns zero processed when queue is empty", async () => {
@@ -127,8 +118,8 @@ describe("processAnalysisJobs", () => {
     });
   });
 
-  it("completes job and notifies seller on full analysis success", async () => {
-    mockedRun.mockResolvedValue({ ok: true, analysisId: "a1" });
+  it("completes job when full analysis succeeds", async () => {
+    mockedRunAll.mockResolvedValue({ ok: true });
     const deps = makeDeps();
 
     const result = await processAnalysisJobs(deps as never, {
@@ -136,30 +127,24 @@ describe("processAnalysisJobs", () => {
     });
 
     expect(result.succeeded).toBe(1);
-    expect(mockedRun).toHaveBeenCalledTimes(3);
-    expect(deps.meetings.updateMeetingStatus).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "READY" }),
-    );
-    expect(deps.analysisJobs.markJobDone).toHaveBeenCalledWith("job_1");
-    expect(deps.notifications.create).toHaveBeenCalledWith(
+    expect(mockedRunAll).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({
-        userId: "seller_1",
-        title: "Analyse terminée",
+        organizationId: "org_1",
+        meetingId: "meet_1",
+        jobId: "job_1",
+        notifyOnComplete: true,
       }),
     );
-    expect(mockedEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ to: "seller@example.com" }),
-    );
+    expect(deps.analysisJobs.markJobDone).toHaveBeenCalledWith("job_1");
   });
 
-  it("marks meeting FAILED when analysis step fails", async () => {
-    mockedRun
-      .mockResolvedValueOnce({ ok: true, analysisId: "a1" })
-      .mockResolvedValueOnce({
-        ok: false,
-        error: "PROMPT_NOT_CONFIGURED",
-        message: "No prompt",
-      });
+  it("marks job failed when analysis step fails", async () => {
+    mockedRunAll.mockResolvedValue({
+      ok: false,
+      error: "ANALYSIS_FAILED",
+      message: "No prompt",
+    });
 
     const deps = makeDeps();
 
@@ -168,14 +153,11 @@ describe("processAnalysisJobs", () => {
     });
 
     expect(result.failed).toBe(1);
-    expect(deps.meetings.updateMeetingStatus).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: "FAILED",
-        errorMessage: "No prompt",
-      }),
-    );
     expect(deps.analysisJobs.markJobFailed).toHaveBeenCalledWith(
-      expect.objectContaining({ requeue: true }),
+      expect.objectContaining({
+        error: "No prompt",
+        requeue: true,
+      }),
     );
   });
 });
