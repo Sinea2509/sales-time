@@ -32,7 +32,7 @@ Super admin is an **app database** role (`SystemRole.SUPER_ADMIN`). Passwords ar
 2. For Prisma CLI (`migrate deploy`, seed, studio), the app needs a **direct** connection (host **without** `-pooler`): set **`DIRECT_URL`**, or rely on the Vercel Neon integration’s **`DATABASE_URL_UNPOOLED`** (see [`prisma.config.ts`](prisma.config.ts) resolution order). Keep **`DATABASE_URL`** **pooled** for runtime (`lib/prisma.ts`). Without a direct URL, `npm run build` can fail with **P1002** (advisory lock) or the explicit pooler guard error—[`prisma migrate deploy`](https://pris.ly/d/migrate-advisory-locking) must not use the pooler. See [Neon + Prisma](https://neon.com/docs/guides/prisma) and [Vercel Neon env vars](https://neon.com/docs/guides/vercel-managed-integration#environment-variables-set-by-the-integration).
 3. Locally, copy the same variables into `.env` (or run `vercel env pull` if you use the Vercel CLI). [`.env.example`](.env.example) shows the split.
 4. In production, set **`SUPER_ADMIN_ORG_COOKIE_SECRET`** (long random string) so the super-admin organization elevation cookie can be signed.
-5. Apply migrations: `npm run db:migrate` (deploy) or `npm run db:migrate:dev` (local).
+5. Migrations run automatically on Vercel (`npm run build` → `prisma migrate deploy`). For local/other hosts, run `npm run db:migrate` (deploy) or `npm run db:migrate:dev` (local). Requires **`DIRECT_URL`** (or `DATABASE_URL_UNPOOLED`) — see step 2 above.
 
 ### Grant the first super admin
 
