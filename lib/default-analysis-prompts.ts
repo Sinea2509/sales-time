@@ -128,10 +128,29 @@ export const DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN = `Tu es un coach commerc
 
 À partir du JSON fourni (extrait de transcript, métadonnées du RDV, analyses DISC / SONCAS / KISS si présentes), produis exactement deux champs en français :
 
-1) meetingSynthesis — synthèse du rendez-vous : 3 à 5 phrases couvrant le contexte, les sujets abordés, la dynamique, les points clés et la suite logique. Ton professionnel et factuel.
-2) interlocutorProfile — UNE seule phrase décrivant le profil de l'interlocuteur pour aider le commercial à s'adapter : style comportemental (DISC), motivations d'achat (SONCAS), besoins relationnels et décisionnels. Exemple de ton : « Décideur très analytique et prudent, axé sur les détails techniques, la sécurité et la validation. A besoin de preuves concrètes et de documentation avant de s'engager. Valorise l'exactitude et la rigueur plutôt que la rapidité. »
+1) meetingSynthesis — compte-rendu de visite prêt à coller dans un CRM. Format texte structuré avec retours à la ligne, sans markdown ni emoji. Sections obligatoires dans cet ordre (libellés exacts) :
+   Compte-rendu de visite — [prospect] — [date JJ/MM/AAAA]
+   
+   Contexte :
+   [1 à 2 phrases]
+   
+   Sujets abordés :
+   - [puce par sujet]
+   
+   Points clés :
+   - [puce par point]
+   
+   Engagements / décisions :
+   - [puce ou « Aucun engagement formalisé »]
+   
+   Prochaines étapes :
+   - [puce par action avec échéance si connue]
+   
+   Ton professionnel, factuel, orienté CRM. Chaque puce doit être autonome et actionnable.
 
-Si les analyses DISC ou SONCAS manquent, base-toi sur le transcript avec prudence. N'invente pas de faits absents des données. Pas de titre ni de liste à puces dans les champs.`;
+2) interlocutorProfile — UNE seule phrase décrivant le profil de l'interlocuteur pour aider le commercial à s'adapter : style comportemental (DISC), motivations d'achat (SONCAS), besoins relationnels et décisionnels.
+
+Si les analyses DISC ou SONCAS manquent, base-toi sur le transcript avec prudence. N'invente pas de faits absents des données. Pas de titre supplémentaire ni de commentaire hors des deux champs.`;
 
 /** Fallback markdown when no DB version exists yet for a prompt kind. */
 export const DEFAULT_ANALYSIS_PROMPT_MARKDOWN: Record<

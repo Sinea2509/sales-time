@@ -8,6 +8,7 @@ import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-templ
 import type { GlobalKissCoachingPromptsRepositoryPort } from "@/src/core/ports/global-kiss-coaching-prompts-repository-port";
 
 const STALE_MINUTES = 10;
+const RECONCILE_MINUTES = 2;
 const JOBS_PER_RUN = 3;
 
 export type ProcessAnalysisJobsResult = {
@@ -15,6 +16,7 @@ export type ProcessAnalysisJobsResult = {
   succeeded: number;
   failed: number;
   releasedStale: number;
+  reconciledMeetings: number;
 };
 
 export async function processAnalysisJobs(
@@ -34,6 +36,12 @@ export async function processAnalysisJobs(
   const releasedStale = await deps.analysisJobs.releaseStaleProcessingJobs(
     staleBefore,
   );
+  const reconcileBefore = new Date(Date.now() - RECONCILE_MINUTES * 60_000);
+  const reconciledMeetings =
+    await deps.analysisJobs.reconcileStuckProcessingMeetings({
+      staleBefore: reconcileBefore,
+      limit: JOBS_PER_RUN,
+    });
 
   let processed = 0;
   let succeeded = 0;
@@ -89,5 +97,5 @@ export async function processAnalysisJobs(
     }
   }
 
-  return { processed, succeeded, failed, releasedStale };
+  return { processed, succeeded, failed, releasedStale, reconciledMeetings };
 }

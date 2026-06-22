@@ -409,6 +409,7 @@ model Meeting {
   pipelineStage  String?
   potentialAmount Float?
   followUpEmailDraft String?   @db.Text
+  visitReportDraft   String?   @db.Text
   transcript     String         @db.Text
   notes          String?        @db.Text
   outcome        MeetingOutcome

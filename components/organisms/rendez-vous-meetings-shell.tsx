@@ -128,8 +128,10 @@ export function RendezVousMeetingsShell({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return meetings.filter((m) => {
-      if (q && !m.prospectName.toLowerCase().includes(q)) return false;
-      return true;
+      if (!q) return true;
+      if (m.prospectName.toLowerCase().includes(q)) return true;
+      if (m.prospectCompany?.toLowerCase().includes(q)) return true;
+      return false;
     });
   }, [meetings, query]);
 

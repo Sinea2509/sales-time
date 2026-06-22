@@ -1,5 +1,6 @@
 import { BadgePercent, Clock, LayoutList, Star } from "lucide-react";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
+import { KPI_TAM_HINT, KPI_TUC_HINT } from "@/lib/kpi-hints";
 import { KpiTile } from "@/components/molecules/kpi-tile";
 import {
   KpiVsPreviousBadge,
@@ -18,19 +19,22 @@ function formatNoteOn5(value: number | null): string {
 export function AnalyseKpiCards({
   home,
   isOrgAdmin,
+  sellerScoped = false,
 }: {
   home: OrgDashboardHome;
   isOrgAdmin: boolean;
+  /** Manager view of one commercial — seller-specific copy instead of team. */
+  sellerScoped?: boolean;
 }) {
+  const tucLabel =
+    sellerScoped || !isOrgAdmin ? "TUC optimisé" : "TUC optimisé de l'équipe";
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <KpiTile
         icon={BadgePercent}
-        label={
-          isOrgAdmin
-            ? "TUC optimisé de l'équipe"
-            : "TUC optimisé"
-        }
+        label={tucLabel}
+        labelTooltip={KPI_TUC_HINT}
         trend={
           <KpiVsPreviousBadge
             delta={home.tucTrendPoints}
@@ -45,6 +49,7 @@ export function AnalyseKpiCards({
       <KpiTile
         icon={Clock}
         label="TAM cumulé"
+        labelTooltip={KPI_TAM_HINT}
         trend={
           <KpiVsPreviousBadge
             delta={home.tamCumuleTrendPercent}

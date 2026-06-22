@@ -5,6 +5,7 @@ import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-
 import type { OrganizationQuotaRepositoryPort } from "@/src/core/ports/organization-quota-repository-port";
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import type { MeetingSourceType } from "@/src/core/domain/meeting-status";
+import { resolveMeetingPersonLink } from "@/src/core/application/resolve-meeting-person-link";
 
 export type CreateMeetingResult =
   | { ok: true; meetingId: string }
@@ -60,14 +61,30 @@ export async function createMeetingForOrg(
     }
   }
 
-  const personId =
+  const explicitPersonId =
     input.personId != null && String(input.personId).trim() !== ""
       ? String(input.personId).trim()
       : null;
 
-  if (personId) {
+  if (explicitPersonId) {
     const person = await deps.contacts.findById({
-      id: personId,
+      id: explicitPersonId,
+      organizationId: input.organizationId,
+    });
+    if (!person) {
+      return { ok: false, error: "INVALID_PERSON" };
+    }
+  }
+
+  const resolvedPerson = await resolveMeetingPersonLink(deps.contacts, {
+    organizationId: input.organizationId,
+    personId: explicitPersonId,
+    prospectName: input.prospectName,
+  });
+
+  if (resolvedPerson.personId && resolvedPerson.personId !== explicitPersonId) {
+    const person = await deps.contacts.findById({
+      id: resolvedPerson.personId,
       organizationId: input.organizationId,
     });
     if (!person) {
@@ -78,8 +95,8 @@ export async function createMeetingForOrg(
   const meeting = await deps.meetings.createMeeting({
     organizationId: input.organizationId,
     sellerUserId: input.sellerInternalUserId,
-    personId,
-    prospectName: input.prospectName.trim(),
+    personId: resolvedPerson.personId,
+    prospectName: resolvedPerson.prospectName,
     meetingAt: input.meetingAt,
     durationMin: input.durationMin,
     meetingType: input.meetingType,
@@ -98,6 +115,10 @@ export async function createMeetingForOrg(
     await deps.organizationQuota.decrementTrialAnalysesLeft(
       input.organizationId,
     );
+    await deps.analysisJobs.enqueueMeetingAnalysis({
+      organizationId: input.organizationId,
+      meetingId: meeting.id,
+    });
   }
 
   await deps.audit?.logPlatformAction({

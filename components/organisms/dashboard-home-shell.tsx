@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { ProspectIdentityCell } from "@/components/molecules/prospect-identity-cell";
 import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
-import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
@@ -34,15 +33,7 @@ function formatPotentialEuro(amount: number | null): string {
   return euroFormat.format(amount);
 }
 
-export function DashboardHomeShell({
-  home,
-  meetingTypeOptions,
-  pipelineStageOptions,
-}: {
-  home: OrgDashboardHome;
-  meetingTypeOptions: string[];
-  pipelineStageOptions: string[];
-}) {
+export function DashboardHomeShell({ home }: { home: OrgDashboardHome }) {
   return (
     <div className="space-y-8" data-feedback-id="dashboard-home">
       <div className="space-y-3">
@@ -69,10 +60,6 @@ export function DashboardHomeShell({
         >
           Préparer un RDV
         </BrandCtaLink>
-        <MeetingCreateDialog
-          meetingTypeOptions={meetingTypeOptions}
-          pipelineStageOptions={pipelineStageOptions}
-        />
       </div>
 
       <section className="space-y-3">

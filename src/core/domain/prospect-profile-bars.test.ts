@@ -1,5 +1,10 @@
 import { discResultSchema, soncasResultSchema } from "./analysis-result-zod";
-import { discBarsFromResult, soncasBarsFromResult } from "./prospect-profile-bars";
+import {
+  discBarItemsForUi,
+  discBarsFromResult,
+  soncasBarItemsForUi,
+  soncasBarsFromResult,
+} from "./prospect-profile-bars";
 
 const disc = discResultSchema.parse({
   scores: { D: 20, I: 30, S: 40, C: 90 },
@@ -32,5 +37,19 @@ describe("prospect-profile-bars", () => {
     const bars = soncasBarsFromResult(soncas);
     expect(bars[0]?.key).toBe("securite");
     expect(bars[0]?.pct).toBe(80);
+  });
+});
+
+describe("prospect-profile-bars UI helpers", () => {
+  it("adds bar and pill classes for DISC", () => {
+    const items = discBarItemsForUi(disc);
+    expect(items[0]?.barClass).toBeTruthy();
+    expect(items[0]?.pillClass).toBeTruthy();
+  });
+
+  it("adds bar and pill classes for SONCAS", () => {
+    const items = soncasBarItemsForUi(soncas);
+    expect(items[0]?.barClass).toBeTruthy();
+    expect(items[0]?.pillClass).toBeTruthy();
   });
 });

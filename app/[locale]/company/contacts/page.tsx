@@ -4,6 +4,7 @@ import { ContactsListTable } from "@/components/organisms/contacts-list-table";
 import { PageHeader } from "@/components/molecules/page-header";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
+import { listContactsForOrg } from "@/src/core/application/list-contacts-for-org";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +21,15 @@ export default async function ContactsPage({ searchParams }: ContactsPageProps) 
   const { create } = await searchParams;
 
   const deps = getApplicationDeps();
-  const rows = await deps.contacts.listForOrg({
-    organizationId: actor.activeOrganizationId,
-    search: undefined,
-    limit: 200,
-    offset: 0,
-  });
+  const rows = await listContactsForOrg(
+    { contacts: deps.contacts },
+    {
+      organizationId: actor.activeOrganizationId,
+      search: undefined,
+      limit: 200,
+      offset: 0,
+    },
+  );
 
   return (
     <div className="space-y-6">

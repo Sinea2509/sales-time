@@ -216,7 +216,7 @@ export default async function ManagerCommercialViewPage({
       nbRdvs={home.nbRdvs}
       decouverte={decouverte}
       proposition={proposition}
-      tamCumuleMinutes={home.tamCumuleMinutes}
+      tamMinutesAvg={home.avgDurationMin}
       performanceForces={performanceProfile.performanceForces}
       performanceAxes={performanceProfile.performanceAxes}
       performanceStop={performanceProfile.performanceStop}
@@ -243,6 +243,7 @@ export default async function ManagerCommercialViewPage({
       salesProfileRdvCount={teamSalesProfile.rdvCount}
       progressBullets={progressBullets}
       improvementBullets={improvementBullets}
+      home={home}
     />
   );
 }

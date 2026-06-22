@@ -28,6 +28,7 @@ function makeDeps(over: Partial<{
     },
     contacts: {
       findById: jest.fn().mockResolvedValue(over.person ?? null),
+      findUniqueByCompanyName: jest.fn().mockResolvedValue(null),
     },
     analysisJobs: {
       enqueueMeetingAnalysis: jest.fn().mockResolvedValue(undefined),
@@ -102,7 +103,37 @@ describe("createMeetingForOrg", () => {
     expect(deps.organizationQuota.decrementTrialAnalysesLeft).toHaveBeenCalledWith(
       "org_1",
     );
-    expect(deps.analysisJobs.enqueueMeetingAnalysis).not.toHaveBeenCalled();
+    expect(deps.analysisJobs.enqueueMeetingAnalysis).toHaveBeenCalledWith({
+      organizationId: "org_1",
+      meetingId: "meet_99",
+    });
+  });
+
+  it("links meeting to contact when prospect name matches a unique company", async () => {
+    const deps = makeDeps({ meetingId: "meet_co" });
+    deps.contacts.findUniqueByCompanyName = jest.fn().mockResolvedValue({
+      id: "person_margaux",
+      displayName: "Margaux JULIEN",
+      company: "Doha",
+    });
+    deps.contacts.findById = jest.fn().mockResolvedValue({
+      id: "person_margaux",
+      displayName: "Margaux JULIEN",
+      company: "Doha",
+    });
+
+    const result = await createMeetingForOrg(deps as never, {
+      ...baseInput,
+      prospectName: "Doha",
+    });
+
+    expect(result).toEqual({ ok: true, meetingId: "meet_co" });
+    expect(deps.meetings.createMeeting).toHaveBeenCalledWith(
+      expect.objectContaining({
+        personId: "person_margaux",
+        prospectName: "Margaux JULIEN",
+      }),
+    );
   });
 
   it("skips quota and queue when enqueueAnalysis is false", async () => {

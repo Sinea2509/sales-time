@@ -116,7 +116,6 @@ export default async function RendezVousDetailPage({
 
   const processingLooksStuck = isMeetingAnalysisStuck({
     status: meeting.status,
-    analysisCount: meeting.analyses.length,
     updatedAt: meeting.updatedAt,
   });
 

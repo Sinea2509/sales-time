@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnalysePagePeriodFallback } from "@/components/molecules/analyse-page-period-fallback";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
+import { AnalyseKpiCards } from "@/components/organisms/analyse-kpi-cards";
 import { AnalyseRecommandationsSection } from "@/components/organisms/analyse-recommandations-section";
 import { AnalyseStatistiquesGlobalesSection } from "@/components/organisms/analyse-statistiques-globales-section";
 import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analyse-priority-opportunities-table";
@@ -9,7 +11,9 @@ import type { SalesProfileScores } from "@/components/organisms/sales-profile-ra
 import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
 import { TeamMemberPerformanceProfileCard } from "@/components/organisms/team-member-performance-profile-card";
 import type { OrgAdminKissTeamRollup } from "@/src/core/application/get-org-admin-dashboard";
+import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { QualificationPotentialMatrixPoint } from "@/src/core/domain/meeting-analyse-matrices";
+import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import {
   cardProseBodyClass,
   cardTitleClass,
@@ -43,7 +47,7 @@ function statColumn({
 }
 export type TeamMemberPerformanceShellProps = {
   sellerUserId: string;
-  statsWindowDays: number;
+  statsWindowDays: StatsWindowDays;
   performanceFingerprint: string;
   nameLine: string;
   initials: string;
@@ -51,8 +55,8 @@ export type TeamMemberPerformanceShellProps = {
   nbRdvs: number;
   decouverte: number;
   proposition: number;
-  /** TAM cumulé — somme des durées de conversation utile sur la fenêtre. */
-  tamCumuleMinutes: number;
+  /** TAM — temps d'appel moyen (min) sur les RDV connectés de la fenêtre. */
+  tamMinutesAvg: number | null;
   performanceForces: string | null;
   performanceAxes: string | null;
   performanceStop: string | null;
@@ -69,6 +73,7 @@ export type TeamMemberPerformanceShellProps = {
   salesProfileRdvCount: number;
   progressBullets: string[];
   improvementBullets: string[];
+  home: OrgDashboardHome;
 };
 
 export function TeamMemberPerformanceShell({
@@ -81,7 +86,7 @@ export function TeamMemberPerformanceShell({
   nbRdvs,
   decouverte,
   proposition,
-  tamCumuleMinutes,
+  tamMinutesAvg,
   performanceForces,
   performanceAxes,
   performanceStop,
@@ -98,6 +103,7 @@ export function TeamMemberPerformanceShell({
   salesProfileRdvCount,
   progressBullets,
   improvementBullets,
+  home,
 }: TeamMemberPerformanceShellProps) {
   return (
     <div className="space-y-8">
@@ -141,12 +147,12 @@ export function TeamMemberPerformanceShell({
           })}
           {statColumn({
             value:
-              tamCumuleMinutes > 0
-                ? formatDurationHoursMinutes(tamCumuleMinutes)
+              tamMinutesAvg != null
+                ? formatDurationHoursMinutes(tamMinutesAvg)
                 : "—",
-            label: "TAM cumulé",
+            label: "TAM",
             title:
-              "Temps de conversation utile cumulé sur les RDV connectés de ce commercial (durée renseignée)",
+              "Temps d'appel moyen sur les RDV connectés de ce commercial (durée renseignée)",
           })}
         </div>
       </div>
@@ -215,26 +221,36 @@ export function TeamMemberPerformanceShell({
         />
       </section>
 
-      <section className="space-y-4">
-        <h2 className={sectionHeadingClass}>Statistiques globales</h2>
-        <AnalyseStatistiquesGlobalesSection
-          qualificationPotentialPoints={qualificationPotentialPoints}
-          priorityOpportunities={priorityOpportunities}
-          rdvCount={salesProfileRdvCount}
-        />
-      </section>
+      <section className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className={sectionHeadingClass}>Performance</h2>
+          <AnalysePagePeriodFallback value={statsWindowDays} />
+        </div>
 
-      <section className="space-y-4">
-        <h2 className={sectionHeadingClass}>Recommandations</h2>
-        <AnalyseRecommandationsSection
-          salesProfile={salesProfile}
-          previousSalesProfile={previousSalesProfile}
-          rdvCount={salesProfileRdvCount}
-          progressBullets={progressBullets}
-          improvementBullets={improvementBullets}
-          isOrgAdmin
-          sellerScoped
-        />
+        <AnalyseKpiCards home={home} isOrgAdmin sellerScoped />
+
+        <div className="space-y-4">
+          <h3 className={sectionHeadingClass}>Statistiques globales</h3>
+          <AnalyseStatistiquesGlobalesSection
+            qualificationPotentialPoints={qualificationPotentialPoints}
+            priorityOpportunities={priorityOpportunities}
+            rdvCount={salesProfileRdvCount}
+            statsWindowDays={statsWindowDays}
+          />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className={sectionHeadingClass}>Recommandations</h3>
+          <AnalyseRecommandationsSection
+            salesProfile={salesProfile}
+            previousSalesProfile={previousSalesProfile}
+            rdvCount={salesProfileRdvCount}
+            progressBullets={progressBullets}
+            improvementBullets={improvementBullets}
+            isOrgAdmin
+            sellerScoped
+          />
+        </div>
       </section>
     </div>
   );

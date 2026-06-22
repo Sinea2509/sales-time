@@ -77,4 +77,29 @@ describe("buildFeedbackCursorMarkdown", () => {
     expect(md).toContain("- (aucune)");
     expect(md).toContain("(aucune)");
   });
+
+  it("includes aria-label, crop url and submit context when present", () => {
+    const md = buildFeedbackCursorMarkdown(
+      sampleFeedback({
+        extra: {
+          targetElement: {
+            cssSelector: "button",
+            xpath: "/button[1]",
+            tagName: "button",
+            textSnippet: "",
+            ariaLabel: "Save",
+            boundingRect: { x: 0, y: 0, width: 10, height: 10 },
+            scroll: { x: 0, y: 0 },
+            dataFeedbackId: null,
+          },
+          elementCropUrl: "https://blob.example/crop.png",
+          submitContext: { step: 2 },
+        },
+      }),
+    );
+    expect(md).toContain('Aria-label: "Save"');
+    expect(md).toContain("https://blob.example/crop.png");
+    expect(md).toContain('"step": 2');
+    expect(md).toContain("- Texte: (vide)");
+  });
 });

@@ -128,4 +128,31 @@ export class PrismaAnalysisJobRepository implements AnalysisJobRepositoryPort {
     });
     return result.count;
   }
+
+  async reconcileStuckProcessingMeetings(input: {
+    staleBefore: Date;
+    limit: number;
+  }): Promise<number> {
+    const stuckMeetings = await this.db.meeting.findMany({
+      where: {
+        status: "PROCESSING",
+        updatedAt: { lt: input.staleBefore },
+        analysisJobs: {
+          none: { status: { in: ["QUEUED", "PROCESSING"] } },
+        },
+      },
+      select: { id: true, organizationId: true },
+      take: input.limit,
+      orderBy: { updatedAt: "asc" },
+    });
+
+    for (const meeting of stuckMeetings) {
+      await this.enqueueMeetingAnalysis({
+        organizationId: meeting.organizationId,
+        meetingId: meeting.id,
+      });
+    }
+
+    return stuckMeetings.length;
+  }
 }

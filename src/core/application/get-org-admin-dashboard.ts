@@ -2,6 +2,7 @@ import {
   computeTeamDiscPie,
   computeTeamSoncasPie,
 } from "@/src/core/domain/org-profile-distribution-pie";
+import { averageTamMinutes } from "@/src/core/domain/dashboard-tam-tuc";
 import { soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { kissCoachingBulletsFromMeetings } from "@/src/core/domain/kiss-coaching-bullets-from-meetings";
@@ -107,8 +108,7 @@ function aggregateSellerWindowStats(
     nbRdvs: number;
     coachesCount: number;
     soncasDominants: string[];
-    connectedDurationSum: number;
-    connectedCount: number;
+    connectedDurations: number[];
   }
 > {
   const map = new Map<
@@ -117,8 +117,7 @@ function aggregateSellerWindowStats(
       nbRdvs: number;
       coachesCount: number;
       soncasDominants: string[];
-      connectedDurationSum: number;
-      connectedCount: number;
+      connectedDurations: number[];
     }
   >();
   for (const row of meetings) {
@@ -126,14 +125,12 @@ function aggregateSellerWindowStats(
       nbRdvs: 0,
       coachesCount: 0,
       soncasDominants: [] as string[],
-      connectedDurationSum: 0,
-      connectedCount: 0,
+      connectedDurations: [] as number[],
     };
     cur.nbRdvs += 1;
     if (row.hasKiss) cur.coachesCount += 1;
     if (row.durationMin != null && row.durationMin > 0) {
-      cur.connectedDurationSum += row.durationMin;
-      cur.connectedCount += 1;
+      cur.connectedDurations.push(row.durationMin);
     }
     const parsed = soncasResultSchema.safeParse(row.latestSoncasResult);
     if (parsed.success) cur.soncasDominants.push(parsed.data.dominant);
@@ -181,13 +178,9 @@ function buildMonEquipePage(input: {
       nbRdvs: 0,
       coachesCount: 0,
       soncasDominants: [] as string[],
-      connectedDurationSum: 0,
-      connectedCount: 0,
+      connectedDurations: [] as number[],
     };
-    const tamMinutesAvg =
-      s.connectedCount > 0
-        ? Math.round(s.connectedDurationSum / s.connectedCount)
-        : null;
+    const tamMinutesAvg = averageTamMinutes(s.connectedDurations);
     return {
       userId: mem.userId,
       membershipId: mem.membershipId,

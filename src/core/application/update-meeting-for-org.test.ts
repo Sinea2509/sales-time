@@ -32,6 +32,7 @@ function makeDeps(
     },
     contacts: {
       findById: jest.fn().mockResolvedValue(over.person ?? null),
+      findUniqueByCompanyName: jest.fn().mockResolvedValue(null),
     },
   };
 }

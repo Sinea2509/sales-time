@@ -56,4 +56,11 @@ describe("tryNormalizeWebsiteForOrgKey", () => {
       error: "INVALID",
     });
   });
+
+  it("rejects non-http protocols after normalization", () => {
+    expect(tryNormalizeWebsiteForOrgKey("javascript:alert(1)")).toEqual({
+      ok: false,
+      error: "INVALID",
+    });
+  });
 });

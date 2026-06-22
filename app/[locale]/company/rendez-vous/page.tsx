@@ -4,6 +4,7 @@ import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
+import { resolveProspectListDisplay } from "@/src/core/domain/prospect-list-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -24,27 +25,37 @@ export default async function RendezVousPage() {
     redirect("/company");
   }
 
-  const [meetings, settings] = await Promise.all([
+  const [meetings, settings, companyAliases] = await Promise.all([
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: actor.activeOrganizationId,
       limit: 200,
       sellerUserId: sellerScope,
     }),
     deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
+    deps.contacts.findProspectCompanyAliasByPersonId({
+      organizationId: actor.activeOrganizationId,
+    }),
   ]);
 
   const tamMinutesPerRdv = tamMinutesSavedPerMeetingFromSettings(settings);
 
-  const rows = meetings.map((m) => ({
-    id: m.id,
-    prospectName: m.prospectName,
-    prospectCompany: m.prospectCompany,
-    meetingAt: m.meetingAt.toISOString(),
-    meetingType: m.meetingType,
-    pipelineStage: m.pipelineStage,
-    salesScore: m.salesScore,
-    potentialAmount: m.potentialAmount,
-  }));
+  const rows = meetings.map((m) => {
+    const identity = resolveProspectListDisplay({
+      personDisplayName: m.personDisplayName,
+      personCompany: m.prospectCompany,
+      companyAlias: companyAliases.get(m.personId) ?? null,
+    });
+    return {
+      id: m.id,
+      prospectName: identity.displayName,
+      prospectCompany: identity.company,
+      meetingAt: m.meetingAt.toISOString(),
+      meetingType: m.meetingType,
+      pipelineStage: m.pipelineStage,
+      salesScore: m.salesScore,
+      potentialAmount: m.potentialAmount,
+    };
+  });
 
   return (
     <div className="space-y-8">

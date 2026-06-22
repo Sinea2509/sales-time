@@ -11,7 +11,6 @@ import { mergeMeetingTranscriptSources } from "@/lib/transcript-extract";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
 import { createMeetingForOrg } from "@/src/core/application/create-meeting";
-import { runAllMeetingAnalysesForOrg } from "@/src/core/application/run-all-meeting-analyses-for-org";
 import { updateMeetingForOrg } from "@/src/core/application/update-meeting-for-org";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 
@@ -201,12 +200,6 @@ export async function createMeetingAction(formData: FormData) {
             : result.error,
     };
   }
-
-  await runAllMeetingAnalysesForOrg(deps, {
-    organizationId: ctx.activeOrganizationId,
-    meetingId: result.meetingId,
-    notifyOnComplete: false,
-  });
 
   revalidatePath("/company/rendez-vous");
   revalidatePath("/company/analyse");
@@ -440,10 +433,15 @@ export async function updateMeetingAction(formData: FormData) {
       await deps.organizationQuota.decrementTrialAnalysesLeft(
         ctx.activeOrganizationId,
       );
-      await runAllMeetingAnalysesForOrg(deps, {
+      await deps.meetings.updateMeetingStatus({
+        id: parsedId.data,
+        organizationId: ctx.activeOrganizationId,
+        status: "PROCESSING",
+        errorMessage: null,
+      });
+      await deps.analysisJobs.enqueueMeetingAnalysis({
         organizationId: ctx.activeOrganizationId,
         meetingId: parsedId.data,
-        notifyOnComplete: false,
       });
     }
   }

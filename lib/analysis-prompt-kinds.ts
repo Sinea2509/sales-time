@@ -75,9 +75,9 @@ export const ANALYSIS_PROMPT_TAB_META: Record<
     description: "Préparation du prochain rendez-vous (Préparer un RDV).",
   },
   MEETING_DETAIL_SYNTHESIS: {
-    label: "Synthèse fiche RDV",
+    label: "Compte-rendu fiche RDV",
     description:
-      "Synthèse narrative du rendez-vous et phrase profil interlocuteur (page détail RDV).",
+      "Compte-rendu de visite CRM et phrase profil interlocuteur (page détail RDV).",
   },
 };
 

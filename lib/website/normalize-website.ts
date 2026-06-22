@@ -26,11 +26,6 @@ export function tryNormalizeWebsiteForOrgKey(
     return { ok: false, error: "INVALID" };
   }
 
-  /* istanbul ignore if -- only http(s) are possible after prepending https:// when needed */
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    return { ok: false, error: "INVALID" };
-  }
-
   let host = url.hostname.toLowerCase();
   if (host.startsWith("www.")) {
     host = host.slice(4);

@@ -70,4 +70,23 @@ describe("formatFeedbackUserRoleLabel", () => {
   it("returns null for unknown extra payloads", () => {
     expect(formatFeedbackUserRoleLabel({ route: "/company" })).toBeNull();
   });
+
+  it("falls back to workspace role mode when membership role is missing", () => {
+    expect(
+      formatFeedbackUserRoleLabel({
+        organizationMembershipRole: null,
+        workspaceRoleMode: "admin",
+        systemRoles: [],
+        organizationId: "org_1",
+      }),
+    ).toBe("Manager");
+    expect(
+      formatFeedbackUserRoleLabel({
+        organizationMembershipRole: null,
+        workspaceRoleMode: "member",
+        systemRoles: [],
+        organizationId: "org_1",
+      }),
+    ).toBe("Commercial");
+  });
 });

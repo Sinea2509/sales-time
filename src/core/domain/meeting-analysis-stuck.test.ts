@@ -7,18 +7,6 @@ describe("isMeetingAnalysisStuck", () => {
     expect(
       isMeetingAnalysisStuck({
         status: "READY",
-        analysisCount: 0,
-        updatedAt,
-        now: updatedAt.getTime() + MEETING_PROCESSING_STUCK_MS + 1,
-      }),
-    ).toBe(false);
-  });
-
-  it("returns false when analyses exist", () => {
-    expect(
-      isMeetingAnalysisStuck({
-        status: "PROCESSING",
-        analysisCount: 1,
         updatedAt,
         now: updatedAt.getTime() + MEETING_PROCESSING_STUCK_MS + 1,
       }),
@@ -29,18 +17,16 @@ describe("isMeetingAnalysisStuck", () => {
     expect(
       isMeetingAnalysisStuck({
         status: "PROCESSING",
-        analysisCount: 0,
         updatedAt,
         now: updatedAt.getTime() + MEETING_PROCESSING_STUCK_MS,
       }),
     ).toBe(false);
   });
 
-  it("returns true when processing with no analyses past the window", () => {
+  it("returns true when processing past the window", () => {
     expect(
       isMeetingAnalysisStuck({
         status: "PROCESSING",
-        analysisCount: 0,
         updatedAt,
         now: updatedAt.getTime() + MEETING_PROCESSING_STUCK_MS + 1,
       }),

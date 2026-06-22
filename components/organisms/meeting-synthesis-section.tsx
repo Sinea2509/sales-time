@@ -15,7 +15,7 @@ export function MeetingSynthesisSection({
   fromAi: boolean;
 }) {
   const [copied, setCopied] = useState(false);
-  const canCopy = meetingSynthesis.trim().length > 0;
+  const canCopy = fromAi && meetingSynthesis.trim().length > 0;
 
   const copyReport = useCallback(async () => {
     if (!canCopy) return;
@@ -48,12 +48,14 @@ export function MeetingSynthesisSection({
       </div>
       <Card>
         <CardContent className={cn("pt-6", cardProseBodyClass)}>
-          <p className="leading-relaxed">{meetingSynthesis}</p>
+          <p className="leading-relaxed whitespace-pre-wrap">{meetingSynthesis}</p>
           {!fromAi ? (
             <p className="text-muted-foreground mt-3 text-xs">
-              {meetingSynthesis.includes("analyse automatique")
+              {meetingSynthesis.includes("en cours de génération")
                 ? "Le compte-rendu complet apparaîtra une fois l'analyse automatique terminée."
-                : "Compte-rendu indicatif — une version enrichie est générée après analyse."}
+                : meetingSynthesis.includes("analyse automatique")
+                  ? "Le compte-rendu complet apparaîtra une fois l'analyse automatique terminée."
+                  : "Compte-rendu indicatif — une version enrichie est générée après analyse."}
             </p>
           ) : null}
         </CardContent>

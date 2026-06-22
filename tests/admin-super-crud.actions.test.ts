@@ -94,6 +94,13 @@ jest.mock("@/src/core/application/publish-global-prompt-version", () => {
   return { publishGlobalPromptVersion: publishGlobalPromptVersionMock };
 });
 
+// eslint-disable-next-line no-var
+var updateGlobalPromptModelMock: JestFn;
+jest.mock("@/src/core/application/update-global-prompt-model", () => {
+  updateGlobalPromptModelMock = jest.fn();
+  return { updateGlobalPromptModel: updateGlobalPromptModelMock };
+});
+
 const ACTOR_ID = "cjld2cjxh0000qzrmn831i7rn";
 const OTHER_USER_ID = "cmfq0w5vq0001s6z8v9x0y1z2";
 const ORG_ID = "clorg00000000000000000001";
@@ -117,7 +124,7 @@ import {
   revokeSuperAdminInvitationAction,
   revokeSuperAdminRoleAction,
 } from "@/app/[locale]/admin/super-admins/actions";
-import { publishPromptAction } from "@/app/[locale]/admin/prompts/actions";
+import { publishPromptAction, updatePromptModelAction } from "@/app/[locale]/admin/prompts/actions";
 import { getApplicationDeps } from "@/lib/application-deps";
 
 const {
@@ -141,6 +148,7 @@ beforeEach(() => {
   getAuthenticatedPrincipalMock.mockReset();
   findByIdMock.mockReset();
   publishGlobalPromptVersionMock.mockReset();
+  updateGlobalPromptModelMock.mockReset();
   publishGlobalPromptVersionMock.mockImplementation(
     async (_deps: unknown, input: { isSuperAdmin: boolean }) => {
       if (!input.isSuperAdmin) {
@@ -189,6 +197,54 @@ describe("admin super-admin CRUD — organizations", () => {
       reason: expect.stringContaining("Acme"),
     });
     expect(revalidatePathMock).toHaveBeenCalledWith("/admin/organizations");
+  });
+
+  it("rejects create on invalid slug format", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    const r = await createOrganizationAction({ name: "Acme", slug: "Bad Slug" });
+    expect(r.ok).toBe(false);
+    expect(backofficeMock.createOrganization).not.toHaveBeenCalled();
+  });
+
+  it("rejects update with invalid slug format", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    const r = await updateOrganizationAction({
+      id: ORG_ID,
+      name: "Acme",
+      slug: "Bad Slug",
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it("rejects update when organization missing", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    backofficeMock.findOrganizationById.mockResolvedValue(null);
+    const r = await updateOrganizationAction({
+      id: ORG_ID,
+      name: "New",
+      slug: "new-slug",
+    });
+    expect(r).toEqual({ ok: false, message: "Organisation introuvable." });
+  });
+
+  it("updates organization when slug is available", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    backofficeMock.findOrganizationById.mockResolvedValue({
+      id: ORG_ID,
+      name: "Old",
+      slug: "old-slug",
+    });
+    backofficeMock.findOrganizationSlugConflict.mockResolvedValue(false);
+    backofficeMock.updateOrganization.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
+
+    const r = await updateOrganizationAction({
+      id: ORG_ID,
+      name: "New Name",
+      slug: "new-slug",
+    });
+    expect(r).toEqual({ ok: true });
+    expect(backofficeMock.updateOrganization).toHaveBeenCalled();
   });
 
   it("rejects create on duplicate slug", async () => {
@@ -263,6 +319,56 @@ describe("admin super-admin CRUD — organizations", () => {
 });
 
 describe("admin super-admin CRUD — users", () => {
+  it("rejects bulk toggle when no users found", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    backofficeMock.findUsersByIdsForBulk.mockResolvedValue([]);
+    const r = await bulkToggleUserStatusAction(["u1"], "DISABLED");
+    expect(r).toEqual({ ok: false, message: "Aucun utilisateur trouvé." });
+  });
+
+  it("rejects update user with invalid email", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    const r = await updateUserAction({
+      id: OTHER_USER_ID,
+      firstName: "A",
+      lastName: "B",
+      email: "bad-email",
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it("toggles user status back to active", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    backofficeMock.findUserStatusById.mockResolvedValue({
+      id: OTHER_USER_ID,
+      status: "DISABLED",
+      email: "u@example.com",
+    });
+    backofficeMock.updateUserStatus.mockResolvedValue(undefined);
+    backofficeMock.createSuperAdminAuditLog.mockResolvedValue(undefined);
+
+    const r = await toggleUserStatusAction(OTHER_USER_ID);
+    expect(r).toEqual({ ok: true });
+    expect(backofficeMock.updateUserStatus).toHaveBeenCalledWith(
+      OTHER_USER_ID,
+      "ACTIVE",
+    );
+  });
+
+  it("rejects org invite when pending invitation exists", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    backofficeMock.findOrganizationNameById.mockResolvedValue({ name: "Org" });
+    backofficeMock.findPendingOrganizationInvitation.mockResolvedValue({
+      id: INVITE_ID,
+    });
+    const r = await inviteUserToOrgAction({
+      email: "join@example.com",
+      organizationId: ORG_ID,
+      role: "MEMBER",
+    });
+    expect(r.ok).toBe(false);
+  });
+
   it("rejects bulk toggle with empty ids", async () => {
     mockAuthenticatedSuperAdminPrincipal();
     const r = await bulkToggleUserStatusAction([], "DISABLED");
@@ -385,6 +491,16 @@ describe("admin super-admin CRUD — users", () => {
     );
   });
 
+  it("rejects org invite with invalid email", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    const r = await inviteUserToOrgAction({
+      email: "bad",
+      organizationId: ORG_ID,
+      role: "MEMBER",
+    });
+    expect(r.ok).toBe(false);
+  });
+
   it("rejects org invite when org missing", async () => {
     mockAuthenticatedSuperAdminPrincipal();
     backofficeMock.findOrganizationNameById.mockResolvedValue(null);
@@ -402,6 +518,22 @@ describe("admin super-admin CRUD — users", () => {
 });
 
 describe("admin super-admin — super-admins & prompts", () => {
+  it("rejects invite with invalid email", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    const r = await inviteSuperAdminAction({ email: "not-an-email" });
+    expect(r).toEqual({ ok: false, message: "Adresse e-mail invalide." });
+  });
+
+  it("rejects invite when pending invitation exists", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    backofficeMock.findUserWithSuperAdminByEmail.mockResolvedValueOnce(null);
+    backofficeMock.findPendingSuperAdminInvitationByEmail.mockResolvedValue({
+      id: INVITE_ID,
+    });
+    const r = await inviteSuperAdminAction({ email: "pending@example.com" });
+    expect(r.ok).toBe(false);
+  });
+
   it("inviteSuperAdmin rejects when user already super admin", async () => {
     mockAuthenticatedSuperAdminPrincipal();
     backofficeMock.findUserWithSuperAdminByEmail.mockResolvedValueOnce({
@@ -436,6 +568,16 @@ describe("admin super-admin — super-admins & prompts", () => {
     expect(r).toEqual({ ok: false, message: "Identifiant invalide." });
   });
 
+  it("revokeSuperAdminInvitation returns not found", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    backofficeMock.findPendingSuperAdminInvitationById.mockResolvedValue(null);
+    const r = await revokeSuperAdminInvitationAction(INVITE_ID);
+    expect(r).toEqual({
+      ok: false,
+      message: "Invitation introuvable ou déjà traitée.",
+    });
+  });
+
   it("revokeSuperAdminInvitation revokes pending invite", async () => {
     mockAuthenticatedSuperAdminPrincipal();
     backofficeMock.findPendingSuperAdminInvitationById.mockResolvedValue({
@@ -449,6 +591,19 @@ describe("admin super-admin — super-admins & prompts", () => {
     expect(backofficeMock.revokeSuperAdminInvitation).toHaveBeenCalledWith(
       INVITE_ID,
     );
+  });
+
+  it("revokeSuperAdminRole rejects invalid user id", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    const r = await revokeSuperAdminRoleAction("bad-id");
+    expect(r).toEqual({ ok: false, message: "Identifiant invalide." });
+  });
+
+  it("revokeSuperAdminRole rejects missing role", async () => {
+    mockAuthenticatedSuperAdminPrincipal();
+    backofficeMock.findSuperAdminSystemRoleForUser.mockResolvedValue(null);
+    const r = await revokeSuperAdminRoleAction(OTHER_USER_ID);
+    expect(r).toEqual({ ok: false, message: "Ce rôle est introuvable." });
   });
 
   it("revokeSuperAdminRole rejects self-revoke", async () => {
@@ -476,6 +631,26 @@ describe("admin super-admin — super-admins & prompts", () => {
     expect(backofficeMock.createSuperAdminAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({ action: "REVOKE_SUPER_ADMIN" }),
     );
+  });
+
+  it("publishPromptAction rejects invalid payload", async () => {
+    const r = await publishPromptAction({
+      kind: "SONCAS",
+      markdown: "",
+      auditAction: "PUBLISH_PROMPT",
+    });
+    expect(r).toEqual({ ok: false, error: "VALIDATION" });
+  });
+
+  it("publishPromptAction rejects missing user row", async () => {
+    getAuthenticatedPrincipalMock.mockResolvedValue({ userId: ACTOR_ID });
+    findByIdMock.mockResolvedValue(null);
+    const r = await publishPromptAction({
+      kind: "SONCAS",
+      markdown: "# body",
+      auditAction: "PUBLISH_PROMPT",
+    });
+    expect(r).toEqual({ ok: false, error: "NO_USER" });
   });
 
   it("publishPromptAction rejects unauthenticated", async () => {
@@ -536,6 +711,64 @@ describe("admin super-admin — super-admins & prompts", () => {
         auditAction: "RESTORE_PROMPT",
       }),
     );
+    expect(revalidatePathMock).toHaveBeenCalledWith("/admin/prompts");
+  });
+
+  it("updatePromptModelAction rejects invalid payload", async () => {
+    const r = await updatePromptModelAction({
+      kind: "SONCAS",
+      model: "not-a-model" as never,
+    });
+    expect(r).toEqual({ ok: false, error: "VALIDATION" });
+  });
+
+  it("updatePromptModelAction rejects missing user row", async () => {
+    getAuthenticatedPrincipalMock.mockResolvedValue({ userId: ACTOR_ID });
+    findByIdMock.mockResolvedValue(null);
+    const r = await updatePromptModelAction({
+      kind: "SONCAS",
+      model: "anthropic/claude-sonnet-4",
+    });
+    expect(r).toEqual({ ok: false, error: "NO_USER" });
+  });
+
+  it("updatePromptModelAction propagates core failure", async () => {
+    updateGlobalPromptModelMock.mockResolvedValue({
+      ok: false,
+      error: "NOT_SUPER_ADMIN",
+    });
+    getAuthenticatedPrincipalMock.mockResolvedValue({ userId: ACTOR_ID });
+    findByIdMock.mockResolvedValue({
+      id: ACTOR_ID,
+      email: "a@b.com",
+      systemRoles: ["SUPER_ADMIN"],
+    });
+    const r = await updatePromptModelAction({
+      kind: "SONCAS",
+      model: "anthropic/claude-sonnet-4",
+    });
+    expect(r).toEqual({ ok: false, error: "NOT_SUPER_ADMIN" });
+  });
+
+  it("updatePromptModelAction updates model for super admin", async () => {
+    updateGlobalPromptModelMock.mockResolvedValue({
+      ok: true,
+      model: "anthropic/claude-sonnet-4",
+    });
+    getAuthenticatedPrincipalMock.mockResolvedValue({ userId: ACTOR_ID });
+    findByIdMock.mockResolvedValue({
+      id: ACTOR_ID,
+      email: "a@b.com",
+      systemRoles: ["SUPER_ADMIN"],
+    });
+    const r = await updatePromptModelAction({
+      kind: "SONCAS",
+      model: "anthropic/claude-sonnet-4",
+    });
+    expect(r).toEqual({
+      ok: true,
+      model: "anthropic/claude-sonnet-4",
+    });
     expect(revalidatePathMock).toHaveBeenCalledWith("/admin/prompts");
   });
 });

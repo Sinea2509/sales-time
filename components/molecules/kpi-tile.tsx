@@ -1,4 +1,11 @@
+"use client";
+
 import type { ComponentType, ReactNode } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   statAccentStyles,
   type StatAccent,
@@ -8,6 +15,8 @@ import { cn } from "@/lib/utils";
 export type KpiTileProps = {
   icon: ComponentType<{ className?: string }>;
   label: string;
+  /** Shown on hover over the full KPI tile. */
+  labelTooltip?: string;
   trend?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
@@ -19,6 +28,7 @@ export type KpiTileProps = {
 export function KpiTile({
   icon: Icon,
   label,
+  labelTooltip,
   trend,
   children,
   footer,
@@ -27,13 +37,14 @@ export function KpiTile({
 }: KpiTileProps) {
   const accentColors = accent ? statAccentStyles[accent] : null;
 
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border border-zinc-200/10 bg-white p-5 text-zinc-900 shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50",
-        className,
-      )}
-    >
+  const shellClass = cn(
+    "rounded-2xl border border-zinc-200/10 bg-white p-5 text-zinc-900 shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50",
+    labelTooltip && "cursor-help",
+    className,
+  );
+
+  const content = (
+    <>
       <div className="flex min-w-0 items-center gap-2.5">
         <div
           className={cn(
@@ -65,6 +76,28 @@ export function KpiTile({
           {footer}
         </p>
       ) : null}
-    </div>
+    </>
+  );
+
+  if (!labelTooltip) {
+    return <div className={shellClass}>{content}</div>;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={<div className={shellClass} tabIndex={0} />}
+        aria-label={`${label} — afficher l'explication`}
+      >
+        {content}
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        align="start"
+        className="max-w-sm text-left leading-relaxed"
+      >
+        {labelTooltip}
+      </TooltipContent>
+    </Tooltip>
   );
 }

@@ -13,9 +13,10 @@ describe("extractEmailDomain", () => {
   });
 
   it("returns null for malformed email", () => {
-    expect(extractEmailDomain("not-an-email")).toBeNull();
+    expect(extractEmailDomain("invalid")).toBeNull();
     expect(extractEmailDomain("@nodomain.com")).toBeNull();
     expect(extractEmailDomain("user@")).toBeNull();
+    expect(extractEmailDomain("user@   ")).toBeNull();
   });
 });
 
@@ -49,5 +50,6 @@ describe("emailDomainMatchesOrgWebsite", () => {
 
   it("returns false for malformed email", () => {
     expect(emailDomainMatchesOrgWebsite("invalid", "acme.com")).toBe(false);
+    expect(emailDomainMatchesOrgWebsite("user@example.com", "")).toBe(false);
   });
 });

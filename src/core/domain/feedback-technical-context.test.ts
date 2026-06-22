@@ -1,5 +1,6 @@
-import { describe, expect, it } from "@jest/globals";
+import { afterEach, describe, expect, it } from "@jest/globals";
 import {
+  buildClientTechnicalContextSnapshot,
   formatNetworkErrorEntry,
   parseFeedbackUserAgent,
   resolveFeedbackPriority,
@@ -7,6 +8,24 @@ import {
 } from "./feedback-technical-context";
 
 describe("feedback-technical-context", () => {
+  afterEach(() => {
+    // @ts-expect-error test cleanup
+    delete global.window;
+  });
+
+  it("returns nulls for empty user agent", () => {
+    expect(parseFeedbackUserAgent(null)).toEqual({
+      browser: null,
+      os: null,
+      deviceType: null,
+    });
+    expect(parseFeedbackUserAgent("   ")).toEqual({
+      browser: null,
+      os: null,
+      deviceType: null,
+    });
+  });
+
   it("parses user agent into browser, os and device", () => {
     const parsed = parseFeedbackUserAgent(
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -37,5 +56,43 @@ describe("feedback-technical-context", () => {
         status: 500,
       }),
     ).toBe("POST /api/meetings → 500");
+    expect(
+      formatNetworkErrorEntry({
+        method: "get",
+        url: "/api/meetings",
+      }),
+    ).toBe("GET /api/meetings → network error");
+  });
+
+  it("falls back when URL parsing fails", () => {
+    expect(sanitizeNetworkErrorUrl("http://[")).toBe("http://[");
+  });
+
+  it("returns null snapshot on server", () => {
+    expect(buildClientTechnicalContextSnapshot()).toEqual({
+      routePath: null,
+      referrer: null,
+      timezone: null,
+      scrollPosition: null,
+    });
+  });
+
+  it("captures browser context when window is defined", () => {
+    const location = {
+      pathname: "/company",
+      search: "?tab=1",
+    };
+    global.window = {
+      location,
+      scrollX: 10,
+      scrollY: 20,
+    } as unknown as Window & typeof globalThis;
+    global.document = { referrer: "https://example.com" } as Document;
+    expect(buildClientTechnicalContextSnapshot()).toEqual({
+      routePath: "/company?tab=1",
+      referrer: "https://example.com",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      scrollPosition: "10,20",
+    });
   });
 });

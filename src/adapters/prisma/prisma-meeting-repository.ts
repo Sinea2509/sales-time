@@ -29,6 +29,7 @@ function mapMeeting(row: {
   pipelineStage: string | null;
   potentialAmount: number | null;
   followUpEmailDraft: string | null;
+  visitReportDraft: string | null;
   transcript: string;
   notes: string | null;
   outcome: MeetingOutcome;
@@ -52,6 +53,7 @@ function mapMeeting(row: {
     pipelineStage: row.pipelineStage,
     potentialAmount: row.potentialAmount,
     followUpEmailDraft: row.followUpEmailDraft,
+    visitReportDraft: row.visitReportDraft,
     transcript: row.transcript,
     notes: row.notes,
     outcome: row.outcome,
@@ -156,6 +158,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
         pipelineStage: input.pipelineStage,
         potentialAmount: input.potentialAmount,
         followUpEmailDraft: null,
+        visitReportDraft: null,
         transcript: input.transcript,
         notes: input.notes,
         outcome: input.outcome,
@@ -380,7 +383,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       orderBy: { createdAt: "desc" },
       ...(input.limit != null ? { take: input.limit } : {}),
       include: {
-        person: { select: { company: true } },
+        person: { select: { displayName: true, company: true } },
         seller: { select: { email: true, firstName: true, lastName: true } },
         analyses: {
           select: { kind: true, result: true, createdAt: true },
@@ -398,6 +401,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       const base = mapMeeting(row);
       const out: RecentMeetingListRow = {
         ...base,
+        personDisplayName: row.person.displayName,
         prospectCompany: row.person.company,
         sellerEmail: row.seller.email,
         sellerFirstName: row.seller.firstName,
@@ -536,6 +540,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       status: row.status,
       errorMessage: row.errorMessage,
       followUpEmailDraft: row.followUpEmailDraft,
+      visitReportDraft: row.visitReportDraft,
       transcript: row.transcript,
       notes: row.notes,
       updatedAt: row.updatedAt,
@@ -555,6 +560,18 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     const res = await this.db.meeting.updateMany({
       where: { id: input.id, organizationId: input.organizationId },
       data: { followUpEmailDraft: input.followUpEmailDraft },
+    });
+    return res.count > 0;
+  }
+
+  async updateMeetingVisitReportDraft(input: {
+    id: string;
+    organizationId: string;
+    visitReportDraft: string | null;
+  }): Promise<boolean> {
+    const res = await this.db.meeting.updateMany({
+      where: { id: input.id, organizationId: input.organizationId },
+      data: { visitReportDraft: input.visitReportDraft },
     });
     return res.count > 0;
   }

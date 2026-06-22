@@ -1,5 +1,6 @@
 import { KissResultView } from "@/components/molecules/kiss-result-view";
 import { MeetingAnalysisStatusBanner } from "@/components/molecules/meeting-analysis-status-banner";
+import { MeetingAnalysisStatusPoller } from "@/components/molecules/meeting-analysis-status-poller";
 import { ContentCard } from "@/components/molecules/content-card";
 import { InfoCard } from "@/components/molecules/info-card";
 import { NavLinkButton } from "@/components/molecules/nav-link-button";
@@ -91,6 +92,7 @@ export function MeetingDetailShell({
       />
 
       <MeetingAnalysisStatusBanner status={meeting.status} />
+      <MeetingAnalysisStatusPoller status={meeting.status} />
 
       {meeting.status === "FAILED" && meeting.errorMessage ? (
         <InfoCard
@@ -103,7 +105,7 @@ export function MeetingDetailShell({
       {processingLooksStuck ? (
         <InfoCard
           title="Analyse bloquée"
-          description="L'analyse semble bloquée depuis plus de 15 minutes. Rechargez la page ou modifiez le rendez-vous pour relancer l'analyse automatique. Vérifiez aussi que AI_GATEWAY_API_KEY est configuré (voir docs/env-sync.md)."
+          description="L'analyse semble bloquée depuis plus de 15 minutes. Rechargez la page ou modifiez le rendez-vous pour relancer l'analyse automatique."
         />
       ) : null}
 

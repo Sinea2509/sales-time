@@ -54,6 +54,12 @@ export class PrismaContactRepository implements ContactRepositoryPort {
               mode: "insensitive",
             },
           },
+          {
+            company: {
+              contains: q,
+              mode: "insensitive",
+            },
+          },
           ...(normalized.length > 0
             ? [
                 {
@@ -70,6 +76,81 @@ export class PrismaContactRepository implements ContactRepositoryPort {
       select: { id: true, displayName: true, company: true },
     });
     return rows;
+  }
+
+  async findUniqueByCompanyName(input: {
+    organizationId: string;
+    companyName: string;
+  }): Promise<ContactSearchHit | null> {
+    const company = input.companyName.trim();
+    if (!company) return null;
+
+    const rows = await this.db.person.findMany({
+      where: {
+        organizationId: input.organizationId,
+        company: { equals: company, mode: "insensitive" },
+      },
+      select: { id: true, displayName: true, company: true },
+      take: 2,
+    });
+    if (rows.length !== 1) return null;
+    return rows[0]!;
+  }
+
+  async findProspectCompanyAliasByPersonId(input: {
+    organizationId: string;
+  }): Promise<Map<string, { displayName: string; company: string | null }>> {
+    const withCompany = await this.db.person.findMany({
+      where: {
+        organizationId: input.organizationId,
+        company: { not: null },
+      },
+      select: { id: true, displayName: true, company: true },
+    });
+
+    const canonicalByCompanyKey = new Map<
+      string,
+      { id: string; displayName: string; company: string | null } | "ambiguous"
+    >();
+    for (const person of withCompany) {
+      const company = person.company?.trim();
+      if (!company) continue;
+      const key = normalizePersonDisplayKey(company);
+      if (!key) continue;
+      const existing = canonicalByCompanyKey.get(key);
+      if (!existing) {
+        canonicalByCompanyKey.set(key, {
+          id: person.id,
+          displayName: person.displayName,
+          company: person.company,
+        });
+      } else if (existing !== "ambiguous") {
+        canonicalByCompanyKey.set(key, "ambiguous");
+      }
+    }
+
+    const allPersons = await this.db.person.findMany({
+      where: { organizationId: input.organizationId },
+      select: { id: true, displayName: true },
+    });
+
+    const aliases = new Map<
+      string,
+      { displayName: string; company: string | null }
+    >();
+    for (const person of allPersons) {
+      const key = normalizePersonDisplayKey(person.displayName);
+      if (!key) continue;
+      const canonical = canonicalByCompanyKey.get(key);
+      if (!canonical || canonical === "ambiguous" || canonical.id === person.id) {
+        continue;
+      }
+      aliases.set(person.id, {
+        displayName: canonical.displayName,
+        company: canonical.company,
+      });
+    }
+    return aliases;
   }
 
   async findById(input: {

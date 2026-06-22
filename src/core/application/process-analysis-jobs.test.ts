@@ -42,6 +42,7 @@ function makeDeps(over: {
   return {
     analysisJobs: {
       releaseStaleProcessingJobs: jest.fn().mockResolvedValue(2),
+      reconcileStuckProcessingMeetings: jest.fn().mockResolvedValue(0),
       dequeueNextJob: jest
         .fn()
         .mockResolvedValueOnce(job)
@@ -100,6 +101,7 @@ describe("processAnalysisJobs", () => {
       succeeded: 0,
       failed: 0,
       releasedStale: 2,
+      reconciledMeetings: 0,
     });
   });
 

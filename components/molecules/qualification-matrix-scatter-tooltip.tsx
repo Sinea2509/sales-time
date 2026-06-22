@@ -11,6 +11,7 @@ export type QualificationMatrixScatterTooltipMeta = {
   contactName: string;
   potentialAmount: number | null;
   salesScore: number | null;
+  sellerDisplayName?: string;
 };
 
 const euroFormat = new Intl.NumberFormat("fr-FR", {
@@ -44,6 +45,12 @@ function QualificationMatrixTooltipContent() {
       <p className="text-foreground text-sm font-semibold leading-snug">
         {meta.contactName}
       </p>
+      {meta.sellerDisplayName ? (
+        <p>
+          <span className="text-muted-foreground">Commercial : </span>
+          <span className="font-medium">{meta.sellerDisplayName}</span>
+        </p>
+      ) : null}
       <p>
         <span className="text-muted-foreground">Montant : </span>
         <span className="font-medium tabular-nums">

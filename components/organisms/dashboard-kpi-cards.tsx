@@ -1,5 +1,6 @@
 import { BadgePercent, Clock, LayoutList } from "lucide-react";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
+import { KPI_TAM_HINT, KPI_TUC_HINT } from "@/lib/kpi-hints";
 import { KpiTile } from "@/components/molecules/kpi-tile";
 import { KpiVsPreviousBadge } from "@/components/molecules/trend-pill";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
@@ -10,6 +11,7 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
       <KpiTile
         icon={Clock}
         label="TAM"
+        labelTooltip={KPI_TAM_HINT}
         trend={
           <KpiVsPreviousBadge
             delta={home.tamCumuleTrendPercent}
@@ -35,6 +37,7 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
       <KpiTile
         icon={BadgePercent}
         label="TUC optimisé (%)"
+        labelTooltip={KPI_TUC_HINT}
         trend={
           <KpiVsPreviousBadge
             delta={home.tucTrendPoints}

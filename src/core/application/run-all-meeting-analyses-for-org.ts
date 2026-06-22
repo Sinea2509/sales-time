@@ -1,4 +1,5 @@
 import { discResultSchema, soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
+import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
@@ -11,6 +12,7 @@ import type {
 import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
+import { generateAndPersistMeetingVisitReport } from "./summarize-meeting-detail";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
 
 export type RunAllMeetingAnalysesResult =
@@ -52,6 +54,11 @@ export async function runAllMeetingAnalysesForOrg(
     organizationId: input.organizationId,
     status: "PROCESSING",
     errorMessage: null,
+  });
+  await deps.meetings.updateMeetingVisitReportDraft({
+    id: meeting.id,
+    organizationId: input.organizationId,
+    visitReportDraft: null,
   });
 
   const globalKissJson = deps.globalKissCoachingPrompts
@@ -114,8 +121,14 @@ export async function runAllMeetingAnalysesForOrg(
     organizationId: input.organizationId,
     kind: "SONCAS",
   });
+  const kiss = await deps.meetings.findLatestAnalysisForMeeting({
+    meetingId: meeting.id,
+    organizationId: input.organizationId,
+    kind: "KISS",
+  });
   const discParsed = disc ? discResultSchema.safeParse(disc.result) : null;
   const soncasParsed = soncas ? soncasResultSchema.safeParse(soncas.result) : null;
+  const kissParsed = kiss ? kissResultSchema.safeParse(kiss.result) : null;
   if (discParsed?.success || soncasParsed?.success) {
     await deps.meetings.updatePersonProfileCache({
       personId: meeting.personId,
@@ -125,6 +138,27 @@ export async function runAllMeetingAnalysesForOrg(
         ? soncasParsed.data.dominant
         : undefined,
     });
+  }
+
+  const meetingDetail = await deps.meetings.findMeetingDetailWithAnalyses({
+    id: meeting.id,
+    organizationId: input.organizationId,
+  });
+  if (meetingDetail) {
+    await generateAndPersistMeetingVisitReport(
+      {
+        analysis: deps.analysis,
+        prompts: deps.prompts,
+        meetings: deps.meetings,
+      },
+      {
+        organizationId: input.organizationId,
+        meeting: meetingDetail,
+        discResult: discParsed?.success ? discParsed.data : null,
+        soncasResult: soncasParsed?.success ? soncasParsed.data : null,
+        kissResult: kissParsed?.success ? kissParsed.data : null,
+      },
+    ).catch(() => undefined);
   }
 
   await deps.meetings.updateMeetingStatus({

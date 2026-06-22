@@ -191,11 +191,6 @@ export async function runMeetingAnalysis(
       }
     }
 
-    if (input.kind !== "KISS") {
-      const unhandledKind: never = input.kind;
-      throw new Error(`Unhandled analysis kind: ${unhandledKind}`);
-    }
-
     const [priorSoncas, priorDisc] = await Promise.all([
       deps.meetings.findLatestAnalysisForMeeting({
         meetingId: meeting.id,

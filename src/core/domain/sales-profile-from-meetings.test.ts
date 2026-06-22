@@ -45,6 +45,7 @@ function meeting(
     sellerUserId: "u1",
     personId: "p1",
     prospectName: "Acme",
+    personDisplayName: "Acme",
     prospectCompany: null,
     meetingAt: new Date("2026-01-01T00:00:00.000Z"),
     durationMin: 30,
@@ -52,6 +53,7 @@ function meeting(
     pipelineStage: null,
     potentialAmount: null,
     followUpEmailDraft: null,
+    visitReportDraft: null,
     transcript: "",
     notes: null,
     outcome: "FOLLOW_UP",
@@ -103,5 +105,33 @@ describe("sales-profile-from-meetings", () => {
     ]);
     expect(agg.rdvCount).toBe(2);
     expect(agg.scores?.assertivite).toBeGreaterThan(0);
+  });
+
+  it("returns empty aggregate when meetings lack profile signals", () => {
+    const agg = aggregateTeamSalesProfileFromMeetings([
+      meeting({
+        latestSoncasResult: null,
+        latestDiscResult: null,
+        latestKissResult: null,
+      }),
+    ]);
+    expect(agg).toEqual({ scores: null, rdvCount: 0 });
+  });
+
+  it("defaults missing dimension values to zero in aggregate", () => {
+    const agg = aggregateTeamSalesProfileFromMeetings([
+      meeting({
+        latestSoncasResult: null,
+        latestKissResult: null,
+        latestDiscResult: {
+          scores: { D: 55, I: 0, S: 0, C: 0 },
+          dominant: "D" as const,
+          evidence: ["e"],
+          summary: "s",
+        },
+      }),
+    ]);
+    expect(agg.scores?.assertivite).toBe(55);
+    expect(agg.scores?.nextSteps).toBe(0);
   });
 });

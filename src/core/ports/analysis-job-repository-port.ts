@@ -33,4 +33,10 @@ export interface AnalysisJobRepositoryPort {
   }): Promise<void>;
 
   releaseStaleProcessingJobs(staleBefore: Date): Promise<number>;
+
+  /** Re-enqueue meetings stuck in PROCESSING with no active job. */
+  reconcileStuckProcessingMeetings(input: {
+    staleBefore: Date;
+    limit: number;
+  }): Promise<number>;
 }

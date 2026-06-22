@@ -147,6 +147,8 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
           qualificationPotentialPoints={qualificationPotentialPoints}
           priorityOpportunities={priorityOpportunities}
           rdvCount={meetings.length}
+          isTeamView={isOrgAdmin}
+          statsWindowDays={home.statsWindowDays}
         />
       </section>
 

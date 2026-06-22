@@ -332,4 +332,137 @@ describe("runMeetingAnalysis", () => {
       message: "not-an-error",
     });
   });
+
+  it("records ai log when prompt bootstrap fails", async () => {
+    const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
+    const meetings = {
+      findMeetingByIdForOrg: jest.fn().mockResolvedValue({
+        id: "m1",
+        organizationId: "org_1",
+        transcript: "t",
+        notes: null,
+      }),
+    };
+    const prompts = {
+      ensureCurrentVersion: jest.fn().mockRejectedValue(new Error("seed fail")),
+      getModelForKind: jest.fn().mockRejectedValue(new Error("model fail")),
+    };
+    const analysis = {
+      analyzeSoncas: jest.fn(),
+      analyzeDisc: jest.fn(),
+      analyzeKiss: jest.fn(),
+    };
+
+    const result = await runMeetingAnalysis(
+      { meetings, prompts, analysis, aiLogs } as never,
+      {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind: "SONCAS",
+        jobId: "job_1",
+      },
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      error: "PROMPT_NOT_CONFIGURED",
+      message: "seed fail",
+    });
+    expect(aiLogs.createLog).toHaveBeenCalled();
+  });
+
+  it("records ai log when SONCAS analysis fails", async () => {
+    const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
+    const meetings = {
+      findMeetingByIdForOrg: jest.fn().mockResolvedValue({
+        id: "m1",
+        organizationId: "org_1",
+        transcript: "t",
+        notes: null,
+      }),
+      createAnalysis: jest.fn(),
+    };
+    const prompts = {
+      ensureCurrentVersion: jest.fn().mockResolvedValue({
+        id: "pv",
+        markdown: "sys",
+        templateId: "t",
+        kind: "SONCAS" as const,
+        version: 1,
+        authorUserId: "u1",
+        createdAt: new Date(),
+      }),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+    };
+    const analysis = {
+      analyzeSoncas: jest.fn().mockRejectedValue(new Error("soncas fail")),
+      analyzeDisc: jest.fn(),
+      analyzeKiss: jest.fn(),
+    };
+
+    const result = await runMeetingAnalysis(
+      { meetings, prompts, analysis, aiLogs } as never,
+      {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind: "SONCAS",
+      },
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      error: "ANALYSIS_FAILED",
+      message: "soncas fail",
+    });
+    expect(aiLogs.createLog).toHaveBeenCalled();
+  });
+
+  it("maps outer catch when prior analysis lookup throws", async () => {
+    const meetings = {
+      findMeetingByIdForOrg: jest.fn().mockResolvedValue({
+        id: "m1",
+        organizationId: "org_1",
+        transcript: "t",
+        notes: null,
+      }),
+      findLatestAnalysisForMeeting: jest
+        .fn()
+        .mockRejectedValue(new Error("db error")),
+    };
+    const prompts = {
+      ensureCurrentVersion: jest.fn().mockResolvedValue({
+        id: "pv",
+        markdown: "m",
+        templateId: "t",
+        kind: "KISS" as const,
+        version: 1,
+        authorUserId: "u1",
+        createdAt: new Date(),
+      }),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+    };
+
+    const result = await runMeetingAnalysis(
+      {
+        meetings,
+        prompts,
+        analysis: {
+          analyzeSoncas: jest.fn(),
+          analyzeDisc: jest.fn(),
+          analyzeKiss: jest.fn(),
+        },
+      } as never,
+      {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind: "KISS",
+      },
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      error: "ANALYSIS_FAILED",
+      message: "db error",
+    });
+  });
 });

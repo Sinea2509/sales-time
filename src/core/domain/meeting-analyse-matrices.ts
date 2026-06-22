@@ -1,4 +1,5 @@
 import { meetingEtapeDisplayLabel } from "./meeting-etape-display";
+import { sellerDisplayNameFromMeetingRow } from "./seller-display-name";
 import { soncasResultSchema } from "./analysis-result-zod";
 import { kissResultSchema } from "./kiss-result-zod";
 import type { MeetingOutcome } from "./meeting-outcome";
@@ -29,6 +30,8 @@ export type QualificationPotentialMatrixPoint = {
   outcome: MeetingOutcome;
   potentialAmount: number | null;
   salesScore: number | null;
+  sellerUserId: string;
+  sellerDisplayName: string;
 };
 
 function meetingEtapeFromRow(meeting: RecentMeetingListRow): string {
@@ -138,6 +141,8 @@ export function buildQualificationPotentialMatrixPoints(
         outcome: m.outcome,
         potentialAmount: m.potentialAmount,
         salesScore: m.salesScore,
+        sellerUserId: m.sellerUserId,
+        sellerDisplayName: sellerDisplayNameFromMeetingRow(m),
       },
     ];
   });

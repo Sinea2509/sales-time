@@ -35,12 +35,31 @@ export type ContactUpdatePatch = {
   notes?: string | null;
 };
 
+export type ProspectCompanyAliasRow = {
+  displayName: string;
+  company: string | null;
+};
+
 export interface ContactRepositoryPort {
   searchByPrefix(input: {
     organizationId: string;
     prefix: string;
     limit: number;
   }): Promise<ContactSearchHit[]>;
+
+  /** Returns the contact when exactly one has this company name (case-insensitive). */
+  findUniqueByCompanyName(input: {
+    organizationId: string;
+    companyName: string;
+  }): Promise<ContactSearchHit | null>;
+
+  /**
+   * Maps person ids whose displayName equals another contact's company
+   * to that canonical contact (skipped when ambiguous).
+   */
+  findProspectCompanyAliasByPersonId(input: {
+    organizationId: string;
+  }): Promise<Map<string, ProspectCompanyAliasRow>>;
 
   findById(input: {
     id: string;

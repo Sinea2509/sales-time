@@ -19,6 +19,7 @@ export type MeetingRow = {
   pipelineStage: string | null;
   potentialAmount: number | null;
   followUpEmailDraft: string | null;
+  visitReportDraft: string | null;
   transcript: string;
   notes: string | null;
   outcome: MeetingOutcome;
@@ -42,6 +43,8 @@ export type MeetingAnalysisRow = {
 
 /** Recent meeting row for dashboard (tri par date d’ajout). */
 export type RecentMeetingListRow = MeetingRow & {
+  /** Nom affiché du contact lié (fiche Person). */
+  personDisplayName: string;
   /** Société du contact lié, si renseignée. */
   prospectCompany: string | null;
   sellerEmail: string | null;
@@ -87,6 +90,7 @@ export type MeetingDetailWithAnalyses = {
   status: MeetingStatus;
   errorMessage: string | null;
   followUpEmailDraft: string | null;
+  visitReportDraft: string | null;
   transcript: string;
   notes: string | null;
   updatedAt: Date;
@@ -224,6 +228,12 @@ export interface MeetingRepositoryPort {
     id: string;
     organizationId: string;
     followUpEmailDraft: string | null;
+  }): Promise<boolean>;
+
+  updateMeetingVisitReportDraft(input: {
+    id: string;
+    organizationId: string;
+    visitReportDraft: string | null;
   }): Promise<boolean>;
 
   updateMeeting(input: {

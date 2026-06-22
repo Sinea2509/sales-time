@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import { MonEquipeSection } from "@/components/organisms/mon-equipe-section";
@@ -12,14 +11,10 @@ import type { OrgAdminDashboard } from "@/src/core/application/get-org-admin-das
 export function DashboardAdminShell({
   admin,
   kissTeamStrengthsNarrative,
-  meetingTypeOptions,
-  pipelineStageOptions,
   currentUserEmail,
 }: {
   admin: OrgAdminDashboard;
   kissTeamStrengthsNarrative?: string | null;
-  meetingTypeOptions: string[];
-  pipelineStageOptions: string[];
   currentUserEmail: string;
 }) {
   const { home, monEquipe, discPie, soncasPie, kissTeamRollup } = admin;
@@ -40,13 +35,6 @@ export function DashboardAdminShell({
         </div>
 
         <DashboardKpiCards home={home} />
-      </div>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-        <MeetingCreateDialog
-          meetingTypeOptions={meetingTypeOptions}
-          pipelineStageOptions={pipelineStageOptions}
-        />
       </div>
 
       <MonEquipeSection

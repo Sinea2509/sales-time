@@ -6,6 +6,59 @@ import {
   it,
 } from "@jest/globals";
 
+type JestFn = jest.Mock;
+
+type ZodFlattenMockResult = {
+  formErrors: string[];
+  fieldErrors: Record<string, string[] | undefined>;
+};
+
+// eslint-disable-next-line no-var
+var zodFlattenMock: (() => ZodFlattenMockResult) | null = null;
+
+jest.mock("zod", () => {
+  const actual = jest.requireActual<typeof import("zod")>("zod");
+  const origObject = actual.z.object.bind(actual.z);
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- test-only Zod proxy
+  function wrapSchema<T extends { safeParse: Function; refine?: Function }>(
+    schema: T,
+  ): T {
+    const origSafeParse = schema.safeParse.bind(schema);
+    schema.safeParse = (input: unknown) => {
+      const result = origSafeParse(input) as {
+        success: boolean;
+        error?: { flatten: () => ZodFlattenMockResult };
+      };
+      if (!result.success && zodFlattenMock) {
+        return {
+          success: false as const,
+          error: { flatten: () => zodFlattenMock!() },
+        };
+      }
+      return result;
+    };
+    if (typeof schema.refine === "function") {
+      const origRefine = schema.refine.bind(schema);
+      schema.refine = (...args: Parameters<typeof origRefine>) =>
+        wrapSchema(origRefine(...args));
+    }
+    return schema;
+  }
+
+  const zProxy = new Proxy(actual.z, {
+    get(target, prop, receiver) {
+      if (prop === "object") {
+        return (...args: Parameters<typeof actual.z.object>) =>
+          wrapSchema(origObject(...args));
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+
+  return { ...actual, z: zProxy };
+});
+
 // eslint-disable-next-line no-var
 var redirectMock: jest.Mock;
 jest.mock("next/navigation", () => {
@@ -16,6 +69,16 @@ jest.mock("next/navigation", () => {
       const err = new Error(`REDIRECT:${url}`);
       throw err;
     },
+  };
+});
+
+jest.mock("@/lib/website/normalize-website", () => {
+  const actual = jest.requireActual<
+    typeof import("@/lib/website/normalize-website")
+  >("@/lib/website/normalize-website");
+  return {
+    ...actual,
+    tryNormalizeWebsiteForOrgKey: jest.fn(actual.tryNormalizeWebsiteForOrgKey),
   };
 });
 
@@ -431,6 +494,7 @@ function form(entries: Record<string, string>): FormData {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  zodFlattenMock = null;
   prismaMock.organizationInvitation.update.mockReset();
   prismaMock.organizationInvitation.update.mockResolvedValue({});
   prismaMock.organizationMembership.upsert.mockReset();
@@ -507,6 +571,90 @@ describe("signUpAction", () => {
     });
   });
 
+  it("returns validation fallback for invalid sign-up fields", async () => {
+    const r = await signUpAction(
+      null,
+      form({
+        firstName: "",
+        lastName: "",
+        companyName: "Acme",
+        profileRole: "COMMERCIAL",
+        email: "a@b.co",
+        website: "https://example.com",
+        password: "password12",
+        confirmPassword: "password12",
+      }),
+    );
+    expect(r?.ok).toBe(false);
+    expect(r?.message).toBeTruthy();
+  });
+
+  it("returns EMPTY website hint when normalization fails empty", async () => {
+    const { tryNormalizeWebsiteForOrgKey } = jest.requireMock<{
+      tryNormalizeWebsiteForOrgKey: JestFn;
+    }>("@/lib/website/normalize-website");
+    (tryNormalizeWebsiteForOrgKey as JestFn).mockReturnValueOnce({
+      ok: false,
+      error: "EMPTY",
+    });
+    const r = await signUpAction(
+      null,
+      form({
+        firstName: "Ada",
+        lastName: "Lovelace",
+        companyName: "Acme",
+        profileRole: "COMMERCIAL",
+        email: "a@b.co",
+        website: "https://example.com",
+        password: "password12",
+        confirmPassword: "password12",
+      }),
+    );
+    expect(r).toEqual({
+      ok: false,
+      message: "Indiquez le site web de votre entreprise.",
+    });
+  });
+
+  it("returns email validation fallback when email invalid only", async () => {
+    const r = await signUpAction(
+      null,
+      form({
+        firstName: "Ada",
+        lastName: "Lovelace",
+        companyName: "Acme",
+        profileRole: "COMMERCIAL",
+        email: "not-email",
+        website: "https://example.com",
+        password: "password12",
+        confirmPassword: "password12",
+      }),
+    );
+    expect(r?.ok).toBe(false);
+    expect(r?.message).toBeTruthy();
+  });
+
+  it("returns generic validation fallback when flatten has no field errors", async () => {
+    zodFlattenMock = () => ({ formErrors: [], fieldErrors: {} });
+    const r = await signUpAction(
+      null,
+      form({
+        firstName: "",
+        lastName: "Lovelace",
+        companyName: "Acme",
+        profileRole: "COMMERCIAL",
+        email: "a@b.co",
+        website: "https://example.com",
+        password: "password12",
+        confirmPassword: "password12",
+      }),
+    );
+    expect(r).toEqual({
+      ok: false,
+      message: "Vérifiez les champs.",
+    });
+  });
+
   it("returns error for invalid website", async () => {
     const r = await signUpAction(
       null,
@@ -523,6 +671,24 @@ describe("signUpAction", () => {
     );
     expect(r?.ok).toBe(false);
     expect(r?.message).toContain("invalide");
+  });
+
+  it("returns error when website is empty after normalization", async () => {
+    const r = await signUpAction(
+      null,
+      form({
+        firstName: "Ada",
+        lastName: "Lovelace",
+        companyName: "Analytical Engines Ltd",
+        profileRole: "COMMERCIAL",
+        email: "a@b.co",
+        website: "   ",
+        password: "password12",
+        confirmPassword: "password12",
+      }),
+    );
+    expect(r?.ok).toBe(false);
+    expect(r?.message).toContain("site web");
   });
 
   it("returns error when company name is empty", async () => {
@@ -771,6 +937,26 @@ describe("signInAction", () => {
     expect(r?.message).toBe("E-mail ou mot de passe incorrect.");
   });
 
+  it("returns error when account is disabled", async () => {
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: "u1",
+      passwordHash: "h",
+      status: "DISABLED",
+      systemRoles: [],
+      organizationMemberships: [],
+    } as never);
+    const r = await signInAction(
+      null,
+      form({ email: "a@b.co", password: "password12" }),
+    );
+    expect(r?.message).toContain("désactivé");
+  });
+
+  it("returns password field error when password missing", async () => {
+    const r = await signInAction(null, form({ email: "a@b.co", password: "" }));
+    expect(r?.fieldErrors?.password).toBeTruthy();
+  });
+
   it("redirects to /company on success", async () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: "u1",
@@ -889,6 +1075,34 @@ describe("forgotPasswordAction", () => {
 });
 
 describe("resetPasswordAction", () => {
+  it("returns validation error for invalid token length", async () => {
+    const r = await resetPasswordAction(
+      null,
+      form({
+        token: "short",
+        password: "password12",
+        confirm: "password12",
+      }),
+    );
+    expect(r?.ok).toBe(false);
+    expect(r?.message).toBeTruthy();
+  });
+
+  it("returns validation error when passwords do not match", async () => {
+    const r = await resetPasswordAction(
+      null,
+      form({
+        token: "x".repeat(12),
+        password: "password12",
+        confirm: "other-password",
+      }),
+    );
+    expect(r).toEqual({
+      ok: false,
+      message: "Les mots de passe ne correspondent pas.",
+    });
+  });
+
   it("returns validation error for short password", async () => {
     const r = await resetPasswordAction(
       null,
@@ -1177,6 +1391,32 @@ describe("onboarding steps", () => {
     expect(r.ok === false && r.message).toMatch(/entreprise|inscription/i);
   });
 
+  it("submitOnboardingStep1 fails when onboarding profile is missing", async () => {
+    findUserWithOnboardingByUserIdMock.mockResolvedValue({
+      ...domainUser,
+      registerProfileCompletedAt: new Date(),
+      onboardingProfile: null,
+    });
+    const r = await submitOnboardingStep1({
+      industrySector: "IT",
+      commercialTeamSize: null,
+      averageSalesCycle: null,
+      averageDealSize: null,
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it("submitOnboardingStep1 fails validation for invalid payload", async () => {
+    const r = await submitOnboardingStep1({
+      industrySector: "x".repeat(300),
+      commercialTeamSize: null,
+      averageSalesCycle: null,
+      averageDealSize: null,
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.fieldErrors).toBeDefined();
+  });
+
   it("submitOnboardingStep1 persists via repository using stored company name", async () => {
     updateAfterStep1Mock.mockResolvedValue(undefined);
     const r = await submitOnboardingStep1({
@@ -1193,6 +1433,14 @@ describe("onboarding steps", () => {
       averageSalesCycle: null,
       averageDealSize: null,
     });
+  });
+
+  it("submitOnboardingStep2 fails validation for invalid payload", async () => {
+    const r = await submitOnboardingStep2({
+      objections: ["x".repeat(400)],
+      keyArguments: [],
+    });
+    expect(r.ok).toBe(false);
   });
 
   it("submitOnboardingStep2 persists objections and arguments", async () => {
@@ -1247,6 +1495,48 @@ describe("onboarding steps", () => {
     expect(r.ok === false && r.message).toContain("site web");
   });
 
+  it("submitOnboardingStep4 sanitizes invite message and skips self-invite", async () => {
+    onboardingCompletionStep4Mock.mockResolvedValueOnce({
+      ok: true,
+      organizationId: "org-1",
+      companyName: "Ma Société",
+      mailPayloads: [],
+    });
+    setActiveOrganizationCookieMock.mockResolvedValue(undefined);
+    await expect(
+      submitOnboardingStep4({
+        invites: [
+          { email: "a@b.co", role: "MEMBER" },
+          { email: "a@b.co", role: "ADMIN" },
+        ],
+        inviteMessage: "<b>Hello</b>",
+      }),
+    ).rejects.toThrow("REDIRECT:/company");
+    expect(onboardingCompletionStep4Mock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inviteMessage: expect.any(String),
+        invites: [],
+      }),
+    );
+  });
+
+  it("submitOnboardingStep4 fails validation for invalid invite email", async () => {
+    const r = await submitOnboardingStep4({
+      invites: [{ email: "not-an-email", role: "MEMBER" }],
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it("submitOnboardingStep4 returns generic error for unknown failure", async () => {
+    onboardingCompletionStep4Mock.mockResolvedValueOnce({
+      ok: false,
+      error: "UNKNOWN",
+    });
+    const r = await submitOnboardingStep4({ invites: [] });
+    expect(r.ok).toBe(false);
+    expect(r.ok === false && r.message).toContain("erreur");
+  });
+
   it("submitOnboardingStep4 creates org and redirects to /company", async () => {
     onboardingCompletionStep4Mock.mockResolvedValueOnce({
       ok: true,
@@ -1288,6 +1578,19 @@ describe("submitOnboardingStep1 when session missing", () => {
         commercialTeamSize: null,
         averageSalesCycle: null,
         averageDealSize: null,
+      }),
+    ).rejects.toThrow("REDIRECT:/sign-in");
+  });
+});
+
+describe("submitOnboarding when user row missing", () => {
+  it("redirects to sign-in from step 2", async () => {
+    getAuthenticatedPrincipalMock.mockResolvedValue({ userId: "u1" });
+    findByIdMock.mockResolvedValue(null);
+    await expect(
+      submitOnboardingStep2({
+        objections: ["Prix"],
+        keyArguments: ["ROI"],
       }),
     ).rejects.toThrow("REDIRECT:/sign-in");
   });

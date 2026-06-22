@@ -2,6 +2,7 @@ import type { ContactRepositoryPort } from "@/src/core/ports/contact-repository-
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import type { MeetingSourceType } from "@/src/core/domain/meeting-status";
+import { resolveMeetingPersonLink } from "@/src/core/application/resolve-meeting-person-link";
 
 export type UpdateMeetingResult =
   | { ok: true; meetingId: string }
@@ -45,14 +46,30 @@ export async function updateMeetingForOrg(
     return { ok: false, error: "NOT_FOUND" };
   }
 
-  const personId =
+  const explicitPersonId =
     input.personId != null && String(input.personId).trim() !== ""
       ? String(input.personId).trim()
       : null;
 
-  if (personId) {
+  if (explicitPersonId) {
     const person = await deps.contacts.findById({
-      id: personId,
+      id: explicitPersonId,
+      organizationId: input.organizationId,
+    });
+    if (!person) {
+      return { ok: false, error: "INVALID_PERSON" };
+    }
+  }
+
+  const resolvedPerson = await resolveMeetingPersonLink(deps.contacts, {
+    organizationId: input.organizationId,
+    personId: explicitPersonId,
+    prospectName: input.prospectName,
+  });
+
+  if (resolvedPerson.personId && resolvedPerson.personId !== explicitPersonId) {
+    const person = await deps.contacts.findById({
+      id: resolvedPerson.personId,
       organizationId: input.organizationId,
     });
     if (!person) {
@@ -63,8 +80,8 @@ export async function updateMeetingForOrg(
   const updated = await deps.meetings.updateMeeting({
     id: input.meetingId,
     organizationId: input.organizationId,
-    personId,
-    prospectName: input.prospectName.trim(),
+    personId: resolvedPerson.personId,
+    prospectName: resolvedPerson.prospectName,
     meetingAt: input.meetingAt,
     durationMin: input.durationMin,
     meetingType: input.meetingType,

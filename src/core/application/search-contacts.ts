@@ -1,3 +1,4 @@
+import { excludeProspectCompanyAliasContacts } from "@/src/core/domain/prospect-list-identity";
 import type { ContactRepositoryPort } from "@/src/core/ports/contact-repository-port";
 
 export async function searchContactsByPrefix(
@@ -8,9 +9,15 @@ export async function searchContactsByPrefix(
     limit?: number;
   },
 ) {
-  return deps.contacts.searchByPrefix({
-    organizationId: input.organizationId,
-    prefix: input.prefix,
-    limit: input.limit ?? 10,
-  });
+  const [rows, companyAliases] = await Promise.all([
+    deps.contacts.searchByPrefix({
+      organizationId: input.organizationId,
+      prefix: input.prefix,
+      limit: input.limit ?? 10,
+    }),
+    deps.contacts.findProspectCompanyAliasByPersonId({
+      organizationId: input.organizationId,
+    }),
+  ]);
+  return excludeProspectCompanyAliasContacts(rows, companyAliases);
 }
