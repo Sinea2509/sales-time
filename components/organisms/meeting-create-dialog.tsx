@@ -22,6 +22,9 @@ type MeetingFormOptions = {
 type MeetingCreateDialogProps = MeetingFormOptions & {
   defaultOpen?: boolean;
   className?: string;
+  /** Preserved for in-app feedback tooling (e.g. dashboard CTA). */
+  dataFeedbackId?: string;
+  showPlusIcon?: boolean;
 };
 
 export function MeetingCreateDialog({
@@ -29,6 +32,8 @@ export function MeetingCreateDialog({
   pipelineStageOptions: initialPipelineStageOptions,
   defaultOpen = false,
   className,
+  dataFeedbackId,
+  showPlusIcon = true,
 }: MeetingCreateDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(defaultOpen);
@@ -59,9 +64,13 @@ export function MeetingCreateDialog({
     <>
       <BrandCtaButton
         onClick={openDialog}
+        variant="primary"
         className={cn("gap-1", className)}
+        data-feedback-id={dataFeedbackId}
       >
-        <span className="text-lg leading-none">+</span>
+        {showPlusIcon ? (
+          <span className="text-lg leading-none">+</span>
+        ) : null}
         Analyser un RDV
       </BrandCtaButton>
 

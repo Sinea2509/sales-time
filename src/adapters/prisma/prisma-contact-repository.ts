@@ -234,6 +234,28 @@ export class PrismaContactRepository implements ContactRepositoryPort {
     }
   }
 
+  async deleteByIdForOrg(input: {
+    id: string;
+    organizationId: string;
+  }): Promise<"deleted" | "not_found" | "has_meetings"> {
+    const existing = await this.db.person.findFirst({
+      where: { id: input.id, organizationId: input.organizationId },
+      select: { id: true },
+    });
+    if (!existing) return "not_found";
+
+    const linkedMeetings = await this.db.meeting.count({
+      where: {
+        personId: input.id,
+        organizationId: input.organizationId,
+      },
+    });
+    if (linkedMeetings > 0) return "has_meetings";
+
+    await this.db.person.delete({ where: { id: input.id } });
+    return "deleted";
+  }
+
   async listForOrg(input: {
     organizationId: string;
     search?: string;

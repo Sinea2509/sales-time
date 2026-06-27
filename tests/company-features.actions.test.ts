@@ -7,6 +7,7 @@ import {
 import {
   createContactInlineAction,
   createContactAction,
+  deleteContactAction,
   searchContactsPickerAction,
   updateContactAction,
 } from "@/app/[locale]/company/contacts/actions";
@@ -207,6 +208,7 @@ jest.mock("@/lib/application-deps", () => {
       create: jest.fn(),
       findById: jest.fn(),
       update: jest.fn(),
+      deleteByIdForOrg: jest.fn(),
     },
     meetingsMock: {
       searchMeetingsForOrg: jest.fn().mockResolvedValue([]),
@@ -787,6 +789,40 @@ describe("contacts actions", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith(
       `/company/contacts/${PERSON_ID}`,
     );
+  });
+
+  it("deleteContactAction validates contact id", async () => {
+    const result = await deleteContactAction("bad");
+    expect(result).toEqual({ ok: false, error: "VALIDATION" });
+  });
+
+  it("deleteContactAction rejects guests", async () => {
+    getAuthenticatedPrincipalMock.mockResolvedValue(null);
+    const result = await deleteContactAction(PERSON_ID);
+    expect(result).toEqual({ ok: false, error: "UNAUTHENTICATED" });
+  });
+
+  it("deleteContactAction returns not found", async () => {
+    contactsMock.deleteByIdForOrg.mockResolvedValue("not_found");
+    const result = await deleteContactAction(PERSON_ID);
+    expect(result).toEqual({ ok: false, error: "NOT_FOUND" });
+  });
+
+  it("deleteContactAction blocks delete when meetings are linked", async () => {
+    contactsMock.deleteByIdForOrg.mockResolvedValue("has_meetings");
+    const result = await deleteContactAction(PERSON_ID);
+    expect(result).toEqual({ ok: false, error: "HAS_MEETINGS" });
+  });
+
+  it("deleteContactAction deletes contact", async () => {
+    contactsMock.deleteByIdForOrg.mockResolvedValue("deleted");
+    const result = await deleteContactAction(PERSON_ID);
+    expect(result).toEqual({ ok: true });
+    expect(contactsMock.deleteByIdForOrg).toHaveBeenCalledWith({
+      id: PERSON_ID,
+      organizationId: ORG_ID,
+    });
+    expect(revalidatePathMock).toHaveBeenCalledWith("/company/contacts");
   });
 });
 

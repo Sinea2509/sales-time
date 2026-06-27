@@ -7,6 +7,7 @@ import { getEnv } from "@/lib/env";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import { parseStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import {
   appendOrganizationKissPromptAppendix,
@@ -115,15 +116,26 @@ export default async function DashboardHomePage({
   }
 
   const sellerId = actor.internalUserId!;
-  const home = await getOrgDashboardHome(deps, {
-    organizationId: actor.activeOrganizationId,
-    statsWindowDays,
-    sellerUserId: sellerId,
-  });
+  const [home, orgSettings] = await Promise.all([
+    getOrgDashboardHome(deps, {
+      organizationId: actor.activeOrganizationId,
+      statsWindowDays,
+      sellerUserId: sellerId,
+    }),
+    deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
+  ]);
+  const { meetingTypeOptions, pipelineStageOptions } =
+    orgMeetingFormOptionsFromSettings(orgSettings);
 
   return (
     <div className="space-y-6">
-      {!home ? null : <DashboardHomeShell home={home} />}
+      {!home ? null : (
+        <DashboardHomeShell
+          home={home}
+          meetingTypeOptions={meetingTypeOptions}
+          pipelineStageOptions={pipelineStageOptions}
+        />
+      )}
     </div>
   );
 }

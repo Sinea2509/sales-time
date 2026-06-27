@@ -74,6 +74,11 @@ export interface ContactRepositoryPort {
     patch: ContactUpdatePatch;
   }): Promise<ContactSummaryRow | null>;
 
+  deleteByIdForOrg(input: {
+    id: string;
+    organizationId: string;
+  }): Promise<"deleted" | "not_found" | "has_meetings">;
+
   listForOrg(input: {
     organizationId: string;
     search?: string;

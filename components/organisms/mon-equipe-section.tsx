@@ -5,6 +5,7 @@ import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { buttonVariants } from "@/components/ui/button";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
+import { formatNoteOn5 } from "@/lib/format-note-on5";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
@@ -63,7 +64,7 @@ export function MonEquipeSection({
       </div>
       <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px] text-left text-sm">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
                 <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
@@ -81,6 +82,12 @@ export function MonEquipeSection({
                 >
                   TAM
                 </DataTableHead>
+                <DataTableHead
+                  className="px-4 py-3.5 tabular-nums dark:text-zinc-500"
+                  title="Moyenne SalesScore convertie sur 5 (analyses SONCAS sur la période)"
+                >
+                  Note globale
+                </DataTableHead>
                 <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
                   Posture
                 </DataTableHead>
@@ -92,7 +99,7 @@ export function MonEquipeSection({
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {monEquipe.rows.length === 0 ? (
                 <TableEmptyRow
-                  colSpan={5}
+                  colSpan={6}
                   message="Aucun membre dans cette organisation."
                   size="large"
                 />
@@ -136,6 +143,9 @@ export function MonEquipeSection({
                         {row.tamMinutesAvg != null
                           ? formatDurationHoursMinutes(row.tamMinutesAvg)
                           : "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3.5 tabular-nums">
+                        {formatNoteOn5(row.noteGlobaleOn5)}
                       </td>
                       <td className="text-muted-foreground max-w-[10rem] truncate px-4 py-3.5 dark:text-zinc-400">
                         {row.postureLabel ?? "—"}

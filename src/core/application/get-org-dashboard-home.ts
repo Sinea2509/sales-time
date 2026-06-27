@@ -12,6 +12,7 @@ import {
   previousMeetingAtWindowStart,
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
+import { noteGlobaleOn5FromSalesScores } from "@/src/core/domain/note-globale-on5";
 import type {
   MeetingRepositoryPort,
   RecentMeetingListRow,
@@ -58,9 +59,7 @@ function noteGlobaleOn5ForMeetings(
   const scores = meetings
     .map((m) => m.salesScore)
     .filter((s): s is number => s != null);
-  if (scores.length === 0) return null;
-  const avg = scores.reduce((acc, s) => acc + s, 0) / scores.length;
-  return Math.round((avg / 20) * 10) / 10;
+  return noteGlobaleOn5FromSalesScores(scores);
 }
 
 export async function getOrgDashboardHome(

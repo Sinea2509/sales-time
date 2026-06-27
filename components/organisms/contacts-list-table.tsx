@@ -1,4 +1,5 @@
 import { ProspectIdentityCell } from "@/components/molecules/prospect-identity-cell";
+import { ContactRowActions } from "@/components/organisms/contact-row-actions";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import {
   Table,
@@ -8,17 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-export type ContactListRow = {
-  id: string;
-  displayName: string;
-  company: string | null;
-  email: string | null;
-  phone: string | null;
-};
+import type { ContactSummaryRow } from "@/src/core/ports/contact-repository-port";
 
 type ContactsListTableProps = {
-  rows: ContactListRow[];
+  rows: ContactSummaryRow[];
 };
 
 function formatContactField(value: string | null | undefined): string {
@@ -36,12 +30,13 @@ export function ContactsListTable({ rows }: ContactsListTableProps) {
             <TableHead>Contact</TableHead>
             <TableHead>E-mail</TableHead>
             <TableHead>Téléphone</TableHead>
+            <TableHead className="w-14 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.length === 0 ? (
             <TableEmptyRow
-              colSpan={4}
+              colSpan={5}
               message="Aucun contact pour le moment. Créez-en un ou importez-les via un rendez-vous."
             />
           ) : (
@@ -61,6 +56,9 @@ export function ContactsListTable({ rows }: ContactsListTableProps) {
                 </TableCell>
                 <TableCell className="max-w-[10rem] truncate">
                   {formatContactField(r.phone)}
+                </TableCell>
+                <TableCell className="text-right align-middle">
+                  <ContactRowActions contact={r} />
                 </TableCell>
               </TableRow>
             ))

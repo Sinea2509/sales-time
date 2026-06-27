@@ -5,18 +5,31 @@ import { useState, useTransition } from "react";
 import { updateContactAction } from "@/app/[locale]/company/contacts/actions";
 import type { ContactSummaryRow } from "@/src/core/ports/contact-repository-port";
 import { Button } from "@/components/ui/button";
+import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
-export function ContactEditForm({ contact }: { contact: ContactSummaryRow }) {
+export function ContactEditForm({
+  contact,
+  variant = "page",
+  onSuccess,
+  onCancel,
+}: {
+  contact: ContactSummaryRow;
+  variant?: "page" | "dialog";
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
+  const isDialog = variant === "dialog";
 
   return (
     <form
-      className="max-w-xl space-y-4"
+      className={cn("space-y-4", !isDialog && "max-w-xl")}
       action={(fd) => {
         setMessage(null);
         startTransition(async () => {
@@ -32,6 +45,10 @@ export function ContactEditForm({ contact }: { contact: ContactSummaryRow }) {
             setMessage(
               "Enregistrement impossible. Vérifiez les champs ou le nom dupliqué.",
             );
+            return;
+          }
+          if (onSuccess) {
+            onSuccess();
             return;
           }
           setMessage("Enregistré.");
@@ -110,13 +127,33 @@ export function ContactEditForm({ contact }: { contact: ContactSummaryRow }) {
           {message}
         </p>
       ) : null}
-      <Button
-        type="submit"
-        disabled={pending}
-        className="bg-brand text-white hover:bg-brand-hover"
-      >
-        {pending ? "Enregistrement…" : "Mettre à jour"}
-      </Button>
+      {isDialog ? (
+        <DialogFooter className="-mx-4 -mb-4 mt-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={pending}
+            onClick={onCancel}
+          >
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            disabled={pending}
+            className="bg-brand text-white hover:bg-brand-hover"
+          >
+            {pending ? "Enregistrement…" : "Mettre à jour"}
+          </Button>
+        </DialogFooter>
+      ) : (
+        <Button
+          type="submit"
+          disabled={pending}
+          className="bg-brand text-white hover:bg-brand-hover"
+        >
+          {pending ? "Enregistrement…" : "Mettre à jour"}
+        </Button>
+      )}
     </form>
   );
 }

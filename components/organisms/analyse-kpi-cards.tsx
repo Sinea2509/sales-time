@@ -5,16 +5,8 @@ import { KpiTile } from "@/components/molecules/kpi-tile";
 import {
   KpiVsPreviousBadge,
 } from "@/components/molecules/trend-pill";
+import { formatNoteOn5 } from "@/lib/format-note-on5";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
-
-function formatNoteOn5(value: number | null): string {
-  if (value == null) return "—";
-  const text =
-    Math.abs(value % 1) < 0.05
-      ? String(Math.round(value))
-      : String(value).replace(".", ",");
-  return `${text}/5`;
-}
 
 export function AnalyseKpiCards({
   home,

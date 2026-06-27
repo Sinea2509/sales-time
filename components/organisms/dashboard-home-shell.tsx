@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import { ProspectIdentityCell } from "@/components/molecules/prospect-identity-cell";
-import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
+import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import {
@@ -33,7 +33,15 @@ function formatPotentialEuro(amount: number | null): string {
   return euroFormat.format(amount);
 }
 
-export function DashboardHomeShell({ home }: { home: OrgDashboardHome }) {
+export function DashboardHomeShell({
+  home,
+  meetingTypeOptions,
+  pipelineStageOptions,
+}: {
+  home: OrgDashboardHome;
+  meetingTypeOptions: string[];
+  pipelineStageOptions: string[];
+}) {
   return (
     <div className="space-y-8" data-feedback-id="dashboard-home">
       <div className="space-y-3">
@@ -52,14 +60,13 @@ export function DashboardHomeShell({ home }: { home: OrgDashboardHome }) {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-        <BrandCtaLink
-          href="/company/rendez-vous/nouveau"
-          variant="outline"
-          className="h-10 rounded-md"
-          data-feedback-id="dashboard-prepare-rdv"
-        >
-          Préparer un RDV
-        </BrandCtaLink>
+        <MeetingCreateDialog
+          meetingTypeOptions={meetingTypeOptions}
+          pipelineStageOptions={pipelineStageOptions}
+          showPlusIcon={false}
+          dataFeedbackId="dashboard-prepare-rdv"
+          className="h-10 rounded-md shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_2px_8px_rgba(108,77,255,0.35)]"
+        />
       </div>
 
       <section className="space-y-3">

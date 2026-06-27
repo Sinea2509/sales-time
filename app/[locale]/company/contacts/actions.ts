@@ -153,3 +153,28 @@ export async function updateContactAction(
   revalidatePath(`/company/contacts/${idParsed.data}`);
   return { ok: true as const };
 }
+
+export async function deleteContactAction(id: string) {
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
+
+  const idParsed = z.string().cuid().safeParse(id);
+  if (!idParsed.success) {
+    return { ok: false as const, error: "VALIDATION" as const };
+  }
+
+  const result = await actor.deps.contacts.deleteByIdForOrg({
+    id: idParsed.data,
+    organizationId: actor.organizationId,
+  });
+
+  if (result === "not_found") {
+    return { ok: false as const, error: "NOT_FOUND" as const };
+  }
+  if (result === "has_meetings") {
+    return { ok: false as const, error: "HAS_MEETINGS" as const };
+  }
+
+  revalidatePath("/company/contacts");
+  return { ok: true as const };
+}

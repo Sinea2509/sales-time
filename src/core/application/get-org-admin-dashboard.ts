@@ -3,6 +3,7 @@ import {
   computeTeamSoncasPie,
 } from "@/src/core/domain/org-profile-distribution-pie";
 import { averageTamMinutes } from "@/src/core/domain/dashboard-tam-tuc";
+import { noteGlobaleOn5FromSalesScores } from "@/src/core/domain/note-globale-on5";
 import { soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { kissCoachingBulletsFromMeetings } from "@/src/core/domain/kiss-coaching-bullets-from-meetings";
@@ -42,6 +43,8 @@ export type OrgAdminMonEquipeRow = {
   coachesCount: number;
   /** TAM — temps d'appel moyen (min) sur les RDV connectés du membre. */
   tamMinutesAvg: number | null;
+  /** Note globale moyenne sur 5 (SalesScore SONCAS converti). */
+  noteGlobaleOn5: number | null;
   /** Levier SONCAS dominant le plus fréquent sur les RDV analysés (SONCAS) du membre. */
   postureLabel: string | null;
 };
@@ -109,6 +112,7 @@ function aggregateSellerWindowStats(
     coachesCount: number;
     soncasDominants: string[];
     connectedDurations: number[];
+    salesScores: number[];
   }
 > {
   const map = new Map<
@@ -118,6 +122,7 @@ function aggregateSellerWindowStats(
       coachesCount: number;
       soncasDominants: string[];
       connectedDurations: number[];
+      salesScores: number[];
     }
   >();
   for (const row of meetings) {
@@ -126,9 +131,11 @@ function aggregateSellerWindowStats(
       coachesCount: 0,
       soncasDominants: [] as string[],
       connectedDurations: [] as number[],
+      salesScores: [] as number[],
     };
     cur.nbRdvs += 1;
     if (row.hasKiss) cur.coachesCount += 1;
+    if (row.salesScore != null) cur.salesScores.push(row.salesScore);
     if (row.durationMin != null && row.durationMin > 0) {
       cur.connectedDurations.push(row.durationMin);
     }
@@ -161,7 +168,7 @@ function modeSoncasDominantLabel(dominants: string[]): string | null {
   return label;
 }
 
-function buildMonEquipePage(input: {
+export function buildMonEquipePage(input: {
   members: Array<{
     membershipId: string;
     userId: string;
@@ -179,6 +186,7 @@ function buildMonEquipePage(input: {
       coachesCount: 0,
       soncasDominants: [] as string[],
       connectedDurations: [] as number[],
+      salesScores: [] as number[],
     };
     const tamMinutesAvg = averageTamMinutes(s.connectedDurations);
     return {
@@ -190,6 +198,7 @@ function buildMonEquipePage(input: {
       nbRdvs: s.nbRdvs,
       coachesCount: s.coachesCount,
       tamMinutesAvg,
+      noteGlobaleOn5: noteGlobaleOn5FromSalesScores(s.salesScores),
       postureLabel: modeSoncasDominantLabel(s.soncasDominants),
     };
   });

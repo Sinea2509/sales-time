@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import type { OrgDashboardHome } from "./get-org-dashboard-home";
 import {
   buildKissTeamRollupFromMeetings,
+  buildMonEquipePage,
   buildOrgAdminImprovementBullets,
   buildOrgAdminProgressBullets,
 } from "./get-org-admin-dashboard";
@@ -85,5 +86,42 @@ describe("buildKissTeamRollupFromMeetings", () => {
     expect(rollup.improveBullets).toEqual(["Poser plus de questions ouvertes"]);
     expect(rollup.stopBullets).toEqual(["Couper la parole"]);
     expect(rollup.startBullets).toEqual(["Envoyer un récap sous 24 h"]);
+  });
+});
+
+describe("buildMonEquipePage", () => {
+  it("computes note globale on 5 per seller from sales scores", () => {
+    const page = buildMonEquipePage({
+      members: [
+        {
+          membershipId: "m1",
+          userId: "u1",
+          email: "a@test.fr",
+          firstName: "Alice",
+          lastName: "A",
+        },
+      ],
+      meetings: [
+        {
+          sellerUserId: "u1",
+          salesScore: 80,
+          hasKiss: true,
+          durationMin: 30,
+          latestSoncasResult: { dominant: "securite" },
+        } as RecentMeetingListRow,
+        {
+          sellerUserId: "u1",
+          salesScore: 60,
+          hasKiss: false,
+          durationMin: 20,
+          latestSoncasResult: { dominant: "securite" },
+        } as RecentMeetingListRow,
+      ],
+      page: 1,
+    });
+
+    expect(page.rows).toHaveLength(1);
+    expect(page.rows[0]?.noteGlobaleOn5).toBe(3.5);
+    expect(page.rows[0]?.coachesCount).toBe(1);
   });
 });
