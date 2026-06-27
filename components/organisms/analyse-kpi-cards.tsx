@@ -4,6 +4,7 @@ import { KPI_TAM_HINT, KPI_TUC_HINT } from "@/lib/kpi-hints";
 import { KpiTile } from "@/components/molecules/kpi-tile";
 import { KpiVsPreviousBadge } from "@/components/molecules/trend-pill";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
+import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 import { MIN_RDV_FOR_STATS } from "@/src/core/domain/dashboard-stats-window";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 
@@ -77,7 +78,8 @@ export function AnalyseKpiCards({
 
       <KpiTile
         icon={Star}
-        label="Note globale sur 5"
+        label={SALES_SCORE_LABEL}
+        footer="Moyenne sur 5"
         trend={
           <KpiVsPreviousBadge
             delta={home.noteGlobaleTrendPercent}

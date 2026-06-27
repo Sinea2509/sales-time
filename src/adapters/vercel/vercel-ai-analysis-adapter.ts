@@ -1,8 +1,8 @@
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import {
-  discResultSchema,
-  soncasResultSchema,
+  discAnalysisOutputSchema,
+  soncasAnalysisOutputSchema,
 } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
@@ -48,7 +48,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
 
     const { object, usage } = await generateObject({
       model: input.model,
-      schema: soncasResultSchema,
+      schema: soncasAnalysisOutputSchema,
       system: systemPrompt,
       prompt: userPrompt,
     });
@@ -78,7 +78,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
 
     const { object, usage } = await generateObject({
       model: input.model,
-      schema: discResultSchema,
+      schema: discAnalysisOutputSchema,
       system: systemPrompt,
       prompt: userPrompt,
     });

@@ -6,6 +6,7 @@ import {
   useItemTooltip,
 } from "@mui/x-charts/ChartsTooltip";
 import { useSeries } from "@mui/x-charts/hooks";
+import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 
 export type QualificationMatrixScatterTooltipMeta = {
   contactName: string;
@@ -58,7 +59,7 @@ function QualificationMatrixTooltipContent() {
         </span>
       </p>
       <p>
-        <span className="text-muted-foreground">Sales Score : </span>
+        <span className="text-muted-foreground">{SALES_SCORE_LABEL} : </span>
         <span className="font-medium tabular-nums">
           {meta.salesScore ?? "—"}
         </span>

@@ -1,6 +1,8 @@
 import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
+import { ProfileActionableAdviceSection } from "@/components/molecules/profile-actionable-advice-section";
 import { cardSubsectionTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
+import type { ProfileActionableAdvice } from "@/src/core/domain/analysis-result-zod";
 
 type ProfileBarItem = {
   key: string;
@@ -32,15 +34,19 @@ function DominantProfileTag({
 function ProfilePanel({
   title,
   bars,
+  actionableAdvice,
   analysisPending,
   pendingLabel,
   unavailableLabel,
+  legacyAdviceHint,
 }: {
   title: string;
   bars: ProfileBarItem[] | null;
+  actionableAdvice?: ProfileActionableAdvice | null;
   analysisPending: boolean;
   pendingLabel: string;
   unavailableLabel: string;
+  legacyAdviceHint: string;
 }) {
   const dominant = bars?.[0] ?? null;
 
@@ -62,6 +68,13 @@ function ProfilePanel({
           {analysisPending ? pendingLabel : unavailableLabel}
         </p>
       )}
+      {actionableAdvice ? (
+        <ProfileActionableAdviceSection advice={actionableAdvice} />
+      ) : bars?.length ? (
+        <p className="text-muted-foreground border-t border-zinc-100 pt-4 text-xs leading-relaxed dark:border-zinc-800">
+          {legacyAdviceHint}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -70,10 +83,14 @@ function ProfilePanel({
 export function InterlocutorProfileTabs({
   discBars,
   soncasBars,
+  discActionableAdvice = null,
+  soncasActionableAdvice = null,
   analysisPending = false,
 }: {
   discBars: ProfileBarItem[] | null;
   soncasBars: ProfileBarItem[] | null;
+  discActionableAdvice?: ProfileActionableAdvice | null;
+  soncasActionableAdvice?: ProfileActionableAdvice | null;
   analysisPending?: boolean;
 }) {
   return (
@@ -81,16 +98,20 @@ export function InterlocutorProfileTabs({
       <ProfilePanel
         title="Profil DISC"
         bars={discBars}
+        actionableAdvice={discActionableAdvice}
         analysisPending={analysisPending}
         pendingLabel="Analyse DISC en cours…"
         unavailableLabel="Profil DISC indisponible pour ce rendez-vous."
+        legacyAdviceHint="Relancez l'analyse pour obtenir des conseils actionnables (ce que ça veut dire, comment lui parler, quoi éviter)."
       />
       <ProfilePanel
         title="Profil SONCAS"
         bars={soncasBars}
+        actionableAdvice={soncasActionableAdvice}
         analysisPending={analysisPending}
         pendingLabel="Analyse SONCAS en cours…"
         unavailableLabel="Profil SONCAS indisponible pour ce rendez-vous."
+        legacyAdviceHint="Relancez l'analyse pour obtenir des conseils actionnables (ce que ça veut dire, comment lui parler, quoi éviter)."
       />
     </div>
   );

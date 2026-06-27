@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
 import { prospectInitials } from "@/lib/prospect-initials";
+import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import type {
@@ -84,9 +85,9 @@ export function MonEquipeSection({
                 </DataTableHead>
                 <DataTableHead
                   className="px-4 py-3.5 tabular-nums dark:text-zinc-500"
-                  title="Moyenne SalesScore convertie sur 5 (analyses SONCAS sur la période)"
+                  title="Moyenne SalesScore sur 5 (analyses SONCAS sur la période)"
                 >
-                  Note globale
+                  {SALES_SCORE_LABEL}
                 </DataTableHead>
                 <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
                   Posture

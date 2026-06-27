@@ -59,6 +59,8 @@ export function MeetingInterlocutorSection({
           <InterlocutorProfileTabs
             discBars={discBars}
             soncasBars={soncasBars}
+            discActionableAdvice={discResult?.actionableAdvice ?? null}
+            soncasActionableAdvice={soncasResult?.actionableAdvice ?? null}
             analysisPending={analysisPending}
           />
         </CardContent>

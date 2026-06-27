@@ -359,7 +359,7 @@ export function buildOrgAdminProgressBullets(home: OrgDashboardHome): string[] {
   }
   if (home.noteGlobaleTrendPoints != null && home.noteGlobaleTrendPoints > 0) {
     out.push(
-      `Note globale moyenne : +${home.noteGlobaleTrendPoints} point(s) sur 5 vs la période précédente.`,
+      `SalesScore moyen : +${home.noteGlobaleTrendPoints} point(s) sur 5 vs la période précédente.`,
     );
   }
   if (out.length === 0) {

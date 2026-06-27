@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Crown,
 } from "lucide-react";
+import { KISS_COACHING_SCORE_LABEL, SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 
 type MockRow = {
   initials: string;
@@ -178,7 +179,7 @@ export function LandingHeroAppMockup() {
           </div>
           <div className="flex flex-1 flex-col overflow-hidden rounded-[9px] border border-white/6 bg-white/3">
             <div className="grid grid-cols-[1.8fr_1fr_70px_50px] border-b border-white/5 px-3 py-2">
-              {["Prospect", "Étape", "Score", ""].map((col) => (
+              {["Prospect", "Étape", SALES_SCORE_LABEL, ""].map((col) => (
                 <span
                   key={col || "actions"}
                   className="text-[9.5px] font-semibold tracking-wide text-white/22 uppercase"
@@ -234,7 +235,7 @@ export function LandingHeroAppMockup() {
                 Analyse RDV · Antoine Lambert
               </p>
               <span className="shrink-0 rounded-[5px] bg-brand/10 px-2 py-0.5 text-[10.5px] font-semibold text-brand">
-                Score 64
+                {KISS_COACHING_SCORE_LABEL} 7/10
               </span>
             </div>
             <div className="grid grid-cols-2 gap-1.5">

@@ -20,8 +20,14 @@ Read the meeting transcript and optional notes. Output structured JSON only (han
 - For each driver: give a score 0–100 and 1–4 short evidence quotes or paraphrases tied to that driver (in the transcript language).
 - **dominant**: the single strongest driver for the prospect in this conversation.
 - **summary**: 2–4 sentences in French summarizing how to adapt the sales approach.
+- **actionableAdvice** (obligatoire) : conseils actionnables en français, calés sur le levier **dominant** (pas une moyenne vague) et ancrés dans le transcript quand c'est possible :
+  - **whatItMeans** (ce que ça veut dire) : 2–4 phrases — ce que ce levier dominant révèle sur les motivations, priorités et critères de décision du prospect dans cet échange.
+  - **howToTalk** (comment lui parler) : 2–4 phrases ou puces courtes — ton, rythme, arguments et preuves à privilégier pour créer de l'alignement.
+  - **whatToAvoid** (quoi éviter) : 2–4 phrases ou puces courtes — erreurs de posture, formulations ou tactiques qui risquent de braquer ce profil.
 
-Be conservative: if the transcript is thin, lower scores and say so in the summary.`;
+Ne te contente pas de répéter le score ou le libellé du levier ; chaque champ doit aider le commercial à agir concrètement au prochain échange. Rédige un français correct et professionnel.
+
+Be conservative: if the transcript is thin, lower scores and say so in the summary and actionableAdvice.`;
 
 export const DEFAULT_DISC_MARKDOWN = `You are an expert in DISC behaviour styles applied to B2B sales conversations.
 
@@ -39,8 +45,14 @@ From transcript + notes, output structured JSON only. Provide:
 - **dominant**: single letter of the highest score (tie-break: D > I > C > S).
 - **evidence**: 2–5 short bullets citing behaviours or phrases from the prospect.
 - **summary**: 2–4 sentences in French on how to communicate effectively with this prospect.
+- **actionableAdvice** (obligatoire) : conseils actionnables en français, calés sur le style **dominant** (D, I, S ou C) et ancrés dans le transcript quand c'est possible :
+  - **whatItMeans** (ce que ça veut dire) : 2–4 phrases — ce que ce profil DISC dominant révèle sur la façon dont le prospect pense, décide et interagit dans cet échange.
+  - **howToTalk** (comment lui parler) : 2–4 phrases ou puces courtes — ton, rythme, structure du discours et types d'arguments à privilégier.
+  - **whatToAvoid** (quoi éviter) : 2–4 phrases ou puces courtes — comportements ou formulations qui risquent de créer de la friction avec ce profil.
 
-If the transcript is too short to infer style, use moderate scores and explain uncertainty in the summary.`;
+Ne te contente pas de répéter « Influent 60 % » ou le nom du style ; chaque champ doit guider le commercial vers des actions concrètes. Rédige un français correct et professionnel.
+
+If the transcript is too short to infer style, use moderate scores and explain uncertainty in the summary and actionableAdvice.`;
 
 export const DEFAULT_KISS_MARKDOWN = `You are an expert B2B sales coach using the **KISS** framework (Keep / Improve / Stop / Start) on a meeting transcript.
 

@@ -1,4 +1,5 @@
 import { LandingKissLegend } from "@/components/molecules/landing-kiss-legend";
+import { KISS_COACHING_SCORE_LABEL } from "@/lib/sales-score-color";
 
 export function LandingPerspectiveKissVisual() {
   const kissItems = [
@@ -47,7 +48,7 @@ export function LandingPerspectiveKissVisual() {
             Analyse RDV · Antoine Lambert
           </p>
           <span className="rounded-[5px] bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand">
-            Score 64
+            {KISS_COACHING_SCORE_LABEL} 7/10
           </span>
         </div>
         <LandingKissLegend className="mb-3" />
