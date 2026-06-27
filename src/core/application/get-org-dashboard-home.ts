@@ -48,6 +48,8 @@ export type OrgDashboardHome = {
   noteGlobaleTrendPoints: number | null;
   /** Variation % de la note globale vs période précédente. */
   noteGlobaleTrendPercent: number | null;
+  /** RDV avec SalesScore (SONCAS) sur la fenêtre — pour gating tendance note globale. */
+  noteGlobaleSampleCount: number;
   recentMeetings: RecentMeetingListRow[];
 };
 
@@ -171,6 +173,9 @@ export async function getOrgDashboardHome(
 
   const noteGlobaleOn5 = noteGlobaleOn5ForMeetings(kpiMeetingsCurrent);
   const noteGlobalePrevOn5 = noteGlobaleOn5ForMeetings(kpiMeetingsPrev);
+  const noteGlobaleSampleCount = kpiMeetingsCurrent.filter(
+    (m) => m.salesScore != null,
+  ).length;
 
   const nbRdvsTrendPercent = percentChangeVsPrevious(nbRdvs, nbRdvsPrev);
   const nbRdvsRenseignesTrendPercent = percentChangeVsPrevious(
@@ -224,6 +229,7 @@ export async function getOrgDashboardHome(
     noteGlobaleOn5,
     noteGlobaleTrendPoints,
     noteGlobaleTrendPercent,
+    noteGlobaleSampleCount,
     recentMeetings,
   };
 }

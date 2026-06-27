@@ -6,6 +6,8 @@ import type { OrganizationQuotaRepositoryPort } from "@/src/core/ports/organizat
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import type { MeetingSourceType } from "@/src/core/domain/meeting-status";
 import { resolveMeetingPersonLink } from "@/src/core/application/resolve-meeting-person-link";
+import { invalidateAiSummaryCacheForOrg } from "@/src/core/application/invalidate-ai-summary-cache-for-org";
+import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 
 export type CreateMeetingResult =
   | { ok: true; meetingId: string }
@@ -24,6 +26,7 @@ export async function createMeetingForOrg(
     contacts: ContactRepositoryPort;
     analysisJobs: AnalysisJobRepositoryPort;
     organizationQuota: OrganizationQuotaRepositoryPort;
+    aiSummaryCache: AiSummaryCacheRepositoryPort;
     audit?: AuditRepositoryPort;
   },
   input: {
@@ -137,6 +140,8 @@ export async function createMeetingForOrg(
     action: "CREATE_MEETING",
     reason: `RDV « ${input.prospectName.trim()} » (${meeting.id})`,
   });
+
+  await invalidateAiSummaryCacheForOrg(deps, input.organizationId);
 
   return { ok: true, meetingId: meeting.id };
 }

@@ -13,7 +13,10 @@ import { TeamMemberPerformanceProfileCard } from "@/components/organisms/team-me
 import type { OrgAdminKissTeamRollup } from "@/src/core/application/get-org-admin-dashboard";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { QualificationPotentialMatrixPoint } from "@/src/core/domain/meeting-analyse-matrices";
-import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import {
+  MIN_RDV_FOR_STATS,
+  type StatsWindowDays,
+} from "@/src/core/domain/dashboard-stats-window";
 import {
   cardProseBodyClass,
   cardTitleClass,
@@ -62,6 +65,8 @@ export type TeamMemberPerformanceShellProps = {
   performanceStop: string | null;
   discBarItems: { key: string; label: string; pct: number; barClass: string }[];
   soncasBarItems: { key: string; label: string; pct: number; barClass: string }[];
+  discAnalyzedMeetings: number;
+  soncasAnalyzedMeetings: number;
   discAffinityText: string | null;
   soncasAffinityText: string | null;
   kissSellerStrengthsNarrative: string | null;
@@ -92,6 +97,8 @@ export function TeamMemberPerformanceShell({
   performanceStop,
   discBarItems,
   soncasBarItems,
+  discAnalyzedMeetings,
+  soncasAnalyzedMeetings,
   discAffinityText,
   soncasAffinityText,
   kissSellerStrengthsNarrative,
@@ -180,7 +187,13 @@ export function TeamMemberPerformanceShell({
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <ProfileAffinityHorizontalBars items={discBarItems} />
+            {discAnalyzedMeetings >= MIN_RDV_FOR_STATS ? (
+              <ProfileAffinityHorizontalBars items={discBarItems} />
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Pas assez de données pour un profil fiable.
+              </p>
+            )}
             {discAffinityText?.trim() ? (
               <p className="text-muted-foreground mt-5 border-t border-zinc-100 pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
                 {discAffinityText.trim()}
@@ -198,7 +211,13 @@ export function TeamMemberPerformanceShell({
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <ProfileAffinityHorizontalBars items={soncasBarItems} />
+            {soncasAnalyzedMeetings >= MIN_RDV_FOR_STATS ? (
+              <ProfileAffinityHorizontalBars items={soncasBarItems} />
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Pas assez de données pour un profil fiable.
+              </p>
+            )}
             {soncasAffinityText?.trim() ? (
               <p className="text-muted-foreground mt-5 border-t border-zinc-100 pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
                 {soncasAffinityText.trim()}

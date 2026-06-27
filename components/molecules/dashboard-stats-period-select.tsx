@@ -17,10 +17,13 @@ const LABELS: Record<StatsWindowDays, string> = {
 
 export function DashboardStatsPeriodSelect(props: {
   value: StatsWindowDays;
+  /** Fenêtres sans assez de RDV — options grisées dans le sélecteur. */
+  disabledDays?: StatsWindowDays[];
   /** Style pour fond sombre (tableau de bord). */
   theme?: "default" | "dark";
 }) {
   const dark = props.theme === "dark";
+  const disabledSet = new Set(props.disabledDays ?? []);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -53,8 +56,9 @@ export function DashboardStatsPeriodSelect(props: {
         }}
       >
         {STATS_WINDOW_DAYS_OPTIONS.map((d) => (
-          <option key={d} value={String(d)}>
+          <option key={d} value={String(d)} disabled={disabledSet.has(d)}>
             {LABELS[d]}
+            {disabledSet.has(d) ? " (données insuffisantes)" : ""}
           </option>
         ))}
       </select>

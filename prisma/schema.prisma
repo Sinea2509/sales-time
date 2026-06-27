@@ -220,6 +220,21 @@ model Organization {
   planRequests PlanRequest[]
   feedbacks    Feedback[]
   notifications Notification[]
+  aiSummaryCaches AiSummaryCache[]
+}
+
+model AiSummaryCache {
+  id                  String       @id @default(cuid())
+  organizationId      String
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  scopeKey            String
+  meetingsFingerprint String
+  payload             Json
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  @@unique([organizationId, scopeKey, meetingsFingerprint])
+  @@index([organizationId])
 }
 
 model OrganizationMembership {

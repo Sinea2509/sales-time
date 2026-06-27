@@ -75,12 +75,43 @@ const sidebarItems = [
   { label: "Analyse", icon: Crown, active: false },
 ] as const;
 
+const kissCoachingItems = [
+  {
+    key: "KEEP",
+    color: "#16A34A",
+    bg: "rgba(22,163,74,0.06)",
+    border: "rgba(22,163,74,0.15)",
+    text: "Très bonne écoute active. Excellentes questions de découverte.",
+  },
+  {
+    key: "IMPROVE",
+    color: "#0284C7",
+    bg: "rgba(2,132,199,0.06)",
+    border: "rgba(2,132,199,0.15)",
+    text: "Challenger davantage sur le budget avant la proposition.",
+  },
+  {
+    key: "START",
+    color: "#6C4DFF",
+    bg: "rgba(108,77,255,0.06)",
+    border: "rgba(108,77,255,0.2)",
+    text: "Créer de l'urgence via des benchmarks sectoriels.",
+  },
+  {
+    key: "STOP",
+    color: "#DC2626",
+    bg: "rgba(220,38,38,0.06)",
+    border: "rgba(220,38,38,0.15)",
+    text: "Promettre un POC gratuit sans accord de principe.",
+  },
+] as const;
+
 export function LandingHeroAppMockup() {
   return (
     <div
       className="relative z-[2] w-full max-w-[1000px] overflow-hidden rounded-t-[14px] border border-b-0 border-white/10 shadow-[0_-12px_60px_rgba(108,77,255,0.15),0_40px_80px_rgba(0,0,0,0.5)]"
       role="img"
-      aria-label="Aperçu du tableau de bord Sales Time"
+      aria-label="Aperçu du tableau de bord Sales Time avec coaching KISS"
     >
       <div className="flex h-[38px] shrink-0 items-center gap-2.5 border-b border-white/7 bg-[#0D0D16] px-3.5">
         <div className="flex gap-1.5" aria-hidden>
@@ -92,7 +123,7 @@ export function LandingHeroAppMockup() {
           app.sales-time.io / tableau de bord
         </div>
       </div>
-      <div className="flex h-[400px]">
+      <div className="relative flex h-[400px]">
         <aside className="flex w-[188px] shrink-0 flex-col gap-0.5 border-r border-white/5 bg-[#0A0A12] px-2.5 py-3.5">
           <div className="mb-2.5 flex items-center gap-1.5 px-2 py-1.5">
             <span className="size-[22px] shrink-0 rounded-md bg-brand" aria-hidden />
@@ -131,9 +162,9 @@ export function LandingHeroAppMockup() {
           </div>
           <div className="flex gap-2.5">
             {[
-              { label: "TAM CUMULÉ", value: "3h40", trend: "+12 min", trendColor: "#4ADE80" },
-              { label: "RENDEZ-VOUS ANALYSÉS", value: "24", trend: "−2", trendColor: "#F87171" },
-              { label: "TUC OPTIMISÉ", value: "70%", trend: "−5%", trendColor: "#F87171" },
+              { label: "TAM CUMULÉ", value: "3h40", trend: "+12 min" },
+              { label: "RENDEZ-VOUS ANALYSÉS", value: "24", trend: "+2" },
+              { label: "TUC OPTIMISÉ", value: "70%", trend: "+5%" },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -141,9 +172,7 @@ export function LandingHeroAppMockup() {
               >
                 <p className="text-[9.5px] font-medium text-white/28">{stat.label}</p>
                 <p className="text-[22px] font-bold tracking-tight text-white/88">{stat.value}</p>
-                <p className="mt-0.5 text-[9.5px]" style={{ color: stat.trendColor }}>
-                  {stat.trend}
-                </p>
+                <p className="mt-0.5 text-[9.5px] text-[#4ADE80]">{stat.trend}</p>
               </div>
             ))}
           </div>
@@ -192,6 +221,36 @@ export function LandingHeroAppMockup() {
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div
+          className="pointer-events-none absolute right-4 bottom-4 z-10 w-[min(100%,320px)] overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 shadow-[0_12px_48px_rgba(0,0,0,0.35)]"
+          aria-hidden
+        >
+          <div className="p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="text-[12px] font-semibold text-zinc-950">
+                Analyse RDV · Antoine Lambert
+              </p>
+              <span className="shrink-0 rounded-[5px] bg-brand/10 px-2 py-0.5 text-[10.5px] font-semibold text-brand">
+                Score 64
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {kissCoachingItems.map((item) => (
+                <div
+                  key={item.key}
+                  className="rounded-[7px] border p-2"
+                  style={{ backgroundColor: item.bg, borderColor: item.border }}
+                >
+                  <p className="mb-0.5 text-[9px] font-bold" style={{ color: item.color }}>
+                    {item.key}
+                  </p>
+                  <p className="text-[10px] leading-snug text-zinc-600">{item.text}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

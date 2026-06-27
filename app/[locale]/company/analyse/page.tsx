@@ -14,13 +14,15 @@ import {
   sectionHeadingClass,
 } from "@/lib/page-typography";
 import {
-  parseStatsWindowDays,
+  disabledStatsWindowDays,
   partitionMeetingsByStatsWindow,
   previousMeetingAtWindowStart,
 } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
 import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
+import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
 import {
   buildQualificationPotentialMatrixPoints,
 } from "@/src/core/domain/meeting-analyse-matrices";
@@ -51,15 +53,26 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   }
 
   const sp = searchParams != null ? await searchParams : {};
-  const statsWindowDays = parseStatsWindowDays(sp.jours);
 
   const deps = getApplicationDeps();
   const isOrgAdmin = actor.workspaceRoleMode === "admin";
-  const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
   const sellerScope =
     actor.workspaceRoleMode === "member"
       ? (actor.internalUserId ?? undefined)
       : undefined;
+
+  const windowCounts = await getStatsWindowRdvsCounts(deps, {
+    organizationId: actor.activeOrganizationId,
+    sellerUserId: sellerScope,
+  });
+  const statsWindowDays = ensureEligibleStatsWindowDays({
+    joursParam: sp.jours,
+    counts: windowCounts,
+    redirectPath: "/company/analyse",
+  });
+  const disabledStatsDays = disabledStatsWindowDays(windowCounts);
+
+  const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
 
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
   const [home, meetingsForWindow, globalKissJson] = await Promise.all([
@@ -126,6 +139,10 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
         )
       : null,
     home,
+    cacheContext: {
+      organizationId: actor.activeOrganizationId,
+      sellerUserId: sellerScope ?? null,
+    },
   });
   const { progressBullets, improvementBullets } = coachingBullets;
 
@@ -134,7 +151,12 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       <div className="space-y-3">
         <PageHeader
           title={isOrgAdmin ? "Performance" : "Ma performance"}
-          actions={<AnalysePagePeriodFallback value={home.statsWindowDays} />}
+          actions={
+            <AnalysePagePeriodFallback
+              value={home.statsWindowDays}
+              disabledDays={disabledStatsDays}
+            />
+          }
         />
 
         <AnalyseKpiCards home={home} isOrgAdmin={isOrgAdmin} />
@@ -149,6 +171,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
           rdvCount={meetings.length}
           isTeamView={isOrgAdmin}
           statsWindowDays={home.statsWindowDays}
+          disabledStatsDays={disabledStatsDays}
         />
       </section>
 

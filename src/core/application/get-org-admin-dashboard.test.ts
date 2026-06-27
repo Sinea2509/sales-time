@@ -25,6 +25,7 @@ function baseHome(over: Partial<OrgDashboardHome> = {}): OrgDashboardHome {
     tucTrendPoints: 2,
     avgDurationTrendPercent: 10,
     noteGlobaleOn5: 4,
+    noteGlobaleSampleCount: 2,
     noteGlobaleTrendPoints: 0.2,
     noteGlobaleTrendPercent: 5,
     recentMeetings: [],

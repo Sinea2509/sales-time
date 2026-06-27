@@ -4,18 +4,18 @@ import { DashboardAdminShell } from "@/components/organisms/dashboard-admin-shel
 import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
-import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
-import { parseStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import {
+  disabledStatsWindowDays,
+} from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
+import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
-import {
-  appendOrganizationKissPromptAppendix,
-  loadAnalysisPromptMarkdown,
-} from "@/lib/load-analysis-prompt";
 import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
+import { getCachedOrgKissRollupNarrative } from "@/src/core/application/get-cached-org-kiss-rollup-narrative";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
+import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +38,6 @@ export default async function DashboardHomePage({
   }
 
   const sp = searchParams != null ? await searchParams : {};
-  const statsWindowDays = parseStatsWindowDays(sp.jours);
   const monEquipePage = parseEquipePage(sp.equipePage);
   const deps = getApplicationDeps();
 
@@ -54,6 +53,15 @@ export default async function DashboardHomePage({
   }
 
   if (actor.workspaceRoleMode === "admin") {
+    const windowCounts = await getStatsWindowRdvsCounts(deps, {
+      organizationId: actor.activeOrganizationId,
+    });
+    const statsWindowDays = ensureEligibleStatsWindowDays({
+      joursParam: sp.jours,
+      counts: windowCounts,
+      redirectPath: "/company",
+    });
+    const disabledStatsDays = disabledStatsWindowDays(windowCounts);
     const teamUserIds = await resolveManagerTeamUserIds(deps, {
       canManageOrganization: actor.canManageOrganization,
       internalUserId: actor.internalUserId,
@@ -67,30 +75,19 @@ export default async function DashboardHomePage({
       }),
       deps.globalKissCoachingPrompts.getPrompts(),
     ]);
-    let kissTeamStrengthsNarrative: string | null = null;
-    if (admin && getEnv().AI_GATEWAY_API_KEY) {
-      try {
-        const basePrompt = await loadAnalysisPromptMarkdown(
-          deps.prompts,
-          "ORG_KISS_ROLLUP",
-        );
-        const systemMarkdown = appendOrganizationKissPromptAppendix(
-          basePrompt,
-          kissMarkdownAppendixForAudience(globalKissJson, "manager"),
-        );
-        const orgKissModel = await resolvePromptGatewayModel(
-          deps.prompts,
-          "ORG_KISS_ROLLUP",
-        );
-        kissTeamStrengthsNarrative = await deps.analysis.summarizeOrgKissRollup({
-          systemMarkdown,
-          rollup: admin.kissTeamRollup,
-          model: orgKissModel,
-        });
-      } catch {
-        kissTeamStrengthsNarrative = null;
-      }
-    }
+    const kissTeamStrengthsNarrative =
+      admin && getEnv().AI_GATEWAY_API_KEY
+        ? await getCachedOrgKissRollupNarrative(deps, {
+            organizationId: actor.activeOrganizationId,
+            statsWindowDays,
+            meetingsFingerprint: admin.meetingsFingerprint,
+            rollup: admin.kissTeamRollup,
+            organizationKissPromptAppendix: kissMarkdownAppendixForAudience(
+              globalKissJson,
+              "manager",
+            ),
+          })
+        : null;
     return (
       <div className="space-y-6">
         {!admin ? null : (
@@ -98,6 +95,7 @@ export default async function DashboardHomePage({
             admin={admin}
             kissTeamStrengthsNarrative={kissTeamStrengthsNarrative}
             currentUserEmail={actor.email}
+            disabledStatsDays={disabledStatsDays}
           />
         )}
       </div>
@@ -116,6 +114,16 @@ export default async function DashboardHomePage({
   }
 
   const sellerId = actor.internalUserId!;
+  const windowCounts = await getStatsWindowRdvsCounts(deps, {
+    organizationId: actor.activeOrganizationId,
+    sellerUserId: sellerId,
+  });
+  const statsWindowDays = ensureEligibleStatsWindowDays({
+    joursParam: sp.jours,
+    counts: windowCounts,
+    redirectPath: "/company",
+  });
+  const disabledStatsDays = disabledStatsWindowDays(windowCounts);
   const [home, orgSettings] = await Promise.all([
     getOrgDashboardHome(deps, {
       organizationId: actor.activeOrganizationId,
@@ -134,6 +142,7 @@ export default async function DashboardHomePage({
           home={home}
           meetingTypeOptions={meetingTypeOptions}
           pipelineStageOptions={pipelineStageOptions}
+          disabledStatsDays={disabledStatsDays}
         />
       )}
     </div>

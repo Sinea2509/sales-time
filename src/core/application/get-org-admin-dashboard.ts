@@ -26,6 +26,7 @@ import {
   getOrgDashboardKpis,
   type OrgDashboardKpis,
 } from "./get-org-dashboard-kpis";
+import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
 
 /** Limite de RDV chargés pour agrégations équipe (perf). */
 export const ORG_ADMIN_DASHBOARD_MEETING_CAP = 5000;
@@ -92,6 +93,8 @@ export type OrgAdminDashboard = {
   discPie: OrgAdminDistributionPie;
   soncasPie: OrgAdminDistributionPie;
   kissTeamRollup: OrgAdminKissTeamRollup;
+  /** Fingerprint of scoped meetings in the stats window (AI summary cache key). */
+  meetingsFingerprint: string;
 };
 
 const DRIVER_LABEL_FR: Record<keyof SoncasDriverAverages, string> = {
@@ -479,5 +482,6 @@ export async function getOrgAdminDashboard(
     discPie,
     soncasPie,
     kissTeamRollup,
+    meetingsFingerprint: teamMemberMeetingsFingerprint(scopedMeetings),
   };
 }

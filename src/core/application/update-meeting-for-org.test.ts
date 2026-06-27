@@ -34,6 +34,9 @@ function makeDeps(
       findById: jest.fn().mockResolvedValue(over.person ?? null),
       findUniqueByCompanyName: jest.fn().mockResolvedValue(null),
     },
+    aiSummaryCache: {
+      invalidateForOrganization: jest.fn().mockResolvedValue(undefined),
+    },
   };
 }
 

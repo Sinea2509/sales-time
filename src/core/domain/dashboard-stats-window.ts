@@ -2,6 +2,33 @@ export const STATS_WINDOW_DAYS_OPTIONS = [7, 30, 90] as const;
 
 export type StatsWindowDays = (typeof STATS_WINDOW_DAYS_OPTIONS)[number];
 
+/** Seuil minimal de RDV pour afficher tendances KPI et activer une fenêtre stats. */
+export const MIN_RDV_FOR_STATS = 5;
+
+export function isStatsWindowEligibleForTrends(nbRdvs: number): boolean {
+  return nbRdvs >= MIN_RDV_FOR_STATS;
+}
+
+export function disabledStatsWindowDays(
+  counts: Record<StatsWindowDays, number>,
+): StatsWindowDays[] {
+  return STATS_WINDOW_DAYS_OPTIONS.filter(
+    (d) => !isStatsWindowEligibleForTrends(counts[d]),
+  );
+}
+
+/** Choisit la première fenêtre éligible (7 → 30 → 90) si la demande est insuffisante. */
+export function resolveEligibleStatsWindowDays(
+  requested: StatsWindowDays,
+  counts: Record<StatsWindowDays, number>,
+): StatsWindowDays {
+  if (isStatsWindowEligibleForTrends(counts[requested])) return requested;
+  for (const d of STATS_WINDOW_DAYS_OPTIONS) {
+    if (isStatsWindowEligibleForTrends(counts[d])) return d;
+  }
+  return requested;
+}
+
 export function parseStatsWindowDays(
   raw: string | string[] | undefined,
 ): StatsWindowDays {

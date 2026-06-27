@@ -109,6 +109,42 @@ describe("summarizeMeetingDetail", () => {
     expect(result.meetingSynthesis).toBe("Compte-rendu IA.");
     expect(summarizeMeetingDetailMock).toHaveBeenCalled();
   });
+
+  it("persists AI visit report on first page render when draft is null", async () => {
+    const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
+    getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: "key" });
+
+    const summarizeMeetingDetailMock = jest.fn().mockResolvedValue({
+      meetingSynthesis: "Compte-rendu IA.",
+      interlocutorProfile: "Profil IA.",
+    });
+    const updateMeetingVisitReportDraft = jest.fn().mockResolvedValue(true);
+    const prompts = {
+      getCurrentVersion: jest.fn().mockResolvedValue(null),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+    };
+
+    await summarizeMeetingDetail(
+      {
+        analysis: { summarizeMeetingDetail: summarizeMeetingDetailMock } as never,
+        prompts: prompts as never,
+        meetings: { updateMeetingVisitReportDraft } as never,
+      },
+      {
+        meeting,
+        discResult: null,
+        soncasResult: null,
+        kissResult: null,
+        organizationId: "org1",
+      },
+    );
+
+    expect(updateMeetingVisitReportDraft).toHaveBeenCalledWith({
+      id: "m1",
+      organizationId: "org1",
+      visitReportDraft: "Compte-rendu IA.",
+    });
+  });
 });
 
 describe("generateAndPersistMeetingVisitReport", () => {

@@ -8,6 +8,7 @@ import {
 } from "@/lib/meeting-etape-pill";
 import { pageTitleClass } from "@/lib/page-typography";
 import { prospectInitials } from "@/lib/prospect-initials";
+import { salesScoreColorClass } from "@/lib/sales-score-color";
 import { cn } from "@/lib/utils";
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
@@ -32,11 +33,13 @@ function statColumn({
   label,
   title,
   valueExtra,
+  valueClassName,
 }: {
   value: string;
   label: string;
   title?: string;
   valueExtra?: ReactNode;
+  valueClassName?: string;
 }) {
   return (
     <div
@@ -44,7 +47,12 @@ function statColumn({
       title={title}
     >
       <div className="flex items-center gap-1.5">
-        <span className="text-foreground text-2xl font-semibold tabular-nums tracking-tight">
+        <span
+          className={cn(
+            "text-foreground text-2xl font-semibold tabular-nums tracking-tight",
+            valueClassName,
+          )}
+        >
           {value}
         </span>
         {valueExtra}
@@ -160,6 +168,8 @@ export function MeetingDetailHeader({
           {statColumn({
             value: salesScore != null ? String(salesScore) : "—",
             label: "SalesScore",
+            valueClassName:
+              salesScore != null ? salesScoreColorClass(salesScore) : undefined,
             valueExtra:
               salesScoreDelta != null && salesScoreDelta !== 0 ? (
                 <SalesScoreDeltaBadge delta={salesScoreDelta} />

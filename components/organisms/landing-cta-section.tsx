@@ -28,7 +28,7 @@ export function LandingCtaSection() {
               href="/sign-up"
               className="inline-flex h-12 items-center rounded-xl bg-brand px-6 text-[15px] font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_4px_16px_rgba(108,77,255,0.4)] transition-[filter,transform] hover:brightness-108 hover:-translate-y-px"
             >
-              Créer un compte gratuit
+              Essayer Gratuitement
             </Link>
             <Link
               href="/sign-in"

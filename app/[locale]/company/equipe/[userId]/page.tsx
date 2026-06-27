@@ -4,12 +4,7 @@ import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analy
 import { buildMeetingDigestsForAiSummary } from "@/lib/meeting-ai-digest";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
-import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
-import {
-  appendOrganizationKissPromptAppendix,
-  loadAnalysisPromptMarkdown,
-} from "@/lib/load-analysis-prompt";
 import { prospectInitials } from "@/lib/prospect-initials";
 import {
   countMeetingTypes,
@@ -17,6 +12,7 @@ import {
 } from "@/lib/team-member-performance-helpers";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getTeamMemberPerformanceProfile } from "@/src/core/application/get-team-member-performance-profile";
+import { getCachedSellerRelationalAffinity } from "@/src/core/application/get-cached-seller-relational-affinity";
 import {
   buildKissTeamRollupFromMeetings,
   ORG_ADMIN_DASHBOARD_MEETING_CAP,
@@ -26,6 +22,8 @@ import { summarizeTeamCoachingRecommendations } from "@/src/core/application/sum
 import {
   aggregateDiscAffinityBarsFromMeetings,
   aggregateSoncasAffinityBarsFromMeetings,
+  countDiscAnalyzedMeetings,
+  countSoncasAnalyzedMeetings,
   DISC_BAR_CLASS,
   emptyDiscAffinityPlaceholder,
   emptySoncasAffinityPlaceholder,
@@ -39,6 +37,8 @@ import {
 import { buildQualificationPotentialMatrixPoints } from "@/src/core/domain/meeting-analyse-matrices";
 import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-profile-from-meetings";
 import type { SellerRelationalAffinitySummary } from "@/src/core/ports/analysis-port";
+import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
+import { getCachedOrgKissRollupNarrative } from "@/src/core/application/get-cached-org-kiss-rollup-narrative";
 
 export const dynamic = "force-dynamic";
 
@@ -132,6 +132,10 @@ export default async function ManagerCommercialViewPage({
       ? kissMarkdownAppendixForAudience(globalKissJson, "manager")
       : null,
     home,
+    cacheContext: {
+      organizationId: orgId,
+      sellerUserId: userId,
+    },
   });
   const { progressBullets, improvementBullets } = coachingBullets;
 
@@ -144,6 +148,7 @@ export default async function ManagerCommercialViewPage({
       .trim() || member.user.email;
 
   const meetingDigests = buildMeetingDigestsForAiSummary(meetings);
+  const meetingsFingerprint = teamMemberMeetingsFingerprint(meetings);
   const performanceProfile = await getTeamMemberPerformanceProfile(deps, {
     organizationId: orgId,
     sellerUserId: userId,
@@ -152,50 +157,35 @@ export default async function ManagerCommercialViewPage({
   });
   let relationalAffinity: SellerRelationalAffinitySummary | null = null;
   if (aiEnabled && meetingDigests.length > 0) {
-    const [affinityPrompt, affinityModel] = await Promise.all([
-      loadAnalysisPromptMarkdown(deps.prompts, "SELLER_AFFINITY"),
-      resolvePromptGatewayModel(deps.prompts, "SELLER_AFFINITY"),
-    ]);
-    try {
-      relationalAffinity = await deps.analysis.summarizeSellerRelationalAffinity({
-        sellerDisplayName: nameLine,
-        meetings: meetingDigests,
-        systemMarkdown: affinityPrompt,
-        model: affinityModel,
-      });
-    } catch {
-      relationalAffinity = null;
-    }
+    relationalAffinity = await getCachedSellerRelationalAffinity(deps, {
+      organizationId: orgId,
+      sellerUserId: userId,
+      sellerDisplayName: nameLine,
+      statsWindowDays,
+      meetings,
+    });
   }
 
   const kissSellerRollup = buildKissTeamRollupFromMeetings(meetings);
-  let kissSellerStrengthsNarrative: string | null = null;
-  if (aiEnabled) {
-    try {
-      const basePrompt = await loadAnalysisPromptMarkdown(
-        deps.prompts,
-        "ORG_KISS_ROLLUP",
-      );
-      const systemMarkdown = appendOrganizationKissPromptAppendix(
-        basePrompt,
-        kissMarkdownAppendixForAudience(globalKissJson, "manager"),
-      );
-      const orgKissModel = await resolvePromptGatewayModel(
-        deps.prompts,
-        "ORG_KISS_ROLLUP",
-      );
-      kissSellerStrengthsNarrative = await deps.analysis.summarizeOrgKissRollup({
-        systemMarkdown,
-        rollup: kissSellerRollup,
-        model: orgKissModel,
-      });
-    } catch {
-      kissSellerStrengthsNarrative = null;
-    }
-  }
+  const kissSellerStrengthsNarrative =
+    aiEnabled
+      ? await getCachedOrgKissRollupNarrative(deps, {
+          organizationId: orgId,
+          statsWindowDays,
+          meetingsFingerprint,
+          rollup: kissSellerRollup,
+          sellerUserId: userId,
+          organizationKissPromptAppendix: kissMarkdownAppendixForAudience(
+            globalKissJson,
+            "manager",
+          ),
+        })
+      : null;
 
   const discAffinityBars = aggregateDiscAffinityBarsFromMeetings(meetings);
   const soncasAffinityBars = aggregateSoncasAffinityBarsFromMeetings(meetings);
+  const discAnalyzedMeetings = countDiscAnalyzedMeetings(meetings);
+  const soncasAnalyzedMeetings = countSoncasAnalyzedMeetings(meetings);
   const discBarSource =
     discAffinityBars.length > 0
       ? discAffinityBars
@@ -232,6 +222,8 @@ export default async function ManagerCommercialViewPage({
         pct: d.pct,
         barClass: SONCAS_BAR_CLASS[d.key],
       }))}
+      discAnalyzedMeetings={discAnalyzedMeetings}
+      soncasAnalyzedMeetings={soncasAnalyzedMeetings}
       discAffinityText={relationalAffinity?.discAffinity ?? null}
       soncasAffinityText={relationalAffinity?.soncasAffinity ?? null}
       kissSellerStrengthsNarrative={kissSellerStrengthsNarrative}

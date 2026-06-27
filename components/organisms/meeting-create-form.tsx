@@ -82,6 +82,9 @@ function mapSubmitError(
   if (res.error === "TRANSCRIPT_TOO_SHORT") {
     return "Le transcript est trop court (minimum 20 caractères).";
   }
+  if (res.error === "TRANSCRIPT_TOO_SHORT_FOR_ANALYSIS") {
+    return "Votre transcript est trop court pour être analysé.";
+  }
   if (res.error === "EXTRACTION_FAILED") {
     return "Impossible de lire le contenu du fichier. Vérifiez qu'il n'est pas protégé ou corrompu, ou collez le texte.";
   }

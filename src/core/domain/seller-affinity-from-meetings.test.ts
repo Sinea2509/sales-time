@@ -76,16 +76,15 @@ describe("seller-affinity-from-meetings", () => {
     expect(bars.every((b) => b.pct >= 0 && b.pct <= 100)).toBe(true);
   });
 
-  it("clamps negative averages to 0 for DISC", () => {
-    const meetings = [row({ latestDiscResult: disc({ D: -80, I: 0, S: 0, C: 0 }) })];
-    const d = aggregateDiscAffinityBarsFromMeetings(meetings).find((b) => b.key === "D");
-    expect(d!.pct).toBe(0);
-  });
-
-  it("clamps high DISC averages to 100", () => {
-    const meetings = [row({ latestDiscResult: disc({ D: 300, I: 0, S: 0, C: 0 }) })];
+  it("normalizes dominant DISC style to 100%", () => {
+    const meetings = [row({ latestDiscResult: disc({ D: 100, I: 0, S: 0, C: 0 }) })];
     const d = aggregateDiscAffinityBarsFromMeetings(meetings).find((b) => b.key === "D");
     expect(d!.pct).toBe(100);
+  });
+
+  it("ignores invalid out-of-range DISC scores", () => {
+    const meetings = [row({ latestDiscResult: disc({ D: -80, I: 0, S: 0, C: 0 }) })];
+    expect(aggregateDiscAffinityBarsFromMeetings(meetings)).toEqual([]);
   });
 
   it("returns placeholder grids", () => {

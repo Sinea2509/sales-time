@@ -17,7 +17,7 @@ export function LandingFeatureCard({
   return (
     <div
       className={cn(
-        "group cursor-default bg-white p-9 transition-colors hover:bg-zinc-50 sm:p-10",
+        "group cursor-default rounded-2xl border border-zinc-200 bg-white p-9 shadow-sm transition-colors hover:bg-zinc-50 sm:p-10",
         className,
       )}
     >

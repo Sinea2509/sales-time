@@ -22,6 +22,7 @@ import {
   meetingEtapePillClass,
 } from "@/lib/meeting-etape-pill";
 import { cn } from "@/lib/utils";
+import { salesScoreColorClass } from "@/lib/sales-score-color";
 
 export type RendezVousMeetingRow = {
   id: string;
@@ -341,7 +342,12 @@ export function RendezVousMeetingsShell({
                       </td>
                       <td className="hidden px-4 py-3.5 align-middle md:table-cell">
                         {m.salesScore != null ? (
-                          <span className="text-base font-semibold tabular-nums text-neutral-950 dark:text-neutral-100">
+                          <span
+                            className={cn(
+                              "text-base font-semibold tabular-nums",
+                              salesScoreColorClass(m.salesScore),
+                            )}
+                          >
                             {m.salesScore}
                           </span>
                         ) : (

@@ -16,6 +16,10 @@ import {
   loadAnalysisPromptMarkdown,
 } from "@/lib/load-analysis-prompt";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
+import { sellerCoachingScopeKey } from "@/src/core/application/ai-summary-cache-scopes";
+import { readThroughAiSummaryCache } from "@/src/core/application/read-through-ai-summary-cache";
+import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
+import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 
 export type TeamCoachingRecommendationBullets = {
   progressBullets: string[];
@@ -46,7 +50,11 @@ function fallbackBullets(input: {
 }
 
 export async function summarizeTeamCoachingRecommendations(
-  deps: { analysis: AnalysisPort; prompts: PromptTemplateRepositoryPort },
+  deps: {
+    analysis: AnalysisPort;
+    prompts: PromptTemplateRepositoryPort;
+    aiSummaryCache?: AiSummaryCacheRepositoryPort;
+  },
   input: {
     meetings: RecentMeetingListRow[];
     previousMeetings: RecentMeetingListRow[];
@@ -56,6 +64,10 @@ export async function summarizeTeamCoachingRecommendations(
     audience: "manager" | "commercial";
     organizationKissPromptAppendix?: string | null;
     home: OrgDashboardHome;
+    cacheContext?: {
+      organizationId: string;
+      sellerUserId: string | null;
+    };
   },
 ): Promise<TeamCoachingRecommendationBullets> {
   const digests = buildMeetingDigestsForAiSummary(input.meetings);
@@ -66,32 +78,62 @@ export async function summarizeTeamCoachingRecommendations(
     });
   }
 
-  try {
-    const basePrompt = await loadAnalysisPromptMarkdown(deps.prompts, "TEAM_COACHING");
-    const systemMarkdown = appendOrganizationKissPromptAppendix(
-      basePrompt,
-      input.organizationKissPromptAppendix,
-    );
-    const model = await resolvePromptGatewayModel(deps.prompts, "TEAM_COACHING");
-    const result = await deps.analysis.summarizeTeamCoachingRecommendations({
-      systemMarkdown,
-      model,
+  const computeBullets = async (): Promise<TeamCoachingRecommendationBullets | null> => {
+    try {
+      const basePrompt = await loadAnalysisPromptMarkdown(deps.prompts, "TEAM_COACHING");
+      const systemMarkdown = appendOrganizationKissPromptAppendix(
+        basePrompt,
+        input.organizationKissPromptAppendix,
+      );
+      const model = await resolvePromptGatewayModel(deps.prompts, "TEAM_COACHING");
+      const result = await deps.analysis.summarizeTeamCoachingRecommendations({
+        systemMarkdown,
+        model,
+        statsWindowDays: input.statsWindowDays,
+        audience: input.audience,
+        meetings: digests,
+        salesProfile: input.teamSalesProfile.scores,
+        previousSalesProfile: input.previousSalesProfile.scores,
+        kissRollup: buildKissTeamRollupFromMeetings(input.meetings),
+      });
+      return {
+        progressBullets: result.progressBullets,
+        improvementBullets: result.improvementBullets,
+        fromAi: true,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  if (deps.aiSummaryCache && input.cacheContext) {
+    const meetingsFingerprint = teamMemberMeetingsFingerprint(input.meetings);
+    const scopeKey = sellerCoachingScopeKey({
+      sellerUserId: input.cacheContext.sellerUserId,
       statsWindowDays: input.statsWindowDays,
       audience: input.audience,
-      meetings: digests,
-      salesProfile: input.teamSalesProfile.scores,
-      previousSalesProfile: input.previousSalesProfile.scores,
-      kissRollup: buildKissTeamRollupFromMeetings(input.meetings),
     });
-    return {
-      progressBullets: result.progressBullets,
-      improvementBullets: result.improvementBullets,
-      fromAi: true,
-    };
-  } catch {
-    return fallbackBullets({
-      meetings: input.meetings,
-      home: input.home,
-    });
+    const cached = await readThroughAiSummaryCache<TeamCoachingRecommendationBullets>(
+      { aiSummaryCache: deps.aiSummaryCache },
+      {
+        organizationId: input.cacheContext.organizationId,
+        scopeKey,
+        meetingsFingerprint,
+        compute: computeBullets,
+      },
+    );
+    if (cached) {
+      return cached;
+    }
+  } else {
+    const fresh = await computeBullets();
+    if (fresh) {
+      return fresh;
+    }
   }
+
+  return fallbackBullets({
+    meetings: input.meetings,
+    home: input.home,
+  });
 }

@@ -5,6 +5,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
+import { isStatsWindowEligibleForTrends } from "@/src/core/domain/dashboard-stats-window";
+import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { cn } from "@/lib/utils";
 
 const basePill =
@@ -75,8 +77,17 @@ export type KpiVsPreviousBadgeProps = {
    * `percentagePoints` = écart entre deux pourcentages, ex. TUC déjà en % (suffixe pts).
    */
   deltaDisplay?: "percent" | "percentagePoints";
+  /** Masque le badge si l'échantillon courant est trop faible. */
+  minSampleCount?: number;
+  currentSampleCount?: number;
+  /** Fenêtre stats active — affiche « vs N j. préc. » sur le badge. */
+  statsWindowDays?: StatsWindowDays;
   className?: string;
 };
+
+function statsWindowReferenceLabel(days: StatsWindowDays): string {
+  return `vs ${days} j. préc.`;
+}
 
 /**
  * Badge « vs période précédente » : valeur absolue sans signe + couleur/icône (favorable / défavorable).
@@ -85,9 +96,20 @@ export function KpiVsPreviousBadge({
   delta,
   mode,
   deltaDisplay = "percent",
+  minSampleCount = 0,
+  currentSampleCount,
+  statsWindowDays,
   className,
 }: KpiVsPreviousBadgeProps) {
   if (delta === null || Number.isNaN(delta)) return null;
+  if (
+    minSampleCount > 0 &&
+    (currentSampleCount == null ||
+      !isStatsWindowEligibleForTrends(currentSampleCount) ||
+      currentSampleCount < minSampleCount)
+  ) {
+    return null;
+  }
   const displayMagnitude = deltaDisplayMagnitude(delta);
   if (displayMagnitude === 0) return null;
   const intent = resolveIntent(delta, mode);
@@ -98,9 +120,11 @@ export function KpiVsPreviousBadge({
       : String(displayMagnitude);
   const textFr = textRaw.replace(".", ",");
   const isPp = deltaDisplay === "percentagePoints";
+  const referenceLabel =
+    statsWindowDays != null ? statsWindowReferenceLabel(statsWindowDays) : null;
   const periodHint = isPp
-    ? "Écart vs la période précédente (même durée), en points de pourcentage du TUC"
-    : "Variation vs la période précédente (même durée que la sélection)";
+    ? `Écart vs les ${statsWindowDays ?? "N"} jours précédents, en points de pourcentage du TUC`
+    : `Variation vs les ${statsWindowDays ?? "N"} jours précédents (même durée que la sélection)`;
   const ariaLabel =
     delta > 0
       ? isPp
@@ -111,15 +135,24 @@ export function KpiVsPreviousBadge({
         : `${periodHint} — baisse de ${textFr} %.`;
   return (
     <span
-      className={cn(kpiVsPreviousVariants({ intent }), className)}
+      className={cn(
+        kpiVsPreviousVariants({ intent }),
+        "flex flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-1",
+        className,
+      )}
       title={periodHint}
       aria-label={ariaLabel}
     >
-      <Icon className="size-3.5 shrink-0" aria-hidden />
-      <span className="tabular-nums" aria-hidden>
-        {textFr}
-        {isPp ? " pts" : "%"}
+      <span className="inline-flex items-center gap-0.5">
+        <Icon className="size-3.5 shrink-0" aria-hidden />
+        <span className="tabular-nums" aria-hidden>
+          {textFr}
+          {isPp ? " pts" : "%"}
+        </span>
       </span>
+      {referenceLabel ? (
+        <span className="text-[10px] font-normal opacity-80">{referenceLabel}</span>
+      ) : null}
     </span>
   );
 }

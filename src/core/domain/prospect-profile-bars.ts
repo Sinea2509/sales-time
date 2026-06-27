@@ -10,6 +10,7 @@ import {
   type DiscBarDatum,
   type SoncasBarDatum,
 } from "@/src/core/domain/seller-affinity-from-meetings";
+import { normalizeScoresToHundred } from "@/src/core/domain/normalize-scores-to-hundred";
 
 const DISC_KEYS = ["D", "I", "S", "C"] as const;
 
@@ -44,10 +45,11 @@ function clampPct(n: number): number {
 }
 
 export function discBarsFromResult(result: DiscAnalysisResult): DiscBarDatum[] {
+  const normalized = normalizeScoresToHundred(result.scores);
   const items: DiscBarDatum[] = DISC_KEYS.map((key) => ({
     key,
     label: DISC_LABEL_FR[key],
-    pct: clampPct(result.scores[key]),
+    pct: clampPct(normalized[key] ?? 0),
   }));
   items.sort((a, b) => b.pct - a.pct || a.key.localeCompare(b.key));
   return items;
@@ -56,10 +58,14 @@ export function discBarsFromResult(result: DiscAnalysisResult): DiscBarDatum[] {
 export function soncasBarsFromResult(
   result: SoncasAnalysisResult,
 ): SoncasBarDatum[] {
+  const rawScores = Object.fromEntries(
+    SONCAS_KEYS.map((key) => [key, result.drivers[key].score]),
+  );
+  const normalized = normalizeScoresToHundred(rawScores);
   const items: SoncasBarDatum[] = SONCAS_KEYS.map((key) => ({
     key,
     label: SONCAS_LABEL_FR[key],
-    pct: clampPct(result.drivers[key].score),
+    pct: clampPct(normalized[key] ?? 0),
   }));
   items.sort((a, b) => b.pct - a.pct || a.key.localeCompare(b.key));
   return items;

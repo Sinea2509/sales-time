@@ -73,6 +73,13 @@ export async function uploadImageToBlob(input: {
     return { ok: true, url: blob.url };
   } catch (err) {
     console.error(input.logLabel, err);
-    return { ok: false, message: "Échec du téléversement. Réessayez." };
+    const message =
+      err instanceof Error && err.message.trim().length > 0
+        ? err.message
+        : "Erreur réseau ou serveur.";
+    return {
+      ok: false,
+      message: `Échec du téléversement : ${message}`,
+    };
   }
 }

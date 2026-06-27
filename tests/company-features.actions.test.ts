@@ -190,6 +190,7 @@ type CompanyDepsMocks = {
   analysisJobsMock: Record<string, JestFn>;
   analysisMock: Record<string, JestFn>;
   promptsMock: Record<string, JestFn>;
+  aiSummaryCacheMock: Record<string, JestFn>;
 };
 
 jest.mock("@/lib/application-deps", () => {
@@ -243,6 +244,9 @@ jest.mock("@/lib/application-deps", () => {
       getCurrentVersion: jest.fn().mockResolvedValue(null),
       getModelForKind: jest.fn().mockResolvedValue(null),
     },
+    aiSummaryCacheMock: {
+      invalidateForOrganization: jest.fn().mockResolvedValue(undefined),
+    },
   };
   const graph = {
     auth: { getAuthenticatedPrincipal: mocks.getAuthenticatedPrincipalMock },
@@ -256,6 +260,7 @@ jest.mock("@/lib/application-deps", () => {
     analysisJobs: mocks.analysisJobsMock,
     analysis: mocks.analysisMock,
     prompts: mocks.promptsMock,
+    aiSummaryCache: mocks.aiSummaryCacheMock,
   };
   (graph as { __companyTestMocks?: CompanyDepsMocks }).__companyTestMocks =
     mocks;
@@ -294,6 +299,9 @@ function mockAuthenticatedActorContext(
   });
 }
 
+const ANALYZABLE_TEST_TRANSCRIPT =
+  "Seller: Bonjour, merci pour votre temps aujourd'hui. Nous allons explorer vos enjeux de croissance et voir comment notre solution peut vous accompagner sur la sécurisation de vos processus et l'amélioration de votre ROI sur les prochains trimestres.";
+
 function meetingFormData(overrides: Record<string, string> = {}): FormData {
   const fd = new FormData();
   const defaults: Record<string, string> = {
@@ -301,7 +309,7 @@ function meetingFormData(overrides: Record<string, string> = {}): FormData {
     prospectName: "Alice Prospect",
     meetingAt: "2026-06-22T10:00:00.000Z",
     durationMin: "30",
-    transcript: "Seller: Hello\nProspect: Hi",
+    transcript: ANALYZABLE_TEST_TRANSCRIPT,
     notes: "",
     meetingType: "Discovery",
     pipelineStage: "Qualif",
@@ -432,7 +440,7 @@ beforeEach(() => {
   });
   uploadMeetingTranscriptFileMock.mockResolvedValue({
     ok: true,
-    transcript: "Uploaded transcript",
+    transcript: ANALYZABLE_TEST_TRANSCRIPT,
     blobUrl: `https://blob.example/orgs/${ORG_ID}/meetings/transcripts/t.txt`,
   });
 });
@@ -996,7 +1004,7 @@ describe("rendez-vous actions", () => {
   it("createMeetingAction rejects foreign transcript blob url", async () => {
     uploadMeetingTranscriptFileMock.mockResolvedValue({
       ok: true,
-      transcript: "Uploaded transcript",
+      transcript: ANALYZABLE_TEST_TRANSCRIPT,
       blobUrl: "https://blob.example/orgs/other-org/meetings/x.txt",
     });
     (blobUrlBelongsToOrg as JestFn).mockReturnValueOnce(false);
@@ -1048,6 +1056,16 @@ describe("rendez-vous actions", () => {
       meetingFormData({ transcript: "   " }),
     );
     expect(result).toEqual({ ok: false, error: "VALIDATION" });
+  });
+
+  it("createMeetingAction rejects transcript too short for analysis", async () => {
+    const result = await createMeetingAction(
+      meetingFormData({ transcript: "Trop court pour analyse." }),
+    );
+    expect(result).toEqual({
+      ok: false,
+      error: "TRANSCRIPT_TOO_SHORT_FOR_ANALYSIS",
+    });
   });
 
   it("createMeetingAction creates meeting", async () => {
@@ -1194,7 +1212,7 @@ describe("rendez-vous actions", () => {
     });
     uploadMeetingTranscriptFileMock.mockResolvedValue({
       ok: true,
-      transcript: "Uploaded transcript",
+      transcript: ANALYZABLE_TEST_TRANSCRIPT,
       blobUrl: "https://blob.example/orgs/other-org/meetings/x.txt",
     });
     (blobUrlBelongsToOrg as JestFn).mockReturnValueOnce(false);
@@ -1316,7 +1334,7 @@ describe("rendez-vous actions", () => {
     });
     organizationQuotaMock.getTrialAnalysesLeft.mockResolvedValue(2);
     const result = await updateMeetingAction(
-      meetingFormData({ meetingId: MEETING_ID, transcript: "New transcript" }),
+      meetingFormData({ meetingId: MEETING_ID, transcript: ANALYZABLE_TEST_TRANSCRIPT }),
     );
     expect(result).toEqual({
       ok: true,

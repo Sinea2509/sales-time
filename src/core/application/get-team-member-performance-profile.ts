@@ -13,7 +13,10 @@ import type { SellerCommercialPerformanceSummary } from "@/src/core/ports/analys
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
+import { sellerPerformanceScopeKey } from "@/src/core/application/ai-summary-cache-scopes";
+import { readThroughAiSummaryCache } from "@/src/core/application/read-through-ai-summary-cache";
 import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
+import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 
 export type TeamMemberPerformanceProfile = {
   performanceForces: string | null;
@@ -27,6 +30,7 @@ type Deps = {
   meetings: MeetingRepositoryPort;
   prompts: PromptTemplateRepositoryPort;
   analysis: AnalysisPort;
+  aiSummaryCache: AiSummaryCacheRepositoryPort;
 };
 
 export async function getTeamMemberPerformanceProfile(
@@ -59,25 +63,31 @@ export async function getTeamMemberPerformanceProfile(
 
   const meetingDigests = buildMeetingDigestsForAiSummary(meetings);
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
+  const meetingsFingerprint = teamMemberMeetingsFingerprint(meetings);
   let performanceSummary: SellerCommercialPerformanceSummary | null = null;
 
   if (aiEnabled && meetingDigests.length > 0) {
-    const [performancePrompt, performanceModel] = await Promise.all([
-      loadAnalysisPromptMarkdown(deps.prompts, "SELLER_PERFORMANCE"),
-      resolvePromptGatewayModel(deps.prompts, "SELLER_PERFORMANCE"),
-    ]);
-    try {
-      performanceSummary = await deps.analysis.summarizeSellerCommercialPerformance(
-        {
-          sellerDisplayName: input.sellerDisplayName,
-          meetings: meetingDigests,
-          systemMarkdown: performancePrompt,
-          model: performanceModel,
-        },
-      );
-    } catch {
-      performanceSummary = null;
-    }
+    performanceSummary = await readThroughAiSummaryCache(deps, {
+      organizationId: input.organizationId,
+      scopeKey: sellerPerformanceScopeKey(input.sellerUserId, statsWindowDays),
+      meetingsFingerprint,
+      compute: async () => {
+        const [performancePrompt, performanceModel] = await Promise.all([
+          loadAnalysisPromptMarkdown(deps.prompts, "SELLER_PERFORMANCE"),
+          resolvePromptGatewayModel(deps.prompts, "SELLER_PERFORMANCE"),
+        ]);
+        try {
+          return await deps.analysis.summarizeSellerCommercialPerformance({
+            sellerDisplayName: input.sellerDisplayName,
+            meetings: meetingDigests,
+            systemMarkdown: performancePrompt,
+            model: performanceModel,
+          });
+        } catch {
+          return null;
+        }
+      },
+    });
   }
 
   const paragraphOptions = {
@@ -99,7 +109,7 @@ export async function getTeamMemberPerformanceProfile(
       performanceSummary?.aStopper,
       paragraphOptions,
     ),
-    fingerprint: teamMemberMeetingsFingerprint(meetings),
+    fingerprint: meetingsFingerprint,
     meetingCount: meetings.length,
   };
 }

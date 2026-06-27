@@ -126,11 +126,14 @@ export default async function RendezVousDetailPage({
     updatedAt: meeting.updatedAt,
   });
 
-  const synthesis = await summarizeMeetingDetail(deps, {
+  const synthesis = await summarizeMeetingDetail(
+    { ...deps, meetings: deps.meetings },
+    {
     meeting,
     discResult: discParsed?.success ? discParsed.data : null,
     soncasResult: soncasParsed?.success ? soncasParsed.data : null,
     kissResult: kissParsed?.success ? kissParsed.data : null,
+    organizationId,
   });
 
   const canViewKissCoaching =

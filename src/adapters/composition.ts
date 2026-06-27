@@ -22,6 +22,7 @@ import { PrismaPlanRequestRepository } from "@/src/adapters/prisma/prisma-plan-r
 import { PrismaFeedbackRepository } from "@/src/adapters/prisma/prisma-feedback-repository";
 import { PrismaNotificationRepository } from "@/src/adapters/prisma/prisma-notification-repository";
 import { PrismaOrganizationQuotaRepository } from "@/src/adapters/prisma/prisma-organization-quota-repository";
+import { PrismaAiSummaryCacheRepository } from "@/src/adapters/prisma/prisma-ai-summary-cache-repository";
 import { PrismaPromptTemplateRepository } from "@/src/adapters/prisma/prisma-prompt-template-repository";
 import { PrismaSignInReadRepository } from "@/src/adapters/prisma/prisma-sign-in-read-repository";
 import { PrismaOrganizationInvitationRepository } from "@/src/adapters/prisma/prisma-organization-invitation-repository";
@@ -57,6 +58,7 @@ import type { PlanRequestRepositoryPort } from "@/src/core/ports/plan-request-re
 import type { FeedbackRepositoryPort } from "@/src/core/ports/feedback-repository-port";
 import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
 import type { OrganizationQuotaRepositoryPort } from "@/src/core/ports/organization-quota-repository-port";
+import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 
 export type ApplicationDeps = {
   auth: AuthSessionPort;
@@ -88,6 +90,7 @@ export type ApplicationDeps = {
   feedbacks: FeedbackRepositoryPort;
   notifications: NotificationRepositoryPort;
   organizationQuota: OrganizationQuotaRepositoryPort;
+  aiSummaryCache: AiSummaryCacheRepositoryPort;
 };
 
 export function makeApplicationDeps(): ApplicationDeps {
@@ -124,5 +127,6 @@ export function makeApplicationDeps(): ApplicationDeps {
     feedbacks: new PrismaFeedbackRepository(prisma),
     notifications: new PrismaNotificationRepository(prisma),
     organizationQuota: new PrismaOrganizationQuotaRepository(prisma),
+    aiSummaryCache: new PrismaAiSummaryCacheRepository(prisma),
   };
 }

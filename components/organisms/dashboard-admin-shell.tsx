@@ -7,15 +7,18 @@ import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-
 import { Skeleton } from "@/components/ui/skeleton";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import type { OrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
+import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 
 export function DashboardAdminShell({
   admin,
   kissTeamStrengthsNarrative,
   currentUserEmail,
+  disabledStatsDays = [],
 }: {
   admin: OrgAdminDashboard;
   kissTeamStrengthsNarrative?: string | null;
   currentUserEmail: string;
+  disabledStatsDays?: StatsWindowDays[];
 }) {
   const { home, monEquipe, discPie, soncasPie, kissTeamRollup } = admin;
   const jours = admin.statsWindowDays;
@@ -30,7 +33,10 @@ export function DashboardAdminShell({
               <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
             }
           >
-            <DashboardStatsPeriodSelect value={home.statsWindowDays} />
+            <DashboardStatsPeriodSelect
+              value={home.statsWindowDays}
+              disabledDays={disabledStatsDays}
+            />
           </Suspense>
         </div>
 

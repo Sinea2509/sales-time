@@ -3,6 +3,7 @@ import {
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
+import { normalizeScoresToHundred } from "@/src/core/domain/normalize-scores-to-hundred";
 
 export type DiscBarDatum = {
   key: "D" | "I" | "S" | "C";
@@ -93,6 +94,28 @@ function clampPct(n: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
+/** Nombre de RDV avec analyse DISC valide sur la période. */
+export function countDiscAnalyzedMeetings(
+  meetings: RecentMeetingListRow[],
+): number {
+  let n = 0;
+  for (const m of meetings) {
+    if (discResultSchema.safeParse(m.latestDiscResult).success) n += 1;
+  }
+  return n;
+}
+
+/** Nombre de RDV avec analyse SONCAS valide sur la période. */
+export function countSoncasAnalyzedMeetings(
+  meetings: RecentMeetingListRow[],
+): number {
+  let n = 0;
+  for (const m of meetings) {
+    if (soncasResultSchema.safeParse(m.latestSoncasResult).success) n += 1;
+  }
+  return n;
+}
+
 /**
  * Moyenne des scores DISC prospect sur les RDV ayant une analyse DISC valide,
  * tri décroissant par %.
@@ -113,10 +136,14 @@ export function aggregateDiscAffinityBarsFromMeetings(
     n += 1;
   }
   if (n === 0) return [];
+  const averages = Object.fromEntries(
+    DISC_KEYS.map((key) => [key, sum[key] / n]),
+  );
+  const normalized = normalizeScoresToHundred(averages);
   const items: DiscBarDatum[] = DISC_KEYS.map((key) => ({
     key,
     label: DISC_LABEL_FR[key],
-    pct: clampPct(sum[key] / n),
+    pct: clampPct(normalized[key] ?? 0),
   }));
   items.sort((a, b) => b.pct - a.pct || a.key.localeCompare(b.key));
   return items;
@@ -151,10 +178,14 @@ export function aggregateSoncasAffinityBarsFromMeetings(
     n += 1;
   }
   if (n === 0) return [];
+  const averages = Object.fromEntries(
+    SONCAS_KEYS.map((key) => [key, sum[key] / n]),
+  );
+  const normalized = normalizeScoresToHundred(averages);
   const items: SoncasBarDatum[] = SONCAS_KEYS.map((key) => ({
     key,
     label: SONCAS_LABEL_FR[key],
-    pct: clampPct(sum[key] / n),
+    pct: clampPct(normalized[key] ?? 0),
   }));
   items.sort((a, b) => b.pct - a.pct || a.key.localeCompare(b.key));
   return items;

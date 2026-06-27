@@ -35,6 +35,9 @@ function makeDeps() {
       isPlanUnlocked: jest.fn() as JestFn,
       decrementTrialAnalysesLeft: jest.fn() as JestFn,
     },
+    aiSummaryCache: {
+      invalidateForOrganization: jest.fn() as JestFn,
+    },
   };
 }
 
@@ -60,6 +63,7 @@ function initDeps(
     over.trialLeft ?? 3,
   );
   deps.organizationQuota.decrementTrialAnalysesLeft.mockResolvedValue(undefined);
+  deps.aiSummaryCache.invalidateForOrganization.mockResolvedValue(undefined);
   return deps;
 }
 

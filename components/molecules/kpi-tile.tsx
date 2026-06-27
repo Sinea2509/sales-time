@@ -1,5 +1,10 @@
 import type { ComponentType, ReactNode } from "react";
-import { KpiTileHintShell } from "@/components/molecules/kpi-tile-hint-shell";
+import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   statAccentStyles,
   type StatAccent,
@@ -9,7 +14,7 @@ import { cn } from "@/lib/utils";
 export type KpiTileProps = {
   icon: ComponentType<{ className?: string }>;
   label: string;
-  /** Shown on hover over the full KPI tile. */
+  /** Definition shown on hover of the info icon beside the label. */
   labelTooltip?: string;
   trend?: ReactNode;
   children: ReactNode;
@@ -36,7 +41,7 @@ export function KpiTile({
     className,
   );
 
-  const tile = (
+  return (
     <div className={shellClass}>
       <div className="flex min-w-0 items-center gap-2.5">
         <div
@@ -56,9 +61,29 @@ export function KpiTile({
             )}
           />
         </div>
-        <p className="text-muted-foreground truncate text-sm font-medium dark:text-zinc-400">
-          {label}
-        </p>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <p className="text-muted-foreground truncate text-sm font-medium dark:text-zinc-400">
+            {label}
+          </p>
+          {labelTooltip ? (
+            <Tooltip>
+              <TooltipTrigger
+                type="button"
+                className="text-muted-foreground hover:text-foreground inline-flex shrink-0 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-ring"
+                aria-label={`${label} — définition`}
+              >
+                <Info className="size-3.5" aria-hidden />
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                align="start"
+                className="max-w-sm text-left leading-relaxed"
+              >
+                {labelTooltip}
+              </TooltipContent>
+            </Tooltip>
+          ) : null}
+        </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
         <p className="text-3xl font-semibold tabular-nums">{children}</p>
@@ -70,15 +95,5 @@ export function KpiTile({
         </p>
       ) : null}
     </div>
-  );
-
-  if (!labelTooltip) {
-    return tile;
-  }
-
-  return (
-    <KpiTileHintShell label={label} hint={labelTooltip}>
-      {tile}
-    </KpiTileHintShell>
   );
 }

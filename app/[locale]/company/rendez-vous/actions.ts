@@ -5,13 +5,14 @@ import { z } from "zod";
 import { revalidateTeamMemberPerformancePaths } from "@/lib/revalidate-team-member-paths";
 import { uploadMeetingTranscriptFile } from "@/lib/meeting-transcript-upload";
 import { blobUrlBelongsToOrg } from "@/lib/blob-paths";
-import { mergeMeetingTranscriptSources } from "@/lib/transcript-extract";
+import { mergeMeetingTranscriptSources, isTranscriptAnalyzable } from "@/lib/transcript-extract";
 import { scheduleAnalysisJobsAfterResponse } from "@/app/[locale]/company/rendez-vous/schedule-analysis-jobs";
 import { requireOrgActor } from "@/lib/analysis-server-context";
 import { requireMeetingMutationAccess } from "@/lib/meeting-mutation-access";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { createMeetingForOrg } from "@/src/core/application/create-meeting";
 import { updateMeetingForOrg } from "@/src/core/application/update-meeting-for-org";
+import { invalidateAiSummaryCacheForOrg } from "@/src/core/application/invalidate-ai-summary-cache-for-org";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 
 const meetingOutcomeSchema = z.enum([
@@ -121,6 +122,13 @@ export async function createMeetingAction(formData: FormData) {
 
   if (transcript.length < 1) {
     return { ok: false as const, error: "VALIDATION" };
+  }
+
+  if (!isTranscriptAnalyzable(transcript)) {
+    return {
+      ok: false as const,
+      error: "TRANSCRIPT_TOO_SHORT_FOR_ANALYSIS" as const,
+    };
   }
 
   if (
@@ -321,6 +329,15 @@ export async function updateMeetingAction(formData: FormData) {
     return { ok: false as const, error: "VALIDATION" };
   }
 
+  const transcriptChanged =
+    parsed.data.transcript !== access.meeting.transcript.trim();
+  if (transcriptChanged && !isTranscriptAnalyzable(parsed.data.transcript)) {
+    return {
+      ok: false as const,
+      error: "TRANSCRIPT_TOO_SHORT_FOR_ANALYSIS" as const,
+    };
+  }
+
   const result = await updateMeetingForOrg(actor.deps, {
     organizationId: actor.organizationId,
     meetingId: parsedId.data,
@@ -349,8 +366,6 @@ export async function updateMeetingAction(formData: FormData) {
     };
   }
 
-  const transcriptChanged =
-    parsed.data.transcript !== access.meeting.transcript.trim();
   const notesChanged =
     (parsed.data.notes ?? null) !==
     (access.meeting.notes?.trim() ? access.meeting.notes.trim() : null);
@@ -413,6 +428,8 @@ export async function deleteMeetingAction(meetingId: string) {
     id: access.meeting.id,
     organizationId: actor.organizationId,
   });
+
+  await invalidateAiSummaryCacheForOrg(actor.deps, actor.organizationId);
 
   revalidatePath("/company/rendez-vous");
   revalidatePath("/company/analyse");

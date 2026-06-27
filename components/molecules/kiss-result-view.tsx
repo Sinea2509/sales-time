@@ -1,4 +1,5 @@
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
+import { DotBulletList } from "@/components/atoms/dot-bullet-list";
 import {
   Card,
   CardContent,
@@ -33,6 +34,10 @@ const blocks = [
   },
 ] as const;
 
+function sanitizeKissBullet(line: string): string {
+  return line.replace(/^[\s\-–—•·]+\s*/, "").trim();
+}
+
 export function KissResultView({ result }: { result: KissAnalysisResult }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -44,11 +49,10 @@ export function KissResultView({ result }: { result: KissAnalysisResult }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="list-inside list-disc space-y-1 text-sm leading-relaxed">
-              {result[key].map((line, i) => (
-                <li key={i}>{line}</li>
-              ))}
-            </ul>
+            <DotBulletList
+              items={result[key].map(sanitizeKissBullet).filter(Boolean)}
+              density="compact"
+            />
           </CardContent>
         </Card>
       ))}

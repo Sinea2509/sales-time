@@ -6,7 +6,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
+import { MIN_RDV_FOR_STATS } from "@/src/core/domain/dashboard-stats-window";
 import type { OrgAdminDistributionPie } from "@/src/core/application/get-org-admin-dashboard";
+
+const INSUFFICIENT_PROFILE_MESSAGE =
+  "Pas assez de données pour un profil fiable.";
 
 function conicGradientStops(slices: OrgAdminDistributionPie["slices"]) {
   const total = slices.reduce((a, s) => a + s.value, 0);
@@ -32,6 +36,8 @@ export function OrgAdminDonutDistributionCard({
   const total = data.slices.reduce((a, s) => a + s.value, 0);
   const gradient = conicGradientStops(data.slices);
   const rdvCount = data.analyzedMeetings;
+  const showChart =
+    data.analyzedMeetings >= MIN_RDV_FOR_STATS && gradient != null;
 
   const description = data.isDefaultEqual
     ? "Répartition par défaut (parts égales) — en attente d'analyses"
@@ -44,9 +50,11 @@ export function OrgAdminDonutDistributionCard({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        {!gradient ? (
+        {!showChart ? (
           <p className="text-muted-foreground text-sm">
-            Pas assez de données sur la période sélectionnée.
+            {data.analyzedMeetings < MIN_RDV_FOR_STATS
+              ? INSUFFICIENT_PROFILE_MESSAGE
+              : "Pas assez de données sur la période sélectionnée."}
           </p>
         ) : (
           <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-center">
@@ -80,19 +88,7 @@ export function OrgAdminDonutDistributionCard({
                     </span>
                   </span>
                   <span className="shrink-0 tabular-nums text-zinc-600 dark:text-zinc-400">
-                    {data.isDefaultEqual ? (
-                      <span className="text-muted-foreground text-xs">
-                        {Math.round((100 * s.value) / total)}%
-                      </span>
-                    ) : (
-                      <>
-                        {s.value}
-                        <span className="text-muted-foreground text-xs">
-                          {" "}
-                          ({Math.round((100 * s.value) / total)}%)
-                        </span>
-                      </>
-                    )}
+                    {Math.round((100 * s.value) / total)}%
                   </span>
                 </li>
               ))}

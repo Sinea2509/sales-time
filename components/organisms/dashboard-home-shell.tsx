@@ -13,8 +13,10 @@ import {
   meetingEtapePillClass,
 } from "@/lib/meeting-etape-pill";
 import { sectionHeadingClass } from "@/lib/page-typography";
+import { salesScoreColorClass } from "@/lib/sales-score-color";
 import { cn } from "@/lib/utils";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
+import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -37,10 +39,12 @@ export function DashboardHomeShell({
   home,
   meetingTypeOptions,
   pipelineStageOptions,
+  disabledStatsDays = [],
 }: {
   home: OrgDashboardHome;
   meetingTypeOptions: string[];
   pipelineStageOptions: string[];
+  disabledStatsDays?: StatsWindowDays[];
 }) {
   return (
     <div className="space-y-8" data-feedback-id="dashboard-home">
@@ -52,7 +56,10 @@ export function DashboardHomeShell({
               <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
             }
           >
-            <DashboardStatsPeriodSelect value={home.statsWindowDays} />
+            <DashboardStatsPeriodSelect
+              value={home.statsWindowDays}
+              disabledDays={disabledStatsDays}
+            />
           </Suspense>
         </div>
 
@@ -142,7 +149,12 @@ export function DashboardHomeShell({
                       </td>
                       <td className="hidden px-4 py-3.5 align-middle md:table-cell">
                         {m.salesScore != null ? (
-                          <span className="text-zinc-900 text-base font-semibold tabular-nums dark:text-zinc-100">
+                          <span
+                            className={cn(
+                              "text-base font-semibold tabular-nums",
+                              salesScoreColorClass(m.salesScore),
+                            )}
+                          >
                             {m.salesScore}
                           </span>
                         ) : (

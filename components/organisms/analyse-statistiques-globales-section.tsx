@@ -26,6 +26,7 @@ export function AnalyseStatistiquesGlobalesSection({
   rdvCount,
   isTeamView = false,
   statsWindowDays,
+  disabledStatsDays = [],
 }: {
   qualificationPotentialPoints: QualificationPotentialMatrixPoint[];
   priorityOpportunities: AnalysePriorityOpportunityRow[];
@@ -33,6 +34,7 @@ export function AnalyseStatistiquesGlobalesSection({
   /** Vue manager : couleur par commercial et sélecteur de période sur la matrice. */
   isTeamView?: boolean;
   statsWindowDays?: StatsWindowDays;
+  disabledStatsDays?: StatsWindowDays[];
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
@@ -47,7 +49,10 @@ export function AnalyseStatistiquesGlobalesSection({
           </CardDescription>
           {statsWindowDays != null ? (
             <CardAction>
-              <DashboardStatsPeriodSelect value={statsWindowDays} />
+              <DashboardStatsPeriodSelect
+                value={statsWindowDays}
+                disabledDays={disabledStatsDays}
+              />
             </CardAction>
           ) : null}
         </CardHeader>

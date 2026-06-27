@@ -9,6 +9,7 @@ import {
   SONCAS_DRIVER_KEYS,
   type SoncasDriverKey,
 } from "./org-soncas-team-aggregate";
+import { normalizeScoresToHundred } from "./normalize-scores-to-hundred";
 
 export type ProfilePieValues<T extends string> = Record<T, number>;
 
@@ -43,14 +44,18 @@ export function computeTeamDiscPie(
     return {
       analyzedMeetings: 0,
       isDefaultEqual: true,
-      values: equalValues(DISC_DIMENSION_KEYS),
+      values: normalizeScoresToHundred(
+        equalValues(DISC_DIMENSION_KEYS),
+      ) as ProfilePieValues<DiscDimensionKey>,
     };
   }
 
   return {
     analyzedMeetings: valid.length,
     isDefaultEqual: false,
-    values: valuesFromAverages(DISC_DIMENSION_KEYS, averageDiscScores(valid)),
+    values: normalizeScoresToHundred(
+      valuesFromAverages(DISC_DIMENSION_KEYS, averageDiscScores(valid)),
+    ) as ProfilePieValues<DiscDimensionKey>,
   };
 }
 
@@ -65,13 +70,17 @@ export function computeTeamSoncasPie(
     return {
       analyzedMeetings: 0,
       isDefaultEqual: true,
-      values: equalValues(SONCAS_DRIVER_KEYS),
+      values: normalizeScoresToHundred(
+        equalValues(SONCAS_DRIVER_KEYS),
+      ) as ProfilePieValues<SoncasDriverKey>,
     };
   }
 
   return {
     analyzedMeetings: valid.length,
     isDefaultEqual: false,
-    values: valuesFromAverages(SONCAS_DRIVER_KEYS, averageSoncasDriverScores(valid)),
+    values: normalizeScoresToHundred(
+      valuesFromAverages(SONCAS_DRIVER_KEYS, averageSoncasDriverScores(valid)),
+    ) as ProfilePieValues<SoncasDriverKey>,
   };
 }

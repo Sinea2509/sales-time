@@ -1,5 +1,16 @@
 export const MIN_TRANSCRIPT_CHARS = 20;
 
+/** Minimum length for AI analysis (create/update meeting). */
+export const MIN_ANALYZABLE_TRANSCRIPT_CHARS = 200;
+
+export type TranscriptTooShortForAnalysisError =
+  "TRANSCRIPT_TOO_SHORT_FOR_ANALYSIS";
+
+/** Returns false when transcript is too short for reliable AI analysis. */
+export function isTranscriptAnalyzable(text: string): boolean {
+  return text.trim().length >= MIN_ANALYZABLE_TRANSCRIPT_CHARS;
+}
+
 /** Formats read directly as UTF-8 text (subtitles get timestamp stripping). */
 export const TEXT_TRANSCRIPT_EXTENSIONS = [
   ".txt",

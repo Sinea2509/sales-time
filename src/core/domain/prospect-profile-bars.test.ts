@@ -30,13 +30,13 @@ describe("prospect-profile-bars", () => {
   it("orders DISC bars by descending score", () => {
     const bars = discBarsFromResult(disc);
     expect(bars[0]?.key).toBe("C");
-    expect(bars[0]?.pct).toBe(90);
+    expect(bars[0]?.pct).toBe(50);
   });
 
   it("orders SONCAS bars by descending score", () => {
     const bars = soncasBarsFromResult(soncas);
     expect(bars[0]?.key).toBe("securite");
-    expect(bars[0]?.pct).toBe(80);
+    expect(bars[0]?.pct).toBe(35);
   });
 });
 

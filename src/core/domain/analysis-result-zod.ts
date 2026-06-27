@@ -27,10 +27,10 @@ export const soncasResultSchema = z.object({
 
 export const discResultSchema = z.object({
   scores: z.object({
-    D: z.number(),
-    I: z.number(),
-    S: z.number(),
-    C: z.number(),
+    D: z.number().min(0).max(100),
+    I: z.number().min(0).max(100),
+    S: z.number().min(0).max(100),
+    C: z.number().min(0).max(100),
   }),
   dominant: z.enum(["D", "I", "S", "C"]),
   evidence: z.array(z.string()),

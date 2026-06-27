@@ -58,7 +58,7 @@ export function LandingSiteHeader() {
             href="/sign-up"
             className="rounded-lg bg-brand px-4 py-1.75 text-[13.5px] font-semibold whitespace-nowrap text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(108,77,255,0.35)] transition-[filter] hover:brightness-110"
           >
-            Commencer
+            Essayer Gratuitement
           </Link>
         </nav>
       </div>

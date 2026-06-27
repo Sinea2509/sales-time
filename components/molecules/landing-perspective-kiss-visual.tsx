@@ -1,3 +1,5 @@
+import { LandingKissLegend } from "@/components/molecules/landing-kiss-legend";
+
 export function LandingPerspectiveKissVisual() {
   const kissItems = [
     {
@@ -48,6 +50,7 @@ export function LandingPerspectiveKissVisual() {
             Score 64
           </span>
         </div>
+        <LandingKissLegend className="mb-3" />
         <div className="mb-4 grid grid-cols-2 gap-2">
           {kissItems.map((item) => (
             <div

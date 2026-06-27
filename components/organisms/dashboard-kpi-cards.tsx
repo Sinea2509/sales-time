@@ -3,9 +3,15 @@ import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { KPI_TAM_HINT, KPI_TUC_HINT } from "@/lib/kpi-hints";
 import { KpiTile } from "@/components/molecules/kpi-tile";
 import { KpiVsPreviousBadge } from "@/components/molecules/trend-pill";
+import { MIN_RDV_FOR_STATS } from "@/src/core/domain/dashboard-stats-window";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 
 export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
+  const trendCommon = {
+    statsWindowDays: home.statsWindowDays,
+    minSampleCount: MIN_RDV_FOR_STATS,
+  };
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" data-feedback-id="dashboard-kpi-cards">
       <KpiTile
@@ -16,6 +22,8 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
           <KpiVsPreviousBadge
             delta={home.tamCumuleTrendPercent}
             mode="up-good"
+            currentSampleCount={home.nbRdvsRenseignes}
+            {...trendCommon}
           />
         }
       >
@@ -28,7 +36,12 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
         icon={LayoutList}
         label="Nb de rdvs"
         trend={
-          <KpiVsPreviousBadge delta={home.nbRdvsTrendPercent} mode="up-good" />
+          <KpiVsPreviousBadge
+            delta={home.nbRdvsTrendPercent}
+            mode="up-good"
+            currentSampleCount={home.nbRdvs}
+            {...trendCommon}
+          />
         }
       >
         {home.nbRdvs}
@@ -43,6 +56,8 @@ export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
             delta={home.tucTrendPoints}
             mode="up-good"
             deltaDisplay="percentagePoints"
+            currentSampleCount={home.nbRdvsRenseignes}
+            {...trendCommon}
           />
         }
       >

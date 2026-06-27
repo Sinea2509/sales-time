@@ -11,7 +11,7 @@ describe("org-profile-distribution-pie", () => {
     const pie = computeTeamDiscPie([]);
     expect(pie.isDefaultEqual).toBe(true);
     expect(pie.analyzedMeetings).toBe(0);
-    expect(pie.values).toEqual({ D: 1, I: 1, S: 1, C: 1 });
+    expect(pie.values).toEqual({ D: 25, I: 25, S: 25, C: 25 });
   });
 
   it("returns team average DISC scores when analyses exist", () => {
@@ -27,8 +27,8 @@ describe("org-profile-distribution-pie", () => {
   it("returns equal SONCAS slices when no valid analyses", () => {
     const pie = computeTeamSoncasPie([{ invalid: true }]);
     expect(pie.isDefaultEqual).toBe(true);
-    expect(pie.values.securite).toBe(1);
-    expect(pie.values.sympathie).toBe(1);
+    expect(Object.values(pie.values).reduce((a, b) => a + b, 0)).toBe(100);
+    expect(Object.values(pie.values).every((v) => v === 16 || v === 17)).toBe(true);
   });
 
   it("returns team average SONCAS driver scores", () => {
@@ -59,7 +59,8 @@ describe("org-profile-distribution-pie", () => {
     const pie = computeTeamSoncasPie([one, two]);
     expect(pie.isDefaultEqual).toBe(false);
     expect(pie.analyzedMeetings).toBe(2);
-    expect(pie.values.securite).toBe(20);
-    expect(pie.values.sympathie).toBe(45);
+    expect(pie.values.securite).toBe(10);
+    expect(pie.values.sympathie).toBe(23);
+    expect(Object.values(pie.values).reduce((a, b) => a + b, 0)).toBe(100);
   });
 });

@@ -3,6 +3,8 @@ import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import type { MeetingSourceType } from "@/src/core/domain/meeting-status";
 import { resolveMeetingPersonLink } from "@/src/core/application/resolve-meeting-person-link";
+import { invalidateAiSummaryCacheForOrg } from "@/src/core/application/invalidate-ai-summary-cache-for-org";
+import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 
 export type UpdateMeetingResult =
   | { ok: true; meetingId: string }
@@ -15,6 +17,7 @@ export async function updateMeetingForOrg(
   deps: {
     meetings: MeetingRepositoryPort;
     contacts: ContactRepositoryPort;
+    aiSummaryCache: AiSummaryCacheRepositoryPort;
   },
   input: {
     organizationId: string | null;
@@ -98,6 +101,8 @@ export async function updateMeetingForOrg(
   if (!updated) {
     return { ok: false, error: "NOT_FOUND" };
   }
+
+  await invalidateAiSummaryCacheForOrg(deps, input.organizationId);
 
   return { ok: true, meetingId: input.meetingId };
 }

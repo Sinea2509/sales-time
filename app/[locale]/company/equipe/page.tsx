@@ -9,7 +9,11 @@ import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
-import { parseStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
+import {
+  disabledStatsWindowDays,
+} from "@/src/core/domain/dashboard-stats-window";
+import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +48,18 @@ export default async function MonEquipePage({ searchParams }: Props) {
   }
 
   const sp = searchParams != null ? await searchParams : {};
-  const statsWindowDays = parseStatsWindowDays(sp.jours);
   const monEquipePage = parseEquipePage(sp.equipePage);
   const deps = getApplicationDeps();
+
+  const windowCounts = await getStatsWindowRdvsCounts(deps, {
+    organizationId: actor.activeOrganizationId,
+  });
+  const statsWindowDays = ensureEligibleStatsWindowDays({
+    joursParam: sp.jours,
+    counts: windowCounts,
+    redirectPath: "/company/equipe",
+  });
+  const disabledStatsDays = disabledStatsWindowDays(windowCounts);
 
   const teamUserIds = await resolveManagerTeamUserIds(deps, {
     canManageOrganization: actor.canManageOrganization,
@@ -81,7 +94,10 @@ export default async function MonEquipePage({ searchParams }: Props) {
             <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
           }
         >
-          <DashboardStatsPeriodSelect value={statsWindowDays} />
+          <DashboardStatsPeriodSelect
+            value={statsWindowDays}
+            disabledDays={disabledStatsDays}
+          />
         </Suspense>
       </div>
       <MonEquipeSection

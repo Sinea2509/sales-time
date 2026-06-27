@@ -22,18 +22,16 @@ export function LandingFeaturesSection() {
           }
         />
 
-        <div className="mt-[52px] overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-200">
-          <div className="grid gap-px md:grid-cols-2">
-            {landingFeatureCards.map((feature, index) => (
-              <LandingReveal key={feature.title} delay={(index % 4) as 0 | 1 | 2 | 3}>
-                <LandingFeatureCard
-                  title={feature.title}
-                  description={feature.description}
-                  icon={feature.icon}
-                />
-              </LandingReveal>
-            ))}
-          </div>
+        <div className="mt-[52px] grid gap-4 rounded-2xl border border-zinc-200 p-4 shadow-sm md:grid-cols-2 md:gap-5 md:p-5">
+          {landingFeatureCards.map((feature, index) => (
+            <LandingReveal key={feature.title} delay={(index % 4) as 0 | 1 | 2 | 3}>
+              <LandingFeatureCard
+                title={feature.title}
+                description={feature.description}
+                icon={feature.icon}
+              />
+            </LandingReveal>
+          ))}
         </div>
       </div>
     </section>

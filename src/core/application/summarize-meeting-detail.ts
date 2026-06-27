@@ -8,7 +8,10 @@ import type {
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import type { MeetingStatus } from "@/src/core/domain/meeting-status";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
-import type { MeetingDetailWithAnalyses } from "@/src/core/ports/meeting-repository-port";
+import type {
+  MeetingDetailWithAnalyses,
+  MeetingRepositoryPort,
+} from "@/src/core/ports/meeting-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 
 export type MeetingDetailSynthesisContent = {
@@ -58,6 +61,7 @@ export async function summarizeMeetingDetail(
   deps: {
     analysis: AnalysisPort;
     prompts: PromptTemplateRepositoryPort;
+    meetings?: MeetingRepositoryPort;
   },
   input: {
     meeting: MeetingDetailWithAnalyses;
@@ -66,6 +70,7 @@ export async function summarizeMeetingDetail(
     kissResult: KissAnalysisResult | null;
     /** Bypass READY guard (analysis worker after SONCAS/DISC/KISS). */
     forceAiGeneration?: boolean;
+    organizationId?: string;
   },
 ): Promise<MeetingDetailSynthesisContent> {
   const storedReport = input.meeting.visitReportDraft?.trim();
@@ -112,11 +117,25 @@ export async function summarizeMeetingDetail(
       soncasResult: input.soncasResult,
       kissResult: input.kissResult,
     });
-    return {
+    const synthesis = {
       meetingSynthesis: result.meetingSynthesis.trim(),
       interlocutorProfile: result.interlocutorProfile.trim(),
       fromAi: true,
     };
+    if (
+      deps.meetings &&
+      input.organizationId &&
+      synthesis.meetingSynthesis.length > 0
+    ) {
+      await deps.meetings
+        .updateMeetingVisitReportDraft({
+          id: input.meeting.id,
+          organizationId: input.organizationId,
+          visitReportDraft: synthesis.meetingSynthesis,
+        })
+        .catch(() => undefined);
+    }
+    return synthesis;
   } catch {
     return fallback;
   }
@@ -127,7 +146,7 @@ export async function generateAndPersistMeetingVisitReport(
   deps: {
     analysis: AnalysisPort;
     prompts: PromptTemplateRepositoryPort;
-    meetings: import("@/src/core/ports/meeting-repository-port").MeetingRepositoryPort;
+    meetings: MeetingRepositoryPort;
   },
   input: {
     organizationId: string;
@@ -140,6 +159,7 @@ export async function generateAndPersistMeetingVisitReport(
   const synthesis = await summarizeMeetingDetail(deps, {
     ...input,
     forceAiGeneration: true,
+    organizationId: input.organizationId,
   });
   if (!synthesis.fromAi || !synthesis.meetingSynthesis.trim()) {
     return;

@@ -1,3 +1,5 @@
+import { LandingKissLegend } from "@/components/molecules/landing-kiss-legend";
+
 const kissThemes = [
   { label: "Qualification budget", tag: "STOP · 38%", color: "#DC2626", pct: 38 },
   { label: "Écoute active", tag: "KEEP · 72%", color: "#16A34A", pct: 72 },
@@ -29,9 +31,10 @@ export function LandingPerspectiveDirectionVisual() {
             </div>
           ))}
         </div>
-        <p className="mb-2.5 text-[10.5px] font-semibold tracking-wide text-zinc-500 uppercase">
+        <p className="mb-2 text-[10.5px] font-semibold tracking-wide text-zinc-500 uppercase">
           Thématiques KISS
         </p>
+        <LandingKissLegend className="mb-2.5" />
         <div className="space-y-2">
           {kissThemes.map((theme) => (
             <div key={theme.label}>
