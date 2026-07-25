@@ -14,21 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { dispatchMeetingMutation } from "@/lib/meeting-mutation-event";
+import { MEETING_OUTCOME_OPTIONS } from "@/lib/meeting-outcome-display";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import { toDatetimeLocalValue } from "@/lib/datetime-local-value";
 import { cn } from "@/lib/utils";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
 
-const TRANSCRIPT_ACCEPT =
-  ".txt,.csv,.md,.vtt,.srt,.doc,.docx,.pdf,text/plain";
+const TRANSCRIPT_ACCEPT = ".txt,.csv,.md,.vtt,.srt,.doc,.docx,.pdf,text/plain";
 const TRANSCRIPT_MAX_BYTES = 4 * 1024 * 1024;
-
-const outcomes = [
-  { value: "WON", label: "Gagné" },
-  { value: "LOST", label: "Perdu" },
-  { value: "FOLLOW_UP", label: "Suivi" },
-  { value: "NO_SHOW", label: "Absent" },
-  { value: "OTHER", label: "Autre" },
-] as const;
 
 const feelingLabels = [
   "Très insatisfait",
@@ -47,7 +40,7 @@ export type MeetingFormInitialValues = {
   meetingType: string | null;
   pipelineStage: string | null;
   potentialAmount: number | null;
-  outcome: (typeof outcomes)[number]["value"];
+  outcome: MeetingOutcome;
   feeling: number;
   transcript: string;
   notes: string | null;
@@ -74,7 +67,7 @@ function mapSubmitError(
     return "Contact introuvable. Rechargez la page ou choisissez un autre contact.";
   }
   if (res.error === "QUOTA_EXHAUSTED") {
-    return "Quota d'analyses épuisé — passez au plan pour continuer.";
+    return "Quota d'analyses épuisé. Passez au plan pour continuer.";
   }
   if (res.error === "UNSUPPORTED_FORMAT") {
     return "Format non pris en charge (.txt, .csv, .md, .vtt, .srt, .doc, .docx, .pdf).";
@@ -192,7 +185,7 @@ export function MeetingCreateForm({
             className={nativeSelectClassName}
             defaultValue={initialValues?.meetingType ?? ""}
           >
-            <option value="">—</option>
+            <option value="">Non précisé</option>
             {meetingTypeOptions.map((t) => (
               <option key={t} value={t}>
                 {t}
@@ -208,7 +201,7 @@ export function MeetingCreateForm({
             className={nativeSelectClassName}
             defaultValue={initialValues?.pipelineStage ?? ""}
           >
-            <option value="">—</option>
+            <option value="">Non précisé</option>
             {pipelineStageOptions.map((t) => (
               <option key={t} value={t}>
                 {t}
@@ -237,7 +230,7 @@ export function MeetingCreateForm({
             defaultValue={initialValues?.outcome ?? "FOLLOW_UP"}
             required
           >
-            {outcomes.map((o) => (
+            {MEETING_OUTCOME_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -246,7 +239,10 @@ export function MeetingCreateForm({
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="feeling">
-            Ressenti après le RDV — {feeling}/5 ({feelingLabels[feeling - 1]})
+            {/* L'espace avant le deux-points est insécable : la typographie
+                française l'exige, et sans elle le « : » passe seul à la ligne
+                quand le libellé se replie sur un écran étroit. */}
+            {`Ressenti après le RDV : ${feeling}/5 (${feelingLabels[feeling - 1]})`}
           </Label>
           <input
             id="feeling"
@@ -292,7 +288,7 @@ export function MeetingCreateForm({
               file={file}
               onFileChange={setFile}
               disabled={pending}
-              hint="Formats : .txt, .csv, .md, .vtt, .srt, .doc, .docx, .pdf — 4 Mo max."
+              hint="Formats acceptés : .txt, .csv, .md, .vtt, .srt, .doc, .docx, .pdf. Taille maximale : 4 Mo."
             />
             <Textarea
               id="transcript"

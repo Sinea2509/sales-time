@@ -7,7 +7,7 @@ import {
   Clock,
   Mail,
 } from "lucide-react";
-import { meetingOutcomeConfig } from "@/lib/meeting-outcome-config";
+import { MeetingOutcomeBadge } from "@/components/atoms/meeting-outcome-badge";
 import { cardTitleClass } from "@/lib/page-typography";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
@@ -207,7 +207,10 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {user.sessions.length === 0 ? (
-                    <TableEmptyRow colSpan={3} message="Aucune session active." />
+                    <TableEmptyRow
+                      colSpan={3}
+                      message="Aucune session active."
+                    />
                   ) : (
                     user.sessions.map((s) => (
                       <tr
@@ -225,11 +228,22 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
                           className="max-w-xs truncate px-4 py-2.5 text-zinc-500"
                           title={s.userAgent ?? undefined}
                         >
-                          {s.userAgent
-                            ? s.userAgent.length > 80
-                              ? `${s.userAgent.slice(0, 80)}…`
-                              : s.userAgent
-                            : "—"}
+                          {/* Un tiret ne dit pas si le navigateur n'a rien
+                              envoyé ou si la donnée s'est perdue. */}
+                          {s.userAgent ? (
+                            s.userAgent.length > 80 ? (
+                              `${s.userAgent.slice(0, 80)}…`
+                            ) : (
+                              s.userAgent
+                            )
+                          ) : (
+                            <span
+                              className="italic"
+                              title="Le navigateur n'a pas transmis son identification lors de cette session."
+                            >
+                              Non transmis
+                            </span>
+                          )}
                         </td>
                         <td className="whitespace-nowrap px-4 py-2.5 text-zinc-500">
                           {s.createdAt.toLocaleDateString("fr-FR")}
@@ -280,9 +294,6 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
                     <TableEmptyRow colSpan={4} message="Aucun rendez-vous." />
                   ) : (
                     user.meetingsAsSeller.map((m) => {
-                      const oc =
-                        meetingOutcomeConfig[m.outcome] ??
-                        meetingOutcomeConfig.OTHER;
                       return (
                         <tr
                           key={m.id}
@@ -295,9 +306,7 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
                             {m.meetingAt.toLocaleDateString("fr-FR")}
                           </td>
                           <td className="px-4 py-2.5">
-                            <Badge variant="outline" className={oc.className}>
-                              {oc.label}
-                            </Badge>
+                            <MeetingOutcomeBadge outcome={m.outcome} />
                           </td>
                           <td className="px-4 py-2.5">
                             <Link

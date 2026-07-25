@@ -8,7 +8,7 @@ import {
   Shield,
   Clock,
 } from "lucide-react";
-import { meetingOutcomeConfig } from "@/lib/meeting-outcome-config";
+import { MeetingOutcomeBadge } from "@/components/atoms/meeting-outcome-badge";
 import { cardTitleClass } from "@/lib/page-typography";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
@@ -205,9 +205,6 @@ export function AdminOrganizationDetailShell({
                     <TableEmptyRow colSpan={4} message="Aucun rendez-vous." />
                   ) : (
                     org.meetings.map((m) => {
-                      const oc =
-                        meetingOutcomeConfig[m.outcome] ??
-                        meetingOutcomeConfig.OTHER;
                       return (
                         <tr
                           key={m.id}
@@ -220,9 +217,7 @@ export function AdminOrganizationDetailShell({
                             {m.meetingAt.toLocaleDateString("fr-FR")}
                           </td>
                           <td className="px-4 py-2.5">
-                            <Badge variant="outline" className={oc.className}>
-                              {oc.label}
-                            </Badge>
+                            <MeetingOutcomeBadge outcome={m.outcome} />
                           </td>
                           <td className="px-4 py-2.5 text-zinc-500">
                             {m.seller.firstName && m.seller.lastName
@@ -299,7 +294,16 @@ export function AdminOrganizationDetailShell({
                           </Badge>
                         </td>
                         <td className="max-w-xs truncate px-4 py-2.5 text-zinc-500">
-                          {log.reason ?? "—"}
+                          {/* La raison est facultative à la saisie : le dire
+                              vaut mieux que laisser une case muette. */}
+                          {log.reason ?? (
+                            <span
+                              className="italic"
+                              title="L'auteur de l'action n'a pas indiqué de raison."
+                            >
+                              Non renseignée
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))

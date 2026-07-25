@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ContactEditForm } from "@/components/organisms/contact-edit-form";
 import { PageDetailHeader } from "@/components/molecules/page-header";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
+import { MeetingOutcomeBadge } from "@/components/atoms/meeting-outcome-badge";
 import {
   Table,
   TableBody,
@@ -12,14 +13,6 @@ import {
 } from "@/components/ui/table";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import type { ContactSummaryRow } from "@/src/core/ports/contact-repository-port";
-
-const outcomesFr: Record<string, string> = {
-  WON: "Gagné",
-  LOST: "Perdu",
-  FOLLOW_UP: "Suivi",
-  NO_SHOW: "Absent",
-  OTHER: "Autre",
-};
 
 type ContactMeetingRow = {
   id: string;
@@ -75,7 +68,9 @@ export function ContactDetailShell({
                         timeStyle: "short",
                       })}
                     </TableCell>
-                    <TableCell>{outcomesFr[m.outcome] ?? m.outcome}</TableCell>
+                    <TableCell>
+                      <MeetingOutcomeBadge outcome={m.outcome} />
+                    </TableCell>
                     <TableCell className="text-right">
                       <Link
                         href={`/company/rendez-vous/${m.id}`}
