@@ -249,6 +249,7 @@ export default async function ManagerCommercialViewPage({
       salesProfile={teamSalesProfile.scores}
       previousSalesProfile={previousSalesProfile.scores}
       salesProfileRdvCount={teamSalesProfile.rdvCount}
+      rdvSurLaPeriode={meetings.length}
       progressBullets={progressBullets}
       improvementBullets={improvementBullets}
       home={home}

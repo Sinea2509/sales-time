@@ -9,8 +9,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
+import { matriceRendezVousLegende } from "@/lib/matrice-rendez-vous-legende";
 import {
   AnalysePriorityOpportunitiesTable,
+  TOP_OPPORTUNITIES,
   type AnalysePriorityOpportunityRow,
 } from "@/components/organisms/analyse-priority-opportunities-table";
 import { QualificationPotentialMatrixScatter } from "@/components/organisms/qualification-potential-matrix-scatter";
@@ -23,19 +25,32 @@ const CHART_HEIGHT = 420;
 export function AnalyseStatistiquesGlobalesSection({
   qualificationPotentialPoints,
   priorityOpportunities,
-  rdvCount,
+  rdvSurLaPeriode,
   isTeamView = false,
   statsWindowDays,
   disabledStatsDays = [],
 }: {
   qualificationPotentialPoints: QualificationPotentialMatrixPoint[];
   priorityOpportunities: AnalysePriorityOpportunityRow[];
-  rdvCount: number;
+  /**
+   * Le nombre de rendez-vous de la période, tous confondus.
+   *
+   * Le nom compte : l'ancien `rdvCount` ne disait pas de quels rendez-vous il
+   * parlait, et les deux appelants lui donnaient deux grandeurs différentes.
+   * Ce n'est pas le nombre de points de la matrice, qui se déduit des points
+   * eux-mêmes.
+   */
+  rdvSurLaPeriode: number;
   /** Vue manager : couleur par commercial et sélecteur de période sur la matrice. */
   isTeamView?: boolean;
   statsWindowDays?: StatsWindowDays;
   disabledStatsDays?: StatsWindowDays[];
 }) {
+  const legendeMatrice = matriceRendezVousLegende({
+    pointsPlaces: qualificationPotentialPoints.length,
+    rdvSurLaPeriode,
+  });
+
   return (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
       <Card className="flex h-full flex-col border-neutral-200 shadow-sm dark:border-neutral-800">
@@ -45,7 +60,7 @@ export function AnalyseStatistiquesGlobalesSection({
           </CardTitle>
           <CardDescription>
             {isTeamView ? "Vue équipe · " : ""}
-            sur {rdvCount} rdv{rdvCount > 1 ? "s" : ""}
+            {legendeMatrice}
           </CardDescription>
           {statsWindowDays != null ? (
             <CardAction>
@@ -70,7 +85,16 @@ export function AnalyseStatistiquesGlobalesSection({
           <CardTitle className={cardTitleClass}>
             Opportunités prioritaires
           </CardTitle>
-          <CardDescription>Top 10 des rendez-vous</CardDescription>
+          {/*
+            « Top 10 des rendez-vous » ne disait pas selon quel critère. Deux
+            grandeurs sont pourtant lisibles sur chaque ligne, et le lecteur ne
+            pouvait pas savoir laquelle commandait le classement ni ce que la
+            barre mesurait. La description porte maintenant les deux.
+          */}
+          <CardDescription>
+            Les plus gros montants potentiels de la période, {TOP_OPPORTUNITIES}{" "}
+            au maximum. La barre donne le SalesScore du rendez-vous, de 0 à 100.
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col">
           <AnalysePriorityOpportunitiesTable rows={priorityOpportunities} />

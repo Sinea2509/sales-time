@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { AnalysePagePeriodFallback } from "@/components/molecules/analyse-page-period-fallback";
 import { InfoCard } from "@/components/molecules/info-card";
-import { PageHeader, PageHeaderSimple } from "@/components/molecules/page-header";
+import {
+  PageHeader,
+  PageHeaderSimple,
+} from "@/components/molecules/page-header";
 import { AnalyseKpiCards } from "@/components/organisms/analyse-kpi-cards";
 import { AnalyseRecommandationsSection } from "@/components/organisms/analyse-recommandations-section";
 import { AnalyseStatistiquesGlobalesSection } from "@/components/organisms/analyse-statistiques-globales-section";
@@ -10,9 +13,7 @@ import { summarizeTeamCoachingRecommendations } from "@/src/core/application/sum
 import { getEnv } from "@/lib/env";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
-import {
-  sectionHeadingClass,
-} from "@/lib/page-typography";
+import { sectionHeadingClass } from "@/lib/page-typography";
 import {
   disabledStatsWindowDays,
   partitionMeetingsByStatsWindow,
@@ -23,9 +24,7 @@ import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
 import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
-import {
-  buildQualificationPotentialMatrixPoints,
-} from "@/src/core/domain/meeting-analyse-matrices";
+import { buildQualificationPotentialMatrixPoints } from "@/src/core/domain/meeting-analyse-matrices";
 import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-profile-from-meetings";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +45,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
         <PageHeaderSimple title="Performance" />
         <InfoCard
           title="Compte"
-          description="Profil utilisateur non synchronisé — impossible de charger votre analyse personnelle."
+          description="Profil utilisateur non synchronisé. Impossible de charger votre analyse personnelle."
         />
       </div>
     );
@@ -90,7 +89,9 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       includeLatestKissResult: true,
       sellerUserId: sellerScope,
     }),
-    aiEnabled ? deps.globalKissCoachingPrompts.getPrompts() : Promise.resolve(null),
+    aiEnabled
+      ? deps.globalKissCoachingPrompts.getPrompts()
+      : Promise.resolve(null),
   ]);
 
   const { currentWindow: meetings, previousWindow: previousMeetings } =
@@ -168,7 +169,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
         <AnalyseStatistiquesGlobalesSection
           qualificationPotentialPoints={qualificationPotentialPoints}
           priorityOpportunities={priorityOpportunities}
-          rdvCount={meetings.length}
+          rdvSurLaPeriode={meetings.length}
           isTeamView={isOrgAdmin}
           statsWindowDays={home.statsWindowDays}
           disabledStatsDays={disabledStatsDays}

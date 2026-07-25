@@ -107,7 +107,19 @@ export type TeamMemberPerformanceShellProps = {
   priorityOpportunities: AnalysePriorityOpportunityRow[];
   salesProfile: SalesProfileScores | null;
   previousSalesProfile: SalesProfileScores | null;
+  /**
+   * Les rendez-vous qui portent un profil de vente, c'est-à-dire ceux dont
+   * l'analyse a pu noter le commercial. Sert aux recommandations.
+   */
   salesProfileRdvCount: number;
+  /**
+   * Tous les rendez-vous du commercial sur la période, analysés ou non.
+   *
+   * La matrice recevait `salesProfileRdvCount` : elle annonçait donc le nombre
+   * de rendez-vous notés là où elle dessine les rendez-vous qualifiés, deux
+   * ensembles qui ne se recouvrent pas.
+   */
+  rdvSurLaPeriode: number;
   progressBullets: string[];
   improvementBullets: string[];
   home: OrgDashboardHome;
@@ -141,6 +153,7 @@ export function TeamMemberPerformanceShell({
   salesProfile,
   previousSalesProfile,
   salesProfileRdvCount,
+  rdvSurLaPeriode,
   progressBullets,
   improvementBullets,
   home,
@@ -302,7 +315,7 @@ export function TeamMemberPerformanceShell({
           <AnalyseStatistiquesGlobalesSection
             qualificationPotentialPoints={qualificationPotentialPoints}
             priorityOpportunities={priorityOpportunities}
-            rdvCount={salesProfileRdvCount}
+            rdvSurLaPeriode={rdvSurLaPeriode}
             statsWindowDays={statsWindowDays}
           />
         </div>

@@ -64,7 +64,9 @@ type LegendItem = {
   count?: number;
 };
 
-function sortedUniqueEtapes(points: QualificationPotentialMatrixPoint[]): string[] {
+function sortedUniqueEtapes(
+  points: QualificationPotentialMatrixPoint[],
+): string[] {
   return [...new Set(points.map((p) => p.etape))].sort((a, b) =>
     a.localeCompare(b, "fr"),
   );
@@ -84,9 +86,10 @@ function tooltipMetaFromPoint(
   };
 }
 
-function buildEtapeSeries(
-  points: QualificationPotentialMatrixPoint[],
-): { series: ScatterSeries[]; legend: LegendItem[] } {
+function buildEtapeSeries(points: QualificationPotentialMatrixPoint[]): {
+  series: ScatterSeries[];
+  legend: LegendItem[];
+} {
   const presentEtapes = sortedUniqueEtapes(points);
   const series = presentEtapes
     .map((etape) => {
@@ -116,9 +119,10 @@ function buildEtapeSeries(
   return { series, legend };
 }
 
-function buildSellerSeries(
-  points: QualificationPotentialMatrixPoint[],
-): { series: ScatterSeries[]; legend: LegendItem[] } {
+function buildSellerSeries(points: QualificationPotentialMatrixPoint[]): {
+  series: ScatterSeries[];
+  legend: LegendItem[];
+} {
   const sellerStyles = sellerScatterStylesByUserId(points);
   const countsBySeller = new Map<string, number>();
   for (const point of points) {
@@ -164,7 +168,7 @@ export function QualificationPotentialMatrixScatter({
 }: {
   points: QualificationPotentialMatrixPoint[];
   height?: number;
-  /** Vue manager — une couleur par commercial. */
+  /** Vue manager : une couleur par commercial. */
   legendMode?: "etape" | "seller";
 }) {
   const { series, legend } = useMemo(() => {
@@ -178,56 +182,82 @@ export function QualificationPotentialMatrixScatter({
       {
         id: "axis-placeholder",
         label: "",
-        data: [{ id: "__axis-placeholder__", x: 0, y: 0, z: {} as QualificationMatrixScatterTooltipMeta }],
+        data: [
+          {
+            id: "__axis-placeholder__",
+            x: 0,
+            y: 0,
+            z: {} as QualificationMatrixScatterTooltipMeta,
+          },
+        ],
         color: "transparent",
         markerSize: 0,
       },
     ];
   }, [series]);
 
+  const isEmpty = series.length === 0;
+
   return (
     <div className="w-full space-y-2">
-      <ScatterChart
-        height={height}
-        series={chartSeries}
-        slots={{ tooltip: QualificationMatrixScatterTooltip }}
-        xAxis={[
-          {
-            id: "qualification",
-            ...matrixAxisConfig,
-            label: "Qualification",
-            height: 28,
-          },
-        ]}
-        yAxis={[
-          {
-            id: "potential",
-            ...matrixAxisConfig,
-            label: "Potentiel",
-            width: 30,
-          },
-        ]}
-        grid={{ vertical: true, horizontal: true }}
-        hideLegend
-        hitAreaRadius={24}
-        margin={{ top: 8, right: 8, bottom: 32, left: 36 }}
-        slotProps={{
-          tooltip: { trigger: "item" },
-          axisTickLabel: { style: compactTickLabel },
-          axisLabel: { style: compactAxisLabel },
-        }}
-      >
-        <ChartsReferenceLine
-          x={0}
-          axisId="qualification"
-          lineStyle={ORIGIN_LINE_STYLE}
-        />
-        <ChartsReferenceLine
-          y={0}
-          axisId="potential"
-          lineStyle={ORIGIN_LINE_STYLE}
-        />
-      </ScatterChart>
+      {/*
+        Sans message, la matrice vide dessinait deux axes gradués et rien
+        d'autre. Deux axes nus se lisent comme un graphique qui n'a pas fini de
+        charger, ou comme une panne : le lecteur attend des points qui ne
+        viendront jamais. La phrase dit pourquoi il n'y en a pas, et quoi faire
+        pour qu'il y en ait.
+      */}
+      <div className="relative">
+        {isEmpty ? (
+          <div className="absolute inset-0 z-10 flex items-center justify-center px-6">
+            <p className="text-muted-foreground bg-card/85 max-w-xs rounded-lg px-3 py-2 text-center text-sm text-balance">
+              Aucun rendez-vous à placer. Un rendez-vous n&apos;apparaît ici
+              qu&apos;une fois analysé et doté d&apos;un montant potentiel.
+            </p>
+          </div>
+        ) : null}
+        <ScatterChart
+          height={height}
+          series={chartSeries}
+          slots={{ tooltip: QualificationMatrixScatterTooltip }}
+          xAxis={[
+            {
+              id: "qualification",
+              ...matrixAxisConfig,
+              label: "Qualification",
+              height: 28,
+            },
+          ]}
+          yAxis={[
+            {
+              id: "potential",
+              ...matrixAxisConfig,
+              label: "Potentiel",
+              width: 30,
+            },
+          ]}
+          grid={{ vertical: true, horizontal: true }}
+          hideLegend
+          hitAreaRadius={24}
+          margin={{ top: 8, right: 8, bottom: 32, left: 36 }}
+          slotProps={{
+            tooltip: { trigger: "item" },
+            axisTickLabel: { style: compactTickLabel },
+            axisLabel: { style: compactAxisLabel },
+          }}
+        >
+          <ChartsReferenceLine
+            x={0}
+            axisId="qualification"
+            lineStyle={ORIGIN_LINE_STYLE}
+          />
+          <ChartsReferenceLine
+            y={0}
+            axisId="potential"
+            lineStyle={ORIGIN_LINE_STYLE}
+          />
+        </ScatterChart>
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         {legend.map((item) => (
           <span
