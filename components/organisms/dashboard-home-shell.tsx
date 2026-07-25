@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { ProspectIdentityCell } from "@/components/molecules/prospect-identity-cell";
+import { MeetingEtapeBadge } from "@/components/atoms/meeting-etape-badge";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
@@ -8,11 +9,7 @@ import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import { DashboardStandingCard } from "@/components/organisms/dashboard-standing-card";
 import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
-import {
-  meetingEtapeDisplayLabel,
-  meetingEtapePillClass,
-} from "@/lib/meeting-etape-pill";
+import { formatPotentialEuro } from "@/lib/format-potential-euro";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import { salesScoreColorClass } from "@/lib/sales-score-color";
 import { cn } from "@/lib/utils";
@@ -26,22 +23,6 @@ const dateShort = new Intl.DateTimeFormat("fr-FR", {
   month: "2-digit",
   year: "numeric",
 });
-
-const euroFormat = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
-
-/**
- * Écrit un potentiel en euros, ou « n. c. » quand il n'est pas renseigné.
- * Un tiret seul dans une colonne de montants se lit comme un zéro, ou comme un
- * signe moins tronqué : il faut dire que la donnée manque, pas la maquiller.
- */
-function formatPotentialEuro(amount: number | null): string {
-  if (amount == null) return VALEUR_NON_CALCULABLE;
-  return euroFormat.format(amount);
-}
 
 export function DashboardHomeShell({
   home,
@@ -100,28 +81,44 @@ export function DashboardHomeShell({
 
         <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            {/*
+              Ces largeurs minimales sont des garde-fous, pas la mise en page :
+              elles sont réglées sous ce que le contenu réclame à chaque palier,
+              si bien qu'elles ne se déclenchent que sur un écran plus étroit
+              que prévu, pour faire défiler plutôt qu'écraser les colonnes.
+            */}
+            <table className="w-full min-w-[300px] text-left text-sm sm:min-w-[500px] md:min-w-[600px] lg:min-w-[720px]">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
                   <DataTableHead className="px-4 py-3.5 dark:text-zinc-400">
                     Prospect
                   </DataTableHead>
-                  <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-400">
+                  {/*
+                    Les colonnes s'allument aux mêmes largeurs que sur
+                    /company/rendez-vous : c'est le même rendez-vous vu deux
+                    fois, et il serait déroutant qu'une colonne apparaisse ici
+                    et pas là sur le même écran.
+                  */}
+                  <DataTableHead className="hidden px-4 py-3.5 md:table-cell dark:text-zinc-400">
                     Potentiel
                   </DataTableHead>
+                  {/*
+                    Sur téléphone l'intitulé se raccourcit : « Date du RDV »
+                    réclame plus de largeur que les dates elles-mêmes, et une
+                    colonne dictée par son en-tête vole cette place au nom du
+                    prospect, qui est la seule donnée qu'on lise ligne à ligne.
+                  */}
+                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-400">
+                    <span className="sm:hidden">Date</span>
+                    <span className="hidden sm:inline">Date du RDV</span>
+                  </DataTableHead>
                   <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-400">
-                    TAM
-                  </DataTableHead>
-                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-400">
-                    Date du RDV
-                  </DataTableHead>
-                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-400">
                     Étape
                   </DataTableHead>
-                  <DataTableHead className="hidden px-4 py-3.5 md:table-cell dark:text-zinc-400">
+                  <DataTableHead className="hidden px-4 py-3.5 lg:table-cell dark:text-zinc-400">
                     SalesScore
                   </DataTableHead>
-                  <DataTableHead className="w-20 px-4 py-3.5 text-right dark:text-zinc-400">
+                  <DataTableHead className="w-14 px-2 py-3.5 text-right sm:w-20 sm:px-4 dark:text-zinc-400">
                     Actions
                   </DataTableHead>
                 </tr>
@@ -129,8 +126,9 @@ export function DashboardHomeShell({
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {home.recentMeetings.length === 0 ? (
                   <TableEmptyRow
-                    colSpan={7}
-                    message="Aucun rendez-vous."
+                    colSpan={6}
+                    message="Aucun rendez-vous sur la période affichée."
+                    description="Changez la période avec le sélecteur en haut de page, ou préparez un rendez-vous avec le bouton ci-dessus : il apparaîtra ici."
                     size="large"
                   />
                 ) : (
@@ -139,38 +137,44 @@ export function DashboardHomeShell({
                       key={m.id}
                       className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/50"
                     >
-                      <td className="px-4 py-3.5 align-middle">
+                      {/*
+                        `max-w-0` avec `w-full` donne à cette colonne toute la
+                        place que les autres n'ont pas réclamée, au lieu de la
+                        laisser s'étendre à la longueur du plus long nom. Les
+                        minimums empêchent qu'elle se réduise à une lettre par
+                        ligne quand un nom très long croise un écran étroit.
+                      */}
+                      <td className="w-full max-w-0 min-w-[7.5rem] px-4 py-3.5 align-middle sm:min-w-[10.5rem]">
                         <ProspectIdentityCell
                           displayName={m.prospectName}
                           company={m.prospectCompany}
                         />
+                        {/*
+                          Sous « sm » l'étape n'a plus de colonne à elle : elle
+                          descend sous le nom du prospect, dans la seule cellule
+                          qui reste. L'information ne coûte alors que de la
+                          hauteur, là où une colonne coûtait de la largeur.
+                        */}
+                        <div className="mt-1.5 sm:hidden">
+                          <MeetingEtapeBadge
+                            meetingType={m.meetingType}
+                            pipelineStage={m.pipelineStage}
+                          />
+                        </div>
                       </td>
-                      <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell dark:text-zinc-400">
+                      <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums md:table-cell dark:text-zinc-400">
                         {formatPotentialEuro(m.potentialAmount)}
-                      </td>
-                      <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums sm:table-cell dark:text-zinc-400">
-                        {formatDurationHoursMinutes(home.tamMinutesPerRdv)}
                       </td>
                       <td className="text-muted-foreground whitespace-nowrap px-4 py-3.5 align-middle tabular-nums dark:text-zinc-400">
                         {dateShort.format(new Date(m.meetingAt))}
                       </td>
-                      <td className="px-4 py-3.5 align-middle">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium",
-                            meetingEtapePillClass({
-                              meetingType: m.meetingType,
-                              pipelineStage: m.pipelineStage,
-                            }),
-                          )}
-                        >
-                          {meetingEtapeDisplayLabel({
-                            meetingType: m.meetingType,
-                            pipelineStage: m.pipelineStage,
-                          })}
-                        </span>
+                      <td className="hidden px-4 py-3.5 align-middle sm:table-cell">
+                        <MeetingEtapeBadge
+                          meetingType={m.meetingType}
+                          pipelineStage={m.pipelineStage}
+                        />
                       </td>
-                      <td className="hidden px-4 py-3.5 align-middle md:table-cell">
+                      <td className="hidden px-4 py-3.5 align-middle lg:table-cell">
                         {m.salesScore != null ? (
                           <span
                             className={cn(
@@ -189,7 +193,7 @@ export function DashboardHomeShell({
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 text-right align-middle">
+                      <td className="px-2 py-3.5 text-right align-middle sm:px-4">
                         <RendezVousMeetingRowActions
                           meetingId={m.id}
                           prospectName={m.prospectName}

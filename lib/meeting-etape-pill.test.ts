@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  ETAPE_NON_RENSEIGNEE,
   meetingEtapeDisplayLabel,
   meetingEtapePillClass,
   meetingEtapePillClassForLabel,
@@ -25,13 +26,18 @@ describe("meeting-etape-pill", () => {
     ).toBe("Négociation");
   });
 
-  it("returns em dash when both fields are missing", () => {
+  it("names the empty case, and keeps it neutral", () => {
     expect(
       meetingEtapeDisplayLabel({
         meetingType: null,
         pipelineStage: null,
       }),
-    ).toBe("—");
+    ).toBe(ETAPE_NON_RENSEIGNEE);
+    // Une étape absente ne porte aucune des couleurs d'étape : elle ne se
+    // range pas dans la progression Découverte, Proposition, Négociation.
+    expect(meetingEtapePillClassForLabel(ETAPE_NON_RENSEIGNEE)).toContain(
+      "zinc",
+    );
   });
 
   it("styles known étape keywords consistently", () => {

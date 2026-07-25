@@ -1,11 +1,14 @@
-import { meetingEtapeDisplayLabel } from "@/src/core/domain/meeting-etape-display";
+import {
+  ETAPE_NON_RENSEIGNEE,
+  meetingEtapeDisplayLabel,
+} from "@/src/core/domain/meeting-etape-display";
 
 export type MeetingEtapeSource = {
   meetingType: string | null;
   pipelineStage: string | null;
 };
 
-export { meetingEtapeDisplayLabel };
+export { ETAPE_NON_RENSEIGNEE, meetingEtapeDisplayLabel };
 
 type EtapeStyle = {
   pillClass: string;
@@ -49,14 +52,14 @@ const QUALIFICATION_STYLE: EtapeStyle = {
 };
 
 function normalizeEtapeLabel(label: string): string {
-  return label
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase();
+  return label.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 }
 
 function etapeStyleForLabel(label: string): EtapeStyle {
-  if (label === "—") return DEFAULT_ETAPE_STYLE;
+  // Le cas « non renseigné » reste neutre : une étape absente n'est ni une
+  // bonne ni une mauvaise nouvelle, et lui donner une couleur d'étape la
+  // ferait entrer dans une progression à laquelle elle n'appartient pas.
+  if (label === ETAPE_NON_RENSEIGNEE) return DEFAULT_ETAPE_STYLE;
 
   const normalized = normalizeEtapeLabel(label);
   if (

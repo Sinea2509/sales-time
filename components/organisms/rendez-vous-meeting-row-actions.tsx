@@ -53,7 +53,7 @@ export function RendezVousMeetingRowActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          aria-label={`Actions — ${prospectName}`}
+          aria-label={`Actions sur le rendez-vous ${prospectName}`}
           disabled={pending}
           className={cn(
             buttonVariants({ variant: "ghost", size: "icon-sm" }),

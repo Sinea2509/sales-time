@@ -1,32 +1,25 @@
 import type { ReactNode } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
+import { MeetingEtapeBadge } from "@/components/atoms/meeting-etape-badge";
 import { MeetingFollowUpEmailDialog } from "@/components/organisms/meeting-follow-up-email-dialog";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
+import { formatPotentialEuro } from "@/lib/format-potential-euro";
 import {
+  ETAPE_NON_RENSEIGNEE,
   meetingEtapeDisplayLabel,
-  meetingEtapePillClass,
 } from "@/lib/meeting-etape-pill";
 import { pageTitleClass } from "@/lib/page-typography";
+import { plurielFr } from "@/lib/pluriel-fr";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { salesScoreColorClass } from "@/lib/sales-score-color";
 import { cn } from "@/lib/utils";
+import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
   month: "2-digit",
   year: "2-digit",
 });
-
-const euroFormat = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
-
-function formatPotentialEuro(amount: number | null): string {
-  if (amount == null) return "—";
-  return euroFormat.format(amount);
-}
 
 function statColumn({
   value,
@@ -65,10 +58,23 @@ function statColumn({
 }
 
 function SalesScoreDeltaBadge({ delta }: { delta: number }) {
-  const display =
-    Math.abs(delta % 1) < 0.05 ? String(Math.round(delta)) : String(delta);
+  /*
+    L'écart est arrondi avant d'être jugé, et non après. Un badge qui annonce
+    « +0 » sous une flèche montante affirme une hausse que le chiffre écrit à
+    côté dément aussitôt : quand l'arrondi ramène l'écart à zéro, il n'y a rien
+    à annoncer, et le badge s'efface plutôt que d'inventer un sens à la flèche.
+  */
+  const magnitude = Math.round(Math.abs(delta) * 10) / 10;
+  if (magnitude === 0) return null;
+
+  // Virgule décimale et vrai signe moins (U+2212) : « −1,5 » et non « -1.5 ».
+  const chiffres = Number.isInteger(magnitude)
+    ? String(magnitude)
+    : magnitude.toFixed(1).replace(".", ",");
   const positive = delta > 0;
   const Icon = positive ? TrendingUp : TrendingDown;
+  const sens = positive ? "en hausse" : "en baisse";
+
   return (
     <span
       className={cn(
@@ -77,15 +83,11 @@ function SalesScoreDeltaBadge({ delta }: { delta: number }) {
           ? "border-emerald-500/35 bg-emerald-500/15 text-emerald-700 dark:text-emerald-100"
           : "border-rose-500/35 bg-rose-500/15 text-rose-700 dark:text-rose-100",
       )}
-      aria-label={
-        positive
-          ? `SalesScore en hausse de ${display} points`
-          : `SalesScore en baisse de ${display} points`
-      }
+      aria-label={`SalesScore ${sens} de ${chiffres} ${plurielFr(magnitude, "point")} par rapport au rendez-vous précédent`}
     >
       <Icon className="size-3 shrink-0" aria-hidden />
-      {positive ? "+" : ""}
-      {display}
+      {positive ? "+" : "−"}
+      {chiffres}
     </span>
   );
 }
@@ -131,15 +133,18 @@ export function MeetingDetailHeader({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className={cn(pageTitleClass, "truncate")}>{prospectName}</h1>
-            {etapeLabel !== "—" ? (
-              <span
-                className={cn(
-                  "inline-flex shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium",
-                  meetingEtapePillClass({ meetingType, pipelineStage }),
-                )}
-              >
-                {etapeLabel}
-              </span>
+            {/*
+              Ici l'insigne disparaît quand l'étape n'est pas renseignée, au
+              lieu d'afficher « Non renseignée » comme le fait le tableau. Un
+              titre de page nomme le rendez-vous ; il n'est pas le bon endroit
+              pour signaler un champ vide, que la ligne du tableau et le
+              formulaire d'édition disent déjà.
+            */}
+            {etapeLabel !== ETAPE_NON_RENSEIGNEE ? (
+              <MeetingEtapeBadge
+                meetingType={meetingType}
+                pipelineStage={pipelineStage}
+              />
             ) : null}
           </div>
           {prospectCompany?.trim() ? (
@@ -166,8 +171,13 @@ export function MeetingDetailHeader({
             label: "Date du RDV",
           })}
           {statColumn({
-            value: salesScore != null ? String(salesScore) : "—",
+            value:
+              salesScore != null ? String(salesScore) : VALEUR_NON_CALCULABLE,
             label: "SalesScore",
+            title:
+              salesScore == null
+                ? "Non calculable : ce rendez-vous n'a pas encore d'analyse SONCAS."
+                : undefined,
             valueClassName:
               salesScore != null ? salesScoreColorClass(salesScore) : undefined,
             valueExtra:
