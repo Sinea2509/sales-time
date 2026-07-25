@@ -17,6 +17,20 @@ export function disabledStatsWindowDays(
   );
 }
 
+/**
+ * Aucune fenêtre n'atteint le seuil : le sélecteur de période n'a plus rien à
+ * proposer, et un écran qui invite à changer de période propose l'impossible.
+ *
+ * Le calcul passe par un ensemble plutôt que par une comparaison de longueurs :
+ * une liste qui contiendrait deux fois la même fenêtre répondrait autrement.
+ */
+export function areAllStatsWindowsDisabled(
+  disabledDays: readonly StatsWindowDays[],
+): boolean {
+  const disabled = new Set(disabledDays);
+  return STATS_WINDOW_DAYS_OPTIONS.every((d) => disabled.has(d));
+}
+
 /** Choisit la première fenêtre éligible (7 → 30 → 90) si la demande est insuffisante. */
 export function resolveEligibleStatsWindowDays(
   requested: StatsWindowDays,

@@ -1,9 +1,14 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  areAllStatsWindowsDisabled,
+  disabledStatsWindowDays,
   meetingAtSinceForStatsWindow,
+  MIN_RDV_FOR_STATS,
   parseStatsWindowDays,
   partitionMeetingsByStatsWindow,
   previousMeetingAtWindowStart,
+  resolveEligibleStatsWindowDays,
+  STATS_WINDOW_DAYS_OPTIONS,
 } from "./dashboard-stats-window";
 
 describe("parseStatsWindowDays", () => {
@@ -65,5 +70,71 @@ describe("partitionMeetingsByStatsWindow", () => {
     );
     expect(currentWindow).toHaveLength(1);
     expect(previousWindow).toHaveLength(1);
+  });
+});
+
+describe("disabledStatsWindowDays", () => {
+  it("closes a window that has fewer meetings than the threshold", () => {
+    const counts = {
+      7: MIN_RDV_FOR_STATS - 1,
+      30: MIN_RDV_FOR_STATS,
+      90: MIN_RDV_FOR_STATS + 40,
+    } as const;
+    expect(disabledStatsWindowDays(counts)).toEqual([7]);
+  });
+
+  it("closes every window on a brand new account", () => {
+    expect(disabledStatsWindowDays({ 7: 0, 30: 0, 90: 0 })).toEqual([
+      ...STATS_WINDOW_DAYS_OPTIONS,
+    ]);
+  });
+});
+
+describe("areAllStatsWindowsDisabled", () => {
+  it("says no as soon as one window can still be chosen", () => {
+    expect(areAllStatsWindowsDisabled([7, 30])).toBe(false);
+    expect(areAllStatsWindowsDisabled([])).toBe(false);
+  });
+
+  it("says yes when no window is left to choose", () => {
+    expect(areAllStatsWindowsDisabled([...STATS_WINDOW_DAYS_OPTIONS])).toBe(
+      true,
+    );
+  });
+
+  it("is not fooled by a repeated window", () => {
+    // Une liste de longueur 3 qui ne contient que deux fenêtres distinctes :
+    // comparer les longueurs répondrait « plus rien à choisir », à tort.
+    expect(areAllStatsWindowsDisabled([7, 7, 30])).toBe(false);
+  });
+
+  it("agrees with the counts it comes from", () => {
+    const vide = { 7: 0, 30: 0, 90: 0 } as const;
+    expect(areAllStatsWindowsDisabled(disabledStatsWindowDays(vide))).toBe(
+      true,
+    );
+    const actif = { 7: 0, 30: 0, 90: MIN_RDV_FOR_STATS } as const;
+    expect(areAllStatsWindowsDisabled(disabledStatsWindowDays(actif))).toBe(
+      false,
+    );
+  });
+});
+
+describe("resolveEligibleStatsWindowDays", () => {
+  it("keeps the requested window when it has enough meetings", () => {
+    expect(
+      resolveEligibleStatsWindowDays(7, { 7: MIN_RDV_FOR_STATS, 30: 0, 90: 0 }),
+    ).toBe(7);
+  });
+
+  it("falls back to the first window that has enough", () => {
+    expect(
+      resolveEligibleStatsWindowDays(7, { 7: 1, 30: 2, 90: MIN_RDV_FOR_STATS }),
+    ).toBe(90);
+  });
+
+  it("returns the requested window when none has enough, so no redirect loops", () => {
+    expect(resolveEligibleStatsWindowDays(7, { 7: 0, 30: 0, 90: 0 })).toBe(7);
+    expect(resolveEligibleStatsWindowDays(30, { 7: 0, 30: 0, 90: 0 })).toBe(30);
   });
 });

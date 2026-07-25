@@ -4,6 +4,8 @@ import { ChevronDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import {
+  areAllStatsWindowsDisabled,
+  MIN_RDV_FOR_STATS,
   STATS_WINDOW_DAYS_OPTIONS,
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
@@ -17,17 +19,48 @@ const LABELS: Record<StatsWindowDays, string> = {
 
 export function DashboardStatsPeriodSelect(props: {
   value: StatsWindowDays;
-  /** Fenêtres sans assez de RDV — options grisées dans le sélecteur. */
+  /** Fenêtres sans assez de RDV : options grisées dans le sélecteur. */
   disabledDays?: StatsWindowDays[];
   /** Style pour fond sombre (tableau de bord). */
   theme?: "default" | "dark";
 }) {
   const dark = props.theme === "dark";
-  const disabledSet = new Set(props.disabledDays ?? []);
+  const disabledDays = props.disabledDays ?? [];
+  const disabledSet = new Set(disabledDays);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
+
+  /*
+    Sur un compte jeune, aucune fenêtre n'atteint le seuil : les trois options
+    étaient grisées, chacune suivie du même « (données insuffisantes) », et
+    l'option affichée était elle-même désactivée. Le commercial ouvrait une
+    liste dans laquelle rien ne pouvait être choisi, sans jamais apprendre ce
+    qu'il fallait pour l'ouvrir.
+
+    Un sélecteur qui n'offre aucun choix n'est plus un sélecteur : la période en
+    vigueur s'écrit alors en toutes lettres, avec la règle qui la fige.
+  */
+  if (areAllStatsWindowsDisabled(disabledDays)) {
+    return (
+      <div
+        className={cn(
+          "text-sm sm:max-w-[17rem] sm:text-right",
+          dark ? "text-zinc-400" : "text-muted-foreground",
+        )}
+      >
+        <p className={dark ? "text-zinc-200" : "text-foreground"}>
+          <span className="sr-only">Période des statistiques : </span>
+          {LABELS[props.value]}
+        </p>
+        <p className="mt-0.5 text-xs text-pretty">
+          Choisir la période demande au moins {MIN_RDV_FOR_STATS} RDV
+          enregistrés.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -36,7 +69,6 @@ export function DashboardStatsPeriodSelect(props: {
         dark ? "text-zinc-400" : "text-muted-foreground",
       )}
     >
-      <span className="sr-only">Période des statistiques</span>
       <select
         aria-label="Période des statistiques (jours glissants)"
         className={cn(
@@ -58,7 +90,12 @@ export function DashboardStatsPeriodSelect(props: {
         {STATS_WINDOW_DAYS_OPTIONS.map((d) => (
           <option key={d} value={String(d)} disabled={disabledSet.has(d)}>
             {LABELS[d]}
-            {disabledSet.has(d) ? " (données insuffisantes)" : ""}
+            {/*
+              « données insuffisantes » énonçait le verdict du système. Le fait
+              qui le produit se lit mieux, et se vérifie : cette fenêtre compte
+              moins de RDV que le seuil.
+            */}
+            {disabledSet.has(d) ? ` (moins de ${MIN_RDV_FOR_STATS} RDV)` : ""}
           </option>
         ))}
       </select>

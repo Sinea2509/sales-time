@@ -125,10 +125,23 @@ export function DashboardHomeShell({
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {home.recentMeetings.length === 0 ? (
+                  /*
+                    Cette ligne disait « Changez la période avec le sélecteur en
+                    haut de page ». La consigne ne pouvait jamais être suivie,
+                    et la démonstration tient en trois pas : les lignes et les
+                    compteurs de fenêtres sortent de la même requête, au même
+                    cadrage ; une fenêtre servie sans aucun rendez-vous est donc
+                    sous le seuil, donc fermée ; et une fenêtre fermée n'est
+                    servie que lorsque toutes le sont, faute de quoi la page
+                    aurait redirigé vers la première ouverte. Le tableau vide
+                    arrive donc toujours avec un sélecteur figé, qui affiche
+                    alors ce qu'il faut pour le dégeler. Reste le seul geste qui
+                    marche depuis cet écran, celui du bouton juste au-dessus.
+                  */
                   <TableEmptyRow
                     colSpan={6}
                     message="Aucun rendez-vous sur la période affichée."
-                    description="Changez la période avec le sélecteur en haut de page, ou préparez un rendez-vous avec le bouton ci-dessus : il apparaîtra ici."
+                    description="Préparez un rendez-vous avec le bouton ci-dessus : il apparaîtra ici."
                     size="large"
                   />
                 ) : (

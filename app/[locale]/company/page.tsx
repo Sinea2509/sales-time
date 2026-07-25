@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { InfoCard } from "@/components/molecules/info-card";
+import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { DashboardAdminShell } from "@/components/organisms/dashboard-admin-shell";
 import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
@@ -94,6 +95,7 @@ export default async function DashboardHomePage({
         : null;
     return (
       <div className="space-y-6">
+        <PageHeaderSimple title="Tableau de bord" />
         {!admin ? null : (
           <DashboardAdminShell
             admin={admin}
@@ -154,6 +156,13 @@ export default async function DashboardHomePage({
 
   return (
     <div className="space-y-6">
+      {/*
+        Toutes les autres pages du portail portent leur titre ; celle-ci, la
+        première que voit un commercial, entrait directement sur « Mes KPI
+        opérationnels », un h2 sans h1 au-dessus. Le libellé reprend mot pour
+        mot celui de la navigation qui y mène.
+      */}
+      <PageHeaderSimple title="Mon tableau de bord" />
       {!home ? null : (
         <DashboardHomeShell
           home={home}
