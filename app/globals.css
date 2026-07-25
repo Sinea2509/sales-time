@@ -76,11 +76,11 @@
   --brand: #6c4dff;
   /*
     Encre posée sur un aplat de marque, exactement comme --primary-foreground
-    se pose sur --primary. Elle manquait, et les 44 endroits qui remplissent en
-    marque écrivaient donc « text-white » en dur. En thème clair cela tombait
-    juste ; en thème sombre --brand s'éclaircit pour rester lisible en texte,
-    et du blanc dessus ne tenait plus que 3,27:1 (mesuré au navigateur sur le
-    bouton « Choisir ce plan »), là où 4,5:1 est le minimum.
+    se pose sur --primary. Elle manquait, et les trente-deux endroits qui
+    remplissent en marque écrivaient donc « text-white » en dur. En thème clair
+    cela tombait juste ; en thème sombre --brand s'éclaircit pour rester lisible
+    en texte, et du blanc dessus ne tenait plus que 3,27:1 (mesuré au navigateur
+    sur le bouton « Choisir ce plan »), là où 4,5:1 est le minimum.
   */
   --brand-foreground: oklch(0.985 0 0);
   --brand-hover: #5a3fd9;

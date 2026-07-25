@@ -78,7 +78,7 @@ function OnboardingStepRail({ step }: { step: number }) {
                   className={cn(
                     "flex size-10 items-center justify-center rounded-lg text-sm font-semibold tabular-nums transition-colors",
                     isDoneOrCurrent &&
-                      "bg-brand text-white shadow-sm shadow-brand/30",
+                      "bg-brand text-brand-foreground shadow-sm shadow-brand/30",
                     !isDoneOrCurrent &&
                       "bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400",
                   )}

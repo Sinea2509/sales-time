@@ -180,6 +180,11 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
       <Sidebar collapsible="none" side="left" variant="sidebar">
         <SidebarHeader className="shrink-0 border-b border-sidebar-border">
           <div className="flex items-center gap-2.5 px-1 py-1">
+            {/*
+              Blanc volontaire : bloc-marque, pas du texte. Voir la note dans
+              `components/atoms/sales-time-logo-mark.tsx`, qui porte la même
+              exception pour la même raison.
+            */}
             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand text-white">
               <ShieldCheck className="size-4" />
             </div>

@@ -22,21 +22,24 @@ export function LandingHeroSection() {
 
       <div className="relative z-[2] flex w-full max-w-[1160px] flex-col items-center px-6 pt-[72px] pb-0 sm:px-10">
         <LandingReveal>
-          <LandingHeroBadge>Coach commercial IA · Analyse DISC &amp; SONCAS</LandingHeroBadge>
+          <LandingHeroBadge>
+            Coach commercial IA · Analyse DISC &amp; SONCAS
+          </LandingHeroBadge>
         </LandingReveal>
 
         <LandingReveal delay={1}>
           <h1 className="mt-7 max-w-[840px] text-center text-[clamp(44px,5.5vw,76px)] leading-[1.06] font-extrabold tracking-tight text-white">
             Le directeur commercial
             <br />
-            <em className="text-brand-muted not-italic">virtuel</em> de votre équipe
+            <em className="text-brand-muted not-italic">virtuel</em> de votre
+            équipe
           </h1>
         </LandingReveal>
 
         <LandingReveal delay={2}>
           <p className="mt-5.5 max-w-[500px] text-center text-lg leading-[1.65] font-normal text-white/45">
-            Chaque RDV devient un compte rendu structuré, un coaching personnalisé et un mail
-            de suivi — en 30 secondes.
+            Chaque RDV devient un compte rendu structuré, un coaching
+            personnalisé et un mail de suivi — en 30 secondes.
           </p>
         </LandingReveal>
 
@@ -44,7 +47,7 @@ export function LandingHeroSection() {
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/sign-up"
-              className="inline-flex h-12 items-center gap-2 rounded-xl bg-brand px-6 text-[15px] font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_4px_16px_rgba(108,77,255,0.4)] transition-[filter,transform] hover:brightness-108 hover:-translate-y-px"
+              className="inline-flex h-12 items-center gap-2 rounded-xl bg-brand px-6 text-[15px] font-semibold text-brand-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_4px_16px_rgba(108,77,255,0.4)] transition-[filter,transform] hover:brightness-108 hover:-translate-y-px"
             >
               <Play className="size-3.5 fill-current" strokeWidth={2.2} />
               Essayer Gratuitement

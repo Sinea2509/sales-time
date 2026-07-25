@@ -239,7 +239,7 @@ export function OrgDashboardShellFrame({
                     href="/company/plan"
                     className={cn(
                       buttonVariants({ size: "sm" }),
-                      "mt-3 h-8 w-full rounded-md bg-brand px-3 text-xs text-white hover:bg-brand-hover",
+                      "mt-3 h-8 w-full rounded-md bg-brand px-3 text-xs text-brand-foreground hover:bg-brand-hover",
                     )}
                   >
                     Voir tous les plans
@@ -260,8 +260,8 @@ export function OrgDashboardShellFrame({
                   Quota d&apos;analyses atteint
                 </h3>
                 <p className="mt-1 text-sm text-[#404040] dark:text-neutral-300">
-                  Vos {trialLimit} analyses gratuites sont utilisées. Demandez un
-                  upgrade pour débloquer la suite.
+                  Vos {trialLimit} analyses gratuites sont utilisées. Demandez
+                  un upgrade pour débloquer la suite.
                 </p>
               </div>
               <button
@@ -288,7 +288,7 @@ export function OrgDashboardShellFrame({
                 href="/company/plan"
                 className={cn(
                   buttonVariants({ size: "sm" }),
-                  "h-8 rounded-md bg-brand text-white hover:bg-brand-hover",
+                  "h-8 rounded-md bg-brand text-brand-foreground hover:bg-brand-hover",
                 )}
                 onClick={() => setShowQuotaPopup(false)}
               >

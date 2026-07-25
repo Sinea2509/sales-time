@@ -473,7 +473,7 @@ export function RendezVousMeetingsShell({
                       className={cn(
                         "inline-flex size-8 items-center justify-center rounded-md border text-sm font-medium tabular-nums transition-colors",
                         isActive
-                          ? "border-brand bg-brand text-white hover:bg-brand-hover"
+                          ? "border-brand bg-brand text-brand-foreground hover:bg-brand-hover"
                           : "text-muted-foreground hover:text-foreground border-neutral-200 bg-white hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900",
                       )}
                     >

@@ -10,7 +10,7 @@ const brandButtonVariants = cva(
     variants: {
       variant: {
         primary:
-          "border-transparent bg-brand text-white hover:bg-brand-hover active:translate-y-px",
+          "border-transparent bg-brand text-brand-foreground hover:bg-brand-hover active:translate-y-px",
         outline:
           "border-brand/25 bg-brand-soft text-brand-hover hover:bg-brand/15 dark:text-brand-muted",
       },

@@ -32,7 +32,7 @@ export function AdminDateRangePicker() {
           className={cn(
             "rounded-full px-3 py-1 text-xs font-medium transition-colors",
             current === r.value
-              ? "bg-brand text-white shadow-sm"
+              ? "bg-brand text-brand-foreground shadow-sm"
               : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700",
           )}
         >

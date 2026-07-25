@@ -84,7 +84,7 @@ export function SuperAdminKissConsignesEditor({ initialJson }: Props) {
               router.refresh();
             });
           }}
-          className="bg-brand text-white hover:bg-brand-hover"
+          className="bg-brand text-brand-foreground hover:bg-brand-hover"
         >
           Enregistrer
         </Button>

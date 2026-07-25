@@ -19,7 +19,7 @@ function SubmitButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="h-10 w-full bg-brand text-white hover:bg-brand-hover sm:w-auto"
+      className="h-10 w-full bg-brand text-brand-foreground hover:bg-brand-hover sm:w-auto"
     >
       Continuer vers l&apos;onboarding
     </Button>

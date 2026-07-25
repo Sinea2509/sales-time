@@ -340,7 +340,7 @@ export function MeetingCreateForm({
           <Button
             type="submit"
             disabled={pending}
-            className="bg-brand text-white hover:bg-brand-hover"
+            className="bg-brand text-brand-foreground hover:bg-brand-hover"
             data-feedback-id="meeting-create-submit"
           >
             {pending
@@ -354,7 +354,7 @@ export function MeetingCreateForm({
         <Button
           type="submit"
           disabled={pending}
-          className={cn("bg-brand text-white hover:bg-brand-hover")}
+          className={cn("bg-brand text-brand-foreground hover:bg-brand-hover")}
           data-feedback-id="meeting-create-submit"
         >
           {pending

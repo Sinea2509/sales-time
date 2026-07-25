@@ -113,7 +113,7 @@ export function OrgSettingsEmailForm({
         <Button
           type="submit"
           disabled={pending}
-          className="bg-brand text-white hover:bg-brand-hover"
+          className="bg-brand text-brand-foreground hover:bg-brand-hover"
         >
           Enregistrer
         </Button>

@@ -108,7 +108,10 @@ export function OrgSettingsContexteForm({
       ) : null}
 
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <OrgSettingsLogoForm initialLogoUrl={initialLogoUrl} canEdit={canEdit} />
+        <OrgSettingsLogoForm
+          initialLogoUrl={initialLogoUrl}
+          canEdit={canEdit}
+        />
         <div className="min-w-0 flex-1 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="org-company">Nom de l’entreprise</Label>
@@ -214,7 +217,7 @@ export function OrgSettingsContexteForm({
           <Button
             type="submit"
             disabled={pending}
-            className="bg-brand text-white hover:bg-brand-hover"
+            className="bg-brand text-brand-foreground hover:bg-brand-hover"
           >
             Enregistrer
           </Button>

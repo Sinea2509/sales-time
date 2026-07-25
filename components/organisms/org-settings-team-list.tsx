@@ -159,7 +159,7 @@ export function OrgSettingsTeamList({
                 type="button"
                 disabled={pending}
                 onClick={sendInvitation}
-                className="h-10 shrink-0 rounded-none border-0 bg-brand px-5 text-white hover:bg-brand-hover focus-visible:ring-0"
+                className="h-10 shrink-0 rounded-none border-0 bg-brand px-5 text-brand-foreground hover:bg-brand-hover focus-visible:ring-0"
               >
                 {pending ? "Envoi…" : "Envoyer"}
               </Button>

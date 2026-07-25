@@ -6,7 +6,7 @@ export const brandCtaVariants = cva(
     variants: {
       variant: {
         primary:
-          "rounded-md border-0 bg-brand px-4 text-sm text-white hover:bg-brand-hover",
+          "rounded-md border-0 bg-brand px-4 text-sm text-brand-foreground hover:bg-brand-hover",
         outline:
           "rounded-md border border-brand/25 bg-brand-soft px-4 text-sm text-brand-hover hover:bg-brand/15 dark:text-brand-muted",
       },
