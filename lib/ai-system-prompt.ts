@@ -5,6 +5,20 @@ export const FRENCH_QUALITY_INSTRUCTION =
   "Rédige en français correct, professionnel et naturel. N'invente pas de mots ou d'expressions (évite les néologismes ou anglicismes mal formés). Utilise un vocabulaire commercial courant en France.";
 
 /**
+ * La ponctuation attendue dans tout texte produit par le modèle.
+ *
+ * Le tiret cadratin est une habitude anglo-saxonne : un modèle laissé libre en
+ * pose partout, et ces textes finissent collés dans un CRM ou dans un mail
+ * envoyé au prospect, où ils détonnent au milieu d'une ponctuation française.
+ * Nettoyer les consignes ne suffit pas à l'éviter, puisque le modèle n'imite
+ * pas seulement la consigne ; il faut le lui interdire. La règle vit ici, avec
+ * le reste du contrat non modifiable, parce qu'un super-admin qui réécrit une
+ * consigne d'analyse ne doit pas pouvoir la faire sauter sans le vouloir.
+ */
+export const FRENCH_TYPOGRAPHY_INSTRUCTION =
+  "Typographie : n'emploie jamais le tiret cadratin (—) comme ponctuation. Sépare les propositions par une virgule, un deux-points, un point-virgule ou un point. Le tiret demi-cadratin (–) ne sert qu'aux intervalles chiffrés, « 0–100 » par exemple. N'ouvre aucune ligne par un tiret : les puces sont posées par le produit, pas par toi.";
+
+/**
  * La définition des six notes du commercial, jointe à toute analyse KISS.
  *
  * Elle vit ici plutôt que dans la consigne KISS par défaut parce qu'un
@@ -29,6 +43,7 @@ export function withDataScopeSystemPrompt(systemMarkdown: string): string {
   return [
     SYSTEM_DATA_ONLY_PREFIX,
     FRENCH_QUALITY_INSTRUCTION,
+    FRENCH_TYPOGRAPHY_INSTRUCTION,
     systemMarkdown,
   ].join("\n\n");
 }

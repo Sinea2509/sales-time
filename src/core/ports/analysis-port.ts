@@ -104,7 +104,7 @@ export interface AnalysisPort {
 
   /**
    * Deux paragraphes : lecture relationnelle via les profils DISC observés sur les RDV,
-   * puis via les leviers SONCAS — à partir des transcriptions et des JSON d’analyse déjà produits.
+   * puis via les leviers SONCAS, à partir des transcriptions et des JSON d’analyse déjà produits.
    */
   summarizeSellerRelationalAffinity(input: {
     systemMarkdown: string;

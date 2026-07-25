@@ -1,9 +1,12 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  FRENCH_QUALITY_INSTRUCTION,
+  FRENCH_TYPOGRAPHY_INSTRUCTION,
   KISS_SELLER_SKILLS_INSTRUCTION,
   withDataScopeSystemPrompt,
   withKissSystemPrompt,
 } from "./ai-system-prompt";
+import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "./default-analysis-prompts";
 import { sellerSkillScoresSchema } from "@/src/core/domain/kiss-result-zod";
 
 describe("withDataScopeSystemPrompt", () => {
@@ -15,6 +18,38 @@ describe("withDataScopeSystemPrompt", () => {
 
   it("does not define the seller scores, which belong to KISS alone", () => {
     expect(withDataScopeSystemPrompt("x")).not.toContain("sellerSkills");
+  });
+
+  /*
+    La règle typographique vaut pour toutes les analyses, pas seulement pour
+    KISS : ces textes partent dans un CRM et dans des mails au prospect.
+  */
+  it("forbids the em dash in every analysis, whatever the editable prompt says", () => {
+    expect(withDataScopeSystemPrompt("CONSIGNE")).toContain(
+      FRENCH_TYPOGRAPHY_INSTRUCTION,
+    );
+    expect(withKissSystemPrompt("CONSIGNE")).toContain(
+      FRENCH_TYPOGRAPHY_INSTRUCTION,
+    );
+  });
+});
+
+/*
+  Une consigne qui emploie elle-même le signe qu'elle interdit apprend au
+  modèle le contraire de ce qu'elle demande. Ce test parcourt les consignes
+  livrées plutôt qu'une liste recopiée, pour qu'une consigne ajoutée plus tard
+  y passe aussi. Seule la règle typographique a le droit de citer le signe,
+  puisque c'est son objet.
+*/
+describe("les consignes livrées", () => {
+  it("n'emploient aucun tiret cadratin", () => {
+    for (const [kind, markdown] of Object.entries(
+      DEFAULT_ANALYSIS_PROMPT_MARKDOWN,
+    )) {
+      expect([kind, markdown.includes("—")]).toEqual([kind, false]);
+    }
+    expect(KISS_SELLER_SKILLS_INSTRUCTION).not.toContain("—");
+    expect(FRENCH_QUALITY_INSTRUCTION).not.toContain("—");
   });
 });
 
