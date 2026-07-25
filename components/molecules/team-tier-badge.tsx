@@ -26,12 +26,13 @@ import {
  * renforce l'ordre sans jamais porter seule l'information.
  */
 const TIER_CLASS: Record<RankingTierId, string> = {
-  bronze:
+  demarrage:
     "bg-violet-100 text-violet-800 ring-violet-300 dark:bg-violet-950 dark:text-violet-300 dark:ring-violet-800",
-  argent:
+  progression:
     "bg-violet-400 text-violet-950 ring-violet-500 dark:bg-violet-800 dark:text-violet-100 dark:ring-violet-700",
-  or: "bg-violet-700 text-white ring-violet-800 dark:bg-violet-600 dark:text-white dark:ring-violet-500",
-  diamant:
+  maitrise:
+    "bg-violet-700 text-white ring-violet-800 dark:bg-violet-600 dark:text-white dark:ring-violet-500",
+  excellence:
     "bg-violet-950 text-white ring-violet-800 dark:bg-violet-400 dark:text-violet-950 dark:ring-violet-300",
 };
 

@@ -11,10 +11,12 @@ import {
   postureLabelFromMeetings,
 } from "@/lib/team-member-performance-helpers";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
 import { getTeamMemberPerformanceProfile } from "@/src/core/application/get-team-member-performance-profile";
 import { getCachedSellerRelationalAffinity } from "@/src/core/application/get-cached-seller-relational-affinity";
 import {
   buildKissTeamRollupFromMeetings,
+  getTeamMemberStanding,
   ORG_ADMIN_DASHBOARD_MEETING_CAP,
 } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
@@ -104,6 +106,20 @@ export default async function ManagerCommercialViewPage({
   const { currentWindow: meetings, previousWindow: previousMeetings } =
     partitionMeetingsByStatsWindow(meetingsForWindow, statsWindowDays);
 
+  // Le rang est relatif : il se calcule sur l'équipe que ce manager a le droit
+  // de voir, exactement comme le tableau « Mon équipe » d'où l'on arrive. Sans
+  // ce cadrage, la fiche annoncerait une place calculée sur un autre groupe.
+  const teamUserIds = await resolveManagerTeamUserIds(deps, {
+    canManageOrganization: actor.canManageOrganization,
+    internalUserId: actor.internalUserId,
+  });
+  const standing = await getTeamMemberStanding(deps, {
+    organizationId: orgId,
+    statsWindowDays,
+    sellerUserId: userId,
+    teamUserIds,
+  });
+
   const priorityOpportunities: AnalysePriorityOpportunityRow[] = [...meetings]
     .filter((m) => m.potentialAmount != null && m.potentialAmount > 0)
     .sort((a, b) => (b.potentialAmount ?? 0) - (a.potentialAmount ?? 0))
@@ -167,20 +183,19 @@ export default async function ManagerCommercialViewPage({
   }
 
   const kissSellerRollup = buildKissTeamRollupFromMeetings(meetings);
-  const kissSellerStrengthsNarrative =
-    aiEnabled
-      ? await getCachedOrgKissRollupNarrative(deps, {
-          organizationId: orgId,
-          statsWindowDays,
-          meetingsFingerprint,
-          rollup: kissSellerRollup,
-          sellerUserId: userId,
-          organizationKissPromptAppendix: kissMarkdownAppendixForAudience(
-            globalKissJson,
-            "manager",
-          ),
-        })
-      : null;
+  const kissSellerStrengthsNarrative = aiEnabled
+    ? await getCachedOrgKissRollupNarrative(deps, {
+        organizationId: orgId,
+        statsWindowDays,
+        meetingsFingerprint,
+        rollup: kissSellerRollup,
+        sellerUserId: userId,
+        organizationKissPromptAppendix: kissMarkdownAppendixForAudience(
+          globalKissJson,
+          "manager",
+        ),
+      })
+    : null;
 
   const discAffinityBars = aggregateDiscAffinityBarsFromMeetings(meetings);
   const soncasAffinityBars = aggregateSoncasAffinityBarsFromMeetings(meetings);
@@ -203,6 +218,7 @@ export default async function ManagerCommercialViewPage({
       nameLine={nameLine}
       initials={prospectInitials(nameLine)}
       posture={posture}
+      standing={standing}
       nbRdvs={home.nbRdvs}
       decouverte={decouverte}
       proposition={proposition}

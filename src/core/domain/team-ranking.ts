@@ -21,7 +21,11 @@
  * porte pas, et le déduire d'un prénom serait faux une fois sur deux.
  */
 
-export type RankingTierId = "bronze" | "argent" | "or" | "diamant";
+export type RankingTierId =
+  | "demarrage"
+  | "progression"
+  | "maitrise"
+  | "excellence";
 
 export type RankingTier = {
   readonly id: RankingTierId;
@@ -37,12 +41,22 @@ export type RankingTier = {
  * Les quatre paliers du produit. Les bornes /5 correspondent exactement aux
  * bornes SalesScore 40, 60 et 80 sur l'échelle 0–100, puisque la note affichée
  * vaut le SalesScore divisé par 20.
+ *
+ * Les noms nomment un niveau atteint, jamais une place sur un podium. Une série
+ * de médailles serait plus flatteuse, mais elle mentirait deux fois sur le même
+ * écran. « Or » veut dire premier partout ailleurs, alors qu'un palier est
+ * absolu et se décerne à tous ceux qui sont dans la tranche, pendant que la
+ * colonne voisine annonce le vrai rang : on lirait « 3e place · Or » sur la même
+ * ligne. Et « Argent » est déjà le nom d'un levier SONCAS, affiché deux colonnes
+ * plus loin, si bien que le même mot y désignerait un niveau de performance et
+ * une motivation d'achat. Tout nom ajouté ici doit donc être vérifié contre le
+ * vocabulaire SONCAS, DISC et les types de rendez-vous avant d'être retenu.
  */
 export const RANKING_TIERS: readonly RankingTier[] = [
-  { id: "bronze", nom: "Bronze", minNoteOn5: 0, maxNoteOn5: 2 },
-  { id: "argent", nom: "Argent", minNoteOn5: 2, maxNoteOn5: 3 },
-  { id: "or", nom: "Or", minNoteOn5: 3, maxNoteOn5: 4 },
-  { id: "diamant", nom: "Diamant", minNoteOn5: 4, maxNoteOn5: null },
+  { id: "demarrage", nom: "Démarrage", minNoteOn5: 0, maxNoteOn5: 2 },
+  { id: "progression", nom: "Progression", minNoteOn5: 2, maxNoteOn5: 3 },
+  { id: "maitrise", nom: "Maîtrise", minNoteOn5: 3, maxNoteOn5: 4 },
+  { id: "excellence", nom: "Excellence", minNoteOn5: 4, maxNoteOn5: null },
 ];
 
 /** Note maximale de l'échelle affichée. */
@@ -70,7 +84,7 @@ export function tierFromNoteOn5(note: number | null): RankingTier | null {
   return RANKING_TIERS[0] ?? null;
 }
 
-/** Ex. « Bronze : 0 à 1,9 » · « Diamant : 4 à 5 ». */
+/** Ex. « Démarrage : 0 à 1,9 » · « Excellence : 4 à 5 ». */
 export function tierRangeLabel(tier: RankingTier): string {
   const hautBrut =
     tier.maxNoteOn5 == null ? NOTE_ON5_MAX : tier.maxNoteOn5 - 0.1;
@@ -120,8 +134,8 @@ export type MemberRanking = {
    * Palier atteint, ou `null` hors classement.
    *
    * Un palier est une distinction, pas une simple traduction de la note : le
-   * lecteur ne compare pas deux chiffres, il compare deux insignes. « Diamant »
-   * décerné sur un rendez-vous, posé à côté de « Diamant » décerné sur douze,
+   * lecteur ne compare pas deux chiffres, il compare deux insignes. « Excellence »
+   * décernée sur un rendez-vous, posée à côté d'« Excellence » décernée sur douze,
    * affirme une égalité que la donnée ne porte pas. Le seuil de volume qui
    * retient le rang retient donc aussi le palier. La note, elle, reste affichée
    * avec le nombre de rendez-vous qui la fonde : rien n'est caché, seule la

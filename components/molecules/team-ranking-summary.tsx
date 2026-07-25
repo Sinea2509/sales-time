@@ -55,10 +55,15 @@ export function TeamRankingSummary({
 }) {
   const moyenne = ranking.averageNoteOn5;
   const exclusions = horsClassement(ranking);
+  // Jamais un nombre nu derrière « sur » : cette ligne suit immédiatement une
+  // note écrite « 3,2/5 », et « classés sur 10 » s'y lit alors « notés sur 10 ».
+  // Les deux effectifs sont donc annoncés séparément, du total vers les classés.
   const base =
     ranking.rankedCount === 0
-      ? "aucun membre classé pour l'instant"
-      : `moyenne des ${membres(ranking.rankedCount)} classés sur ${totalCount}`;
+      ? `équipe de ${membres(totalCount)} · aucun membre classé pour l'instant`
+      : `équipe de ${membres(totalCount)} · moyenne des ${membres(
+          ranking.rankedCount,
+        )} classés`;
 
   return (
     <div

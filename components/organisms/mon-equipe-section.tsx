@@ -193,9 +193,16 @@ export function MonEquipeSection({
                         <span className="block font-medium text-zinc-950 dark:text-zinc-50">
                           {formatNoteOn5(row.noteGlobaleOn5)}
                         </span>
+                        {/*
+                          « moyenne de 6 RDV notés » et non « sur 6 RDV notés » :
+                          la fiche du commercial écrit « 3e place sur 7 » deux
+                          lignes plus loin, où « sur » veut dire « parmi ». Les
+                          deux écrans emploient donc la même formulation, qui ne
+                          se lit que d'une seule façon.
+                        */}
                         <span className="block text-xs text-zinc-500 dark:text-zinc-400">
                           {row.scoredMeetings > 0
-                            ? `sur ${row.scoredMeetings} RDV noté${
+                            ? `moyenne de ${row.scoredMeetings} RDV noté${
                                 row.scoredMeetings > 1 ? "s" : ""
                               }`
                             : "aucun RDV noté"}

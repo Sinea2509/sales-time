@@ -9,8 +9,13 @@ import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analy
 import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-quadrant-grid";
 import type { SalesProfileScores } from "@/components/organisms/sales-profile-radar";
 import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
+import { TeamMemberStanding } from "@/components/molecules/team-member-standing";
 import { TeamMemberPerformanceProfileCard } from "@/components/organisms/team-member-performance-profile-card";
-import type { OrgAdminKissTeamRollup } from "@/src/core/application/get-org-admin-dashboard";
+import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
+import type {
+  OrgAdminKissTeamRollup,
+  TeamMemberStanding as TeamMemberStandingData,
+} from "@/src/core/application/get-org-admin-dashboard";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { QualificationPotentialMatrixPoint } from "@/src/core/domain/meeting-analyse-matrices";
 import {
@@ -24,6 +29,23 @@ import {
   sectionHeadingClass,
 } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
+
+/**
+ * Phrase d'attente d'un profil, avec les deux chiffres qui la justifient.
+ *
+ * « Pas assez de données » ne dit ni combien il en manque, ni quand cela
+ * changera : le lecteur ne sait pas s'il doit attendre un rendez-vous ou dix,
+ * et finit par croire que la fonctionnalité est cassée.
+ */
+function profilEnAttente(analyses: number, minimum: number): string {
+  const compte =
+    analyses === 0
+      ? "Aucun rendez-vous analysé"
+      : analyses === 1
+        ? "1 rendez-vous analysé"
+        : `${analyses} rendez-vous analysés`;
+  return `${compte} sur la période : le profil s'affiche à partir de ${minimum}.`;
+}
 
 function statColumn({
   value,
@@ -55,16 +77,26 @@ export type TeamMemberPerformanceShellProps = {
   nameLine: string;
   initials: string;
   posture: string | null;
+  /**
+   * Place du commercial dans son équipe, telle que le tableau « Mon équipe »
+   * vient de l'annoncer. `null` quand la page ne peut pas la calculer.
+   */
+  standing: TeamMemberStandingData | null;
   nbRdvs: number;
   decouverte: number;
   proposition: number;
-  /** TAM — temps d'appel moyen (min) sur les RDV connectés de la fenêtre. */
+  /** TAM : temps d'appel moyen (min) sur les RDV connectés de la fenêtre. */
   tamMinutesAvg: number | null;
   performanceForces: string | null;
   performanceAxes: string | null;
   performanceStop: string | null;
   discBarItems: { key: string; label: string; pct: number; barClass: string }[];
-  soncasBarItems: { key: string; label: string; pct: number; barClass: string }[];
+  soncasBarItems: {
+    key: string;
+    label: string;
+    pct: number;
+    barClass: string;
+  }[];
   discAnalyzedMeetings: number;
   soncasAnalyzedMeetings: number;
   discAffinityText: string | null;
@@ -88,6 +120,7 @@ export function TeamMemberPerformanceShell({
   nameLine,
   initials,
   posture,
+  standing,
   nbRdvs,
   decouverte,
   proposition,
@@ -119,47 +152,63 @@ export function TeamMemberPerformanceShell({
           <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xl font-semibold text-zinc-800 shadow-sm ring-1 ring-zinc-200/80 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-700/80">
             {initials}
           </span>
-          <div className="flex max-w-md flex-col items-center gap-1 text-center sm:items-start sm:text-left">
+          <div className="flex max-w-md flex-col items-center gap-1.5 text-center sm:items-start sm:text-left">
             <p className={pageTitleClass}>{nameLine}</p>
             {posture ? (
               <Badge
                 variant="secondary"
                 className="mt-0.5 px-2.5 py-0.5 text-xs font-medium"
+                title="Levier SONCAS dominant le plus fréquent sur les rendez-vous analysés de la période."
               >
                 Posture · {posture}
               </Badge>
             ) : (
               <Badge
                 variant="outline"
-                className="mt-0.5 px-2.5 py-0.5 text-xs font-normal text-muted-foreground"
+                className="text-muted-foreground mt-0.5 px-2.5 py-0.5 text-xs font-normal"
+                title="Non calculable : aucune analyse SONCAS sur la période, donc aucun levier dominant à en tirer."
               >
-                Posture · —
+                Posture · {VALEUR_NON_CALCULABLE}
               </Badge>
             )}
+            {standing ? (
+              <TeamMemberStanding
+                standing={standing}
+                className="mt-1 items-center sm:items-start"
+              />
+            ) : null}
           </div>
         </div>
 
         <div className="flex flex-1 flex-wrap items-start justify-center gap-8 self-start border-t border-zinc-200 pt-6 sm:justify-end sm:border-t-0 sm:pt-0 lg:min-w-0 dark:border-zinc-800">
           {statColumn({
             value: String(nbRdvs),
-            label: "RDVs",
+            label: "RDV",
+            title:
+              "Nombre total de rendez-vous sur la période, toutes étapes confondues. Les deux compteurs suivants en sont des sous-ensembles : leur somme peut être inférieure au total, les autres étapes n'y figurant pas.",
           })}
           {statColumn({
             value: String(decouverte),
-            label: "RDVs Découverte",
+            label: "RDV Découverte",
+            title:
+              "Rendez-vous de la période dont l'étape est « Découverte ». Sous-ensemble du total.",
           })}
           {statColumn({
             value: String(proposition),
-            label: "RDVs Proposition",
+            label: "RDV Proposition",
+            title:
+              "Rendez-vous de la période dont l'étape est « Proposition ». Sous-ensemble du total.",
           })}
           {statColumn({
             value:
               tamMinutesAvg != null
                 ? formatDurationHoursMinutes(tamMinutesAvg)
-                : "—",
+                : VALEUR_NON_CALCULABLE,
             label: "TAM",
             title:
-              "Temps d'appel moyen sur les RDV connectés de ce commercial (durée renseignée)",
+              tamMinutesAvg != null
+                ? "Temps d'appel moyen sur les rendez-vous connectés de ce commercial, c'est-à-dire ceux dont la durée est renseignée."
+                : "Non calculable : aucun rendez-vous connecté avec une durée renseignée sur la période.",
           })}
         </div>
       </div>
@@ -191,7 +240,7 @@ export function TeamMemberPerformanceShell({
               <ProfileAffinityHorizontalBars items={discBarItems} />
             ) : (
               <p className="text-muted-foreground text-sm">
-                Pas assez de données pour un profil fiable.
+                {profilEnAttente(discAnalyzedMeetings, MIN_RDV_FOR_STATS)}
               </p>
             )}
             {discAffinityText?.trim() ? (
@@ -215,7 +264,7 @@ export function TeamMemberPerformanceShell({
               <ProfileAffinityHorizontalBars items={soncasBarItems} />
             ) : (
               <p className="text-muted-foreground text-sm">
-                Pas assez de données pour un profil fiable.
+                {profilEnAttente(soncasAnalyzedMeetings, MIN_RDV_FOR_STATS)}
               </p>
             )}
             {soncasAffinityText?.trim() ? (

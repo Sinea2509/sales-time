@@ -47,7 +47,7 @@ export type OrgAdminMonEquipeRow = {
   nbRdvs: number;
   /** Nombre de RDV avec au moins une analyse KISS sur la période. */
   coachesCount: number;
-  /** TAM — temps d'appel moyen (min) sur les RDV connectés du membre. */
+  /** TAM : temps d'appel moyen (min) sur les RDV connectés du membre. */
   tamMinutesAvg: number | null;
   /** Note globale moyenne sur 5 (SalesScore SONCAS converti). */
   noteGlobaleOn5: number | null;
@@ -184,17 +184,30 @@ function modeSoncasDominantLabel(dominants: string[]): string | null {
   return label;
 }
 
-export function buildMonEquipePage(input: {
-  members: Array<{
-    membershipId: string;
-    userId: string;
-    email: string;
-    firstName: string | null;
-    lastName: string | null;
-  }>;
+export type TeamMemberIdentity = {
+  membershipId: string;
+  userId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+};
+
+/**
+ * L'équipe entière, classée, dans l'ordre d'affichage du tableau.
+ *
+ * Cette fonction est le seul endroit où le classement est calculé. La liste
+ * paginée et la fiche d'un commercial s'en servent toutes les deux : une place
+ * annoncée « 3e » dans le tableau doit rester « 3e » quand on ouvre la fiche,
+ * et deux calculs parallèles finiraient toujours par diverger.
+ */
+export function buildRankedTeam(input: {
+  members: TeamMemberIdentity[];
   meetings: RecentMeetingListRow[];
-  page: number;
-}): OrgAdminMonEquipePage {
+}): {
+  rows: OrgAdminMonEquipeRankedRow[];
+  ranking: TeamRankingSummary;
+  totalCount: number;
+} {
   const bySeller = aggregateSellerWindowStats(input.meetings);
   const rowsFull: OrgAdminMonEquipeRow[] = input.members.map((mem) => {
     const s = bySeller.get(mem.userId) ?? {
@@ -233,27 +246,13 @@ export function buildMonEquipePage(input: {
     return nameA.localeCompare(nameB, "fr");
   });
 
-  const totalCount = rowsFull.length;
-  const lastPage = Math.max(
-    1,
-    Math.ceil(totalCount / ORG_ADMIN_MON_EQUIPE_PAGE_SIZE),
-  );
-  const page = Math.min(lastPage, Math.max(1, input.page));
-  // Le classement porte sur l'équipe entière et se calcule avant le découpage
+  // Le classement porte sur l'équipe entière et se calcule avant tout découpage
   // en pages : un rang relatif à une page serait faux dès la deuxième.
   const classement = rankTeamMembers(rowsFull);
 
-  const start = (page - 1) * ORG_ADMIN_MON_EQUIPE_PAGE_SIZE;
-  const rows = classement.rows.slice(
-    start,
-    start + ORG_ADMIN_MON_EQUIPE_PAGE_SIZE,
-  );
-
   return {
-    page,
-    pageSize: ORG_ADMIN_MON_EQUIPE_PAGE_SIZE,
-    totalCount,
-    rows,
+    rows: [...classement.rows],
+    totalCount: rowsFull.length,
     ranking: {
       rankedCount: classement.rankedCount,
       unrankedCount: classement.unrankedCount,
@@ -263,6 +262,109 @@ export function buildMonEquipePage(input: {
       minScoredMeetings: classement.minScoredMeetings,
     },
   };
+}
+
+export function buildMonEquipePage(input: {
+  members: TeamMemberIdentity[];
+  meetings: RecentMeetingListRow[];
+  page: number;
+}): OrgAdminMonEquipePage {
+  const equipe = buildRankedTeam(input);
+  const lastPage = Math.max(
+    1,
+    Math.ceil(equipe.totalCount / ORG_ADMIN_MON_EQUIPE_PAGE_SIZE),
+  );
+  const page = Math.min(lastPage, Math.max(1, input.page));
+  const start = (page - 1) * ORG_ADMIN_MON_EQUIPE_PAGE_SIZE;
+
+  return {
+    page,
+    pageSize: ORG_ADMIN_MON_EQUIPE_PAGE_SIZE,
+    totalCount: equipe.totalCount,
+    rows: equipe.rows.slice(start, start + ORG_ADMIN_MON_EQUIPE_PAGE_SIZE),
+    ranking: equipe.ranking,
+  };
+}
+
+/**
+ * Position d'un membre dans son équipe, telle qu'elle doit être rappelée sur sa
+ * fiche.
+ *
+ * `row` vaut `null` quand la personne demandée n'appartient pas à l'équipe
+ * cadrée : la fiche affiche alors ses statistiques sans prétendre à un rang,
+ * plutôt qu'un rang calculé sur un groupe auquel elle n'appartient pas.
+ */
+export type TeamMemberStanding = {
+  row: OrgAdminMonEquipeRankedRow | null;
+  ranking: TeamRankingSummary;
+  /** Effectif de l'équipe sur laquelle ce rang est calculé. */
+  teamSize: number;
+};
+
+export function buildTeamMemberStanding(input: {
+  members: TeamMemberIdentity[];
+  meetings: RecentMeetingListRow[];
+  sellerUserId: string;
+}): TeamMemberStanding {
+  const equipe = buildRankedTeam(input);
+  return {
+    row: equipe.rows.find((r) => r.userId === input.sellerUserId) ?? null,
+    ranking: equipe.ranking,
+    teamSize: equipe.totalCount,
+  };
+}
+
+/**
+ * Charge l'équipe cadrée et en tire la place d'un commercial.
+ *
+ * La fiche d'un commercial ne charge que ses propres rendez-vous : elle ne peut
+ * donc pas déduire seule un rang, qui est par nature relatif aux autres. Cette
+ * fonction refait la lecture d'équipe du tableau « Mon équipe », avec le même
+ * cadrage manager et la même fenêtre, pour que les deux écrans annoncent le même
+ * chiffre. Elle ne demande à la base que les résultats SONCAS, seuls porteurs du
+ * SalesScore sur lequel repose le classement.
+ *
+ * Renvoie `null` quand le rang n'a pas de sens : hors organisation, ou lorsque
+ * le manager ne cadre aucune équipe.
+ */
+export async function getTeamMemberStanding(
+  deps: {
+    meetings: MeetingRepositoryPort;
+    organizationTeam: OrganizationTeamRepositoryPort;
+  },
+  input: {
+    organizationId: string | null;
+    statsWindowDays: StatsWindowDays;
+    sellerUserId: string;
+    /** Cadrage manager : quand il est fourni, le rang porte sur ce sous-ensemble. */
+    teamUserIds?: string[];
+  },
+): Promise<TeamMemberStanding | null> {
+  if (!input.organizationId) return null;
+
+  const [teamList, meetings] = await Promise.all([
+    deps.organizationTeam.listMembersAndPendingInvitations(
+      input.organizationId,
+    ),
+    deps.meetings.listRecentMeetingsForDashboard({
+      organizationId: input.organizationId,
+      limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
+      meetingAtSince: meetingAtSinceForStatsWindow(input.statsWindowDays),
+      includeLatestSoncasResult: true,
+    }),
+  ]);
+
+  const teamIds = input.teamUserIds?.length ? new Set(input.teamUserIds) : null;
+
+  return buildTeamMemberStanding({
+    members: teamIds
+      ? teamList.members.filter((m) => teamIds.has(m.userId))
+      : teamList.members,
+    meetings: teamIds
+      ? meetings.filter((m) => teamIds.has(m.sellerUserId))
+      : meetings,
+    sellerUserId: input.sellerUserId,
+  });
 }
 
 const DISC_PIE_ORDER = ["D", "I", "S", "C"] as const;
@@ -419,7 +521,7 @@ export function buildOrgAdminImprovementBullets(
     .slice(0, 3);
   if (weak.length === 0) {
     return [
-      "Les leviers SONCAS sont équilibrés sur la période — maintenez la régularité d’analyse.",
+      "Les leviers SONCAS sont équilibrés sur la période : maintenez la régularité d’analyse.",
     ];
   }
   return weak.map(

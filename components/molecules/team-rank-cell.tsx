@@ -62,9 +62,11 @@ export function TeamRankCell({
       {ecartTexte ? (
         <span
           className="text-muted-foreground text-xs tabular-nums dark:text-zinc-400"
+          // « point sur 5 » se lirait « sur 5 » comme une note : un écart n'est
+          // pas une note, il se dit en points de l'échelle, jamais sur elle.
           title={`Écart à la moyenne des membres classés : ${ecartTexte} point${
             Math.abs(ecart ?? 0) >= 2 ? "s" : ""
-          } sur 5.`}
+          } (échelle de 0 à 5).`}
         >
           {ecartTexte}
         </span>

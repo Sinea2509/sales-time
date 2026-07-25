@@ -1,5 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  DISC_LABEL_FR,
+  SONCAS_LABEL_FR,
+} from "./seller-affinity-from-meetings";
+import {
   DEFAULT_MIN_SCORED_MEETINGS,
   RANKING_TIERS,
   displayedNoteOn5,
@@ -18,19 +22,19 @@ function membre(noteGlobaleOn5: number | null, scoredMeetings = 10) {
 
 describe("tierFromNoteOn5", () => {
   it("place chaque borne dans le bon palier", () => {
-    expect(tierFromNoteOn5(0)?.id).toBe("bronze");
-    expect(tierFromNoteOn5(1.9)?.id).toBe("bronze");
-    expect(tierFromNoteOn5(2)?.id).toBe("argent");
-    expect(tierFromNoteOn5(2.9)?.id).toBe("argent");
-    expect(tierFromNoteOn5(3)?.id).toBe("or");
-    expect(tierFromNoteOn5(3.9)?.id).toBe("or");
-    expect(tierFromNoteOn5(4)?.id).toBe("diamant");
-    expect(tierFromNoteOn5(5)?.id).toBe("diamant");
+    expect(tierFromNoteOn5(0)?.id).toBe("demarrage");
+    expect(tierFromNoteOn5(1.9)?.id).toBe("demarrage");
+    expect(tierFromNoteOn5(2)?.id).toBe("progression");
+    expect(tierFromNoteOn5(2.9)?.id).toBe("progression");
+    expect(tierFromNoteOn5(3)?.id).toBe("maitrise");
+    expect(tierFromNoteOn5(3.9)?.id).toBe("maitrise");
+    expect(tierFromNoteOn5(4)?.id).toBe("excellence");
+    expect(tierFromNoteOn5(5)?.id).toBe("excellence");
   });
 
   it("classe sur la note affichée, pas sur la note brute", () => {
-    // 1,96 s'affiche « 2,0 », donc le palier lu doit être Argent.
-    expect(tierFromNoteOn5(1.96)?.id).toBe("argent");
+    // 1,96 s'affiche « 2,0 », donc le palier lu doit être Progression.
+    expect(tierFromNoteOn5(1.96)?.id).toBe("progression");
   });
 
   it("ne renvoie aucun palier sans note", () => {
@@ -97,7 +101,7 @@ describe("rankTeamMembers", () => {
     ]);
     expect(r.rows.map((x) => x.tier?.id ?? null)).toEqual([
       null,
-      "diamant",
+      "excellence",
       null,
     ]);
   });
@@ -188,8 +192,8 @@ describe("libellés", () => {
   });
 
   it("borne chaque palier de façon lisible", () => {
-    expect(tierRangeLabel(RANKING_TIERS[0]!)).toBe("Bronze : 0 à 1,9");
-    expect(tierRangeLabel(RANKING_TIERS[3]!)).toBe("Diamant : 4 à 5");
+    expect(tierRangeLabel(RANKING_TIERS[0]!)).toBe("Démarrage : 0 à 1,9");
+    expect(tierRangeLabel(RANKING_TIERS[3]!)).toBe("Excellence : 4 à 5");
   });
 
   it("accorde le nombre de rendez-vous dans l'explication", () => {
@@ -224,6 +228,41 @@ describe("libellés", () => {
       formatDeltaOn5(-0.3),
     ];
     textes.forEach((t) => expect(t).not.toContain("—"));
+  });
+});
+
+describe("vocabulaire des paliers", () => {
+  /**
+   * Le palier s'affiche sur la même ligne que la posture SONCAS du commercial, à
+   * deux colonnes d'écart, et juste à côté de son rang. Un palier qui reprendrait
+   * un mot déjà pris ferait porter deux sens au même mot sur une seule ligne : le
+   * lecteur ne pourrait plus savoir lequel il lit. Ces deux tests gardent la
+   * décision de nommage, qui ne se voit qu'à l'écran et se perdrait sans eux.
+   */
+  it("n'emprunte aucun mot au vocabulaire SONCAS ou DISC", () => {
+    const dejaPris = new Set(
+      [...Object.values(SONCAS_LABEL_FR), ...Object.values(DISC_LABEL_FR)].map(
+        (mot) => mot.toLowerCase(),
+      ),
+    );
+    RANKING_TIERS.forEach((tier) => {
+      expect(dejaPris.has(tier.nom.toLowerCase())).toBe(false);
+    });
+  });
+
+  it("ne nomme aucun palier d'après une place de podium", () => {
+    // Un palier est absolu et peut être partagé ; le rang, lui, est relatif et
+    // s'affiche dans la colonne voisine. « 3e place · Or » se contredirait.
+    const podium = ["or", "argent", "bronze", "1er", "premier", "première"];
+    RANKING_TIERS.forEach((tier) => {
+      expect(podium).not.toContain(tier.nom.toLowerCase());
+    });
+  });
+
+  it("nomme chaque palier par un nom distinct et non vide", () => {
+    const noms = RANKING_TIERS.map((t) => t.nom);
+    expect(new Set(noms).size).toBe(noms.length);
+    noms.forEach((nom) => expect(nom.trim().length).toBeGreaterThan(0));
   });
 });
 

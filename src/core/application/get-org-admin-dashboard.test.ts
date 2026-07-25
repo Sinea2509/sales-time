@@ -5,6 +5,7 @@ import {
   buildMonEquipePage,
   buildOrgAdminImprovementBullets,
   buildOrgAdminProgressBullets,
+  buildTeamMemberStanding,
 } from "./get-org-admin-dashboard";
 import type { OrgAdminMonEquipeRankedRow } from "./get-org-admin-dashboard";
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
@@ -225,7 +226,7 @@ describe("buildMonEquipePage", () => {
     expect(u1?.tier).toBeNull();
     expect(u1?.unrankedReason).toBe("volume-insuffisant");
     expect(u2?.rank).toBe(1);
-    expect(u2?.tier?.id).toBe("diamant");
+    expect(u2?.tier?.id).toBe("excellence");
   });
 
   it("classe sur l'équipe entière avant de découper en pages", () => {
@@ -251,5 +252,83 @@ describe("buildMonEquipePage", () => {
     // Aucune page ne contient deux fois le même rang, ni un rang inventé.
     expect(Math.min(...page1.rows.map((r) => r.rank ?? 99))).toBe(3);
     expect(page2.ranking.rankedCount).toBe(12);
+  });
+});
+
+describe("buildTeamMemberStanding", () => {
+  const members = Array.from({ length: 12 }, (_, i) =>
+    membre(`u${String(i + 1).padStart(2, "0")}`),
+  );
+  const meetings = members.flatMap((m, i) =>
+    Array.from({ length: 3 }, () => rdv(m.userId, { salesScore: 20 + i * 5 })),
+  );
+
+  it("annonce sur la fiche exactement le rang affiché dans le tableau", () => {
+    // C'est la raison d'être de la fonction : le manager clique sur une ligne
+    // qui dit « 3e » et doit lire « 3e » sur la fiche. Le test compare les deux
+    // sorties membre par membre, y compris pour ceux qui sont en page 2.
+    for (const m of members) {
+      const page = buildMonEquipePage({
+        members,
+        meetings,
+        page: members.indexOf(m) < 10 ? 1 : 2,
+      });
+      const standing = buildTeamMemberStanding({
+        members,
+        meetings,
+        sellerUserId: m.userId,
+      });
+      const dansLeTableau = ligne(page, m.userId);
+      if (!dansLeTableau) continue;
+      expect(standing.row?.rank).toBe(dansLeTableau.rank);
+      expect(standing.row?.tier?.id ?? null).toBe(
+        dansLeTableau.tier?.id ?? null,
+      );
+      expect(standing.row?.noteGlobaleOn5).toBe(dansLeTableau.noteGlobaleOn5);
+      expect(standing.row?.deltaToTeamAverage).toBe(
+        dansLeTableau.deltaToTeamAverage,
+      );
+    }
+  });
+
+  it("expose le même résumé de classement que le tableau", () => {
+    const page = buildMonEquipePage({ members, meetings, page: 1 });
+    const standing = buildTeamMemberStanding({
+      members,
+      meetings,
+      sellerUserId: "u07",
+    });
+    expect(standing.ranking).toEqual(page.ranking);
+    expect(standing.teamSize).toBe(page.totalCount);
+  });
+
+  it("ne prête aucun rang à quelqu'un qui n'est pas dans l'équipe cadrée", () => {
+    // Un manager peut ouvrir la fiche d'un commercial qui ne fait pas partie de
+    // son périmètre. Mieux vaut ne rien annoncer qu'annoncer une place calculée
+    // sur un groupe auquel l'intéressé n'appartient pas.
+    const standing = buildTeamMemberStanding({
+      members,
+      meetings,
+      sellerUserId: "inconnu",
+    });
+    expect(standing.row).toBeNull();
+    expect(standing.teamSize).toBe(12);
+  });
+
+  it("garde la note d'un membre hors classement et dit pourquoi", () => {
+    const standing = buildTeamMemberStanding({
+      members: [membre("u1"), membre("u2")],
+      meetings: [
+        rdv("u1", { salesScore: 100 }),
+        rdv("u2", { salesScore: 80 }),
+        rdv("u2", { salesScore: 80 }),
+        rdv("u2", { salesScore: 80 }),
+      ],
+      sellerUserId: "u1",
+    });
+    expect(standing.row?.noteGlobaleOn5).toBe(5);
+    expect(standing.row?.rank).toBeNull();
+    expect(standing.row?.tier).toBeNull();
+    expect(standing.row?.unrankedReason).toBe("volume-insuffisant");
   });
 });
