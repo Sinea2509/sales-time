@@ -79,4 +79,12 @@ export interface UserRepositoryPort {
   updatePasswordHash(userId: string, passwordHash: string): Promise<void>;
 
   listDirectReportUserIds(managerUserId: string): Promise<string[]>;
+
+  /**
+   * Manager of a seller, or null when none is set.
+   *
+   * Lets a seller's dashboard rank them on the exact team their manager sees,
+   * so the two screens cannot announce two different places for one person.
+   */
+  findManagerUserId(userId: string): Promise<string | null>;
 }

@@ -4,15 +4,19 @@ import { DashboardAdminShell } from "@/components/organisms/dashboard-admin-shel
 import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
-import {
-  disabledStatsWindowDays,
-} from "@/src/core/domain/dashboard-stats-window";
+import { disabledStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
-import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
-import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
+import {
+  resolveManagerTeamUserIds,
+  resolveSellerTeamUserIds,
+} from "@/lib/team-seller-scope";
+import {
+  getOrgAdminDashboard,
+  getTeamMemberStanding,
+} from "@/src/core/application/get-org-admin-dashboard";
 import { getCachedOrgKissRollupNarrative } from "@/src/core/application/get-cached-org-kiss-rollup-narrative";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
@@ -124,13 +128,26 @@ export default async function DashboardHomePage({
     redirectPath: "/company",
   });
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
-  const [home, orgSettings] = await Promise.all([
+  // Le rang est relatif : il se calcule sur l'équipe du manager de ce
+  // commercial, exactement le groupe que ce manager voit dans « Mon équipe ».
+  // Sans ce cadrage, le même écran annoncerait une place que la fiche du
+  // manager démentirait le lendemain.
+  const teamUserIds = await resolveSellerTeamUserIds(deps, {
+    internalUserId: sellerId,
+  });
+  const [home, orgSettings, standing] = await Promise.all([
     getOrgDashboardHome(deps, {
       organizationId: actor.activeOrganizationId,
       statsWindowDays,
       sellerUserId: sellerId,
     }),
     deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
+    getTeamMemberStanding(deps, {
+      organizationId: actor.activeOrganizationId,
+      statsWindowDays,
+      sellerUserId: sellerId,
+      teamUserIds,
+    }),
   ]);
   const { meetingTypeOptions, pipelineStageOptions } =
     orgMeetingFormOptionsFromSettings(orgSettings);
@@ -140,6 +157,7 @@ export default async function DashboardHomePage({
       {!home ? null : (
         <DashboardHomeShell
           home={home}
+          standing={standing}
           meetingTypeOptions={meetingTypeOptions}
           pipelineStageOptions={pipelineStageOptions}
           disabledStatsDays={disabledStatsDays}

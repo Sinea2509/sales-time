@@ -1,10 +1,8 @@
-import { TeamTierBadge } from "@/components/molecules/team-tier-badge";
+import { TeamTierLegend } from "@/components/molecules/team-tier-legend";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import {
-  RANKING_TIERS,
   formatNoteFr,
-  tierRangeLabel,
   type TeamRankingSummary as TeamRankingSummaryData,
 } from "@/src/core/domain/team-ranking";
 
@@ -92,21 +90,7 @@ export function TeamRankingSummary({
               : `${formatNoteFr(moyenne)}/5`}
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            Paliers :
-          </span>
-          <ul
-            className="flex flex-wrap items-center gap-1.5"
-            aria-label="Paliers de note"
-          >
-            {RANKING_TIERS.map((tier) => (
-              <li key={tier.id} title={tierRangeLabel(tier)}>
-                <TeamTierBadge tier={tier} />
-              </li>
-            ))}
-          </ul>
-        </div>
+        <TeamTierLegend />
       </div>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
         {base}

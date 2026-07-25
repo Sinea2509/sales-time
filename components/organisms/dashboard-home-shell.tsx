@@ -5,6 +5,7 @@ import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
+import { DashboardStandingCard } from "@/components/organisms/dashboard-standing-card";
 import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
@@ -16,6 +17,7 @@ import { sectionHeadingClass } from "@/lib/page-typography";
 import { salesScoreColorClass } from "@/lib/sales-score-color";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
+import type { TeamMemberStanding } from "@/src/core/application/get-org-admin-dashboard";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 
@@ -43,11 +45,14 @@ function formatPotentialEuro(amount: number | null): string {
 
 export function DashboardHomeShell({
   home,
+  standing = null,
   meetingTypeOptions,
   pipelineStageOptions,
   disabledStatsDays = [],
 }: {
   home: OrgDashboardHome;
+  /** Place du commercial dans son équipe. `null` hors organisation ou hors équipe. */
+  standing?: TeamMemberStanding | null;
   meetingTypeOptions: string[];
   pipelineStageOptions: string[];
   disabledStatsDays?: StatsWindowDays[];
@@ -68,6 +73,14 @@ export function DashboardHomeShell({
             />
           </Suspense>
         </div>
+
+        {/*
+          La position vient avant les KPI opérationnels, et non après : c'est la
+          seule ligne de l'écran qui réponde à « où j'en suis », les autres
+          répondant à « ce que j'ai fait ». Elle dépend de la même période que
+          les cartes, d'où sa place sous le sélecteur qui la commande.
+        */}
+        {standing ? <DashboardStandingCard standing={standing} /> : null}
 
         <DashboardKpiCards home={home} />
       </div>

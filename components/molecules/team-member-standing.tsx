@@ -128,6 +128,26 @@ export function TeamMemberStanding({
 
   const ecart = row.deltaToTeamAverage;
 
+  // Seul au classement, le rang ne dit rien : « 1re place sur 1 classé » se lit
+  // comme une victoire, alors qu'il n'y avait personne en face. L'écart ne dit
+  // rien non plus, puisque la moyenne d'équipe est cette note elle-même et que
+  // l'écart vaut donc zéro par construction. Restent le palier et la note, qui
+  // sont absolus et gardent tout leur sens sans personne à qui se comparer.
+  if (ranking.rankedCount <= 1) {
+    return (
+      <div className={cn("flex flex-col gap-1.5", className)}>
+        <div className="flex flex-wrap items-center gap-2">
+          <TeamTierBadge tier={row.tier} />
+          <NoteAvecBase note={row.noteGlobaleOn5} scored={row.scoredMeetings} />
+        </div>
+        <p className="text-muted-foreground max-w-prose text-[11px] leading-tight">
+          Seul membre classé sur la période : le palier reste calculé sur
+          l&apos;échelle, le rang attend qu&apos;il y ait à qui se comparer.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       <div className="flex flex-wrap items-center gap-2">
