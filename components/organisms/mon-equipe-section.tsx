@@ -73,12 +73,27 @@ export function MonEquipeSection({
         totalCount={monEquipe.totalCount}
       />
       <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+        {/*
+          Les colonnes s'effacent par ordre inverse d'importance quand l'écran
+          rétrécit, exactement comme le tableau du tableau de bord commercial le
+          fait déjà. Sur téléphone il reste la place, la personne et la note :
+          les trois réponses que le manager vient chercher. Le reste se retrouve
+          d'une tape sur la fiche, qui l'écrit en toutes lettres. Sans ce
+          découpage, huit colonnes tenues à 880px se réduisaient à un défilement
+          horizontal muet où l'on ne voyait que le nom, coupé net.
+        */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[880px] text-left text-sm">
+          {/*
+            Ces largeurs minimales sont des garde-fous, pas la mise en page :
+            elles sont réglées sous ce que le contenu réclame à chaque palier,
+            si bien qu'elles ne se déclenchent que sur un écran plus étroit que
+            prévu, pour faire défiler plutôt qu'écraser les colonnes.
+          */}
+          <table className="w-full min-w-[300px] text-left text-sm sm:min-w-[480px] md:min-w-[560px] lg:min-w-[760px]">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
                 <DataTableHead
-                  className="w-24 px-4 py-3.5 dark:text-zinc-400"
+                  className="w-16 px-4 py-3.5 sm:w-24 dark:text-zinc-400"
                   title={`Rang sur l'équipe entière, et écart à la moyenne des membres classés. Au-dessous de ${monEquipe.ranking.minScoredMeetings} rendez-vous notés, le score est affiché mais pas le rang.`}
                 >
                   Rang
@@ -87,13 +102,13 @@ export function MonEquipeSection({
                   Personne
                 </DataTableHead>
                 <DataTableHead
-                  className="px-4 py-3.5 tabular-nums dark:text-zinc-400"
+                  className="hidden px-4 py-3.5 tabular-nums md:table-cell dark:text-zinc-400"
                   title="Nombre de rendez-vous portant au moins une analyse KISS sur la période. Tous ne sont pas notés : la note vient de l'analyse SONCAS."
                 >
                   RDV coachés
                 </DataTableHead>
                 <DataTableHead
-                  className="px-4 py-3.5 tabular-nums dark:text-zinc-400"
+                  className="hidden px-4 py-3.5 tabular-nums lg:table-cell dark:text-zinc-400"
                   title="Temps d'appel moyen sur les RDV connectés (durée renseignée)"
                 >
                   TAM
@@ -105,15 +120,15 @@ export function MonEquipeSection({
                   {SALES_SCORE_LABEL}
                 </DataTableHead>
                 <DataTableHead
-                  className="px-4 py-3.5 dark:text-zinc-400"
+                  className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-400"
                   title={`Palier atteint sur l'échelle de 0 à 5. Deux membres peuvent partager un palier sans partager une place. Au-dessous de ${monEquipe.ranking.minScoredMeetings} rendez-vous notés, la note est affichée mais le palier n'est pas décerné.`}
                 >
                   Palier
                 </DataTableHead>
-                <DataTableHead className="px-4 py-3.5 dark:text-zinc-400">
+                <DataTableHead className="hidden px-4 py-3.5 lg:table-cell dark:text-zinc-400">
                   Posture
                 </DataTableHead>
-                <DataTableHead className="w-14 px-4 py-3.5 text-right dark:text-zinc-400">
+                <DataTableHead className="hidden w-14 px-4 py-3.5 text-right lg:table-cell dark:text-zinc-400">
                   Actions
                 </DataTableHead>
               </tr>
@@ -142,7 +157,16 @@ export function MonEquipeSection({
                           }
                         />
                       </td>
-                      <td className="px-4 py-3.5 align-middle">
+                      {/*
+                        « w-full max-w-0 » fait de cette colonne la colonne
+                        élastique : elle prend la place que les autres laissent
+                        et coupe proprement, au lieu d'imposer la largeur du
+                        plus long nom à tout le tableau. La largeur minimale est
+                        ce qui empêche l'élasticité de se retourner contre elle :
+                        sans elle, les colonnes à contenu insécable se servent
+                        d'abord et le nom tombe à « C… ».
+                      */}
+                      <td className="w-full max-w-0 min-w-[7.5rem] px-4 py-3.5 align-middle sm:min-w-[10.5rem]">
                         <Link
                           href={
                             statsWindowDays === 30
@@ -152,25 +176,44 @@ export function MonEquipeSection({
                           className="group flex min-w-0 items-center gap-3 rounded-lg py-0.5 pr-2 outline-none transition-colors hover:bg-zinc-100/90 focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:hover:bg-zinc-800/60 dark:focus-visible:ring-zinc-500/40"
                           aria-label={`Fiche de ${person.primary}`}
                         >
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                          {/*
+                            La pastille d'initiales redit en deux lettres le nom
+                            écrit juste à côté. Sur téléphone elle coûte 48px de
+                            largeur pour cela : le nom entier les vaut mieux.
+                          */}
+                          <span
+                            className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 sm:flex dark:bg-zinc-800 dark:text-zinc-200"
+                            aria-hidden
+                          >
                             {prospectInitials(person.initialsSource)}
                           </span>
                           <div className="min-w-0 text-left">
-                            <p className="truncate font-medium text-zinc-950 underline-offset-2 group-hover:underline dark:text-zinc-50">
+                            {/*
+                              Sur téléphone le nom passe à la ligne au lieu
+                              d'être coupé : la hauteur ne coûte rien sur un
+                              écran qui défile déjà, la largeur coûte tout. À
+                              partir de « sm », la place existe et la coupure
+                              propre redevient préférable au retour à la ligne,
+                              qui déformerait la hauteur des lignes du tableau.
+                            */}
+                            <p className="font-medium text-zinc-950 underline-offset-2 group-hover:underline sm:truncate dark:text-zinc-50">
                               {person.primary}
                             </p>
                             {person.secondary ? (
-                              <p className="text-muted-foreground truncate text-xs dark:text-zinc-400">
+                              // L'adresse e-mail ne sert qu'à départager deux
+                              // homonymes : sur téléphone elle coûte plus de
+                              // largeur qu'elle n'en rend, et la fiche l'affiche.
+                              <p className="text-muted-foreground hidden truncate text-xs sm:block dark:text-zinc-400">
                                 {person.secondary}
                               </p>
                             ) : null}
                           </div>
                         </Link>
                       </td>
-                      <td className="px-4 py-3.5 tabular-nums">
+                      <td className="hidden px-4 py-3.5 tabular-nums md:table-cell">
                         {row.coachesCount}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3.5 tabular-nums">
+                      <td className="hidden whitespace-nowrap px-4 py-3.5 tabular-nums lg:table-cell">
                         {row.tamMinutesAvg != null ? (
                           formatDurationHoursMinutes(row.tamMinutesAvg)
                         ) : (
@@ -183,7 +226,15 @@ export function MonEquipeSection({
                         )}
                       </td>
                       <td
-                        className="whitespace-nowrap px-4 py-3.5 tabular-nums"
+                        // Pas de « whitespace-nowrap » ici : le suffixe
+                        // « moyenne de 8 RDV notés » revient à la ligne quand la
+                        // place manque plutôt que d'imposer sa largeur à toute
+                        // la colonne. La note doit rester lisible sans faire
+                        // défiler ; la phrase qui la justifie peut tenir sur
+                        // deux lignes, la ligne du nom en fait déjà autant.
+                        // Sauf sur téléphone, où c'est le nom qui gagne : voir
+                        // le commentaire de la ligne de base, plus bas.
+                        className="px-4 py-3.5 tabular-nums"
                         title={
                           row.scoredMeetings > 0
                             ? `Moyenne des SalesScores de ${row.scoredMeetings} rendez-vous. Un rendez-vous coaché n'est pas toujours noté : le coaching porte sur l'analyse KISS, la note vient de l'analyse SONCAS.`
@@ -200,7 +251,21 @@ export function MonEquipeSection({
                           deux écrans emploient donc la même formulation, qui ne
                           se lit que d'une seule façon.
                         */}
-                        <span className="block text-xs text-zinc-500 dark:text-zinc-400">
+                        {/*
+                          Sur téléphone, la base s'efface quand il y a une note :
+                          « 4,3/5 » se lit seul, et les deux lignes que la base
+                          lui coûtait reviennent au nom, qui était coupé net.
+                          Elle reste affichée quand il n'y a pas de note, parce
+                          que « n. c. » ne se lit pas seul et que l'infobulle qui
+                          l'explique n'existe pas sous le doigt.
+                        */}
+                        <span
+                          className={
+                            row.scoredMeetings > 0
+                              ? "hidden text-xs text-zinc-500 sm:block dark:text-zinc-400"
+                              : "block text-xs text-zinc-500 dark:text-zinc-400"
+                          }
+                        >
                           {row.scoredMeetings > 0
                             ? `moyenne de ${row.scoredMeetings} RDV noté${
                                 row.scoredMeetings > 1 ? "s" : ""
@@ -208,7 +273,7 @@ export function MonEquipeSection({
                             : "aucun RDV noté"}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="hidden px-4 py-3.5 sm:table-cell">
                         <TeamTierBadge
                           tier={row.tier}
                           unavailableTitle={
@@ -222,7 +287,7 @@ export function MonEquipeSection({
                           }
                         />
                       </td>
-                      <td className="max-w-[10rem] truncate px-4 py-3.5 text-zinc-700 dark:text-zinc-300">
+                      <td className="hidden max-w-[10rem] truncate px-4 py-3.5 text-zinc-700 lg:table-cell dark:text-zinc-300">
                         {row.postureLabel ?? (
                           <span
                             className="text-zinc-500 dark:text-zinc-400"
@@ -232,7 +297,7 @@ export function MonEquipeSection({
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 text-right align-middle">
+                      <td className="hidden px-4 py-3.5 text-right align-middle lg:table-cell">
                         <Link
                           href="/company/settings/equipe"
                           className={cn(
