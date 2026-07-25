@@ -22,14 +22,14 @@ export async function createPlanRequest(
   if (adminEmail) {
     await sendTransactionalEmail({
       to: adminEmail,
-      subject: "Sales Time — nouvelle demande d'upgrade",
+      subject: "Sales Time · Nouvelle demande d'upgrade",
       html: `<p>Organisation : ${row.organizationName}</p><p>Plan : ${row.desiredPlan ?? "—"}</p><p>${row.message ?? ""}</p>`,
     }).catch(() => undefined);
   }
 
   await sendTransactionalEmail({
     to: input.requesterEmail,
-    subject: "Sales Time — demande d'upgrade reçue",
+    subject: "Sales Time · Demande d'upgrade reçue",
     html: `<p>Nous avons bien reçu votre demande. Notre équipe vous recontactera sous peu.</p>`,
   }).catch(() => undefined);
 

@@ -223,8 +223,8 @@ export function OrgDashboardShellFrame({
                   </p>
                   <p className="mt-1 text-xs leading-snug text-[#404040]">
                     {trialAnalysesLeft > 0
-                      ? `Plus que ${trialAnalysesLeft} analyse${trialAnalysesLeft > 1 ? "s" : ""} — passez au plan pour continuer`
-                      : "Quota épuisé — passez au plan pour continuer"}
+                      ? `Plus que ${trialAnalysesLeft} analyse${trialAnalysesLeft > 1 ? "s" : ""}, passez au plan pour continuer`
+                      : "Quota épuisé, passez au plan pour continuer"}
                   </p>
                   <div className="mt-3">
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#171717]/20">

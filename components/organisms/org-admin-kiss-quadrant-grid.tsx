@@ -123,7 +123,7 @@ export function OrgAdminKissQuadrantGrid({
               <DotBulletList
                 items={bullets}
                 density="compact"
-                emptyMessage="Aucune recommandation KISS sur la période — lancez des analyses sur vos rendez-vous."
+                emptyMessage="Aucune recommandation KISS sur la période. Lancez des analyses sur vos rendez-vous."
               />
             </CardContent>
           </Card>

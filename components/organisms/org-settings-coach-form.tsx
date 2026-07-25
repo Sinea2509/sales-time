@@ -231,7 +231,7 @@ export function OrgSettingsCoachForm({
             kind="OBJECTION"
             open={objectionPickerOpen}
             onOpenChange={setObjectionPickerOpen}
-            title="Objections — collection partagée"
+            title="Objections · collection partagée"
             description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
             alreadyChosen={objections}
             onAddToList={(texts) =>
@@ -242,7 +242,7 @@ export function OrgSettingsCoachForm({
             kind="ARGUMENT"
             open={argumentPickerOpen}
             onOpenChange={setArgumentPickerOpen}
-            title="Arguments — collection partagée"
+            title="Arguments · collection partagée"
             description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
             alreadyChosen={keyArguments}
             onAddToList={(texts) =>

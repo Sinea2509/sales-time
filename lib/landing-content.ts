@@ -59,7 +59,7 @@ export const landingPerspectiveTabs: LandingPerspectiveTab[] = [
     icon: User,
     title: "Gagnez du Temps Utile Commercial",
     description:
-      "Compte rendu structuré, coaching KISS, mail de suivi prêt à envoyer, profil DISC et SONCAS — sans repasser des heures sur le CRM.",
+      "Compte rendu structuré, coaching KISS, mail de suivi prêt à envoyer, profil DISC et SONCAS, sans repasser des heures sur le CRM.",
     bullets: [
       "Synthèse du RDV en 30 secondes",
       "Coaching personnalisé selon le profil prospect",
@@ -73,7 +73,7 @@ export const landingPerspectiveTabs: LandingPerspectiveTab[] = [
     icon: Users,
     title: "Pilotez la qualité sans micro-management",
     description:
-      "Vue équipe sur le volume de RDV coachés, les axes de coaching collectifs et les signaux de risque — sans lire chaque note individuellement.",
+      "Vue équipe sur le volume de RDV coachés, les axes de coaching collectifs et les signaux de risque, sans lire chaque note individuellement.",
     bullets: [
       "Dashboard équipe : TAM agrégé, volume, DISC",
       "Profil de chaque commercial et axes à coacher",
@@ -109,7 +109,7 @@ export const landingHowSteps = [
     step: "02",
     title: "L'IA génère la fiche RDV",
     description:
-      "Synthèse, coaching KISS, profil DISC/SONCAS avec verbatims et mail de suivi — en quelques secondes.",
+      "Synthèse, coaching KISS, profil DISC/SONCAS avec verbatims et mail de suivi, en quelques secondes.",
     icon: Sparkles,
   },
   {
@@ -125,13 +125,13 @@ export const landingFeatureCards = [
   {
     title: "Fiche RDV analysée",
     description:
-      "Métadonnées, synthèse du contexte et des enjeux, pistes de solution — prête à partager ou à archiver dans votre CRM.",
+      "Métadonnées, synthèse du contexte et des enjeux, pistes de solution, prête à partager ou à archiver dans votre CRM.",
     icon: FileText,
   },
   {
     title: "Coaching KISS personnalisé",
     description:
-      "Recommandations adaptées au profil du prospect : ce qu'il faut garder, améliorer, arrêter et commencer — golden question incluse.",
+      "Recommandations adaptées au profil du prospect : ce qu'il faut garder, améliorer, arrêter et commencer, golden question incluse.",
     icon: Sparkles,
   },
   {
@@ -143,7 +143,7 @@ export const landingFeatureCards = [
   {
     title: "Dashboard manager",
     description:
-      "Vue équipe : volumes, TAM agrégé, répartition des types de RDV et thématiques KISS — sans exposer les notes individuelles.",
+      "Vue équipe : volumes, TAM agrégé, répartition des types de RDV et thématiques KISS, sans exposer les notes individuelles.",
     icon: LayoutDashboard,
   },
 ] as const;

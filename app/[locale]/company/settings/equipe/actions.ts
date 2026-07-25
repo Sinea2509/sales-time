@@ -123,7 +123,7 @@ export async function inviteMemberAction(
 
   await sendTransactionalEmail({
     to: email,
-    subject: `Invitation — ${orgName}`,
+    subject: `Invitation · ${orgName}`,
     html: buildInvitationEmailHtml({
       organizationName: orgName,
       inviteLink: link,
@@ -164,8 +164,7 @@ export async function changeRoleAction(
     if (adminCount <= 1) {
       return {
         ok: false,
-        message:
-          "Impossible de retirer le dernier manager de l’organisation.",
+        message: "Impossible de retirer le dernier manager de l’organisation.",
       };
     }
   }

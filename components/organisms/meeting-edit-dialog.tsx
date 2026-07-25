@@ -53,7 +53,7 @@ export function MeetingEditDialog({
           <DialogTitle>Modifier le rendez-vous</DialogTitle>
           <DialogDescription>
             Corrigez les informations saisies lors de l&apos;analyse initiale
-            {prospectName ? ` — ${prospectName}` : ""}.
+            {prospectName ? ` du rendez-vous avec ${prospectName}` : ""}.
           </DialogDescription>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">

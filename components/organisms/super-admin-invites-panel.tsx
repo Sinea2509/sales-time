@@ -223,8 +223,8 @@ export function SuperAdminInvitesPanel({
           </CardTitle>
           <CardDescription>
             Envoi d&apos;un lien par e-mail. Réservé à l&apos;espace plateforme
-            (<span className="font-mono text-xs">/admin</span>) — les
-            invitations d&apos;organisation restent dans Paramètres → Équipe.
+            (<span className="font-mono text-xs">/admin</span>). Les invitations
+            d&apos;organisation restent dans Paramètres → Équipe.
           </CardDescription>
         </CardHeader>
         <CardContent>

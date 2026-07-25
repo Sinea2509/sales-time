@@ -51,7 +51,7 @@ export function SuperAdminKissConsignesEditor({ initialJson }: Props) {
             <p>
               Ces textes enrichissent le prompt d’analyse KISS sur les
               rendez-vous (priorité aux consignes « commercial ») et les
-              synthèses manager (tableau de bord équipe, fiche commercial —
+              synthèses manager (tableau de bord équipe et fiche commercial :
               consignes « manager »). Les consignes « global » s’appliquent dans
               les deux cas.
             </p>

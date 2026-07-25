@@ -55,7 +55,7 @@ export function GlobalSearchPanel() {
         <PrdEmptyState
           icon={Search}
           title="Aucun résultat"
-          description="Essayez un autre terme — nom de prospect, entreprise ou email."
+          description="Essayez un autre terme : nom de prospect, entreprise ou email."
         />
       ) : null}
 
@@ -105,7 +105,7 @@ export function GlobalSearchPanel() {
                   href={`/company/equipe/${m.userId}`}
                   className="block px-3 py-2 text-sm hover:bg-muted/50"
                 >
-                  {m.firstName ?? m.lastName
+                  {(m.firstName ?? m.lastName)
                     ? `${m.firstName ?? ""} ${m.lastName ?? ""}`.trim()
                     : m.email}
                 </Link>

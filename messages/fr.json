@@ -38,7 +38,7 @@
   },
   "superAdminPage": {
     "title": "Super admin",
-    "orgListTitle": "Super admin — organisations",
+    "orgListTitle": "Super admin · organisations",
     "accessDeniedTitle": "Super admin",
     "accessDeniedBody": "Vous n’avez pas accès à cette zone, ou votre utilisateur n’est pas encore synchronisé dans la base applicative.",
     "promptsLink": "Prompts SONCAS / DISC",
@@ -50,7 +50,7 @@
     "backToOrgs": "← Organisations"
   },
   "superAdminOrgList": {
-    "title": "Super admin — organisations",
+    "title": "Super admin · organisations",
     "description": "Entrer dans une organisation enregistre une trace d’audit. Choisissez le rôle Manager ou Commercial avant d’entrer.",
     "reasonLabel": "Motif (optionnel)",
     "reasonPlaceholder": "Référence ticket / incident",

@@ -213,14 +213,14 @@ export function AdminHealthDashboard({
           icon={AlertTriangle}
           label="Jobs analyse (morts)"
           value={pipeline.jobsDead}
-          footer="AnalysisJob DEAD — relancer manuellement"
+          footer="AnalysisJob DEAD : relancer manuellement"
           accent="violet"
         />
         <AdminKpiCard
           icon={AlertTriangle}
           label="RDV bloqués (PROCESSING)"
           value={pipeline.meetingsProcessingStuck}
-          footer=">15 min sans analyse — vérifier cron / AI key"
+          footer=">15 min sans analyse : vérifier cron / AI key"
           accent="emerald"
         />
       </div>

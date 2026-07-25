@@ -197,7 +197,7 @@ export function CoachSharedPhrasePickerSheet({
                 />
                 <PhraseBlock
                   heading="Collection partagée"
-                  sub="Enrichie depuis l’onboarding et les réglages Coach IA — vous pouvez proposer de nouvelles formulations ci-dessous."
+                  sub="Enrichie depuis l’onboarding et les réglages Coach IA. Vous pouvez proposer de nouvelles formulations ci-dessous."
                   items={community}
                   selectedIds={selectedIds}
                   onToggle={toggle}

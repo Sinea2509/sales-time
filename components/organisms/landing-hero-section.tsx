@@ -39,7 +39,7 @@ export function LandingHeroSection() {
         <LandingReveal delay={2}>
           <p className="mt-5.5 max-w-[500px] text-center text-lg leading-[1.65] font-normal text-white/45">
             Chaque RDV devient un compte rendu structuré, un coaching
-            personnalisé et un mail de suivi — en 30 secondes.
+            personnalisé et un mail de suivi, en 30 secondes.
           </p>
         </LandingReveal>
 

@@ -40,7 +40,7 @@ export function OrgAdminDonutDistributionCard({
     data.analyzedMeetings >= MIN_RDV_FOR_STATS && gradient != null;
 
   const description = data.isDefaultEqual
-    ? "Répartition par défaut (parts égales) — en attente d'analyses"
+    ? "Répartition par défaut (parts égales), en attente d'analyses"
     : `Moyenne équipe sur ${rdvCount} RDV analysé${rdvCount > 1 ? "s" : ""}`;
 
   return (

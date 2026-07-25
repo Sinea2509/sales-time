@@ -1,4 +1,7 @@
-import { discResultSchema, soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
+import {
+  discResultSchema,
+  soncasResultSchema,
+} from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
@@ -85,8 +88,7 @@ export async function runAllMeetingAnalysesForOrg(
         meetingId: input.meetingId,
         kind,
         jobId: input.jobId ?? null,
-        kissSystemMarkdownAppendix:
-          kind === "KISS" ? kissAppendix : undefined,
+        kissSystemMarkdownAppendix: kind === "KISS" ? kissAppendix : undefined,
       },
     );
     if (!r.ok) {
@@ -127,7 +129,9 @@ export async function runAllMeetingAnalysesForOrg(
     kind: "KISS",
   });
   const discParsed = disc ? discResultSchema.safeParse(disc.result) : null;
-  const soncasParsed = soncas ? soncasResultSchema.safeParse(soncas.result) : null;
+  const soncasParsed = soncas
+    ? soncasResultSchema.safeParse(soncas.result)
+    : null;
   const kissParsed = kiss ? kissResultSchema.safeParse(kiss.result) : null;
   if (discParsed?.success || soncasParsed?.success) {
     await deps.meetings.updatePersonProfileCache({
@@ -182,7 +186,7 @@ export async function runAllMeetingAnalysesForOrg(
       if (sellerEmail) {
         await sendTransactionalEmail({
           to: sellerEmail,
-          subject: "Sales Time — votre analyse de RDV est prête",
+          subject: "Sales Time · Votre analyse de RDV est prête",
           html: `<p>Bonjour,</p><p>L'analyse de votre rendez-vous avec <strong>${meeting.prospectName}</strong> est disponible.</p><p><a href="${process.env.APP_BASE_URL ?? ""}/company/rendez-vous/${meeting.id}">Voir la fiche RDV</a></p>`,
         }).catch(() => undefined);
       }

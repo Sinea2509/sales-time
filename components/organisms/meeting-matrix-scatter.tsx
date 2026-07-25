@@ -34,19 +34,21 @@ export function MeetingMatrixScatter({
   const presentEtapes = useMemo(() => sortedUniqueEtapes(points), [points]);
 
   const series = useMemo(() => {
-    return presentEtapes.map((etape) => {
-      const rows = points.filter((p) => p.etape === etape);
-      return {
-        label: etape,
-        data: rows.map((p) => ({
-          id: p.id,
-          x: p.salesScore ?? 0,
-          y: p.tamMinutes,
-        })),
-        color: meetingEtapeScatterColorForLabel(etape),
-        markerSize: 6,
-      };
-    }).filter((s) => s.data.length > 0);
+    return presentEtapes
+      .map((etape) => {
+        const rows = points.filter((p) => p.etape === etape);
+        return {
+          label: etape,
+          data: rows.map((p) => ({
+            id: p.id,
+            x: p.salesScore ?? 0,
+            y: p.tamMinutes,
+          })),
+          color: meetingEtapeScatterColorForLabel(etape),
+          markerSize: 6,
+        };
+      })
+      .filter((s) => s.data.length > 0);
   }, [points, presentEtapes]);
 
   const chartSeries = useMemo(() => {
@@ -93,8 +95,8 @@ export function MeetingMatrixScatter({
       />
       {points.length === 0 ? (
         <p className="text-muted-foreground text-center text-xs">
-          Aucun rendez-vous à afficher — axes prêts pour les prochains RDV
-          analysés.
+          Aucun rendez-vous à afficher : les axes sont prêts pour les prochains
+          RDV analysés.
         </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
@@ -108,7 +110,9 @@ export function MeetingMatrixScatter({
           >
             <span
               className="inline-block size-2 rounded-full"
-              style={{ backgroundColor: meetingEtapeScatterColorForLabel(etape) }}
+              style={{
+                backgroundColor: meetingEtapeScatterColorForLabel(etape),
+              }}
               aria-hidden
             />
             {etape}

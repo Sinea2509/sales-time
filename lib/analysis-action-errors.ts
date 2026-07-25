@@ -1,5 +1,5 @@
 export const AI_NOT_CONFIGURED_MSG =
-  "Analyse IA indisponible — configurez AI_GATEWAY_API_KEY (voir docs/env-sync.md).";
+  "Analyse IA indisponible : configurez AI_GATEWAY_API_KEY (voir docs/env-sync.md).";
 
 export function formatMeetingAnalysisActionError(res: {
   error: string;

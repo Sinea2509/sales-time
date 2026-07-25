@@ -18,7 +18,7 @@ export function MeetingCreatePageShell({
         <div>
           <h1 className={pageTitleClass}>Nouveau rendez-vous</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
-            Transcript manuel — idéal pour alimenter l’IA.
+            Transcript manuel, idéal pour alimenter l’IA.
           </p>
         </div>
         <NavLinkButton href="/company/rendez-vous" variant="ghost" size="sm">

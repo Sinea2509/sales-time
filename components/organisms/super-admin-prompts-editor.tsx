@@ -12,7 +12,10 @@ import {
   AlertCircle,
   History,
 } from "lucide-react";
-import { publishPromptAction, updatePromptModelAction } from "@/app/[locale]/admin/prompts/actions";
+import {
+  publishPromptAction,
+  updatePromptModelAction,
+} from "@/app/[locale]/admin/prompts/actions";
 import type { AnalysisKindSlug } from "@/src/core/ports/prompt-template-repository-port";
 import { ANALYSIS_GATEWAY_MODEL_OPTIONS } from "@/lib/analysis-gateway-models";
 import { Button } from "@/components/ui/button";
@@ -83,7 +86,7 @@ type SideBySideDiffRow = {
   rowKind: "unchanged" | "added-only" | "removed-only" | "replaced";
 };
 
-/** Myers-style line diff via LCS backtrack — correct for reordered / inserted blocks */
+/** Myers-style line diff via LCS backtrack, correct for reordered / inserted blocks */
 function computeDiffOps(oldLines: string[], newLines: string[]): DiffOp[] {
   const m = oldLines.length;
   const n = newLines.length;
@@ -283,7 +286,7 @@ export function SuperAdminPromptsEditor({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
               <CardTitle className={cardTitleClass}>
-                Brouillon — {kind}
+                Brouillon · {kind}
               </CardTitle>
               <CardDescription>
                 Contenu utilisé pour les prochaines analyses jusqu&apos;à
@@ -328,7 +331,10 @@ export function SuperAdminPromptsEditor({
                   if (v) setModel(v);
                 }}
               >
-                <SelectTrigger id={`model-${kind}`} className="w-full sm:max-w-md">
+                <SelectTrigger
+                  id={`model-${kind}`}
+                  className="w-full sm:max-w-md"
+                >
                   <SelectValue placeholder="Choisir un modèle" />
                 </SelectTrigger>
                 <SelectContent>
@@ -494,7 +500,7 @@ export function SuperAdminPromptsEditor({
         </DialogContent>
       </Dialog>
 
-      {/* Diff view — side by side with line numbers */}
+      {/* Diff view, side by side with line numbers */}
       {diffRows && diffVersion && (
         <Card className="border-primary/15 shadow-sm ring-1 ring-primary/10">
           <CardHeader className="pb-3">

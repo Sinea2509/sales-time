@@ -98,7 +98,7 @@ export function AdminAiLogsTable({ rows }: { rows: AdminAiLogRow[] }) {
       <Dialog open={selected != null} onOpenChange={() => setSelected(null)}>
         <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Appel IA — {selected?.kind}</DialogTitle>
+            <DialogTitle>Appel IA · {selected?.kind}</DialogTitle>
           </DialogHeader>
           {selected ? (
             <div className="space-y-4 text-sm">
@@ -148,7 +148,9 @@ export function AdminAiLogsTable({ rows }: { rows: AdminAiLogRow[] }) {
                 </pre>
               </div>
               {selected.errorMessage ? (
-                <p className="text-destructive text-xs">{selected.errorMessage}</p>
+                <p className="text-destructive text-xs">
+                  {selected.errorMessage}
+                </p>
               ) : null}
             </div>
           ) : null}

@@ -54,7 +54,7 @@ export function ContactRowActions({ contact }: { contact: ContactSummaryRow }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          aria-label={`Actions — ${contact.displayName}`}
+          aria-label={`Actions sur ${contact.displayName}`}
           disabled={pending}
           className={cn(
             buttonVariants({ variant: "ghost", size: "icon-sm" }),

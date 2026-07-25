@@ -74,7 +74,7 @@ function OnboardingStepRail({ step }: { step: number }) {
               <div className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1.5 sm:w-20">
                 <span
                   aria-current={isCurrent ? "step" : undefined}
-                  aria-label={`Étape ${s.id} — ${s.label}`}
+                  aria-label={`Étape ${s.id} : ${s.label}`}
                   className={cn(
                     "flex size-10 items-center justify-center rounded-lg text-sm font-semibold tabular-nums transition-colors",
                     isDoneOrCurrent &&
@@ -606,7 +606,7 @@ export function OnboardingWizard({ initial }: Props) {
             kind="OBJECTION"
             open={objectionPickerOpen}
             onOpenChange={setObjectionPickerOpen}
-            title="Objections — collection partagée"
+            title="Objections · collection partagée"
             description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
             alreadyChosen={objections}
             onAddToList={(texts) =>
@@ -617,7 +617,7 @@ export function OnboardingWizard({ initial }: Props) {
             kind="ARGUMENT"
             open={argumentPickerOpen}
             onOpenChange={setArgumentPickerOpen}
-            title="Arguments — collection partagée"
+            title="Arguments · collection partagée"
             description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
             alreadyChosen={keyArguments}
             onAddToList={(texts) =>

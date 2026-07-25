@@ -21,7 +21,7 @@ export function LandingHowSection() {
               Comment <em className="text-brand-muted">ça marche</em>
             </>
           }
-          description="Trois étapes, zéro friction — de la fin du RDV à la fiche structurée."
+          description="Trois étapes, zéro friction : de la fin du RDV à la fiche structurée."
           className="[&_h2]:text-white [&_p]:max-w-[440px] [&_p]:text-white/38"
         />
 

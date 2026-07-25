@@ -21,7 +21,7 @@ export type MeetingDetailSynthesisContent = {
 };
 
 const PROCESSING_REPORT_MESSAGE =
-  "Compte-rendu en cours de génération — disponible à la fin de l'analyse automatique.";
+  "Compte-rendu en cours de génération, disponible à la fin de l'analyse automatique.";
 
 const PENDING_REPORT_MESSAGE =
   "L'analyse automatique (SONCAS, DISC, KISS) démarrera dès que le rendez-vous sera enregistré.";

@@ -38,7 +38,7 @@
   },
   "superAdminPage": {
     "title": "Super admin",
-    "orgListTitle": "Super admin — organizations",
+    "orgListTitle": "Super admin · organizations",
     "accessDeniedTitle": "Super admin",
     "accessDeniedBody": "You do not have access to this area, or your user is not synced to the application database yet.",
     "promptsLink": "SONCAS / DISC prompts",
@@ -50,7 +50,7 @@
     "backToOrgs": "← Organizations"
   },
   "superAdminOrgList": {
-    "title": "Super admin — organizations",
+    "title": "Super admin · organizations",
     "description": "Entering an organization records an audit log. Choose Manager or Commercial role before entering.",
     "reasonLabel": "Reason (optional)",
     "reasonPlaceholder": "Ticket / incident reference",
