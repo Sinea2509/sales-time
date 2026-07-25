@@ -32,7 +32,7 @@ export function ProspectIdentityCell({
           <p className={nameClassName}>{displayName}</p>
         )}
         {company?.trim() ? (
-          <p className="text-muted-foreground truncate text-xs dark:text-zinc-500">
+          <p className="text-muted-foreground truncate text-xs dark:text-zinc-400">
             {company.trim()}
           </p>
         ) : null}

@@ -25,7 +25,7 @@ export function TableEmptyRow({
       <td
         colSpan={colSpan}
         className={cn(
-          "px-4 text-center text-sm text-zinc-400 dark:text-zinc-500",
+          "px-4 text-center text-sm text-zinc-500 dark:text-zinc-400",
           sizeClasses[size],
         )}
       >

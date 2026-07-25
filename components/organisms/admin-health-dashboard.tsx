@@ -280,7 +280,7 @@ export function AdminHealthDashboard({
       </Card>
 
       {/* Timestamp */}
-      <p className="text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
         <Clock className="mr-1 inline size-3" />
         Dernière vérification :{" "}
         {now.toLocaleString("fr-FR", {

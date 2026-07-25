@@ -4,6 +4,11 @@ import {
 } from "@/src/core/domain/org-profile-distribution-pie";
 import { averageTamMinutes } from "@/src/core/domain/dashboard-tam-tuc";
 import { noteGlobaleOn5FromSalesScores } from "@/src/core/domain/note-globale-on5";
+import {
+  rankTeamMembers,
+  type MemberRanking,
+  type TeamRankingSummary,
+} from "@/src/core/domain/team-ranking";
 import { soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { kissCoachingBulletsFromMeetings } from "@/src/core/domain/kiss-coaching-bullets-from-meetings";
@@ -46,15 +51,25 @@ export type OrgAdminMonEquipeRow = {
   tamMinutesAvg: number | null;
   /** Note globale moyenne sur 5 (SalesScore SONCAS converti). */
   noteGlobaleOn5: number | null;
+  /** Nombre de RDV porteurs d'un SalesScore : le dénominateur de la note. */
+  scoredMeetings: number;
   /** Levier SONCAS dominant le plus fréquent sur les RDV analysés (SONCAS) du membre. */
   postureLabel: string | null;
 };
+
+/** Ligne d'équipe enrichie de son rang, de son palier et de son écart à la moyenne. */
+export type OrgAdminMonEquipeRankedRow = OrgAdminMonEquipeRow & MemberRanking;
 
 export type OrgAdminMonEquipePage = {
   page: number;
   pageSize: number;
   totalCount: number;
-  rows: OrgAdminMonEquipeRow[];
+  rows: OrgAdminMonEquipeRankedRow[];
+  /**
+   * Classement calculé sur l'équipe entière, jamais sur la page seule : sinon le
+   * premier de la deuxième page s'afficherait premier.
+   */
+  ranking: TeamRankingSummary;
 };
 
 export type OrgAdminPieSlice = {
@@ -106,9 +121,7 @@ const DRIVER_LABEL_FR: Record<keyof SoncasDriverAverages, string> = {
   sympathie: "Sympathie",
 };
 
-function aggregateSellerWindowStats(
-  meetings: RecentMeetingListRow[],
-): Map<
+function aggregateSellerWindowStats(meetings: RecentMeetingListRow[]): Map<
   string,
   {
     nbRdvs: number;
@@ -202,6 +215,7 @@ export function buildMonEquipePage(input: {
       coachesCount: s.coachesCount,
       tamMinutesAvg,
       noteGlobaleOn5: noteGlobaleOn5FromSalesScores(s.salesScores),
+      scoredMeetings: s.salesScores.length,
       postureLabel: modeSoncasDominantLabel(s.soncasDominants),
     };
   });
@@ -225,14 +239,29 @@ export function buildMonEquipePage(input: {
     Math.ceil(totalCount / ORG_ADMIN_MON_EQUIPE_PAGE_SIZE),
   );
   const page = Math.min(lastPage, Math.max(1, input.page));
+  // Le classement porte sur l'équipe entière et se calcule avant le découpage
+  // en pages : un rang relatif à une page serait faux dès la deuxième.
+  const classement = rankTeamMembers(rowsFull);
+
   const start = (page - 1) * ORG_ADMIN_MON_EQUIPE_PAGE_SIZE;
-  const rows = rowsFull.slice(start, start + ORG_ADMIN_MON_EQUIPE_PAGE_SIZE);
+  const rows = classement.rows.slice(
+    start,
+    start + ORG_ADMIN_MON_EQUIPE_PAGE_SIZE,
+  );
 
   return {
     page,
     pageSize: ORG_ADMIN_MON_EQUIPE_PAGE_SIZE,
     totalCount,
     rows,
+    ranking: {
+      rankedCount: classement.rankedCount,
+      unrankedCount: classement.unrankedCount,
+      unrankedNoScoreCount: classement.unrankedNoScoreCount,
+      unrankedLowVolumeCount: classement.unrankedLowVolumeCount,
+      averageNoteOn5: classement.averageNoteOn5,
+      minScoredMeetings: classement.minScoredMeetings,
+    },
   };
 }
 
@@ -450,8 +479,9 @@ export async function getOrgAdminDashboard(
     ? teamList.members.filter((m) => teamIds.has(m.userId))
     : teamList.members;
 
-  const activeCommercialsCount = new Set(scopedMeetings.map((m) => m.sellerUserId))
-    .size;
+  const activeCommercialsCount = new Set(
+    scopedMeetings.map((m) => m.sellerUserId),
+  ).size;
   const scoreVals = scopedMeetings
     .map((m) => m.salesScore)
     .filter((s): s is number => s != null);

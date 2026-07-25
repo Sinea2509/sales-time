@@ -15,6 +15,7 @@ import {
 import { sectionHeadingClass } from "@/lib/page-typography";
 import { salesScoreColorClass } from "@/lib/sales-score-color";
 import { cn } from "@/lib/utils";
+import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 
@@ -30,8 +31,13 @@ const euroFormat = new Intl.NumberFormat("fr-FR", {
   maximumFractionDigits: 0,
 });
 
+/**
+ * Écrit un potentiel en euros, ou « n. c. » quand il n'est pas renseigné.
+ * Un tiret seul dans une colonne de montants se lit comme un zéro, ou comme un
+ * signe moins tronqué : il faut dire que la donnée manque, pas la maquiller.
+ */
 function formatPotentialEuro(amount: number | null): string {
-  if (amount == null) return "—";
+  if (amount == null) return VALEUR_NON_CALCULABLE;
   return euroFormat.format(amount);
 }
 
@@ -84,32 +90,36 @@ export function DashboardHomeShell({
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
-                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
+                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-400">
                     Prospect
                   </DataTableHead>
-                  <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-500">
+                  <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-400">
                     Potentiel
                   </DataTableHead>
-                  <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-500">
+                  <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-400">
                     TAM
                   </DataTableHead>
-                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
+                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-400">
                     Date du RDV
                   </DataTableHead>
-                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-500">
+                  <DataTableHead className="px-4 py-3.5 dark:text-zinc-400">
                     Étape
                   </DataTableHead>
-                  <DataTableHead className="hidden px-4 py-3.5 md:table-cell dark:text-zinc-500">
+                  <DataTableHead className="hidden px-4 py-3.5 md:table-cell dark:text-zinc-400">
                     SalesScore
                   </DataTableHead>
-                  <DataTableHead className="w-20 px-4 py-3.5 text-right dark:text-zinc-500">
+                  <DataTableHead className="w-20 px-4 py-3.5 text-right dark:text-zinc-400">
                     Actions
                   </DataTableHead>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {home.recentMeetings.length === 0 ? (
-                  <TableEmptyRow colSpan={7} message="Aucun rendez-vous." size="large" />
+                  <TableEmptyRow
+                    colSpan={7}
+                    message="Aucun rendez-vous."
+                    size="large"
+                  />
                 ) : (
                   home.recentMeetings.map((m) => (
                     <tr
@@ -158,8 +168,11 @@ export function DashboardHomeShell({
                             {m.salesScore}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground dark:text-zinc-500">
-                            —
+                          <span
+                            className="text-muted-foreground dark:text-zinc-400"
+                            title="Non calculable : ce rendez-vous n'a pas encore d'analyse SONCAS."
+                          >
+                            {VALEUR_NON_CALCULABLE}
                           </span>
                         )}
                       </td>

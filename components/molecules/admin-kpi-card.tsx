@@ -1,8 +1,5 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
-import {
-  statAccentStyles,
-  type StatAccent,
-} from "@/lib/stat-accent-styles";
+import { statAccentStyles, type StatAccent } from "@/lib/stat-accent-styles";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -63,7 +60,7 @@ export function AdminKpiCard({
         </p>
       </div>
       {footer && (
-        <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+        <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">
           {footer}
         </p>
       )}
