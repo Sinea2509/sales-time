@@ -46,6 +46,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-brand-hover: var(--brand-hover);
   --color-brand-muted: var(--brand-muted);
   --color-brand-soft: var(--brand-soft);
@@ -73,6 +74,15 @@
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
   --brand: #6c4dff;
+  /*
+    Encre posée sur un aplat de marque, exactement comme --primary-foreground
+    se pose sur --primary. Elle manquait, et les 44 endroits qui remplissent en
+    marque écrivaient donc « text-white » en dur. En thème clair cela tombait
+    juste ; en thème sombre --brand s'éclaircit pour rester lisible en texte,
+    et du blanc dessus ne tenait plus que 3,27:1 (mesuré au navigateur sur le
+    bouton « Choisir ce plan »), là où 4,5:1 est le minimum.
+  */
+  --brand-foreground: oklch(0.985 0 0);
   --brand-hover: #5a3fd9;
   --brand-muted: #c4b5fd;
   --brand-soft: color-mix(in srgb, var(--brand) 12%, transparent);
@@ -123,6 +133,9 @@
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --brand: #8b7cff;
+  /* L'aplat s'éclaircit ici, donc l'encre s'assombrit : même bascule que
+     --primary-foreground juste au-dessus. Sur #8b7cff, elle tient 5,49:1. */
+  --brand-foreground: oklch(0.205 0 0);
   --brand-hover: #a294ff;
   --brand-muted: #c4b5fd;
   --brand-soft: color-mix(in srgb, var(--brand) 18%, transparent);
