@@ -16,6 +16,7 @@
   ],
   "ignoreRegExpList": ["/data:image\\\\\\+svg[^\"']+/gi"],
   "words": [
+    "affichee",
     "arg",
     "assertivite",
     "autoincrement",
@@ -79,7 +80,9 @@
     "pooler",
     "posthog",
     "prefs",
+    "préc",
     "prisma",
+    "proratisé",
     "qzrmn",
     "rankable",
     "rdv",

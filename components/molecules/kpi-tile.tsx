@@ -5,10 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  statAccentStyles,
-  type StatAccent,
-} from "@/lib/stat-accent-styles";
+import { statAccentStyles, type StatAccent } from "@/lib/stat-accent-styles";
 import { cn } from "@/lib/utils";
 
 export type KpiTileProps = {
@@ -70,7 +67,7 @@ export function KpiTile({
               <TooltipTrigger
                 type="button"
                 className="text-muted-foreground hover:text-foreground inline-flex shrink-0 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-ring"
-                aria-label={`${label} — définition`}
+                aria-label={`Définition : ${label}`}
               >
                 <Info className="size-3.5" aria-hidden />
               </TooltipTrigger>

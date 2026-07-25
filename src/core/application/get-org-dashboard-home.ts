@@ -21,20 +21,29 @@ import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organi
 
 export type OrgDashboardHome = {
   statsWindowDays: StatsWindowDays;
-  /** Gain estimé par RDV (minutes) — paramètres org (CR, CRM, e-mail, résiduel). */
+  /**
+   * TAM par RDV (minutes) : temps administratif économisé sur un rendez-vous,
+   * d'après les paramètres de l'organisation (CR + CRM + e-mail − résiduel).
+   */
   tamMinutesPerRdv: number;
-  /** TAM — temps d'appel moyen (min) sur les RDV connectés (durée renseignée). */
+  /** Temps d'appel moyen (min) sur les RDV connectés (durée renseignée). */
   avgDurationMin: number | null;
   /** Somme des durées de conversation utile (RDV connectés) sur la fenêtre. */
   usefulConversationMinutes: number;
-  /** TAM cumulé — même valeur que usefulConversationMinutes (libellé Performance). */
+  /** Temps de prospection de référence sur la fenêtre (objectif org proratisé). */
+  prospectingMinutes: number;
+  /**
+   * TAM cumulé (minutes) : le gain par RDV multiplié par le nombre de RDV
+   * renseignés sur la fenêtre. C'est bien du temps administratif économisé, et
+   * non du temps de conversation, que ce champ porte.
+   */
   tamCumuleMinutes: number;
   /** RDV avec durée renseignée (> 0 min) sur la fenêtre. */
   nbRdvsRenseignes: number;
   nbRdvs: number;
   /** TUC optimisé = conversation utile / temps de prospection (objectif org proratisé). */
   tucOptimisePercent: number | null;
-  /** Variation TAM vs fenêtre précédente (%). */
+  /** Variation du temps d'appel moyen vs fenêtre précédente (%). */
   tamTrendPercent: number | null;
   /** Variation TAM cumulé vs fenêtre précédente (%). */
   tamCumuleTrendPercent: number | null;
@@ -48,7 +57,7 @@ export type OrgDashboardHome = {
   noteGlobaleTrendPoints: number | null;
   /** Variation % de la note globale vs période précédente. */
   noteGlobaleTrendPercent: number | null;
-  /** RDV avec SalesScore (SONCAS) sur la fenêtre — pour gating tendance note globale. */
+  /** RDV avec SalesScore (SONCAS) sur la fenêtre, base du gating de la tendance de note globale. */
   noteGlobaleSampleCount: number;
   recentMeetings: RecentMeetingListRow[];
 };
@@ -147,7 +156,8 @@ export async function getOrgDashboardHome(
   const currentDurations = kpiMeetingsCurrent.map((m) => m.durationMin);
   const prevDurations = kpiMeetingsPrev.map((m) => m.durationMin);
 
-  const usefulConversationMinutes = sumUsefulConversationMinutes(currentDurations);
+  const usefulConversationMinutes =
+    sumUsefulConversationMinutes(currentDurations);
   const usefulConversationPrev = sumUsefulConversationMinutes(prevDurations);
   const nbRdvsRenseignes = countConnectedMeetings(currentDurations);
   const nbRdvsRenseignesPrev = countConnectedMeetings(prevDurations);
@@ -182,9 +192,21 @@ export async function getOrgDashboardHome(
     nbRdvsRenseignes,
     nbRdvsRenseignesPrev,
   );
+  // Le TAM cumulé, c'est le gain administratif par RDV répété sur les RDV
+  // renseignés de la fenêtre. Il portait jusqu'ici la somme des durées de
+  // conversation, c'est-à-dire l'exact contraire de ce que son libellé promet :
+  // le temps passé à parler, présenté comme du temps économisé. Un prospect à
+  // qui l'on démontre le produit lisait donc « vous avez gagné 31 h » devant un
+  // nombre qui mesurait ses heures d'appel.
+  //
+  // Le gain par RDV est constant sur les deux fenêtres, si bien que la variation
+  // du cumul est celle du nombre de RDV renseignés. Elle est calculée
+  // explicitement plutôt que déduite, pour que la lecture ne dépende pas de ce
+  // rapprochement.
+  const tamCumuleMinutes = tamMinutesPerRdv * nbRdvsRenseignes;
   const tamCumuleTrendPercent = percentChangeVsPrevious(
-    usefulConversationMinutes,
-    usefulConversationPrev,
+    tamCumuleMinutes,
+    tamMinutesPerRdv * nbRdvsRenseignesPrev,
   );
   const tamTrendPercent =
     avgDurationMinResolved != null
@@ -216,7 +238,8 @@ export async function getOrgDashboardHome(
     tamMinutesPerRdv,
     avgDurationMin: avgDurationMinResolved,
     usefulConversationMinutes,
-    tamCumuleMinutes: usefulConversationMinutes,
+    prospectingMinutes,
+    tamCumuleMinutes,
     nbRdvsRenseignes,
     nbRdvs,
     tucOptimisePercent: tucOptimisePercentValue,

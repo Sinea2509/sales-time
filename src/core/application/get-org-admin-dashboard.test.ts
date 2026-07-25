@@ -16,7 +16,10 @@ function baseHome(over: Partial<OrgDashboardHome> = {}): OrgDashboardHome {
     tamMinutesPerRdv: 50,
     avgDurationMin: 12,
     usefulConversationMinutes: 120,
-    tamCumuleMinutes: 120,
+    prospectingMinutes: 240,
+    // 50 min de gain administratif sur 2 RDV renseignés : le jeu d'essai tient
+    // la même arithmétique que la production, sinon il enseigne un faux rapport.
+    tamCumuleMinutes: 100,
     nbRdvsRenseignes: 2,
     nbRdvs: 2,
     tucOptimisePercent: 50,
