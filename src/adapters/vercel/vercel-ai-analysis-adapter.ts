@@ -4,7 +4,7 @@ import {
   discAnalysisOutputSchema,
   soncasAnalysisOutputSchema,
 } from "@/src/core/domain/analysis-result-zod";
-import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
+import { kissGeneratedResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import { meetingDetailSynthesisSchema } from "@/src/core/domain/meeting-detail-synthesis-zod";
@@ -16,7 +16,10 @@ import type {
   SellerCommercialPerformanceSummary,
   SellerRelationalAffinitySummary,
 } from "@/src/core/ports/analysis-port";
-import { withDataScopeSystemPrompt } from "@/lib/ai-system-prompt";
+import {
+  withDataScopeSystemPrompt,
+  withKissSystemPrompt,
+} from "@/lib/ai-system-prompt";
 import {
   buildDelimitedMeetingUserContent,
   buildKissUserPrompt,
@@ -108,11 +111,15 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       priorSoncasResult: input.priorSoncasResult,
       priorDiscResult: input.priorDiscResult,
     });
-    const systemPrompt = withDataScopeSystemPrompt(input.systemMarkdown);
+    const systemPrompt = withKissSystemPrompt(input.systemMarkdown);
 
+    // Le schéma de génération, pas celui de lecture : le modèle doit fournir
+    // les six notes du commercial. Le schéma de lecture les accepte absentes,
+    // pour ne pas invalider l'historique, et cette tolérance n'a rien à faire
+    // ici où l'analyse est produite.
     const { object, usage } = await generateObject({
       model: input.model,
-      schema: kissResultSchema,
+      schema: kissGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
     });

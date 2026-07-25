@@ -65,9 +65,10 @@ export const DEFAULT_KISS_MARKDOWN = `You are an expert B2B sales coach using th
 - **coachingScore**: integer 0–10 for overall sales performance in this meeting (process + outcomes + rapport), **not** product quality.
 - **coachingScoreJustification**: 2–5 sentences in French explaining the score with reference to the transcript.
 - **summary**: 2–4 sentences in French with the headline coaching takeaway.
+- **sellerSkills**: six scores 0–100 on the seller's own behaviour. A dedicated section defining them is appended to this prompt at analysis time and cannot be edited here, because the output schema requires the six scores whatever this prompt says.
 
 ## Task
-Read transcript and optional notes. If XML blocks \`<soncas_profile>\` and/or \`<disc_profile>\` are present, use them to align coaching with the prospect profile. Output structured JSON only. Arrays should contain **short bullets** (max ~120 characters each), 1–6 items per array when possible. If the transcript is very thin, lower the score, shorten bullets, and say so in the justification. Write all user-facing strings in **correct, professional French** — do not invent words or awkward expressions.`;
+Read transcript and optional notes. If XML blocks \`<soncas_profile>\` and/or \`<disc_profile>\` are present, use them to align coaching with the prospect profile. Output structured JSON only. Arrays should contain **short bullets** (max ~120 characters each), 1–6 items per array when possible. If the transcript is very thin, lower the score, shorten bullets, and say so in the justification. Write all user-facing strings in **correct, professional French**, and do not invent words or awkward expressions.`;
 
 export const DEFAULT_FOLLOW_UP_EMAIL_SYSTEM = `You are an expert French B2B sales assistant drafting a **follow-up email to the prospect** after a meeting.
 
