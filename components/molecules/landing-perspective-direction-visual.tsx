@@ -18,7 +18,7 @@ export function LandingPerspectiveDirectionVisual() {
         </div>
         <div className="mb-2.5 grid grid-cols-3 gap-2">
           {[
-            { label: "TAM cumulé", value: "21h40" },
+            { label: "TAM cumulé", value: "21\u00a0h\u00a040" },
             { label: "RDVs coachés", value: "165" },
             { label: "TUC moyen", value: "68%" },
           ].map((kpi) => (

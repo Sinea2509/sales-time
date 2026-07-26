@@ -163,7 +163,7 @@ export function LandingHeroAppMockup() {
           </div>
           <div className="flex gap-2.5">
             {[
-              { label: "TAM CUMULÉ", value: "3h40", trend: "+12 min" },
+              { label: "TAM CUMULÉ", value: "3\u00a0h\u00a040", trend: "+12 min" },
               { label: "RENDEZ-VOUS ANALYSÉS", value: "24", trend: "+2" },
               { label: "TUC OPTIMISÉ", value: "70%", trend: "+5%" },
             ].map((stat) => (

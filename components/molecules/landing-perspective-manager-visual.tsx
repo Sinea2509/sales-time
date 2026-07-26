@@ -50,7 +50,7 @@ export function LandingPerspectiveManagerVisual() {
         <div className="mb-3 grid grid-cols-2 gap-2">
           <div className="rounded-[7px] border border-zinc-200 bg-white p-2.5">
             <p className="text-[9.5px] text-zinc-500">TAM cumulé</p>
-            <p className="text-base font-bold tracking-tight text-zinc-950">21h40</p>
+            <p className="text-base font-bold tracking-tight text-zinc-950">{"21\u00a0h\u00a040"}</p>
           </div>
           <div className="rounded-[7px] border border-zinc-200 bg-white p-2.5">
             <p className="text-[9.5px] text-zinc-500">RDVs analysés</p>
