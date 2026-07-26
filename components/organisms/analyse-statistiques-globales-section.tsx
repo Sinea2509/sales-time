@@ -27,6 +27,7 @@ export function AnalyseStatistiquesGlobalesSection({
   priorityOpportunities,
   rdvSurLaPeriode,
   isTeamView = false,
+  etapeOrder,
   statsWindowDays,
   disabledStatsDays = [],
 }: {
@@ -43,6 +44,8 @@ export function AnalyseStatistiquesGlobalesSection({
   rdvSurLaPeriode: number;
   /** Vue manager : couleur par commercial et sélecteur de période sur la matrice. */
   isTeamView?: boolean;
+  /** Le vocabulaire d'étapes de l'organisation, qui range les filtres de la matrice. */
+  etapeOrder?: readonly string[];
   statsWindowDays?: StatsWindowDays;
   disabledStatsDays?: StatsWindowDays[];
 }) {
@@ -76,6 +79,7 @@ export function AnalyseStatistiquesGlobalesSection({
             points={qualificationPotentialPoints}
             height={CHART_HEIGHT}
             legendMode={isTeamView ? "seller" : "etape"}
+            etapeOrder={etapeOrder}
           />
         </CardContent>
       </Card>

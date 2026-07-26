@@ -104,6 +104,8 @@ export type TeamMemberPerformanceShellProps = {
   kissSellerStrengthsNarrative: string | null;
   kissSellerRollup: OrgAdminKissTeamRollup;
   qualificationPotentialPoints: QualificationPotentialMatrixPoint[];
+  /** Le vocabulaire d'étapes de l'organisation, qui range les filtres de la matrice. */
+  etapeOrder?: readonly string[];
   priorityOpportunities: AnalysePriorityOpportunityRow[];
   salesProfile: SalesProfileScores | null;
   previousSalesProfile: SalesProfileScores | null;
@@ -149,6 +151,7 @@ export function TeamMemberPerformanceShell({
   kissSellerStrengthsNarrative,
   kissSellerRollup,
   qualificationPotentialPoints,
+  etapeOrder,
   priorityOpportunities,
   salesProfile,
   previousSalesProfile,
@@ -316,6 +319,7 @@ export function TeamMemberPerformanceShell({
             qualificationPotentialPoints={qualificationPotentialPoints}
             priorityOpportunities={priorityOpportunities}
             rdvSurLaPeriode={rdvSurLaPeriode}
+            etapeOrder={etapeOrder}
             statsWindowDays={statsWindowDays}
           />
         </div>

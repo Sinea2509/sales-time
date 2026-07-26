@@ -20,6 +20,8 @@ import {
   previousMeetingAtWindowStart,
 } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
+import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
 import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
@@ -74,25 +76,39 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
 
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
-  const [home, meetingsForWindow, globalKissJson] = await Promise.all([
-    getOrgDashboardHome(deps, {
-      organizationId: actor.activeOrganizationId,
-      statsWindowDays,
-      sellerUserId: sellerScope,
-    }),
-    deps.meetings.listRecentMeetingsForDashboard({
-      organizationId: actor.activeOrganizationId,
-      limit: isOrgAdmin ? ORG_ADMIN_DASHBOARD_MEETING_CAP : 200,
-      meetingAtSince: sincePreviousWindow,
-      includeLatestSoncasResult: true,
-      includeLatestDiscResult: true,
-      includeLatestKissResult: true,
-      sellerUserId: sellerScope,
-    }),
-    aiEnabled
-      ? deps.globalKissCoachingPrompts.getPrompts()
-      : Promise.resolve(null),
-  ]);
+  const [home, meetingsForWindow, globalKissJson, orgSettings] =
+    await Promise.all([
+      getOrgDashboardHome(deps, {
+        organizationId: actor.activeOrganizationId,
+        statsWindowDays,
+        sellerUserId: sellerScope,
+      }),
+      deps.meetings.listRecentMeetingsForDashboard({
+        organizationId: actor.activeOrganizationId,
+        limit: isOrgAdmin ? ORG_ADMIN_DASHBOARD_MEETING_CAP : 200,
+        meetingAtSince: sincePreviousWindow,
+        includeLatestSoncasResult: true,
+        includeLatestDiscResult: true,
+        includeLatestKissResult: true,
+        sellerUserId: sellerScope,
+      }),
+      aiEnabled
+        ? deps.globalKissCoachingPrompts.getPrompts()
+        : Promise.resolve(null),
+      deps.organizationSettings.findByOrganizationId(
+        actor.activeOrganizationId,
+      ),
+    ]);
+
+  /*
+    L'ordre dans lequel l'organisation a écrit ses étapes, pour ranger la
+    rangée de filtres sous la matrice. Il part des réglages de l'organisation
+    et non d'une liste figée : une équipe qui a renommé ses étapes les
+    retrouve dans son ordre, pas rejetées en fin de rangée.
+  */
+  const etapeOrder = etapeVocabularyFromOptions(
+    orgMeetingFormOptionsFromSettings(orgSettings),
+  );
 
   const { currentWindow: meetings, previousWindow: previousMeetings } =
     partitionMeetingsByStatsWindow(meetingsForWindow, statsWindowDays);
@@ -171,6 +187,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
           priorityOpportunities={priorityOpportunities}
           rdvSurLaPeriode={meetings.length}
           isTeamView={isOrgAdmin}
+          etapeOrder={etapeOrder}
           statsWindowDays={home.statsWindowDays}
           disabledStatsDays={disabledStatsDays}
         />

@@ -11,6 +11,8 @@ import {
   postureLabelFromMeetings,
 } from "@/lib/team-member-performance-helpers";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
+import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
 import { getTeamMemberPerformanceProfile } from "@/src/core/application/get-team-member-performance-profile";
 import { getCachedSellerRelationalAffinity } from "@/src/core/application/get-cached-seller-relational-affinity";
@@ -73,7 +75,7 @@ export default async function ManagerCommercialViewPage({
   const orgId = actor.activeOrganizationId;
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
 
-  const [member, home, globalKissJson] = await Promise.all([
+  const [member, home, globalKissJson, orgSettings] = await Promise.all([
     deps.organizationTeam.findMembershipForManagerView(orgId, userId),
     getOrgDashboardHome(
       {
@@ -87,6 +89,7 @@ export default async function ManagerCommercialViewPage({
       },
     ),
     deps.globalKissCoachingPrompts.getPrompts(),
+    deps.organizationSettings.findByOrganizationId(orgId),
   ]);
 
   if (!member) notFound();
@@ -134,6 +137,15 @@ export default async function ManagerCommercialViewPage({
 
   const qualificationPotentialPoints =
     buildQualificationPotentialMatrixPoints(meetings);
+  /*
+    L'ordre dans lequel l'organisation a écrit ses étapes, pour ranger la
+    rangée de filtres sous la matrice. Il part des réglages de l'organisation
+    et non d'une liste figée : une équipe qui a renommé ses étapes les
+    retrouve dans son ordre, pas rejetées en fin de rangée.
+  */
+  const etapeOrder = etapeVocabularyFromOptions(
+    orgMeetingFormOptionsFromSettings(orgSettings),
+  );
   const teamSalesProfile = aggregateTeamSalesProfileFromMeetings(meetings);
   const previousSalesProfile =
     aggregateTeamSalesProfileFromMeetings(previousMeetings);
@@ -245,6 +257,7 @@ export default async function ManagerCommercialViewPage({
       kissSellerStrengthsNarrative={kissSellerStrengthsNarrative}
       kissSellerRollup={kissSellerRollup}
       qualificationPotentialPoints={qualificationPotentialPoints}
+      etapeOrder={etapeOrder}
       priorityOpportunities={priorityOpportunities}
       salesProfile={teamSalesProfile.scores}
       previousSalesProfile={previousSalesProfile.scores}

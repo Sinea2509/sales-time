@@ -10,6 +10,14 @@ import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 
 export type QualificationMatrixScatterTooltipMeta = {
   contactName: string;
+  /**
+   * L'étape du rendez-vous, écrite en toutes lettres.
+   *
+   * Elle ne se déduit plus de la couleur du point : tous les points d'une même
+   * personne partagent désormais une seule teinte. L'info-bulle est donc le
+   * seul endroit où l'étape d'un point précis se lit.
+   */
+  etape: string;
   potentialAmount: number | null;
   salesScore: number | null;
   sellerDisplayName?: string;
@@ -49,6 +57,12 @@ function QualificationMatrixTooltipContent() {
       <p className="text-foreground text-sm font-semibold leading-snug">
         {meta.contactName}
       </p>
+      {meta.etape ? (
+        <p>
+          <span className="text-muted-foreground">Étape : </span>
+          <span className="font-medium">{meta.etape}</span>
+        </p>
+      ) : null}
       {meta.sellerDisplayName ? (
         <p>
           <span className="text-muted-foreground">Commercial : </span>
