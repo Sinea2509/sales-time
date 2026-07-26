@@ -220,8 +220,8 @@ describe("buildMonEquipePage", () => {
       page: 1,
     });
 
-    // Les lignes sont triées par volume : on les retrouve par identifiant, pas
-    // par position, sinon le test décrirait le tri et non la règle testée.
+    // On retrouve les lignes par identifiant, pas par position : ce test porte
+    // sur le seuil de volume, pas sur l'ordre d'affichage.
     const u1 = ligne(page, "u1");
     const u2 = ligne(page, "u2");
     expect(u1?.noteGlobaleOn5).toBe(5);
@@ -233,9 +233,9 @@ describe("buildMonEquipePage", () => {
   });
 
   it("classe sur l'équipe entière avant de découper en pages", () => {
-    // Le meilleur vendeur est en fin de liste, donc en page 2. Si le classement
-    // était calculé après le découpage, il serait premier de sa page et la
-    // page 1 sacrerait quelqu'un qui ne l'est pas.
+    // Le meilleur vendeur est en fin de liste reçue. Si le classement était
+    // calculé après le découpage, la page 2 recommencerait à 1 et sacrerait
+    // quelqu'un que l'équipe entière place onzième.
     const members = Array.from({ length: 12 }, (_, i) =>
       membre(`u${String(i + 1).padStart(2, "0")}`),
     );
@@ -250,11 +250,60 @@ describe("buildMonEquipePage", () => {
 
     expect(page1.rows).toHaveLength(10);
     expect(page2.rows).toHaveLength(2);
-    expect(ligne(page2, "u12")?.rank).toBe(1);
-    expect(ligne(page1, "u01")?.rank).toBe(12);
-    // Aucune page ne contient deux fois le même rang, ni un rang inventé.
-    expect(Math.min(...page1.rows.map((r) => r.rank ?? 99))).toBe(3);
+    expect(page2.rows.map((r) => r.rank)).toEqual([11, 12]);
+    expect(ligne(page1, "u12")?.rank).toBe(1);
+    expect(ligne(page2, "u01")?.rank).toBe(12);
     expect(page2.ranking.rankedCount).toBe(12);
+  });
+
+  it("range les lignes dans l'ordre du classement, hors classement en fin", () => {
+    // La première colonne du tableau s'appelle « Rang » : la liste doit la
+    // suivre, sinon la colonne décrit un classement que l'œil ne lit pas.
+    // Les identifiants portent la lettre qui les trierait autrement : le membre
+    // sans note ouvre l'alphabet et tient le plus gros volume. S'il passe
+    // devant celui qui n'attend que du volume, c'est que la raison du hors
+    // classement n'a pas été lue.
+    const members = [
+      membre("cFaible"), // classé, dernier
+      membre("aSansNote"), // aucun rendez-vous noté, mais 4 rendez-vous
+      membre("dFort"), // classé, premier
+      membre("zPeuDeVolume"), // noté une seule fois, sous le seuil
+      membre("bMoyen"), // classé, deuxième
+    ];
+    const meetings = [
+      ...Array.from({ length: 3 }, () => rdv("cFaible", { salesScore: 30 })),
+      ...Array.from({ length: 3 }, () => rdv("dFort", { salesScore: 95 })),
+      ...Array.from({ length: 3 }, () => rdv("bMoyen", { salesScore: 70 })),
+      rdv("zPeuDeVolume", { salesScore: 90 }),
+      ...Array.from({ length: 4 }, () => rdv("aSansNote")),
+    ];
+
+    const page = buildMonEquipePage({ members, meetings, page: 1 });
+
+    expect(page.rows.map((r) => r.userId)).toEqual([
+      "dFort",
+      "bMoyen",
+      "cFaible",
+      "zPeuDeVolume",
+      "aSansNote",
+    ]);
+    expect(page.rows.map((r) => r.rank)).toEqual([1, 2, 3, null, null]);
+  });
+
+  it("départage deux ex æquo par le volume de rendez-vous", () => {
+    // Même note affichée, donc même rang. Passe devant celui qui a le plus de
+    // matière derrière sa note. Les identifiants sont choisis pour que
+    // l'alphabet dise l'inverse du volume : un tri par nom seul échouerait ici.
+    const members = [membre("aPeu"), membre("zBeaucoup")];
+    const meetings = [
+      ...Array.from({ length: 3 }, () => rdv("aPeu", { salesScore: 80 })),
+      ...Array.from({ length: 6 }, () => rdv("zBeaucoup", { salesScore: 80 })),
+    ];
+
+    const page = buildMonEquipePage({ members, meetings, page: 1 });
+
+    expect(page.rows.map((r) => r.rank)).toEqual([1, 1]);
+    expect(page.rows.map((r) => r.userId)).toEqual(["zBeaucoup", "aPeu"]);
   });
 });
 

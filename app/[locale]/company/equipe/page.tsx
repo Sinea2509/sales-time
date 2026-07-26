@@ -100,10 +100,12 @@ export default async function MonEquipePage({ searchParams }: Props) {
           />
         </Suspense>
       </div>
+      {/* Le titre de la page dit déjà « Mon équipe » : la section ne le répète pas. */}
       <MonEquipeSection
         monEquipe={admin.monEquipe}
         statsWindowDays={statsWindowDays}
         currentUserEmail={actor.email}
+        showHeading={false}
       />
     </div>
   );

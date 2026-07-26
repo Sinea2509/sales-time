@@ -53,6 +53,13 @@ export function MonEquipeSection({
   currentUserEmail: string;
   /** Base path for pagination links (default: dedicated team page). */
   listBasePath?: string;
+  /**
+   * Titre porté par la section elle-même.
+   *
+   * Vrai quand la section vit au milieu d'autres sections et a besoin de se
+   * nommer. Faux quand la page porte déjà ce titre en tête : deux « Mon équipe »
+   * l'un sous l'autre, à deux tailles différentes, se lisent comme un doublon.
+   */
   showHeading?: boolean;
 }) {
   const lastPage = Math.max(
@@ -62,7 +69,18 @@ export function MonEquipeSection({
 
   return (
     <section className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/*
+        Sans titre, le bouton reste seul sur sa ligne : il se range à droite,
+        là où il se trouve déjà quand le titre l'accompagne, plutôt que de
+        sauter à gauche d'un écran à l'autre.
+      */}
+      <div
+        className={
+          showHeading
+            ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+            : "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
+        }
+      >
         {showHeading ? (
           <h2 className={sectionHeadingClass}>Mon équipe</h2>
         ) : null}

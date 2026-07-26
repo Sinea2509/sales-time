@@ -192,6 +192,19 @@ export type TeamMemberIdentity = {
   lastName: string | null;
 };
 
+/** Nom d'affichage replié pour le tri, avec l'adresse pour seul recours. */
+function cleDeNom(row: {
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+}): string {
+  return (
+    `${row.lastName ?? ""} ${row.firstName ?? ""}`
+      .trim()
+      .toLocaleLowerCase("fr") || row.email.toLocaleLowerCase("fr")
+  );
+}
+
 /**
  * L'équipe entière, classée, dans l'ordre d'affichage du tableau.
  *
@@ -233,25 +246,40 @@ export function buildRankedTeam(input: {
     };
   });
 
-  rowsFull.sort((a, b) => {
-    if (b.nbRdvs !== a.nbRdvs) return b.nbRdvs - a.nbRdvs;
-    const nameA =
-      `${a.lastName ?? ""} ${a.firstName ?? ""}`
-        .trim()
-        .toLocaleLowerCase("fr") || a.email.toLocaleLowerCase("fr");
-    const nameB =
-      `${b.lastName ?? ""} ${b.firstName ?? ""}`
-        .trim()
-        .toLocaleLowerCase("fr") || b.email.toLocaleLowerCase("fr");
-    return nameA.localeCompare(nameB, "fr");
-  });
-
   // Le classement porte sur l'équipe entière et se calcule avant tout découpage
   // en pages : un rang relatif à une page serait faux dès la deuxième.
   const classement = rankTeamMembers(rowsFull);
 
+  /*
+    L'ordre d'affichage est le classement lui-même.
+
+    La première colonne du tableau s'appelle « Rang ». Rangées par volume, ses
+    valeurs descendaient 3, 1, 2, 3, 5, et sur une équipe de plus de dix la
+    première page pouvait ne pas contenir le premier : la colonne annonçait un
+    classement que la liste ne suivait pas.
+
+    Les membres classés viennent donc par rang croissant. À rang égal passe
+    d'abord celui qui a le plus de rendez-vous : même note, plus de matière
+    derrière. Les membres hors classement ferment la liste, ceux qui ont déjà un
+    score avant ceux qui n'en ont aucun : les premiers n'attendent que du
+    volume, les seconds n'ont encore rien à coacher.
+  */
+  const rangDeSortie = (row: (typeof classement.rows)[number]): number => {
+    if (row.rank != null) return row.rank;
+    return row.unrankedReason === "volume-insuffisant"
+      ? Number.MAX_SAFE_INTEGER - 1
+      : Number.MAX_SAFE_INTEGER;
+  };
+  const parRang = [...classement.rows].sort((a, b) => {
+    const ra = rangDeSortie(a);
+    const rb = rangDeSortie(b);
+    if (ra !== rb) return ra - rb;
+    if (b.nbRdvs !== a.nbRdvs) return b.nbRdvs - a.nbRdvs;
+    return cleDeNom(a).localeCompare(cleDeNom(b), "fr");
+  });
+
   return {
-    rows: [...classement.rows],
+    rows: parRang,
     totalCount: rowsFull.length,
     ranking: {
       rankedCount: classement.rankedCount,
