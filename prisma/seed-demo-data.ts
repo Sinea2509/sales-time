@@ -411,7 +411,7 @@ function buildSoncasResult(
     drivers,
     dominant,
     summary:
-      "Analyse SONCAS générée par le seed — profil prospect cohérent pour les tableaux de bord.",
+      "Analyse SONCAS générée par le seed, profil prospect cohérent pour les tableaux de bord.",
   };
 }
 
@@ -443,7 +443,7 @@ function buildDiscResult(scores: DemoMeetingSpec["disc"]) {
     scores,
     dominant,
     evidence: ["Ton adapté au profil DISC observé pendant l’échange."],
-    summary: "Profil DISC seed — utile pour le radar et les matrices.",
+    summary: "Profil DISC seed, utile pour le radar et les matrices.",
   };
 }
 
@@ -454,7 +454,7 @@ function buildKissResult(score: number) {
       "Questions ouvertes pour faire parler le prospect.",
     ],
     improve: [
-      "Fournir des données concrètes dès le départ — certifications et ROI prêts.",
+      "Fournir des données concrètes dès le départ : certifications et ROI prêts.",
       "Structurer l’appel avec un ordre du jour clair pour chaque partie prenante.",
     ],
     stop: ["Enchaîner les arguments sans valider la compréhension."],
@@ -466,7 +466,7 @@ function buildKissResult(score: number) {
     coachingScore: score,
     coachingScoreJustification: "Score seed aligné sur la qualité perçue du rendez-vous.",
     summary:
-      "Synthèse KISS seed — alimente les cartes Progrès et Axes d’amélioration.",
+      "Synthèse KISS seed, alimente les cartes Progrès et Axes d’amélioration.",
   };
 }
 
@@ -613,7 +613,7 @@ export async function ensureDemoTenant(
   const shouldReset = process.env.SEED_DEMO_RESET === "1";
   if (existingMeetings > 0 && !shouldReset) {
     console.log(
-      `Demo org already has ${existingMeetings} meetings — skip (set SEED_DEMO_RESET=1 to reseed).`,
+      `Demo org already has ${existingMeetings} meetings; skip (set SEED_DEMO_RESET=1 to reseed).`,
     );
     printDemoCredentials(org, password);
     return;
@@ -674,7 +674,7 @@ export async function ensureDemoTenant(
         pipelineStage: spec.pipelineStage,
         potentialAmount: spec.potentialAmount,
         transcript:
-          `[seed] Transcript synthétique — RDV avec ${contact.displayName} (${contact.company}). ` +
+          `[seed] Transcript synthétique · RDV avec ${contact.displayName} (${contact.company}). ` +
           "Discussion sur les enjeux, le budget et les prochaines étapes.",
         notes: "[seed] Compte-rendu généré pour données de démo.",
         outcome: spec.outcome,

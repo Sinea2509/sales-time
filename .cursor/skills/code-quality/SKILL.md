@@ -1,7 +1,7 @@
 ---
 name: code-quality
 description: >-
-  Run before declaring feature/fix complete — verifies hexagonal boundaries,
+  Run before declaring feature/fix complete: verifies hexagonal boundaries,
   atomic design, IDOR, Zod, tests, KISS/DRY, and quality gates for sales-time.
 disable-model-invocation: false
 ---
@@ -14,7 +14,7 @@ Apply after substantive edits to `src/`, `lib/`, `app/`, or `components/`.
 
 | Layer | Rule |
 |-------|------|
-| `src/core/domain` | Pure — no Next, Prisma, React, adapters |
+| `src/core/domain` | Pure: no Next, Prisma, React, adapters |
 | `src/core/application` | Ports + domain only; deps injected |
 | `src/core/ports` | Interfaces only |
 | `src/adapters` | Implement ports |

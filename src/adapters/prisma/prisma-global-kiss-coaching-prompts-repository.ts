@@ -4,7 +4,7 @@ import type { GlobalKissCoachingPromptsRepositoryPort } from "@/src/core/ports/g
 
 const SINGLETON_ID = "default";
 
-/** Postgres undefined_table — table absente (migration non appliquée). */
+/** Postgres undefined_table : table absente (migration non appliquée). */
 function isMissingGlobalKissTableError(e: unknown): boolean {
   if (!(e instanceof Prisma.PrismaClientKnownRequestError)) return false;
   if (e.code !== "P2010") return false;

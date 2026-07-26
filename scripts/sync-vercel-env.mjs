@@ -111,14 +111,14 @@ const DEPLOY_HOOK_URL = process.env.VERCEL_DEPLOY_HOOK_URL?.trim();
 
 if (!VERCEL_TOKEN) {
   fail(
-    "VERCEL_TOKEN is required — set it in .env.production, export it, or run `vercel login`",
+    "VERCEL_TOKEN is required: set it in .env.production, export it, or run `vercel login`",
   );
 }
 if (!VERCEL_PROJECT_ID) {
-  fail("VERCEL_PROJECT_ID is required — run `vercel link` in this repo");
+  fail("VERCEL_PROJECT_ID is required: run `vercel link` in this repo");
 }
 if (!VERCEL_ORG_ID) {
-  fail("VERCEL_ORG_ID is required — run `vercel link` in this repo");
+  fail("VERCEL_ORG_ID is required: run `vercel link` in this repo");
 }
 
 /** @type {{ variables: Array<{ key: string; target: string[]; type: string; optional?: boolean }> }} */
@@ -162,7 +162,7 @@ async function upsertEnvVar(entry, value) {
 
 async function triggerDeploy() {
   if (!DEPLOY_HOOK_URL) {
-    console.log("VERCEL_DEPLOY_HOOK_URL unset — skip redeploy");
+    console.log("VERCEL_DEPLOY_HOOK_URL unset, skip redeploy");
     return;
   }
   if (DRY_RUN) {
@@ -180,7 +180,7 @@ async function triggerDeploy() {
 async function main() {
   if (!existsSync(envFile) && process.env.CI) {
     fail(
-      "GitHub Actions secrets are empty — add VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID, and app secrets (see docs/env-sync.md)",
+      "GitHub Actions secrets are empty: add VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID, and app secrets (see docs/env-sync.md)",
     );
   }
 
@@ -196,7 +196,7 @@ async function main() {
         continue;
       }
       fail(
-        `missing required value: ${entry.key} — set it in .env.production or GitHub Secrets`,
+        `missing required value: ${entry.key}; set it in .env.production or GitHub Secrets`,
       );
     }
 

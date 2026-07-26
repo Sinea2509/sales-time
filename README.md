@@ -29,10 +29,10 @@ Super admin is an **app database** role (`SystemRole.SUPER_ADMIN`). Passwords ar
 ### Vercel + Neon
 
 1. In Vercel, connect the [Neon](https://neon.tech) integration (or paste `DATABASE_URL` from the Neon console) into project **Environment Variables** for Production / Preview / Development as needed.
-2. For Prisma CLI (`migrate deploy`, seed, studio), the app needs a **direct** connection (host **without** `-pooler`): set **`DIRECT_URL`**, or rely on the Vercel Neon integration’s **`DATABASE_URL_UNPOOLED`** (see [`prisma.config.ts`](prisma.config.ts) resolution order). Keep **`DATABASE_URL`** **pooled** for runtime (`lib/prisma.ts`). Without a direct URL, `npm run build` can fail with **P1002** (advisory lock) or the explicit pooler guard error—[`prisma migrate deploy`](https://pris.ly/d/migrate-advisory-locking) must not use the pooler. See [Neon + Prisma](https://neon.com/docs/guides/prisma) and [Vercel Neon env vars](https://neon.com/docs/guides/vercel-managed-integration#environment-variables-set-by-the-integration).
+2. For Prisma CLI (`migrate deploy`, seed, studio), the app needs a **direct** connection (host **without** `-pooler`): set **`DIRECT_URL`**, or rely on the Vercel Neon integration’s **`DATABASE_URL_UNPOOLED`** (see [`prisma.config.ts`](prisma.config.ts) resolution order). Keep **`DATABASE_URL`** **pooled** for runtime (`lib/prisma.ts`). Without a direct URL, `npm run build` can fail with **P1002** (advisory lock) or the explicit pooler guard error: [`prisma migrate deploy`](https://pris.ly/d/migrate-advisory-locking) must not use the pooler. See [Neon + Prisma](https://neon.com/docs/guides/prisma) and [Vercel Neon env vars](https://neon.com/docs/guides/vercel-managed-integration#environment-variables-set-by-the-integration).
 3. Locally, copy the same variables into `.env` (or run `vercel env pull` if you use the Vercel CLI). [`.env.example`](.env.example) shows the split.
 4. In production, set **`SUPER_ADMIN_ORG_COOKIE_SECRET`** (long random string) so the super-admin organization elevation cookie can be signed.
-5. Migrations run automatically on Vercel (`npm run build` → `prisma migrate deploy`). For local/other hosts, run `npm run db:migrate` (deploy) or `npm run db:migrate:dev` (local). Requires **`DIRECT_URL`** (or `DATABASE_URL_UNPOOLED`) — see step 2 above.
+5. Migrations run automatically on Vercel (`npm run build` → `prisma migrate deploy`). For local/other hosts, run `npm run db:migrate` (deploy) or `npm run db:migrate:dev` (local). Requires **`DIRECT_URL`** (or `DATABASE_URL_UNPOOLED`), see step 2 above.
 
 ### Grant the first super admin
 
@@ -60,9 +60,9 @@ Run **`npm run lint`**, **`npm run typecheck`**, and **`npm test`**. If you chan
 
 ## Architecture
 
-- **Domain / application**: [`src/core`](src/core) — policies and use-cases. **Dependency rule:** no `next/*`, no `@/lib/prisma`, and no imports from `@/lib/generated/prisma` (use domain-owned types such as [`organization-membership-role.ts`](src/core/domain/organization-membership-role.ts) and map at adapters).
-- **Ports**: [`src/core/ports`](src/core/ports) — interfaces for auth, session persistence, users, audit, org directory, invitations, and other side effects.
-- **Adapters**: [`src/adapters`](src/adapters) — Prisma repositories, session + auth wiring, [`composition.ts`](src/adapters/composition.ts) (`makeApplicationDeps`), AI analysis adapter. **Runtime wiring:** Server Components and Server Actions use [`getApplicationDeps()`](lib/application-deps.ts) (React `cache`) for a single dependency graph per request.
+- **Domain / application**: [`src/core`](src/core): policies and use-cases. **Dependency rule:** no `next/*`, no `@/lib/prisma`, and no imports from `@/lib/generated/prisma` (use domain-owned types such as [`organization-membership-role.ts`](src/core/domain/organization-membership-role.ts) and map at adapters).
+- **Ports**: [`src/core/ports`](src/core/ports): interfaces for auth, session persistence, users, audit, org directory, invitations, and other side effects.
+- **Adapters**: [`src/adapters`](src/adapters): Prisma repositories, session + auth wiring, [`composition.ts`](src/adapters/composition.ts) (`makeApplicationDeps`), AI analysis adapter. **Runtime wiring:** Server Components and Server Actions use [`getApplicationDeps()`](lib/application-deps.ts) (React `cache`) for a single dependency graph per request.
 - **UI**: [`components/ui`](components/ui) (atoms), [`components/molecules`](components/molecules), [`components/organisms`](components/organisms), [`components/templates`](components/templates).
 
 **Migration note:** [`src/core`](src/core) is strict hexagonal; some routes under [`app/`](app/) still call Prisma directly while they are migrated behind ports. Prefer ports + use cases for new behavior.
@@ -71,9 +71,9 @@ Run **`npm run lint`**, **`npm run typecheck`**, and **`npm test`**. If you chan
 
 `resolveActorAuthorization` ([`src/core/domain/authorization-policy.ts`](src/core/domain/authorization-policy.ts)) computes:
 
-- **`activeOrganizationId`** — super-admin elevation cookie wins when present and valid; otherwise the session’s active organization must match a membership.
-- **`canManageOrganization`** — org `ADMIN` for the active tenant **or** elevated super admin for that tenant.
-- **`isElevatedSuperAdmin`** — super admin with an active elevation cookie targeting the active tenant.
+- **`activeOrganizationId`**: the super-admin elevation cookie wins when present and valid; otherwise the session’s active organization must match a membership.
+- **`canManageOrganization`**: org `ADMIN` for the active tenant **or** elevated super admin for that tenant.
+- **`isElevatedSuperAdmin`**: super admin with an active elevation cookie targeting the active tenant.
 
 Use **`activeOrganizationId`** for org-scoped queries and mutations.
 

@@ -6,7 +6,7 @@ const PAYLOAD_VERSION = 1 as const;
 
 type CookiePayload = {
   v: typeof PAYLOAD_VERSION;
-  /** Internal app user id — cookie is only valid for this actor. */
+  /** Internal app user id: the cookie is only valid for this actor. */
   uid: string;
   /** Internal organization id being operated in. */
   org: string;

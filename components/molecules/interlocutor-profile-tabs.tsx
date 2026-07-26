@@ -79,7 +79,7 @@ function ProfilePanel({
   );
 }
 
-/** DISC and SONCAS profiles shown together — both must be visible without tab switching. */
+/** DISC and SONCAS profiles shown together: both must be visible without tab switching. */
 export function InterlocutorProfileTabs({
   discBars,
   soncasBars,

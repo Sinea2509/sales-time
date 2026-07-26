@@ -1,6 +1,6 @@
 /**
  * Proprietary meeting metric (0–100), derived from the average of SONCAS driver scores.
- * Use only for `salesScore` / aggregated SalesScore KPIs — not for KISS coaching (0–10),
+ * Use only for `salesScore` / aggregated SalesScore KPIs, not for KISS coaching (0–10),
  * DISC/SONCAS profile percentages, or other framework-specific scores.
  */
 export const SALES_SCORE_LABEL = "SalesScore";

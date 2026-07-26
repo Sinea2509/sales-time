@@ -52,7 +52,7 @@ export const SONCAS_LABEL_FR: Record<(typeof SONCAS_KEYS)[number], string> = {
   sympathie: "Sympathie",
 };
 
-/** Remplissage barre — DISC : dominant rouge, influent jaune, stable vert, conforme bleu. */
+/** Remplissage barre DISC : dominant rouge, influent jaune, stable vert, conforme bleu. */
 export const DISC_BAR_CLASS: Record<(typeof DISC_KEYS)[number], string> = {
   D: "bg-red-600",
   I: "bg-amber-400",
@@ -60,7 +60,7 @@ export const DISC_BAR_CLASS: Record<(typeof DISC_KEYS)[number], string> = {
   C: "bg-blue-600",
 };
 
-/** Remplissage barre SONCAS — couleurs distinctes par levier. */
+/** Remplissage barre SONCAS : couleurs distinctes par levier. */
 export const SONCAS_BAR_CLASS: Record<(typeof SONCAS_KEYS)[number], string> = {
   securite: "bg-cyan-600",
   orgueil: "bg-violet-600",
@@ -70,7 +70,7 @@ export const SONCAS_BAR_CLASS: Record<(typeof SONCAS_KEYS)[number], string> = {
   sympathie: "bg-rose-600",
 };
 
-/** Pastille tag — même palette que les barres DISC. */
+/** Pastille tag : même palette que les barres DISC. */
 export const DISC_PILL_CLASS: Record<(typeof DISC_KEYS)[number], string> = {
   D: "border-red-600/30 bg-red-600/10 text-red-800 dark:text-red-200",
   I: "border-amber-500/35 bg-amber-400/15 text-amber-900 dark:text-amber-100",
@@ -78,7 +78,7 @@ export const DISC_PILL_CLASS: Record<(typeof DISC_KEYS)[number], string> = {
   C: "border-blue-600/30 bg-blue-600/10 text-blue-800 dark:text-blue-200",
 };
 
-/** Pastille tag — même palette que les barres SONCAS. */
+/** Pastille tag : même palette que les barres SONCAS. */
 export const SONCAS_PILL_CLASS: Record<(typeof SONCAS_KEYS)[number], string> = {
   securite:
     "border-cyan-600/30 bg-cyan-600/10 text-cyan-800 dark:text-cyan-200",
