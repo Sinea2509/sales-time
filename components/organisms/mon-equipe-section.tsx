@@ -10,6 +10,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { membres, rdvNotes } from "@/lib/accord-fr";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
+import { ficheMembreHref, monEquipeListHref } from "@/lib/liens-mon-equipe";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 import {
@@ -24,19 +25,6 @@ import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import { unrankedExplanation } from "@/src/core/domain/team-ranking";
 import type { OrgAdminMonEquipePage } from "@/src/core/application/get-org-admin-dashboard";
 import type { ReactNode } from "react";
-
-function monEquipeListHref(
-  basePath: string,
-  jours: number,
-  equipePage: number,
-) {
-  const q = new URLSearchParams();
-  q.set("jours", String(jours));
-  if (equipePage > 1) {
-    q.set("equipePage", String(equipePage));
-  }
-  return `${basePath}?${q.toString()}`;
-}
 
 /**
  * Ce que la liste contient et dans quel ordre.
@@ -307,11 +295,11 @@ export function MonEquipeSection({
                           profondeur et non la couleur.
                         */}
                         <Link
-                          href={
-                            statsWindowDays === 30
-                              ? `/company/equipe/${row.userId}`
-                              : `/company/equipe/${row.userId}?jours=${statsWindowDays}`
-                          }
+                          href={ficheMembreHref(
+                            row.userId,
+                            statsWindowDays,
+                            monEquipe.page,
+                          )}
                           className="group flex min-w-0 items-center gap-3 rounded-lg py-0.5 pr-2 outline-none transition-colors hover:bg-violet-100/70 focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:hover:bg-zinc-800/60 dark:focus-visible:ring-zinc-500/40"
                           aria-label={`Fiche de ${person.primary}`}
                         >

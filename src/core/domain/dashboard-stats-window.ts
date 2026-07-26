@@ -2,6 +2,16 @@ export const STATS_WINDOW_DAYS_OPTIONS = [7, 30, 90] as const;
 
 export type StatsWindowDays = (typeof STATS_WINDOW_DAYS_OPTIONS)[number];
 
+/**
+ * La fenêtre retenue quand l'adresse n'en nomme aucune.
+ *
+ * Elle est nommée plutôt qu'écrite en chiffre à chaque emploi, parce que
+ * plusieurs endroits ont besoin de savoir laquelle est implicite : les liens
+ * qui l'omettent volontairement de l'adresse, et la page qui retire ce
+ * paramètre quand il ne dit rien de plus que le défaut.
+ */
+export const DEFAULT_STATS_WINDOW_DAYS: StatsWindowDays = 30;
+
 /** Seuil minimal de RDV pour afficher tendances KPI et activer une fenêtre stats. */
 export const MIN_RDV_FOR_STATS = 5;
 
@@ -51,7 +61,7 @@ export function parseStatsWindowDays(
   if (s === "7" || s === "30" || s === "90") {
     return Number(s) as StatsWindowDays;
   }
-  return 30;
+  return DEFAULT_STATS_WINDOW_DAYS;
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;

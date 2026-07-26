@@ -67,7 +67,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     sellerUserId: sellerScope,
   });
   const statsWindowDays = ensureEligibleStatsWindowDays({
-    joursParam: sp.jours,
+    searchParams: sp,
     counts: windowCounts,
     redirectPath: "/company/analyse",
   });

@@ -62,7 +62,7 @@ export default async function DashboardHomePage({
       organizationId: actor.activeOrganizationId,
     });
     const statsWindowDays = ensureEligibleStatsWindowDays({
-      joursParam: sp.jours,
+      searchParams: sp,
       counts: windowCounts,
       redirectPath: "/company",
     });
@@ -125,7 +125,7 @@ export default async function DashboardHomePage({
     sellerUserId: sellerId,
   });
   const statsWindowDays = ensureEligibleStatsWindowDays({
-    joursParam: sp.jours,
+    searchParams: sp,
     counts: windowCounts,
     redirectPath: "/company",
   });

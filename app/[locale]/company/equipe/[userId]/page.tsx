@@ -31,10 +31,12 @@ import {
   SONCAS_BAR_CLASS,
 } from "@/src/core/domain/seller-affinity-from-meetings";
 import {
+  DEFAULT_STATS_WINDOW_DAYS,
   parseStatsWindowDays,
   partitionMeetingsByStatsWindow,
   previousMeetingAtWindowStart,
 } from "@/src/core/domain/dashboard-stats-window";
+import { pathWithStatsWindow } from "@/lib/resolve-stats-window-days";
 import { buildQualificationPotentialMatrixPoints } from "@/src/core/domain/meeting-analyse-matrices";
 import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-profile-from-meetings";
 import type { SellerRelationalAffinitySummary } from "@/src/core/ports/analysis-port";
@@ -45,7 +47,12 @@ export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ userId: string }>;
-  searchParams?: Promise<{ jours?: string }>;
+  /**
+   * `equipePage` n'est pas lu par cette page : il n'y sert qu'à la retenir, le
+   * temps d'un aller-retour, pour que le lien de retour rende au manager la
+   * page de liste d'où il vient plutôt que la première.
+   */
+  searchParams?: Promise<{ jours?: string; equipePage?: string }>;
 };
 
 export default async function ManagerCommercialViewPage({
@@ -55,10 +62,18 @@ export default async function ManagerCommercialViewPage({
   const { userId } = await params;
   const sp = searchParams != null ? await searchParams : {};
   const joursParam = Array.isArray(sp.jours) ? sp.jours[0] : sp.jours;
-  if (joursParam === "30") {
-    redirect(`/company/equipe/${userId}`);
+  if (joursParam === String(DEFAULT_STATS_WINDOW_DAYS)) {
+    // La période par défaut se dit par son absence, mais le reste de la requête
+    // survit à ce nettoyage : sans cela, écrire la période courante dans
+    // l'adresse suffisait à perdre la page de liste.
+    redirect(pathWithStatsWindow(`/company/equipe/${userId}`, sp, null));
   }
   const statsWindowDays = parseStatsWindowDays(sp.jours);
+  const retourEquipeHref = pathWithStatsWindow(
+    "/company/equipe",
+    { equipePage: sp.equipePage },
+    statsWindowDays,
+  );
 
   const actor = await requireDashboardActor();
   if (actor.kind !== "authenticated" || !actor.activeOrganizationId) {
@@ -221,6 +236,7 @@ export default async function ManagerCommercialViewPage({
   return (
     <TeamMemberPerformanceShell
       sellerUserId={userId}
+      backHref={retourEquipeHref}
       statsWindowDays={statsWindowDays}
       performanceFingerprint={performanceProfile.fingerprint}
       nameLine={nameLine}

@@ -55,8 +55,11 @@ export default async function MonEquipePage({ searchParams }: Props) {
   const windowCounts = await getStatsWindowRdvsCounts(deps, {
     organizationId: actor.activeOrganizationId,
   });
+  // La requête entière, et pas seulement `jours` : si cette période n'a pas
+  // assez de RDV, la redirection qui suit doit ramener le lecteur sur la page
+  // de liste où il était, et non sur la première.
   const statsWindowDays = ensureEligibleStatsWindowDays({
-    joursParam: sp.jours,
+    searchParams: sp,
     counts: windowCounts,
     redirectPath: "/company/equipe",
   });

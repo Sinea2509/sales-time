@@ -1,5 +1,7 @@
+import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalysePagePeriodFallback } from "@/components/molecules/analyse-page-period-fallback";
+import { NavLinkButton } from "@/components/molecules/nav-link-button";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { AnalyseKpiCards } from "@/components/organisms/analyse-kpi-cards";
 import { AnalyseRecommandationsSection } from "@/components/organisms/analyse-recommandations-section";
@@ -73,6 +75,13 @@ function statColumn({
 }
 export type TeamMemberPerformanceShellProps = {
   sellerUserId: string;
+  /**
+   * L'adresse de la liste d'équipe, période et page de liste comprises.
+   *
+   * Elle est calculée par la page plutôt que fixée ici : le retour doit rendre
+   * au manager la vue qu'il avait, et cette vue tient dans la requête.
+   */
+  backHref: string;
   statsWindowDays: StatsWindowDays;
   performanceFingerprint: string;
   nameLine: string;
@@ -145,6 +154,7 @@ export type TeamMemberPerformanceShellProps = {
 
 export function TeamMemberPerformanceShell({
   sellerUserId,
+  backHref,
   statsWindowDays,
   performanceFingerprint,
   nameLine,
@@ -180,6 +190,26 @@ export function TeamMemberPerformanceShell({
 }: TeamMemberPerformanceShellProps) {
   return (
     <div className="space-y-8">
+      {/*
+        Cette fiche n'avait aucun chemin de retour : on y entrait depuis le
+        tableau « Mon équipe », et on en ressortait par le bouton du navigateur
+        ou par le menu latéral, lequel ramène à la première page de la liste.
+        Le lien nomme sa destination plutôt que de dire « Retour », qui ne
+        promet rien de vérifiable, et il emporte la période et la page de liste
+        pour rendre la vue telle qu'elle était.
+      */}
+      <NavLinkButton
+        href={backHref}
+        variant="ghost"
+        size="sm"
+        // Le retrait annule le remplissage gauche du bouton : la flèche se pose
+        // alors sur la même verticale que la pastille d'initiales au-dessous,
+        // au lieu d'être décalée de dix pixels vers l'intérieur.
+        className="-ml-2.5"
+      >
+        <ArrowLeft aria-hidden="true" />
+        Retour à l&apos;équipe
+      </NavLinkButton>
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:gap-4">
           <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xl font-semibold text-zinc-800 shadow-sm ring-1 ring-zinc-200/80 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-700/80">
