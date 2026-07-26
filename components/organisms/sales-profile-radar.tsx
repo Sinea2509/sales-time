@@ -3,24 +3,31 @@
 import { useEffect, useState } from "react";
 import { RadarChart } from "@mui/x-charts/RadarChart";
 import { ChartTheme } from "@/components/atoms/chart-theme";
+import {
+  SALES_PROFILE_DIMENSION_KEYS,
+  type SalesProfileScores,
+} from "@/src/core/domain/sales-profile-from-meetings";
+import { SELLER_SKILL_SHORT_FR } from "@/src/core/domain/seller-skill-signature";
 
-export type SalesProfileScores = {
-  assertivite: number;
-  ecouteActive: number;
-  capitalSympathie: number;
-  argumentation: number;
-  objections: number;
-  nextSteps: number;
-};
+export type { SalesProfileScores };
 
-const METRIC_LABELS = [
-  "Assertivité",
-  "Écoute",
-  "Sympathie",
-  "Argument.",
-  "Objections",
-  "Next steps",
-] as const;
+/*
+  Les six sommets et les six valeurs sortent de la même liste de clés, dans le
+  même ordre, et c'est la raison d'être de cette page-ci.
+
+  Ce fichier portait deux listes parallèles : six libellés écrits à la main
+  d'un côté, six accès `scores.xxx` de l'autre. Rien ne les tenait ensemble.
+  Ajouter une septième compétence, ou seulement en réordonner deux dans le
+  domaine, aurait affiché des notes justes sous des noms faux, et le radar
+  n'aurait pas eu l'air cassé pour autant. Deux de ces libellés étaient
+  d'ailleurs faux avant même cela : « Sympathie » est un levier SONCAS, qui
+  décrit le prospect, et « Next steps » n'était pas français.
+*/
+const METRICS = SALES_PROFILE_DIMENSION_KEYS.map((key) => ({
+  name: SELLER_SKILL_SHORT_FR[key],
+  min: 0,
+  max: 100,
+}));
 
 const CURRENT_SERIES_ID = "current-profile";
 const PREVIOUS_SERIES_ID = "previous-profile";
@@ -41,14 +48,7 @@ const CURRENT_SERIES_COLOR = "#8b5cf6";
 const PREVIOUS_SERIES_COLOR = "var(--chart-ink)";
 
 function scoresToData(scores: SalesProfileScores): number[] {
-  return [
-    scores.assertivite,
-    scores.ecouteActive,
-    scores.capitalSympathie,
-    scores.argumentation,
-    scores.objections,
-    scores.nextSteps,
-  ];
+  return SALES_PROFILE_DIMENSION_KEYS.map((key) => scores[key]);
 }
 
 export function SalesProfileRadar({
@@ -102,9 +102,7 @@ export function SalesProfileRadar({
         <RadarChart
           height={chartHeight}
           series={series}
-          radar={{
-            metrics: METRIC_LABELS.map((name) => ({ name, min: 0, max: 100 })),
-          }}
+          radar={{ metrics: METRICS }}
           shape="circular"
           divisions={4}
           hideLegend

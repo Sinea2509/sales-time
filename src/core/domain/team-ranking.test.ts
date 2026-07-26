@@ -233,11 +233,11 @@ describe("libellés", () => {
 
 describe("vocabulaire des paliers", () => {
   /**
-   * Le palier s'affiche sur la même ligne que la posture SONCAS du commercial, à
-   * deux colonnes d'écart, et juste à côté de son rang. Un palier qui reprendrait
-   * un mot déjà pris ferait porter deux sens au même mot sur une seule ligne : le
-   * lecteur ne pourrait plus savoir lequel il lit. Ces deux tests gardent la
-   * décision de nommage, qui ne se voit qu'à l'écran et se perdrait sans eux.
+   * Le palier s'affiche à côté du rang, et sur les mêmes écrans que les leviers
+   * SONCAS et les profils DISC des prospects. Un palier qui reprendrait un mot
+   * déjà pris ferait porter deux sens au même mot : le lecteur ne pourrait plus
+   * savoir lequel il lit. Ces deux tests gardent la décision de nommage, qui ne
+   * se voit qu'à l'écran et se perdrait sans eux.
    */
   it("n'emprunte aucun mot au vocabulaire SONCAS ou DISC", () => {
     const dejaPris = new Set(

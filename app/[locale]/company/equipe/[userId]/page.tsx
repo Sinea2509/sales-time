@@ -6,10 +6,7 @@ import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { prospectInitials } from "@/lib/prospect-initials";
-import {
-  countMeetingTypes,
-  postureLabelFromMeetings,
-} from "@/lib/team-member-performance-helpers";
+import { countMeetingTypes } from "@/lib/team-member-performance-helpers";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
@@ -168,7 +165,6 @@ export default async function ManagerCommercialViewPage({
   const { progressBullets, improvementBullets } = coachingBullets;
 
   const { decouverte, proposition } = countMeetingTypes(meetings);
-  const posture = postureLabelFromMeetings(meetings);
   const nameLine =
     [member.user.firstName?.trim() ?? "", member.user.lastName?.trim() ?? ""]
       .filter(Boolean)
@@ -229,7 +225,14 @@ export default async function ManagerCommercialViewPage({
       performanceFingerprint={performanceProfile.fingerprint}
       nameLine={nameLine}
       initials={prospectInitials(nameLine)}
-      posture={posture}
+      /*
+        Le profil vient de la lecture d'équipe, pas des seuls rendez-vous de
+        cette personne : un point fort se dit « au-dessus des autres », et cette
+        page ne charge que les siens. En le prenant sur `standing`, la fiche et
+        le tableau « Mon équipe » nomment forcément la même compétence.
+      */
+      skillSignature={standing?.row?.skillSignature ?? null}
+      skillMeetings={standing?.row?.skillMeetings ?? 0}
       standing={standing}
       nbRdvs={home.nbRdvs}
       decouverte={decouverte}

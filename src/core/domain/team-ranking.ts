@@ -47,9 +47,9 @@ export type RankingTier = {
  * écran. « Or » veut dire premier partout ailleurs, alors qu'un palier est
  * absolu et se décerne à tous ceux qui sont dans la tranche, pendant que la
  * colonne voisine annonce le vrai rang : on lirait « 3e place · Or » sur la même
- * ligne. Et « Argent » est déjà le nom d'un levier SONCAS, affiché deux colonnes
- * plus loin, si bien que le même mot y désignerait un niveau de performance et
- * une motivation d'achat. Tout nom ajouté ici doit donc être vérifié contre le
+ * ligne. Et « Argent » est déjà le nom d'un levier SONCAS, affiché sur les mêmes
+ * écrans, si bien que le même mot y désignerait un niveau de performance et une
+ * motivation d'achat. Tout nom ajouté ici doit donc être vérifié contre le
  * vocabulaire SONCAS, DISC et les types de rendez-vous avant d'être retenu.
  */
 export const RANKING_TIERS: readonly RankingTier[] = [

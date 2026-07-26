@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { TeamMemberInviteDialog } from "@/components/organisms/team-member-invite-dialog";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
+import { SkillSignatureCell } from "@/components/molecules/seller-skill-signature-view";
 import { TeamRankCell } from "@/components/molecules/team-rank-cell";
 import { TeamRankingSummary } from "@/components/molecules/team-ranking-summary";
 import { TeamTierBadge } from "@/components/molecules/team-tier-badge";
@@ -143,8 +144,11 @@ export function MonEquipeSection({
                 >
                   Palier
                 </DataTableHead>
-                <DataTableHead className="hidden px-4 py-3.5 lg:table-cell dark:text-zinc-400">
-                  Posture
+                <DataTableHead
+                  className="hidden px-4 py-3.5 lg:table-cell dark:text-zinc-400"
+                  title="Ce qui distingue cette personne du reste de l'équipe : sa compétence la plus au-dessus de la moyenne, et la plus au-dessous. Les six compétences sont notées sur le commercial lui-même, à chaque rendez-vous coaché."
+                >
+                  Profil
                 </DataTableHead>
                 <DataTableHead className="hidden w-14 px-4 py-3.5 text-right lg:table-cell dark:text-zinc-400">
                   Actions
@@ -305,15 +309,17 @@ export function MonEquipeSection({
                           }
                         />
                       </td>
-                      <td className="hidden max-w-[10rem] truncate px-4 py-3.5 text-zinc-700 lg:table-cell dark:text-zinc-300">
-                        {row.postureLabel ?? (
-                          <span
-                            className="text-zinc-500 dark:text-zinc-400"
-                            title="Non calculable : aucune analyse SONCAS sur la période."
-                          >
-                            {VALEUR_NON_CALCULABLE}
-                          </span>
-                        )}
+                      {/*
+                        La colonne prend la largeur de ses mots plutôt que de
+                        les couper : « Lien de confiance … » ne dit plus quelle
+                        compétence travailler, et la colonne « Personne » avait
+                        de la place à céder.
+                      */}
+                      <td className="hidden px-4 py-3.5 whitespace-nowrap lg:table-cell">
+                        <SkillSignatureCell
+                          signature={row.skillSignature}
+                          skillMeetings={row.skillMeetings}
+                        />
                       </td>
                       <td className="hidden px-4 py-3.5 text-right align-middle lg:table-cell">
                         <Link

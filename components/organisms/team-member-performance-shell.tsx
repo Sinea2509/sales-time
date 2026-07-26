@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalysePagePeriodFallback } from "@/components/molecules/analyse-page-period-fallback";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
@@ -9,6 +8,7 @@ import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analy
 import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-quadrant-grid";
 import type { SalesProfileScores } from "@/components/organisms/sales-profile-radar";
 import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
+import { SkillSignatureBadges } from "@/components/molecules/seller-skill-signature-view";
 import { TeamMemberStanding } from "@/components/molecules/team-member-standing";
 import { TeamMemberPerformanceProfileCard } from "@/components/organisms/team-member-performance-profile-card";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
@@ -18,6 +18,7 @@ import type {
 } from "@/src/core/application/get-org-admin-dashboard";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { QualificationPotentialMatrixPoint } from "@/src/core/domain/meeting-analyse-matrices";
+import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signature";
 import {
   MIN_RDV_FOR_STATS,
   type StatsWindowDays,
@@ -76,7 +77,22 @@ export type TeamMemberPerformanceShellProps = {
   performanceFingerprint: string;
   nameLine: string;
   initials: string;
-  posture: string | null;
+  /**
+   * Ce qui distingue ce commercial du reste de son équipe : sa compétence la
+   * plus au-dessus de la moyenne, et la plus au-dessous.
+   *
+   * La fiche affichait auparavant une « Posture », qui valait le levier SONCAS
+   * dominant chez ses prospects : une description de son portefeuille, portée
+   * sous son nom à lui. Ces deux compétences-ci se notent sur le commercial,
+   * pendant l'analyse de chacun de ses rendez-vous coachés, et disent en deux
+   * mots ce que le radar plus bas dessine en six.
+   *
+   * `null` quand il n'y a rien à comparer, soit faute de rendez-vous coaché,
+   * soit faute de collègue coaché sur la période.
+   */
+  skillSignature: SellerSkillSignature | null;
+  /** Les rendez-vous coachés qui étayent ces deux compétences. */
+  skillMeetings: number;
   /**
    * Place du commercial dans son équipe, telle que le tableau « Mon équipe »
    * vient de l'annoncer. `null` quand la page ne peut pas la calculer.
@@ -133,7 +149,8 @@ export function TeamMemberPerformanceShell({
   performanceFingerprint,
   nameLine,
   initials,
-  posture,
+  skillSignature,
+  skillMeetings,
   standing,
   nbRdvs,
   decouverte,
@@ -170,23 +187,11 @@ export function TeamMemberPerformanceShell({
           </span>
           <div className="flex max-w-md flex-col items-center gap-1.5 text-center sm:items-start sm:text-left">
             <p className={pageTitleClass}>{nameLine}</p>
-            {posture ? (
-              <Badge
-                variant="secondary"
-                className="mt-0.5 px-2.5 py-0.5 text-xs font-medium"
-                title="Levier SONCAS dominant le plus fréquent sur les rendez-vous analysés de la période."
-              >
-                Posture · {posture}
-              </Badge>
-            ) : (
-              <Badge
-                variant="outline"
-                className="text-muted-foreground mt-0.5 px-2.5 py-0.5 text-xs font-normal"
-                title="Non calculable : aucune analyse SONCAS sur la période, donc aucun levier dominant à en tirer."
-              >
-                Posture · {VALEUR_NON_CALCULABLE}
-              </Badge>
-            )}
+            <SkillSignatureBadges
+              signature={skillSignature}
+              skillMeetings={skillMeetings}
+              className="mt-0.5 justify-center sm:justify-start"
+            />
             {standing ? (
               <TeamMemberStanding
                 standing={standing}

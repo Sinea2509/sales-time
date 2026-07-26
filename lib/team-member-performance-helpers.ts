@@ -1,50 +1,14 @@
-import { soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
 import { meetingEtapeDisplayLabel } from "@/src/core/domain/meeting-etape-display";
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
 
-const DRIVER_LABEL_FR: Record<
-  "securite" | "orgueil" | "nouveaute" | "confort" | "argent" | "sympathie",
-  string
-> = {
-  securite: "Sécurité",
-  orgueil: "Orgueil",
-  nouveaute: "Nouveauté",
-  confort: "Confort",
-  argent: "Argent",
-  sympathie: "Sympathie",
-};
-
-function modeSoncasDominantLabel(dominants: string[]): string | null {
-  if (dominants.length === 0) return null;
-  const counts = new Map<string, number>();
-  for (const d of dominants) {
-    counts.set(d, (counts.get(d) ?? 0) + 1);
-  }
-  let bestKey = dominants[0]!;
-  let bestCount = -1;
-  for (const [k, n] of counts) {
-    if (
-      n > bestCount ||
-      (n === bestCount && k.localeCompare(bestKey, "fr") < 0)
-    ) {
-      bestCount = n;
-      bestKey = k;
-    }
-  }
-  return DRIVER_LABEL_FR[bestKey as keyof typeof DRIVER_LABEL_FR] ?? bestKey;
-}
-
-export function postureLabelFromMeetings(
-  meetings: RecentMeetingListRow[],
-): string | null {
-  const dominants: string[] = [];
-  for (const m of meetings) {
-    if (m.latestSoncasResult == null) continue;
-    const parsed = soncasResultSchema.safeParse(m.latestSoncasResult);
-    if (parsed.success) dominants.push(parsed.data.dominant);
-  }
-  return modeSoncasDominantLabel(dominants);
-}
+/*
+  `postureLabelFromMeetings` vivait ici : elle prenait le levier SONCAS
+  dominant le plus fréquent chez les prospects rencontrés et l'affichait sous
+  le nom du commercial, comme si c'était un trait de lui. Ce que la fiche
+  montre désormais à cet endroit se calcule sur ses six compétences de vendeur,
+  comparées à celles de son équipe, dans
+  `src/core/domain/seller-skill-signature.ts`.
+*/
 
 export function countMeetingTypes(meetings: RecentMeetingListRow[]): {
   decouverte: number;

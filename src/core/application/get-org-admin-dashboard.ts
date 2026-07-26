@@ -9,8 +9,16 @@ import {
   type MemberRanking,
   type TeamRankingSummary,
 } from "@/src/core/domain/team-ranking";
-import { soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
+import {
+  salesProfileScoresFromMeeting,
+  type SalesProfileScores,
+} from "@/src/core/domain/sales-profile-from-meetings";
+import {
+  averageSkillScores,
+  sellerSkillSignature,
+  type SellerSkillSignature,
+} from "@/src/core/domain/seller-skill-signature";
 import { kissCoachingBulletsFromMeetings } from "@/src/core/domain/kiss-coaching-bullets-from-meetings";
 import type { SoncasDriverAverages } from "@/src/core/domain/org-soncas-team-aggregate";
 import type {
@@ -53,8 +61,26 @@ export type OrgAdminMonEquipeRow = {
   noteGlobaleOn5: number | null;
   /** Nombre de RDV porteurs d'un SalesScore : le dénominateur de la note. */
   scoredMeetings: number;
-  /** Levier SONCAS dominant le plus fréquent sur les RDV analysés (SONCAS) du membre. */
-  postureLabel: string | null;
+  /**
+   * Les six compétences du commercial, moyennées sur ses rendez-vous coachés.
+   *
+   * Ce sont des notes sur le vendeur, tirées de l'analyse KISS. La colonne
+   * qu'elles remplacent affichait le levier SONCAS le plus fréquent chez ses
+   * prospects : un portrait de son portefeuille, posé sur sa ligne à lui, sous
+   * un intitulé qui se lisait comme un portrait de sa façon de vendre.
+   *
+   * `null` quand aucun de ses rendez-vous n'est noté sur ces six dimensions.
+   */
+  skillScores: SalesProfileScores | null;
+  /** Nombre de RDV portant les six notes : le dénominateur de `skillScores`. */
+  skillMeetings: number;
+  /**
+   * Sa compétence la plus au-dessus et la plus au-dessous de son équipe.
+   *
+   * `null` quand il n'y a rien à comparer : aucun rendez-vous noté de son côté,
+   * ou personne d'autre de noté à qui se mesurer.
+   */
+  skillSignature: SellerSkillSignature | null;
 };
 
 /** Ligne d'équipe enrichie de son rang, de son palier et de son écart à la moyenne. */
@@ -121,31 +147,32 @@ const DRIVER_LABEL_FR: Record<keyof SoncasDriverAverages, string> = {
   sympathie: "Sympathie",
 };
 
-function aggregateSellerWindowStats(meetings: RecentMeetingListRow[]): Map<
-  string,
-  {
-    nbRdvs: number;
-    coachesCount: number;
-    soncasDominants: string[];
-    connectedDurations: number[];
-    salesScores: number[];
-  }
-> {
-  const map = new Map<
-    string,
-    {
-      nbRdvs: number;
-      coachesCount: number;
-      soncasDominants: string[];
-      connectedDurations: number[];
-      salesScores: number[];
-    }
-  >();
+type SellerWindowStats = {
+  nbRdvs: number;
+  coachesCount: number;
+  /** Les six notes du vendeur, un jeu par rendez-vous qui en porte. */
+  skillNotes: SalesProfileScores[];
+  connectedDurations: number[];
+  salesScores: number[];
+};
+
+const AUCUN_RDV: SellerWindowStats = {
+  nbRdvs: 0,
+  coachesCount: 0,
+  skillNotes: [],
+  connectedDurations: [],
+  salesScores: [],
+};
+
+function aggregateSellerWindowStats(
+  meetings: RecentMeetingListRow[],
+): Map<string, SellerWindowStats> {
+  const map = new Map<string, SellerWindowStats>();
   for (const row of meetings) {
     const cur = map.get(row.sellerUserId) ?? {
       nbRdvs: 0,
       coachesCount: 0,
-      soncasDominants: [] as string[],
+      skillNotes: [] as SalesProfileScores[],
       connectedDurations: [] as number[],
       salesScores: [] as number[],
     };
@@ -155,33 +182,11 @@ function aggregateSellerWindowStats(meetings: RecentMeetingListRow[]): Map<
     if (row.durationMin != null && row.durationMin > 0) {
       cur.connectedDurations.push(row.durationMin);
     }
-    const parsed = soncasResultSchema.safeParse(row.latestSoncasResult);
-    if (parsed.success) cur.soncasDominants.push(parsed.data.dominant);
+    const skills = salesProfileScoresFromMeeting(row);
+    if (skills != null) cur.skillNotes.push(skills);
     map.set(row.sellerUserId, cur);
   }
   return map;
-}
-
-function modeSoncasDominantLabel(dominants: string[]): string | null {
-  if (dominants.length === 0) return null;
-  const counts = new Map<string, number>();
-  for (const d of dominants) {
-    counts.set(d, (counts.get(d) ?? 0) + 1);
-  }
-  let bestKey = dominants[0]!;
-  let bestCount = -1;
-  for (const [k, n] of counts) {
-    if (
-      n > bestCount ||
-      (n === bestCount && k.localeCompare(bestKey, "fr") < 0)
-    ) {
-      bestCount = n;
-      bestKey = k;
-    }
-  }
-  const label =
-    DRIVER_LABEL_FR[bestKey as keyof typeof DRIVER_LABEL_FR] ?? bestKey;
-  return label;
 }
 
 export type TeamMemberIdentity = {
@@ -222,16 +227,29 @@ export function buildRankedTeam(input: {
   totalCount: number;
 } {
   const bySeller = aggregateSellerWindowStats(input.meetings);
-  const rowsFull: OrgAdminMonEquipeRow[] = input.members.map((mem) => {
-    const s = bySeller.get(mem.userId) ?? {
-      nbRdvs: 0,
-      coachesCount: 0,
-      soncasDominants: [] as string[],
-      connectedDurations: [] as number[],
-      salesScores: [] as number[],
-    };
-    const tamMinutesAvg = averageTamMinutes(s.connectedDurations);
-    return {
+
+  /*
+    La moyenne d'un commercial se fait sur ses rendez-vous : chacun de ses
+    rendez-vous notés pèse pareil chez lui.
+  */
+  const parMembre = input.members.map((mem) => {
+    const s = bySeller.get(mem.userId) ?? AUCUN_RDV;
+    return { mem, s, skillScores: averageSkillScores(s.skillNotes) };
+  });
+
+  /*
+    La référence, elle, se fait sur les commerciaux : un élément par personne,
+    pas un par rendez-vous. Autrement, celui qui tient le plus gros volume
+    fixerait à lui seul la barre à laquelle on le compare ensuite, et un
+    commercial constant se verrait « au-dessus de l'équipe » le mois où un
+    collègue en difficulté a beaucoup travaillé.
+  */
+  const referenceEquipe = averageSkillScores(
+    parMembre.map((p) => p.skillScores),
+  );
+
+  const rowsFull: OrgAdminMonEquipeRow[] = parMembre.map(
+    ({ mem, s, skillScores }) => ({
       userId: mem.userId,
       membershipId: mem.membershipId,
       firstName: mem.firstName,
@@ -239,12 +257,14 @@ export function buildRankedTeam(input: {
       email: mem.email,
       nbRdvs: s.nbRdvs,
       coachesCount: s.coachesCount,
-      tamMinutesAvg,
+      tamMinutesAvg: averageTamMinutes(s.connectedDurations),
       noteGlobaleOn5: noteGlobaleOn5FromSalesScores(s.salesScores),
       scoredMeetings: s.salesScores.length,
-      postureLabel: modeSoncasDominantLabel(s.soncasDominants),
-    };
-  });
+      skillScores,
+      skillMeetings: s.skillNotes.length,
+      skillSignature: sellerSkillSignature(skillScores, referenceEquipe),
+    }),
+  );
 
   // Le classement porte sur l'équipe entière et se calcule avant tout découpage
   // en pages : un rang relatif à une page serait faux dès la deuxième.
@@ -349,8 +369,11 @@ export function buildTeamMemberStanding(input: {
  * donc pas déduire seule un rang, qui est par nature relatif aux autres. Cette
  * fonction refait la lecture d'équipe du tableau « Mon équipe », avec le même
  * cadrage manager et la même fenêtre, pour que les deux écrans annoncent le même
- * chiffre. Elle ne demande à la base que les résultats SONCAS, seuls porteurs du
- * SalesScore sur lequel repose le classement.
+ * chiffre. Elle demande les résultats SONCAS, porteurs du SalesScore sur lequel
+ * repose le classement, et les résultats KISS, porteurs des six notes du
+ * vendeur : le profil affiché sur la fiche se compare à la même équipe que
+ * celui du tableau, et les deux écrans ne peuvent donc pas nommer deux points
+ * forts différents pour la même personne.
  *
  * Renvoie `null` quand le rang n'a pas de sens : hors organisation, ou lorsque
  * le manager ne cadre aucune équipe.
@@ -379,6 +402,7 @@ export async function getTeamMemberStanding(
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
       meetingAtSince: meetingAtSinceForStatsWindow(input.statsWindowDays),
       includeLatestSoncasResult: true,
+      includeLatestKissResult: true,
     }),
   ]);
 
