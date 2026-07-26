@@ -1,4 +1,3 @@
-import { MoreHorizontal } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { TeamMemberInviteDialog } from "@/components/organisms/team-member-invite-dialog";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
@@ -178,26 +177,42 @@ export function MonEquipeSection({
           </p>
         </div>
         {/*
-          Les colonnes s'effacent par ordre inverse d'importance quand l'écran
-          rétrécit, exactement comme le tableau du tableau de bord commercial le
-          fait déjà. Sur téléphone il reste la place, la personne et la note :
-          les trois réponses que le manager vient chercher. Le reste se retrouve
-          d'une tape sur la fiche, qui l'écrit en toutes lettres. Sans ce
-          découpage, huit colonnes tenues à 880px se réduisaient à un défilement
-          horizontal muet où l'on ne voyait que le nom, coupé net.
+          Les colonnes s'effacent par ordre inverse d'importance quand la place
+          manque, exactement comme le tableau du tableau de bord commercial le
+          fait déjà. Il reste toujours la place, la personne et la note : les
+          trois réponses que le manager vient chercher. Le reste se retrouve
+          d'une tape sur la fiche, qui l'écrit en toutes lettres.
+
+          Ce qui décide ici, c'est la largeur de ce bloc et non celle de la
+          fenêtre. Les deux ne varient pas ensemble : le menu latéral s'ouvre à
+          768px et prend 256px, si bien qu'en passant de 767 à 768px de fenêtre
+          la place disponible dans ce bloc tombe de 717px à 462px. La fenêtre
+          grandit d'un pixel, le tableau en perd 255. Réglé sur la fenêtre, il
+          ajoutait justement une colonne à cet endroit : 575px de contenu pour
+          462px de place, six noms sur sept coupés. Réglé sur le bloc, il ne
+          peut plus le faire.
+
+          Chaque seuil est la largeur au-dessous de laquelle la colonne qu'il
+          commande ramènerait « Personne » sous 260px, la place qu'il faut au
+          plus long nom pour ne pas être coupé. C'est le nom qui arbitre : il
+          est ce qu'on lit en premier, et le seul contenu du tableau qui ne se
+          devine pas une fois tronqué. Les seuils valent donc 580, 670, 750 et
+          940px, et laissent à « Personne » 261, 262, 266 et 266px.
         */}
-        <div className="overflow-x-auto">
+        <div className="@container overflow-x-auto">
           {/*
             Ces largeurs minimales sont des garde-fous, pas la mise en page :
-            elles sont réglées sous ce que le contenu réclame à chaque palier,
-            si bien qu'elles ne se déclenchent que sur un écran plus étroit que
-            prévu, pour faire défiler plutôt qu'écraser les colonnes.
+            chacune est réglée sous ce que le contenu réclame dans son régime,
+            mesuré à 296px à trois colonnes, 487px à quatre, 575px à cinq,
+            652px à six et 842px à sept. Elles ne se déclenchent donc que sur un
+            bloc plus étroit que prévu, pour faire défiler plutôt qu'écraser les
+            colonnes, et jamais sur un bloc à la largeur attendue.
           */}
-          <table className="w-full min-w-[300px] text-left text-sm sm:min-w-[480px] md:min-w-[560px] lg:min-w-[760px]">
+          <table className="w-full min-w-[290px] text-left text-sm @min-[580px]:min-w-[480px] @min-[670px]:min-w-[560px] @min-[750px]:min-w-[640px] @min-[940px]:min-w-[820px]">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
                 <DataTableHead
-                  className="w-16 px-4 py-3.5 sm:w-24 dark:text-zinc-400"
+                  className="w-16 px-4 py-3.5 @min-[580px]:w-24 dark:text-zinc-400"
                   title={`Rang sur l'équipe entière, et écart à la moyenne des membres classés. Au-dessous de ${monEquipe.ranking.minScoredMeetings} rendez-vous notés, le score est affiché mais pas le rang.`}
                 >
                   Rang
@@ -206,13 +221,13 @@ export function MonEquipeSection({
                   Personne
                 </DataTableHead>
                 <DataTableHead
-                  className="hidden px-4 py-3.5 tabular-nums md:table-cell dark:text-zinc-400"
+                  className="hidden px-4 py-3.5 tabular-nums @min-[670px]:table-cell dark:text-zinc-400"
                   title="Nombre de rendez-vous portant au moins une analyse KISS sur la période. Tous ne sont pas notés : la note vient de l'analyse SONCAS."
                 >
                   RDV coachés
                 </DataTableHead>
                 <DataTableHead
-                  className="hidden px-4 py-3.5 tabular-nums lg:table-cell dark:text-zinc-400"
+                  className="hidden px-4 py-3.5 tabular-nums @min-[750px]:table-cell dark:text-zinc-400"
                   title="Temps d'appel moyen sur les RDV connectés (durée renseignée)"
                 >
                   TAM
@@ -224,26 +239,23 @@ export function MonEquipeSection({
                   {SALES_SCORE_LABEL}
                 </DataTableHead>
                 <DataTableHead
-                  className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-400"
+                  className="hidden px-4 py-3.5 @min-[580px]:table-cell dark:text-zinc-400"
                   title={`Palier atteint sur l'échelle de 0 à 5. Deux membres peuvent partager un palier sans partager une place. Au-dessous de ${monEquipe.ranking.minScoredMeetings} rendez-vous notés, la note est affichée mais le palier n'est pas décerné.`}
                 >
                   Palier
                 </DataTableHead>
                 <DataTableHead
-                  className="hidden px-4 py-3.5 lg:table-cell dark:text-zinc-400"
+                  className="hidden px-4 py-3.5 @min-[940px]:table-cell dark:text-zinc-400"
                   title="Ce qui distingue cette personne du reste de l'équipe : sa compétence la plus au-dessus de la moyenne, et la plus au-dessous. Les six compétences sont notées sur le commercial lui-même, à chaque rendez-vous coaché."
                 >
                   Profil
-                </DataTableHead>
-                <DataTableHead className="hidden w-14 px-4 py-3.5 text-right lg:table-cell dark:text-zinc-400">
-                  Actions
                 </DataTableHead>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {monEquipe.rows.length === 0 ? (
                 <TableEmptyRow
-                  colSpan={8}
+                  colSpan={7}
                   message="Aucun membre dans cette organisation."
                   size="large"
                 />
@@ -283,7 +295,7 @@ export function MonEquipeSection({
                         sans elle, les colonnes à contenu insécable se servent
                         d'abord et le nom tombe à « C… ».
                       */}
-                      <td className="w-full max-w-0 min-w-[7.5rem] px-4 py-3.5 align-middle sm:min-w-[10.5rem]">
+                      <td className="w-full max-w-0 min-w-[7.5rem] px-4 py-3.5 align-middle @min-[580px]:min-w-[10.5rem]">
                         <Link
                           href={
                             statsWindowDays === 30
@@ -295,42 +307,43 @@ export function MonEquipeSection({
                         >
                           {/*
                             La pastille d'initiales redit en deux lettres le nom
-                            écrit juste à côté. Sur téléphone elle coûte 48px de
-                            largeur pour cela : le nom entier les vaut mieux.
+                            écrit juste à côté. Dans un bloc étroit elle coûte
+                            48px pour cela : le nom entier les vaut mieux.
                           */}
                           <span
-                            className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 sm:flex dark:bg-zinc-800 dark:text-zinc-200"
+                            className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 @min-[580px]:flex dark:bg-zinc-800 dark:text-zinc-200"
                             aria-hidden
                           >
                             {prospectInitials(person.initialsSource)}
                           </span>
                           <div className="min-w-0 text-left">
                             {/*
-                              Sur téléphone le nom passe à la ligne au lieu
+                              Dans un bloc étroit le nom passe à la ligne au lieu
                               d'être coupé : la hauteur ne coûte rien sur un
-                              écran qui défile déjà, la largeur coûte tout. À
-                              partir de « sm », la place existe et la coupure
-                              propre redevient préférable au retour à la ligne,
-                              qui déformerait la hauteur des lignes du tableau.
+                              écran qui défile déjà, la largeur coûte tout.
+                              Au-delà de 580px la colonne garde 260px et la
+                              coupure propre redevient préférable au retour à la
+                              ligne, qui déformerait la hauteur des lignes.
                             */}
-                            <p className="font-medium text-zinc-950 underline-offset-2 group-hover:underline sm:truncate dark:text-zinc-50">
+                            <p className="font-medium text-zinc-950 underline-offset-2 group-hover:underline @min-[580px]:truncate dark:text-zinc-50">
                               {person.primary}
                             </p>
                             {person.secondary ? (
                               // L'adresse e-mail ne sert qu'à départager deux
-                              // homonymes : sur téléphone elle coûte plus de
-                              // largeur qu'elle n'en rend, et la fiche l'affiche.
-                              <p className="text-muted-foreground hidden truncate text-xs sm:block dark:text-zinc-400">
+                              // homonymes : dans un bloc étroit elle coûte plus
+                              // de largeur qu'elle n'en rend, et la fiche
+                              // l'affiche de toute façon.
+                              <p className="text-muted-foreground hidden truncate text-xs @min-[580px]:block dark:text-zinc-400">
                                 {person.secondary}
                               </p>
                             ) : null}
                           </div>
                         </Link>
                       </td>
-                      <td className="hidden px-4 py-3.5 tabular-nums md:table-cell">
+                      <td className="hidden px-4 py-3.5 tabular-nums @min-[670px]:table-cell">
                         {row.coachesCount}
                       </td>
-                      <td className="hidden whitespace-nowrap px-4 py-3.5 tabular-nums lg:table-cell">
+                      <td className="hidden whitespace-nowrap px-4 py-3.5 tabular-nums @min-[750px]:table-cell">
                         {row.tamMinutesAvg != null ? (
                           formatDurationHoursMinutes(row.tamMinutesAvg)
                         ) : (
@@ -369,17 +382,17 @@ export function MonEquipeSection({
                           se lit que d'une seule façon.
                         */}
                         {/*
-                          Sur téléphone, la base s'efface quand il y a une note :
-                          « 4,3/5 » se lit seul, et les deux lignes que la base
-                          lui coûtait reviennent au nom, qui était coupé net.
-                          Elle reste affichée quand il n'y a pas de note, parce
-                          que « n. c. » ne se lit pas seul et que l'infobulle qui
-                          l'explique n'existe pas sous le doigt.
+                          Dans un bloc étroit, la base s'efface quand il y a une
+                          note : « 4,3/5 » se lit seul, et les deux lignes que la
+                          base lui coûtait reviennent au nom, qui était coupé
+                          net. Elle reste affichée quand il n'y a pas de note,
+                          parce que « n. c. » ne se lit pas seul et que
+                          l'infobulle qui l'explique n'existe pas sous le doigt.
                         */}
                         <span
                           className={
                             row.scoredMeetings > 0
-                              ? "hidden text-xs text-zinc-500 sm:block dark:text-zinc-400"
+                              ? "hidden text-xs text-zinc-500 @min-[580px]:block dark:text-zinc-400"
                               : "block text-xs text-zinc-500 dark:text-zinc-400"
                           }
                         >
@@ -388,7 +401,7 @@ export function MonEquipeSection({
                             : "aucun RDV noté"}
                         </span>
                       </td>
-                      <td className="hidden px-4 py-3.5 sm:table-cell">
+                      <td className="hidden px-4 py-3.5 @min-[580px]:table-cell">
                         <TeamTierBadge
                           tier={row.tier}
                           unavailableTitle={
@@ -403,31 +416,23 @@ export function MonEquipeSection({
                         />
                       </td>
                       {/*
-                        La colonne prend la largeur de ses mots plutôt que de
-                        les couper : « Lien de confiance … » ne dit plus quelle
-                        compétence travailler, et la colonne « Personne » avait
-                        de la place à céder.
+                        Un plancher de largeur, et les mots s'enroulent au-delà :
+                        « Lien de confiance … » tronqué ne dit plus quelle
+                        compétence travailler, et c'est le mot que le manager
+                        vient lire ici.
+
+                        Tenues d'un seul tenant, ces deux lignes réclamaient
+                        234px, et c'est la colonne « Personne » qui les payait :
+                        elle tombait à 173px et six noms sur sept étaient
+                        coupés. À 190px enroulés elle garde ses 260px, plus
+                        aucun nom n'est coupé, et la ligne la plus haute passe
+                        de 81 à 84 pixels.
                       */}
-                      <td className="hidden px-4 py-3.5 whitespace-nowrap lg:table-cell">
+                      <td className="hidden min-w-[190px] px-4 py-3.5 @min-[940px]:table-cell">
                         <SkillSignatureCell
                           signature={row.skillSignature}
                           skillMeetings={row.skillMeetings}
                         />
-                      </td>
-                      <td className="hidden px-4 py-3.5 text-right align-middle lg:table-cell">
-                        <Link
-                          href="/company/settings/equipe"
-                          className={cn(
-                            buttonVariants({
-                              variant: "outline",
-                              size: "icon-sm",
-                            }),
-                            "inline-flex",
-                          )}
-                          aria-label="Paramètres équipe et membres"
-                        >
-                          <MoreHorizontal className="size-4" aria-hidden />
-                        </Link>
                       </td>
                     </tr>
                   );

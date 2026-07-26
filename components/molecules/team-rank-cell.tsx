@@ -75,13 +75,20 @@ export function TeamRankCell({
         {ranking.rank}
       </span>
       {ecartTexte ? (
-        // Masqué sur téléphone : à cette largeur la colonne doit tenir en une
-        // pastille, et l'écart se relit sans lui, la moyenne d'équipe étant
-        // rappelée dans le bandeau juste au-dessus et la note dans la colonne
-        // voisine. Il revient dès la première taille où la place existe, et la
+        // Masqué tant que le tableau est étroit : à cette largeur la colonne
+        // doit tenir en une pastille, et l'écart se relit sans lui, la moyenne
+        // d'équipe étant rappelée dans le bandeau juste au-dessus et la note
+        // dans la colonne voisine. Il revient dès que la place existe, et la
         // fiche du commercial l'écrit de toute façon en toutes lettres.
+        //
+        // Le seuil se lit sur le bloc du tableau et non sur la fenêtre, et
+        // c'est celui-là même qui commande la colonne « Palier ». Réglé sur la
+        // fenêtre, l'écart revenait à 640px et portait la colonne de 64 à 92px,
+        // y compris à 768px où le menu latéral venait de prendre 256px de
+        // large. Cette cellule ne sert qu'au tableau : elle a donc toujours un
+        // bloc de référence au-dessus d'elle.
         <span
-          className="text-muted-foreground hidden text-xs tabular-nums sm:inline dark:text-zinc-400"
+          className="text-muted-foreground hidden text-xs tabular-nums @min-[580px]:inline dark:text-zinc-400"
           // « point sur 5 » se lirait « sur 5 » comme une note : un écart n'est
           // pas une note, il se dit en points de l'échelle, jamais sur elle.
           title={`Écart à la moyenne des membres classés : ${ecartTexte} point${

@@ -60,10 +60,15 @@ export function SkillSignatureCell({
       title={titreComparaison(skillMeetings)}
     >
       {/*
-        Les deux lignes s'enroulent au lieu de se couper. Une compétence
+        Les deux lignes s'enroulent au lieu de se couper : une compétence
         tronquée « Lien de confiance … » ne dit plus laquelle travailler, et
-        c'est précisément le mot que le manager est venu lire ; les autres
-        colonnes du tableau passent déjà à la ligne.
+        c'est précisément le mot que le manager est venu lire.
+
+        Rien n'est décidé ici, ni dans un sens ni dans l'autre. C'est la cellule
+        qui accueille ce bloc qui tranche, et elle le fait en posant un plancher
+        de largeur plutôt qu'en interdisant le passage à la ligne. Elle
+        l'interdisait auparavant, et ce commentaire décrivait alors un
+        enroulement que le rendu ne produisait pas.
       */}
       <span className="text-zinc-900 dark:text-zinc-100">
         {SELLER_SKILL_LABEL_FR[signature.fort]}{" "}
