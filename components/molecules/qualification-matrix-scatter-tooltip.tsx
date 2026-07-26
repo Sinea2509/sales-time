@@ -22,7 +22,7 @@ const euroFormat = new Intl.NumberFormat("fr-FR", {
 });
 
 function formatPotentialEuro(amount: number | null): string {
-  if (amount == null) return "—";
+  if (amount == null) return "Non renseigné";
   return euroFormat.format(amount);
 }
 
@@ -61,7 +61,7 @@ function QualificationMatrixTooltipContent() {
       <p>
         <span className="text-muted-foreground">{SALES_SCORE_LABEL} : </span>
         <span className="font-medium tabular-nums">
-          {meta.salesScore ?? "—"}
+          {meta.salesScore ?? "Non noté"}
         </span>
       </p>
     </div>

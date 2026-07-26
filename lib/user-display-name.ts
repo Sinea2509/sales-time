@@ -9,5 +9,5 @@ export function formatUserDisplayName(input: {
     .filter(Boolean)
     .join(" ");
   if (full) return full;
-  return input.email?.trim() ?? "—";
+  return input.email?.trim() ?? "Utilisateur sans nom";
 }

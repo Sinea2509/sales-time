@@ -479,7 +479,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       const avgDurationMin = avgRaw == null ? null : Math.round(Number(avgRaw));
       return {
         personId: g.personId,
-        displayName: nameById.get(g.personId) ?? "—",
+        displayName: nameById.get(g.personId) ?? "Contact sans nom",
         meetingCount,
         lastMeetingAt: latest.meetingAt,
         lastOutcome: latest.outcome,

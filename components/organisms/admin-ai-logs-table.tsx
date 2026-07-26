@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type { AiRequestLogRow } from "@/src/core/ports/ai-request-log-repository-port";
 
 type AdminAiLogRow = Omit<AiRequestLogRow, "createdAt"> & {
@@ -74,7 +75,16 @@ export function AdminAiLogsTable({ rows }: { rows: AdminAiLogRow[] }) {
                   {(row.inputTokens ?? 0) + (row.outputTokens ?? 0)}
                 </td>
                 <td className="px-3 py-2 tabular-nums">
-                  {row.latencyMs != null ? `${row.latencyMs} ms` : "—"}
+                  {row.latencyMs != null ? (
+                    `${row.latencyMs} ms`
+                  ) : (
+                    <span
+                      className="text-muted-foreground"
+                      title="Latence non enregistrée pour cet appel."
+                    >
+                      {VALEUR_NON_CALCULABLE}
+                    </span>
+                  )}
                 </td>
                 <td className="px-3 py-2">
                   <Button
@@ -132,13 +142,13 @@ export function AdminAiLogsTable({ rows }: { rows: AdminAiLogRow[] }) {
               <div>
                 <p className="font-medium">System prompt</p>
                 <pre className="mt-1 max-h-40 overflow-auto rounded bg-muted p-2 text-xs whitespace-pre-wrap">
-                  {selected.systemPrompt ?? "—"}
+                  {selected.systemPrompt ?? "(non enregistré)"}
                 </pre>
               </div>
               <div>
                 <p className="font-medium">User prompt</p>
                 <pre className="mt-1 max-h-40 overflow-auto rounded bg-muted p-2 text-xs whitespace-pre-wrap">
-                  {selected.userPrompt ?? "—"}
+                  {selected.userPrompt ?? "(non enregistré)"}
                 </pre>
               </div>
               <div>

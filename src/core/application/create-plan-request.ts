@@ -23,7 +23,7 @@ export async function createPlanRequest(
     await sendTransactionalEmail({
       to: adminEmail,
       subject: "Sales Time · Nouvelle demande d'upgrade",
-      html: `<p>Organisation : ${row.organizationName}</p><p>Plan : ${row.desiredPlan ?? "—"}</p><p>${row.message ?? ""}</p>`,
+      html: `<p>Organisation : ${row.organizationName}</p><p>Plan : ${row.desiredPlan ?? "non précisé"}</p><p>${row.message ?? ""}</p>`,
     }).catch(() => undefined);
   }
 

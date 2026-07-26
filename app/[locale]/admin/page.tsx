@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/molecules/page-header";
 import { AdminActivityChart } from "@/components/organisms/admin-activity-chart";
 import { AdminOrgGrowthChart } from "@/components/organisms/admin-org-growth-chart";
 import { AdminDateRangePicker } from "@/components/molecules/admin-date-range-picker";
+import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 
 export const dynamic = "force-dynamic";
 
@@ -132,7 +133,7 @@ export default async function AdminDashboardPage(props: {
           value={
             aiKpis.analysisFailureRatePct != null
               ? `${aiKpis.analysisFailureRatePct}%`
-              : "—"
+              : VALEUR_NON_CALCULABLE
           }
           footer={`${aiKpis.failedMeetings} échecs / ${aiKpis.readyMeetings} OK`}
           accent="violet"
@@ -193,8 +194,16 @@ export default async function AdminDashboardPage(props: {
         <AdminKpiCard
           icon={TrendingDown}
           label="Stickiness (DAU/MAU)"
-          value={mau > 0 ? `${Math.round((dau / mau) * 100)}%` : "—"}
-          footer={"Ratio d'engagement quotidien"}
+          value={
+            mau > 0
+              ? `${Math.round((dau / mau) * 100)}%`
+              : VALEUR_NON_CALCULABLE
+          }
+          footer={
+            mau > 0
+              ? "Ratio d'engagement quotidien"
+              : "Aucun utilisateur actif sur la période"
+          }
           accent="violet"
         />
       </div>

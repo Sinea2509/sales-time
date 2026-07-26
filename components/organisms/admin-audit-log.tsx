@@ -237,8 +237,8 @@ export function AdminAuditLog({ logs }: Props) {
                             {log.reason}
                           </span>
                         ) : (
-                          <span className="text-zinc-300 dark:text-zinc-600">
-                            —
+                          <span className="text-zinc-500 dark:text-zinc-400">
+                            Sans motif
                           </span>
                         )}
                       </td>
