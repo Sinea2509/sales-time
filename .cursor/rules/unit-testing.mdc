@@ -1,12 +1,12 @@
 ---
-description: Unit tests — colocation, naming, coverage expectations
+description: Unit tests · colocation, naming, coverage expectations
 globs: **/*.test.ts
 alwaysApply: false
 ---
 
 # Unit tests
 
-- Name `*.test.ts` next to source or under `tests/` for integration-style action tests — match existing layout.
+- Name `*.test.ts` next to source or under `tests/` for integration-style action tests; match existing layout.
 - Prefer **pure tests** for domain (no DB); mock **ports** for application use cases.
 - Cover branches and edge cases when touching logic; maintain **≥75% line coverage** on aggregate for paths listed in `jest.config.js` → `collectCoverageFrom` (CI-enforced thresholds pending accurate Jest coverage).
 - After substantive changes: `npm run verify`; for coverage snapshot: `npm run test:coverage`.

@@ -1,5 +1,5 @@
 ---
-description: Next.js delivery layer — routes, Server Actions, UI wiring to core
+description: Next.js delivery layer · routes, Server Actions, UI wiring to core
 globs: app/**/*.{ts,tsx}
 alwaysApply: false
 ---
@@ -9,9 +9,9 @@ alwaysApply: false
 ## Thin delivery
 
 - Parse/validate with **Zod** at the boundary (`safeParse` + structured errors).
-- Compose deps via `getApplicationDeps()` — **no ad-hoc Prisma** in routes/actions.
+- Compose deps via `getApplicationDeps()`; **no ad-hoc Prisma** in routes/actions.
 - Call **one** application use case per action when possible; map result to UI/JSON/redirect.
-- Side effects tied to HTTP lifecycle (`after()`, `revalidatePath`) stay in delivery — not in `src/core/application/`.
+- Side effects tied to HTTP lifecycle (`after()`, `revalidatePath`) stay in delivery, not in `src/core/application/`.
 
 ## File placement
 
