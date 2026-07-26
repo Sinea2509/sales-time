@@ -296,13 +296,23 @@ export function MonEquipeSection({
                         d'abord et le nom tombe à « C… ».
                       */}
                       <td className="w-full max-w-0 min-w-[7.5rem] px-4 py-3.5 align-middle @min-[580px]:min-w-[10.5rem]">
+                        {/*
+                          Deux survols se superposent ici, celui de la ligne et
+                          celui du lien, et ils se lisent dans la même famille :
+                          violet 50 à 60% pour la ligne, violet 100 à 70% pour le
+                          lien. Le second se détache du premier de 1,08, contre
+                          1,04 quand il était gris ; le pas est petit dans les
+                          deux cas, mais celui-là ne change pas de teinte en
+                          chemin, si bien que ce qu'on voit bouger est la
+                          profondeur et non la couleur.
+                        */}
                         <Link
                           href={
                             statsWindowDays === 30
                               ? `/company/equipe/${row.userId}`
                               : `/company/equipe/${row.userId}?jours=${statsWindowDays}`
                           }
-                          className="group flex min-w-0 items-center gap-3 rounded-lg py-0.5 pr-2 outline-none transition-colors hover:bg-zinc-100/90 focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:hover:bg-zinc-800/60 dark:focus-visible:ring-zinc-500/40"
+                          className="group flex min-w-0 items-center gap-3 rounded-lg py-0.5 pr-2 outline-none transition-colors hover:bg-violet-100/70 focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:hover:bg-zinc-800/60 dark:focus-visible:ring-zinc-500/40"
                           aria-label={`Fiche de ${person.primary}`}
                         >
                           {/*
@@ -333,7 +343,12 @@ export function MonEquipeSection({
                               // homonymes : dans un bloc étroit elle coûte plus
                               // de largeur qu'elle n'en rend, et la fiche
                               // l'affiche de toute façon.
-                              <p className="text-muted-foreground hidden truncate text-xs @min-[580px]:block dark:text-zinc-400">
+                              //
+                              // Zinc 600 et non l'encre douce : cette ligne est
+                              // la plus enfouie du tableau, sous le survol de la
+                              // ligne puis sous celui du lien, où l'encre douce
+                              // tombe à 4,15:1. Zinc 600 y vaut 6,75:1.
+                              <p className="hidden truncate text-xs text-zinc-600 @min-[580px]:block dark:text-zinc-400">
                                 {person.secondary}
                               </p>
                             ) : null}
@@ -348,7 +363,7 @@ export function MonEquipeSection({
                           formatDurationHoursMinutes(row.tamMinutesAvg)
                         ) : (
                           <span
-                            className="text-muted-foreground dark:text-zinc-400"
+                            className="text-zinc-600 dark:text-zinc-400"
                             title="Non calculable : aucun rendez-vous connecté avec une durée renseignée sur la période."
                           >
                             {VALEUR_NON_CALCULABLE}

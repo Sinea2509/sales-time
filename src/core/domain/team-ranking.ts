@@ -86,7 +86,11 @@ export const NOTE_ON5_MAX = 5;
 
 /**
  * Volume minimum de rendez-vous notés pour entrer au classement.
- * Réglable par organisation ; cette valeur est le défaut du produit.
+ *
+ * C'est 3 pour tout le monde. `rankTeamMembers` accepte bien une autre valeur,
+ * mais rien ne lui en fournit : l'unique appel de production la laisse vide et
+ * les réglages d'organisation ne portent pas ce seuil. La porte est ouverte, le
+ * réglage n'existe pas encore, et ce commentaire ne promettra pas l'inverse.
  */
 export const DEFAULT_MIN_SCORED_MEETINGS = 3;
 

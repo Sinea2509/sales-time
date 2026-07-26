@@ -22,7 +22,12 @@ import {
  *
  * Contrastes calculés sur le thème clair, seul thème optimisé : blanc sur la
  * couleur de marque vaut 5,07:1 et violet 700 sur violet 100 vaut 6,15:1, tous
- * deux au-dessus du seuil de 4,5:1 exigé pour du petit texte.
+ * deux au-dessus du seuil de 4,5:1 exigé pour du petit texte. La pastille peint
+ * son fond, elle ne dépend donc pas de la ligne qui la porte.
+ *
+ * Les deux textes qui l'entourent en dépendent, eux, et c'est pourquoi ils sont
+ * en zinc 600 plutôt qu'en encre douce : la ligne se teinte au survol et l'encre
+ * douce y tombe à 4,49:1, sous le seuil, là où zinc 600 vaut 7,32:1.
  */
 export function TeamRankCell({
   ranking,
@@ -42,10 +47,7 @@ export function TeamRankCell({
     const raison = ranking.unrankedReason ?? "sans-note";
     return (
       <span
-        className={cn(
-          "text-muted-foreground text-sm dark:text-zinc-400",
-          className,
-        )}
+        className={cn("text-sm text-zinc-600 dark:text-zinc-400", className)}
         title={unrankedExplanation(raison, scoredMeetings, minScoredMeetings)}
       >
         {VALEUR_NON_CALCULABLE}
@@ -88,7 +90,7 @@ export function TeamRankCell({
         // large. Cette cellule ne sert qu'au tableau : elle a donc toujours un
         // bloc de référence au-dessus d'elle.
         <span
-          className="text-muted-foreground hidden text-xs tabular-nums @min-[580px]:inline dark:text-zinc-400"
+          className="hidden text-xs text-zinc-600 tabular-nums @min-[580px]:inline dark:text-zinc-400"
           // « point sur 5 » se lirait « sur 5 » comme une note : un écart n'est
           // pas une note, il se dit en points de l'échelle, jamais sur elle.
           title={`Écart à la moyenne des membres classés : ${ecartTexte} point${
