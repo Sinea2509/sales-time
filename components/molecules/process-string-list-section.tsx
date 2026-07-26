@@ -186,7 +186,9 @@ function ProcessSortableRow({
                 type="button"
                 className={cn(
                   "text-muted-foreground hover:text-foreground -ml-1 shrink-0 cursor-grab touch-none rounded-md p-1.5 active:cursor-grabbing",
-                  "hover:bg-muted/80 outline-none",
+                  // La poignée de glissement se saisit aussi au clavier : sans
+                  // anneau, le curseur de tabulation disparaissait dessus.
+                  "hover:bg-muted/80 outline-none focus-visible:ring-brand focus-visible:ring-2",
                 )}
                 aria-label="Glisser pour réordonner"
                 {...sortable.dragAttributes}

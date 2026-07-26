@@ -112,6 +112,13 @@ export function OrgSettingsTeamList({
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
+            {/*
+              Les trois commandes sont soudées dans un même cadre, et ce cadre
+              coupe ce qui dépasse : un anneau de focus posé à l'extérieur d'un
+              segment serait rogné. C'est pourquoi ils avaient tous les trois
+              annulé le leur, et pourquoi personne ne voyait plus où il était au
+              clavier. L'anneau va donc à l'intérieur du segment.
+            */}
             <div className="flex w-full flex-nowrap items-stretch overflow-hidden rounded-md border border-input bg-background">
               <div
                 className={cn(
@@ -127,7 +134,7 @@ export function OrgSettingsTeamList({
                   placeholder="collegue@entreprise.com"
                   autoComplete="email"
                   aria-label="Adresse e-mail du membre à inviter"
-                  className="h-10 min-w-0 flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:outline-none"
+                  className="h-10 min-w-0 flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:inset-ring-2 focus-visible:inset-ring-brand"
                 />
               </div>
               {canManageTeam ? (
@@ -142,7 +149,7 @@ export function OrgSettingsTeamList({
                     className={cn(
                       nativeSelectChevronClasses,
                       "h-10 min-w-[9.5rem] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-3 pr-10 text-sm outline-none",
-                      "focus-visible:ring-0",
+                      "focus-visible:inset-ring-2 focus-visible:inset-ring-brand",
                       "dark:bg-transparent",
                     )}
                   >
@@ -159,7 +166,9 @@ export function OrgSettingsTeamList({
                 type="button"
                 disabled={pending}
                 onClick={sendInvitation}
-                className="h-10 shrink-0 rounded-none border-0 bg-brand px-5 text-brand-foreground hover:bg-brand-hover focus-visible:ring-0"
+                // Anneau clair et non violet : sur un bouton déjà peint à la
+                // marque, un anneau à la marque ne se verrait pas.
+                className="h-10 shrink-0 rounded-none border-0 bg-brand px-5 text-brand-foreground hover:bg-brand-hover focus-visible:inset-ring-2 focus-visible:inset-ring-brand-foreground"
               >
                 {pending ? "Envoi…" : "Envoyer"}
               </Button>

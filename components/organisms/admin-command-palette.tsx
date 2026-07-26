@@ -289,7 +289,12 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
             onKeyDown={handleKeyDown}
             disabled={pending}
             placeholder="Rechercher des pages, organisations, utilisateurs..."
-            className="h-12 border-0 shadow-none focus-visible:ring-0"
+            // Le champ touche le bord haut de la boite de dialogue, et cette
+            // boite rogne ce qui dépasse : le halo posé à l'extérieur par
+            // « Input » est coupé sur toute la largeur du champ. L'anneau va
+            // donc à l'intérieur, comme pour les commandes soudées de la page
+            // équipe.
+            className="h-12 border-0 shadow-none focus-visible:ring-0 focus-visible:inset-ring-2 focus-visible:inset-ring-brand"
           />
         </div>
         <div ref={listRef} className="max-h-[320px] overflow-y-auto p-2">

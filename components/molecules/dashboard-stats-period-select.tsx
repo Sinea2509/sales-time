@@ -69,11 +69,22 @@ export function DashboardStatsPeriodSelect(props: {
         dark ? "text-zinc-400" : "text-muted-foreground",
       )}
     >
+      {/*
+        « outline-none » sans rien en échange rendait cette commande muette au
+        clavier : on tabulait dessus et rien ne bougeait à l'écran. C'est
+        pourtant elle qui commande la période de tous les chiffres de la page.
+
+        Un anneau plein plutôt que la bordure teintée des champs bordés : ce
+        sélecteur n'a aucune bordure à repeindre, et lui en poser une
+        déplacerait le chevron de deux pixels au repos. La marque à pleine
+        force, et non voilée, parce qu'elle se détache sur le blanc de la page
+        (rapport 5,1) là où la même teinte à 30 % tomberait à 2,3.
+      */}
       <select
         aria-label="Période des statistiques (jours glissants)"
         className={cn(
-          "h-8 appearance-none bg-transparent pr-5 pl-1 text-sm font-normal outline-none",
-          "focus-visible:ring-0 disabled:opacity-60",
+          "h-8 appearance-none rounded-md bg-transparent pr-5 pl-1 text-sm font-normal outline-none",
+          "focus-visible:ring-brand focus-visible:ring-2 disabled:opacity-60",
           dark ? "text-zinc-200" : "text-foreground",
         )}
         value={String(props.value)}
