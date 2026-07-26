@@ -8,6 +8,7 @@ import { TeamRankCell } from "@/components/molecules/team-rank-cell";
 import { TeamTierBadge } from "@/components/molecules/team-tier-badge";
 import { TeamCollectiveOverview } from "@/components/organisms/team-collective-overview";
 import { buttonVariants } from "@/components/ui/button";
+import { membres, rdvNotes } from "@/lib/accord-fr";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
 import { prospectInitials } from "@/lib/prospect-initials";
@@ -36,10 +37,6 @@ function monEquipeListHref(
     q.set("equipePage", String(equipePage));
   }
   return `${basePath}?${q.toString()}`;
-}
-
-function membres(n: number): string {
-  return n <= 1 ? `${n} membre` : `${n} membres`;
 }
 
 /**
@@ -387,9 +384,7 @@ export function MonEquipeSection({
                           }
                         >
                           {row.scoredMeetings > 0
-                            ? `moyenne de ${row.scoredMeetings} RDV noté${
-                                row.scoredMeetings > 1 ? "s" : ""
-                              }`
+                            ? `moyenne de ${rdvNotes(row.scoredMeetings)}`
                             : "aucun RDV noté"}
                         </span>
                       </td>

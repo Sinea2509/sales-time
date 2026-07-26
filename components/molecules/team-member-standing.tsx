@@ -1,4 +1,5 @@
 import { TeamTierBadge } from "@/components/molecules/team-tier-badge";
+import { membresClasses, rdvNotes } from "@/lib/accord-fr";
 import { cn } from "@/lib/utils";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
 import {
@@ -8,14 +9,6 @@ import {
   unrankedExplanation,
 } from "@/src/core/domain/team-ranking";
 import type { TeamMemberStanding as TeamMemberStandingData } from "@/src/core/application/get-org-admin-dashboard";
-
-function rdvNotes(n: number): string {
-  return n <= 1 ? `${n} RDV noté` : `${n} RDV notés`;
-}
-
-function membresClasses(n: number): string {
-  return n <= 1 ? `${n} membre classé` : `${n} membres classés`;
-}
 
 /**
  * Phrase de comparaison à la moyenne d'équipe.
@@ -163,9 +156,19 @@ export function TeamMemberStanding({
             trois éléments plus loin sur la même ligne, et un nombre nu derrière
             « sur » s'y lirait comme le dénominateur d'une note. Le mot dit aussi
             que ces 7 ne sont pas l'équipe entière, qui en compte 10.
+
+            « classés » est écrit au pluriel une fois pour toutes, sans test
+            d'accord : le retour anticipé ci-dessus a déjà renvoyé la fiche pour
+            un seul membre classé, si bien qu'ici le compte vaut deux au
+            minimum. Un singulier conditionnel serait une branche que rien ne
+            peut atteindre, et laisserait croire qu'elle protège quelque chose.
+
+            Le libellé long, « membres classés », est celui de l'infobulle
+            au-dessus ; l'insigne, lui, tient sur une ligne à côté d'un rang et
+            d'un palier, et se contente du mot qui porte le sens.
           */}
           <span className="font-normal text-zinc-500 dark:text-zinc-400">
-            sur {ranking.rankedCount} classé{ranking.rankedCount > 1 ? "s" : ""}
+            sur {ranking.rankedCount} classés
           </span>
         </span>
         <TeamTierBadge tier={row.tier} />

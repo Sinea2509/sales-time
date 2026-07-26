@@ -1,3 +1,4 @@
+import { membres, membresClasses } from "@/lib/accord-fr";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import {
   amplitudeDesNotes,
@@ -10,10 +11,6 @@ import {
   tierFromNoteOn5,
   type TeamRankingSummary as TeamRankingSummaryData,
 } from "@/src/core/domain/team-ranking";
-
-function membres(n: number): string {
-  return n <= 1 ? `${n} membre` : `${n} membres`;
-}
 
 /**
  * Phrase des exclusions, une raison à la fois.
@@ -83,7 +80,7 @@ function listeDesSatellites(
       cle: "palier",
       libelle: `${PREMIER_PALIER_HAUT.nom} ou plus`,
       valeur: String(membresAuPalier(dots, PREMIER_PALIER_HAUT)),
-      precision: `sur ${ranking.rankedCount} classés`,
+      precision: `sur ${membresClasses(ranking.rankedCount)}`,
     });
   }
 
@@ -105,6 +102,53 @@ function listeDesSatellites(
   }
 
   return liste;
+}
+
+/**
+ * La ligne qui dit sur quoi le grand chiffre est pris.
+ *
+ * Jamais un nombre nu derrière « sur » : cette ligne suit immédiatement une
+ * note écrite « 3,2/5 », et « classés sur 10 » s'y lirait alors
+ * « notés sur 10 ». Les deux effectifs sont donc annoncés séparément, du total
+ * vers les classés.
+ *
+ * À un seul membre classé, le mot « moyenne » disparaît. La valeur affichée est
+ * la note de cette personne ; l'annoncer comme une moyenne laisserait croire à
+ * un calcul portant sur plusieurs.
+ */
+function baseDeLaMoyenne(
+  ranking: TeamRankingSummaryData,
+  totalCount: number,
+): string {
+  const effectif = `équipe de ${membres(totalCount)}`;
+  if (ranking.rankedCount === 0) {
+    return `${effectif} · aucun membre classé pour l'instant`;
+  }
+  if (ranking.rankedCount === 1) {
+    return `${effectif} · note du seul membre classé`;
+  }
+  return `${effectif} · moyenne des ${membresClasses(ranking.rankedCount)}`;
+}
+
+/**
+ * Ce que le grand chiffre dit exactement, en toutes lettres, au survol.
+ *
+ * Même règle que la ligne juste au-dessous : à un seul membre classé, ce n'est
+ * pas une moyenne, c'est une note.
+ */
+function detailDeLaMoyenne(
+  ranking: TeamRankingSummaryData,
+  moyenne: number | null,
+): string {
+  if (moyenne == null) {
+    return "Aucun membre classé : la moyenne n'a pas de base de calcul.";
+  }
+  if (ranking.rankedCount === 1) {
+    return "Note du seul membre classé : avec une seule note, la moyenne est cette note.";
+  }
+  return `Moyenne des notes affichées des ${membres(
+    ranking.rankedCount,
+  )} au classement.`;
 }
 
 const ETIQUETTE =
@@ -151,15 +195,7 @@ export function TeamRankingSummary({
   const palier = tierFromNoteOn5(moyenne);
   const exclusions = horsClassement(ranking);
   const satellites = listeDesSatellites(ranking, totalCount, dots);
-  // Jamais un nombre nu derrière « sur » : cette ligne suit immédiatement une
-  // note écrite « 3,2/5 », et « classés sur 10 » s'y lit alors « notés sur 10 ».
-  // Les deux effectifs sont donc annoncés séparément, du total vers les classés.
-  const base =
-    ranking.rankedCount === 0
-      ? `équipe de ${membres(totalCount)} · aucun membre classé pour l'instant`
-      : `équipe de ${membres(totalCount)} · moyenne des ${membres(
-          ranking.rankedCount,
-        )} classés`;
+  const base = baseDeLaMoyenne(ranking, totalCount);
 
   return (
     <div className="relative isolate overflow-hidden bg-violet-950 text-white">
@@ -184,13 +220,7 @@ export function TeamRankingSummary({
             <p className="mt-1 flex items-baseline gap-1.5">
               <span
                 className="text-4xl leading-none font-semibold tracking-tight tabular-nums sm:text-5xl"
-                title={
-                  moyenne == null
-                    ? "Aucun membre classé : la moyenne n'a pas de base de calcul."
-                    : `Moyenne des notes affichées des ${membres(
-                        ranking.rankedCount,
-                      )} au classement.`
-                }
+                title={detailDeLaMoyenne(ranking, moyenne)}
               >
                 {moyenne == null
                   ? VALEUR_NON_CALCULABLE
