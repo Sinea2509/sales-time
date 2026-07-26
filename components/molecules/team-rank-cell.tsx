@@ -13,6 +13,16 @@ import {
  * Un membre écarté du classement n'affiche pas un rang factice ni un tiret : il
  * affiche « n. c. » et l'infobulle dit pourquoi, avec le chiffre qui le justifie.
  * Tous les libellés s'accordent sur « place », un nom, jamais sur la personne.
+ *
+ * La première place est la seule marquée, et elle l'est en couleur de marque et
+ * non en médaille : il n'y a ni or, ni argent, ni bronze, la deuxième place se
+ * présentant exactement comme la septième. La couleur dit où commence la liste,
+ * pas ce que vaut la personne. Le chiffre reste écrit dans la pastille, donc
+ * elle n'est jamais seule à porter l'information.
+ *
+ * Contrastes calculés sur le thème clair, seul thème optimisé : blanc sur la
+ * couleur de marque vaut 5,07:1 et violet 700 sur violet 100 vaut 6,15:1, tous
+ * deux au-dessus du seuil de 4,5:1 exigé pour du petit texte.
  */
 export function TeamRankCell({
   ranking,
@@ -50,7 +60,12 @@ export function TeamRankCell({
   return (
     <span className={cn("flex items-center gap-2", className)}>
       <span
-        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold tabular-nums text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+        className={cn(
+          "inline-flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums",
+          ranking.rank === 1
+            ? "bg-brand text-white"
+            : "bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-200",
+        )}
         title={
           ranking.tied
             ? `${rankLabel(ranking.rank)}, ex æquo.`

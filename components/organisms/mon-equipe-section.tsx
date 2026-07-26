@@ -12,7 +12,10 @@ import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
-import { sectionHeadingClass } from "@/lib/page-typography";
+import {
+  cardSubsectionTitleClass,
+  sectionHeadingClass,
+} from "@/lib/page-typography";
 import { teamMemberDisplayName } from "@/lib/team-member-display-name";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
@@ -32,12 +35,36 @@ function monEquipeListHref(
   return `${basePath}?${q.toString()}`;
 }
 
+function membres(n: number): string {
+  return n <= 1 ? `${n} membre` : `${n} membres`;
+}
+
+/**
+ * Ce que la liste contient et dans quel ordre.
+ *
+ * L'ordre affiché est le classement lui-même, et il n'est pas devinable : deux
+ * lignes voisines peuvent porter la même note sans porter la même place, et la
+ * fin de liste change de sens selon qu'elle contient ou non des membres hors
+ * classement. La phrase ne décrit donc que les cas réellement présents à
+ * l'écran, plutôt que d'annoncer une fin de liste qui n'existe pas.
+ */
+function ordreDeLaListe(monEquipe: OrgAdminMonEquipePage): string {
+  const effectif = membres(monEquipe.totalCount);
+  if (monEquipe.ranking.rankedCount === 0) {
+    return `${effectif} · aucun n'est encore classé`;
+  }
+  return monEquipe.ranking.unrankedCount === 0
+    ? `${effectif} · du premier au dernier du classement`
+    : `${effectif} · du premier au dernier du classement, puis les membres hors classement`;
+}
+
 export function MonEquipeSection({
   monEquipe,
   statsWindowDays,
   currentUserEmail,
   listBasePath = "/company/equipe",
   showHeading = true,
+  showInvite = true,
 }: {
   monEquipe: OrgAdminMonEquipePage;
   statsWindowDays: number;
@@ -52,6 +79,15 @@ export function MonEquipeSection({
    * l'un sous l'autre, à deux tailles différentes, se lisent comme un doublon.
    */
   showHeading?: boolean;
+  /**
+   * Bouton d'invitation porté par la section elle-même.
+   *
+   * Faux quand la page le range dans son propre en-tête, à côté du sélecteur de
+   * période : sans titre pour l'accompagner, ce bouton occupait ici une ligne
+   * entière pour lui seul, juste au-dessous d'une autre ligne à un seul
+   * élément.
+   */
+  showInvite?: boolean;
 }) {
   const lastPage = Math.max(
     1,
@@ -60,23 +96,27 @@ export function MonEquipeSection({
 
   return (
     <section className="space-y-3">
-      {/*
-        Sans titre, le bouton reste seul sur sa ligne : il se range à droite,
-        là où il se trouve déjà quand le titre l'accompagne, plutôt que de
-        sauter à gauche d'un écran à l'autre.
-      */}
-      <div
-        className={
-          showHeading
-            ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-            : "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
-        }
-      >
-        {showHeading ? (
-          <h2 className={sectionHeadingClass}>Mon équipe</h2>
-        ) : null}
-        <TeamMemberInviteDialog currentUserEmail={currentUserEmail} />
-      </div>
+      {showHeading || showInvite ? (
+        /*
+          Sans titre, le bouton reste seul sur sa ligne : il se range à droite,
+          là où il se trouve déjà quand le titre l'accompagne, plutôt que de
+          sauter à gauche d'un écran à l'autre.
+        */
+        <div
+          className={
+            showHeading
+              ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+              : "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
+          }
+        >
+          {showHeading ? (
+            <h2 className={sectionHeadingClass}>Mon équipe</h2>
+          ) : null}
+          {showInvite ? (
+            <TeamMemberInviteDialog currentUserEmail={currentUserEmail} />
+          ) : null}
+        </div>
+      ) : null}
       {/*
         Les deux lectures collectives viennent avant le tableau : elles portent
         sur l'équipe entière, quand le tableau ne montre qu'une page de membres.
@@ -89,7 +129,27 @@ export function MonEquipeSection({
         ranking={monEquipe.ranking}
         totalCount={monEquipe.totalCount}
       />
-      <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+      {/*
+        Même cadre que les deux cartes collectives juste au-dessus : le bord
+        était ici un zinc 200 à 10 % d'opacité, donc invisible sur blanc, et
+        l'ombre était d'un cran plus lourde. Des trois cartes empilées, une
+        seule flottait.
+      */}
+      <section
+        aria-label="Détail membre par membre"
+        className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        {/*
+          La carte se nomme, comme les deux au-dessus d'elle. Sans titre, le
+          tableau semblait détailler la carte des compétences qui le précède,
+          alors qu'il ne détaille que le classement.
+        */}
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-zinc-200 px-4 py-3.5 sm:px-5 dark:border-zinc-800">
+          <h3 className={cardSubsectionTitleClass}>Membre par membre</h3>
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            {ordreDeLaListe(monEquipe)}
+          </p>
+        </div>
         {/*
           Les colonnes s'effacent par ordre inverse d'importance quand l'écran
           rétrécit, exactement comme le tableau du tableau de bord commercial le
@@ -164,9 +224,19 @@ export function MonEquipeSection({
                 monEquipe.rows.map((row) => {
                   const person = teamMemberDisplayName(row);
                   return (
+                    /*
+                      Le survol prend la teinte de marque plutôt qu'un gris :
+                      c'est la même famille que le bandeau d'ouverture et que
+                      les pastilles de rang, donc la ligne survolée se rattache
+                      à la page au lieu de s'en détacher. L'opacité est réglée à
+                      60 % pour que l'encre la plus pâle du tableau, le gris 500
+                      du sous-titre de note, tienne encore 4,57:1 sur le fond
+                      obtenu, au-dessus du seuil de 4,5:1. À pleine opacité elle
+                      tomberait à 4,40:1.
+                    */
                     <tr
                       key={row.userId}
-                      className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/50"
+                      className="hover:bg-violet-50/60 dark:hover:bg-zinc-800/50"
                     >
                       <td className="px-4 py-3.5 align-middle">
                         <TeamRankCell
@@ -341,12 +411,11 @@ export function MonEquipeSection({
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
       {monEquipe.totalCount > monEquipe.pageSize ? (
         <div className="text-muted-foreground flex flex-col gap-2 text-xs sm:flex-row sm:items-center sm:justify-between dark:text-zinc-400">
           <span>
-            {monEquipe.totalCount} membre
-            {monEquipe.totalCount > 1 ? "s" : ""} · page {monEquipe.page} sur{" "}
+            {membres(monEquipe.totalCount)} · page {monEquipe.page} sur{" "}
             {lastPage}
           </span>
           <div className="flex flex-wrap items-center gap-2">
