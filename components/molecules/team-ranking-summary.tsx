@@ -1,4 +1,5 @@
 import { membres, membresClasses } from "@/lib/accord-fr";
+import { plurielFr } from "@/lib/pluriel-fr";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import {
   amplitudeDesNotes,
@@ -44,6 +45,20 @@ type Satellite = {
   readonly cle: string;
   readonly libelle: string;
   readonly valeur: string;
+  /**
+   * L'unité du chiffre, quand ce n'est pas un nombre de personnes.
+   *
+   * Les satellites occupent des cases identiques, au même corps et au même
+   * gras : « 5 », « 3 », « 1,4 » se lisent d'une traite comme trois
+   * dénombrements, alors que le dernier est un écart de notes. Le libellé le
+   * dit, mais il est au-dessus et en petites capitales, et l'œil descend au
+   * chiffre. L'unité est donc écrite à côté du chiffre, comme le « /5 » de la
+   * moyenne juste au-dessus.
+   *
+   * Absente sur les satellites qui comptent des personnes : « 5 personnes sur
+   * 7 membres » redirait le mot que la précision porte déjà.
+   */
+  readonly unite?: string;
   /** Sur quoi le chiffre est pris. Jamais un nombre nu derrière « sur ». */
   readonly precision: string;
 };
@@ -60,8 +75,12 @@ type Satellite = {
  * Un repère qui n'a pas de base de calcul n'est pas rendu, plutôt que rendu à
  * zéro ou en « n. c. » : le bandeau se resserre sur ce qu'il sait dire, et une
  * équipe qui démarre ne lit pas trois cases vides.
+ *
+ * Exportée pour être relue par « tests/satellites-du-bandeau-equipe.test.ts » :
+ * elle ne produit aucune balise, seulement les mots et les chiffres que le
+ * manager lit, et c'est là qu'un repère perd son unité ou sa base de calcul.
  */
-function listeDesSatellites(
+export function listeDesSatellites(
   ranking: TeamRankingSummaryData,
   totalCount: number,
   dots: readonly TeamDispersionDot[],
@@ -95,6 +114,7 @@ function listeDesSatellites(
       cle: "amplitude",
       libelle: "Écart dans l'équipe",
       valeur: formatNoteFr(bornes.amplitude),
+      unite: plurielFr(bornes.amplitude, "point"),
       precision: `de ${formatNoteFr(bornes.basse)} à ${formatNoteFr(
         bornes.haute,
       )}`,
@@ -256,6 +276,18 @@ export function TeamRankingSummary({
               <span className="text-lg font-semibold tabular-nums">
                 {satellite.valeur}
               </span>
+              {/*
+                Le retrait reprend les deux tiers de l'espacement : l'unité se
+                colle à son chiffre, la précision reste à distance. Sans lui,
+                les trois blocs sont également espacés et « points de 2,9 à
+                4,3 » se lit d'un trait, comme si les points allaient de 2,9 à
+                4,3.
+              */}
+              {satellite.unite == null ? null : (
+                <span className="-ml-1 text-xs font-medium text-white/70">
+                  {satellite.unite}
+                </span>
+              )}
               <span className="text-xs text-white/70">
                 {satellite.precision}
               </span>

@@ -1,6 +1,7 @@
 import { TeamRankingSummary } from "@/components/molecules/team-ranking-summary";
 import { TEAM_TIER_CLASS } from "@/components/molecules/team-tier-badge";
 import type { CardHeadingTag } from "@/lib/page-typography";
+import { plurielFr } from "@/lib/pluriel-fr";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { teamMemberDisplayName } from "@/lib/team-member-display-name";
 import { cn } from "@/lib/utils";
@@ -180,9 +181,15 @@ function positionSurAxe(note: number): string {
   return `${(note / NOTE_ON5_MAX) * 100}%`;
 }
 
-/** « 1,2 point » · « 2,4 points ». Le pluriel commence à deux, comme en français. */
+/**
+ * « 1,2 point » · « 2,4 points ».
+ *
+ * L'accord passe par `plurielFr` plutôt que par un test écrit ici : c'est la
+ * même règle que celle des écarts et des tendances ailleurs dans l'app, et une
+ * règle recopiée est une règle qui finit par diverger d'un écran à l'autre.
+ */
 function points(valeur: number): string {
-  return `${formatNoteFr(valeur)} point${valeur >= 2 ? "s" : ""}`;
+  return `${formatNoteFr(valeur)} ${plurielFr(valeur, "point")}`;
 }
 
 function commerciaux(n: number): string {
@@ -511,10 +518,22 @@ function CarteDesCompetences({
               );
             })}
           </ul>
+          {/*
+            « Niveaux » et non « notes » : la note, sur cet écran, est celle
+            sur 5 qui classe les membres juste au-dessus. Deux échelles portant
+            le même mot sur une même page se confondent, et 62 se lirait comme
+            une note.
+
+            La deuxième phrase dit ce que le calcul fait vraiment : la
+            référence d'équipe moyenne une valeur par commercial, pas une par
+            rendez-vous. Ce qui était écrit ici, « un vote par personne »,
+            promettait un vote qui n'existe nulle part dans le produit.
+          */}
           <p className={cn(LEGENDE, "mt-3")}>
-            Notes sur 100, moyenne de {commerciaux(collectif.skillSellers)} sur
-            la période, un vote par personne. Le repère vertical marque le
-            niveau moyen de l&apos;équipe, {vue.niveauMoyen}/100.
+            Niveaux sur 100, moyenne de {commerciaux(collectif.skillSellers)}{" "}
+            sur la période : chaque commercial y compte pour un, quel que soit
+            son nombre de rendez-vous. Le repère vertical marque le niveau moyen
+            de l&apos;équipe, {vue.niveauMoyen}/100.
           </p>
         </>
       )}
