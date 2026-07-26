@@ -1,5 +1,3 @@
-import { TeamTierLegend } from "@/components/molecules/team-tier-legend";
-import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import {
   formatNoteFr,
@@ -38,18 +36,25 @@ function horsClassement(ranking: TeamRankingSummaryData): string | null {
 }
 
 /**
- * Bandeau de lecture du classement d'équipe : la référence, qui la compose, qui
- * en est écarté et pourquoi, et ce que signifient les paliers. Sans lui, un rang
- * est un nombre sans échelle.
+ * L'en-tête de lecture du classement : la référence, qui la compose, et qui en
+ * est écarté, avec la raison. Sans elle, un rang est un nombre sans échelle.
+ *
+ * Sans cadre à elle : elle coiffe la piste de répartition, dans la carte de
+ * celle-ci. La moyenne annoncée ici est le trait vertical dessiné dix pixels
+ * plus bas, et deux cadres l'un sur l'autre auraient séparé un chiffre de sa
+ * propre illustration.
+ *
+ * L'échelle des paliers n'est pas répétée non plus : la piste dessine les
+ * quatre paliers à leur vraie place sur l'axe des notes, ce qu'une rangée
+ * d'insignes ne fait pas, elle qui garde ses bornes dans une infobulle qu'un
+ * doigt n'ouvre pas.
  */
 export function TeamRankingSummary({
   ranking,
   totalCount,
-  className,
 }: {
   ranking: TeamRankingSummaryData;
   totalCount: number;
-  className?: string;
 }) {
   const moyenne = ranking.averageNoteOn5;
   const exclusions = horsClassement(ranking);
@@ -64,33 +69,25 @@ export function TeamRankingSummary({
         )} classés`;
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900",
-        className,
-      )}
-    >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <span className="text-xs font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
-            Moyenne d&apos;équipe
-          </span>
-          <span
-            className="text-lg font-semibold text-zinc-950 tabular-nums dark:text-zinc-50"
-            title={
-              moyenne == null
-                ? "Aucun membre classé : la moyenne n'a pas de base de calcul."
-                : `Moyenne des notes affichées des ${membres(
-                    ranking.rankedCount,
-                  )} au classement.`
-            }
-          >
-            {moyenne == null
-              ? VALEUR_NON_CALCULABLE
-              : `${formatNoteFr(moyenne)}/5`}
-          </span>
-        </div>
-        <TeamTierLegend />
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="text-xs font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+          Moyenne d&apos;équipe
+        </span>
+        <span
+          className="text-2xl font-semibold text-zinc-950 tabular-nums dark:text-zinc-50"
+          title={
+            moyenne == null
+              ? "Aucun membre classé : la moyenne n'a pas de base de calcul."
+              : `Moyenne des notes affichées des ${membres(
+                  ranking.rankedCount,
+                )} au classement.`
+          }
+        >
+          {moyenne == null
+            ? VALEUR_NON_CALCULABLE
+            : `${formatNoteFr(moyenne)}/5`}
+        </span>
       </div>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
         {base}

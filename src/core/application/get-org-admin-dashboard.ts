@@ -86,6 +86,53 @@ export type OrgAdminMonEquipeRow = {
 /** Ligne d'équipe enrichie de son rang, de son palier et de son écart à la moyenne. */
 export type OrgAdminMonEquipeRankedRow = OrgAdminMonEquipeRow & MemberRanking;
 
+/**
+ * Un membre classé, réduit à ce qu'il faut pour le poser sur l'axe des notes.
+ *
+ * Il porte son identité brute et non un libellé déjà écrit : c'est la vue qui
+ * décide comment nommer quelqu'un, et elle le décide une seule fois, pour le
+ * tableau comme pour la piste. Deux règles parallèles finiraient par afficher
+ * « Camille Reynaud » d'un côté et son adresse de l'autre.
+ */
+export type OrgAdminTeamDispersionMember = {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  /** Note globale du membre, sur 5. Toujours présente : un membre classé en a une. */
+  noteOn5: number;
+  rang: number;
+};
+
+/**
+ * Ce que l'équipe dit d'elle-même, par-delà la ligne de chacun.
+ *
+ * Tout porte ici sur l'équipe entière, jamais sur la page affichée : une
+ * dispersion tirée des dix premiers décrirait les dix premiers, sous un titre
+ * qui annonce l'équipe.
+ */
+export type OrgAdminTeamCollective = {
+  /**
+   * Un point par membre classé, à poser sur l'axe des notes.
+   *
+   * Les membres hors classement en sont absents, comme ils sont absents de la
+   * moyenne affichée juste au-dessus : les deux lectures doivent porter sur le
+   * même groupe, sans quoi la moyenne ne tomberait pas au milieu de ses points.
+   */
+  dispersion: OrgAdminTeamDispersionMember[];
+  /**
+   * Les six compétences moyennes de l'équipe, un vote par commercial.
+   *
+   * C'est exactement la référence à laquelle chaque ligne est comparée dans la
+   * colonne « Profil » : le relief de l'équipe et le profil de chacun se lisent
+   * donc dans la même échelle, et un « +17 » individuel se rapporte bien à la
+   * barre affichée au-dessus du tableau.
+   */
+  skillReference: SalesProfileScores | null;
+  /** Commerciaux qui portent des notes de compétence : le dénominateur des barres. */
+  skillSellers: number;
+};
+
 export type OrgAdminMonEquipePage = {
   page: number;
   pageSize: number;
@@ -96,6 +143,7 @@ export type OrgAdminMonEquipePage = {
    * premier de la deuxième page s'afficherait premier.
    */
   ranking: TeamRankingSummary;
+  collectif: OrgAdminTeamCollective;
 };
 
 export type OrgAdminPieSlice = {
@@ -225,6 +273,7 @@ export function buildRankedTeam(input: {
   rows: OrgAdminMonEquipeRankedRow[];
   ranking: TeamRankingSummary;
   totalCount: number;
+  collectif: OrgAdminTeamCollective;
 } {
   const bySeller = aggregateSellerWindowStats(input.meetings);
 
@@ -298,9 +347,35 @@ export function buildRankedTeam(input: {
     return cleDeNom(a).localeCompare(cleDeNom(b), "fr");
   });
 
+  /*
+    La lecture collective se prend sur `parRang`, c'est-à-dire sur l'équipe
+    entière et déjà triée, avant tout découpage en pages. Une dispersion tirée
+    de la page affichée décrirait les dix premiers sous un titre qui annonce
+    l'équipe, et sa ligne de moyenne tomberait à côté de ses propres points.
+  */
+  const dispersion: OrgAdminTeamDispersionMember[] = parRang.flatMap((row) =>
+    row.rank == null || row.noteGlobaleOn5 == null
+      ? []
+      : [
+          {
+            userId: row.userId,
+            firstName: row.firstName,
+            lastName: row.lastName,
+            email: row.email,
+            noteOn5: row.noteGlobaleOn5,
+            rang: row.rank,
+          },
+        ],
+  );
+
   return {
     rows: parRang,
     totalCount: rowsFull.length,
+    collectif: {
+      dispersion,
+      skillReference: referenceEquipe,
+      skillSellers: parMembre.filter((p) => p.skillScores != null).length,
+    },
     ranking: {
       rankedCount: classement.rankedCount,
       unrankedCount: classement.unrankedCount,
@@ -331,6 +406,7 @@ export function buildMonEquipePage(input: {
     totalCount: equipe.totalCount,
     rows: equipe.rows.slice(start, start + ORG_ADMIN_MON_EQUIPE_PAGE_SIZE),
     ranking: equipe.ranking,
+    collectif: equipe.collectif,
   };
 }
 

@@ -24,8 +24,14 @@ import {
  *
  * Enfin le nom du palier est toujours écrit à côté, si bien que la couleur
  * renforce l'ordre sans jamais porter seule l'information.
+ *
+ * Exporté parce que la piste de répartition peint ses pastilles avec ces mêmes
+ * quatre marches : le manager y reconnaît d'un coup d'œil les paliers qu'il lit
+ * une ligne plus bas dans le tableau. Une seconde échelle recopiée à côté
+ * finirait par en dériver, et deux violets voisins qui ne veulent pas dire la
+ * même chose sur le même écran, c'est pire que pas de couleur du tout.
  */
-const TIER_CLASS: Record<RankingTierId, string> = {
+export const TEAM_TIER_CLASS: Record<RankingTierId, string> = {
   demarrage:
     "bg-violet-100 text-violet-800 ring-violet-300 dark:bg-violet-950 dark:text-violet-300 dark:ring-violet-800",
   progression:
@@ -72,7 +78,7 @@ export function TeamTierBadge({
 
   return (
     <span
-      className={cn(CHIP_BASE, TIER_CLASS[tier.id], className)}
+      className={cn(CHIP_BASE, TEAM_TIER_CLASS[tier.id], className)}
       title={tierRangeLabel(tier)}
     >
       {tier.nom}

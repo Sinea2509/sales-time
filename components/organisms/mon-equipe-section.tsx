@@ -5,21 +5,19 @@ import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { SkillSignatureCell } from "@/components/molecules/seller-skill-signature-view";
 import { TeamRankCell } from "@/components/molecules/team-rank-cell";
-import { TeamRankingSummary } from "@/components/molecules/team-ranking-summary";
 import { TeamTierBadge } from "@/components/molecules/team-tier-badge";
+import { TeamCollectiveOverview } from "@/components/organisms/team-collective-overview";
 import { buttonVariants } from "@/components/ui/button";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 import { sectionHeadingClass } from "@/lib/page-typography";
+import { teamMemberDisplayName } from "@/lib/team-member-display-name";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import { unrankedExplanation } from "@/src/core/domain/team-ranking";
-import type {
-  OrgAdminMonEquipePage,
-  OrgAdminMonEquipeRankedRow,
-} from "@/src/core/application/get-org-admin-dashboard";
+import type { OrgAdminMonEquipePage } from "@/src/core/application/get-org-admin-dashboard";
 
 function monEquipeListHref(
   basePath: string,
@@ -32,14 +30,6 @@ function monEquipeListHref(
     q.set("equipePage", String(equipePage));
   }
   return `${basePath}?${q.toString()}`;
-}
-
-function monEquipePersonLines(row: OrgAdminMonEquipeRankedRow) {
-  const full = [row.firstName, row.lastName].filter(Boolean).join(" ").trim();
-  if (full) {
-    return { primary: full, secondary: row.email, initialsSource: full };
-  }
-  return { primary: row.email, secondary: null, initialsSource: row.email };
 }
 
 export function MonEquipeSection({
@@ -87,7 +77,15 @@ export function MonEquipeSection({
         ) : null}
         <TeamMemberInviteDialog currentUserEmail={currentUserEmail} />
       </div>
-      <TeamRankingSummary
+      {/*
+        Les deux lectures collectives viennent avant le tableau : elles portent
+        sur l'équipe entière, quand le tableau ne montre qu'une page de membres.
+        Les lire après aurait donné à croire qu'elles décrivent ce qui est
+        au-dessus d'elles. La moyenne d'équipe est dans la première des deux,
+        au-dessus de la piste qui la dessine.
+      */}
+      <TeamCollectiveOverview
+        collectif={monEquipe.collectif}
         ranking={monEquipe.ranking}
         totalCount={monEquipe.totalCount}
       />
@@ -164,7 +162,7 @@ export function MonEquipeSection({
                 />
               ) : (
                 monEquipe.rows.map((row) => {
-                  const person = monEquipePersonLines(row);
+                  const person = teamMemberDisplayName(row);
                   return (
                     <tr
                       key={row.userId}
