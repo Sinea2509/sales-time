@@ -3,7 +3,11 @@ import {
   type SalesProfileDimensionKey,
   type SalesProfileScores,
 } from "./sales-profile-from-meetings";
-import { displayedNoteOn5, NOTE_ON5_MAX } from "./team-ranking";
+import {
+  displayedNoteOn5,
+  NOTE_ON5_MAX,
+  type RankingTier,
+} from "./team-ranking";
 
 /**
  * Ce que le manager lit de son équipe prise comme un tout · règles pures.
@@ -275,6 +279,29 @@ export function nombreDeStratesParLargeur(
     });
   }
   return compte;
+}
+
+/**
+ * Combien de membres de la piste atteignent au moins un palier donné.
+ *
+ * Le compte se prend sur les points de la piste et jamais sur les lignes du
+ * tableau : le tableau est paginé, la piste porte toute l'équipe classée. Lu
+ * sur la page en cours, le même chiffre dirait « 3 » sur la première page et
+ * « 2 » sur la seconde, pour la même équipe et le même jour.
+ *
+ * La comparaison se fait sur la note affichée, comme partout ailleurs : un
+ * membre qui lit 3 à l'écran est au palier qui commence à 3, même si sa moyenne
+ * brute vaut 2,96. Compter autrement produirait un total que le lecteur ne
+ * pourrait pas refaire en regardant les pastilles.
+ *
+ * La borne haute du palier n'est pas regardée : la question posée est « qui est
+ * au moins à ce niveau », donc les paliers au-dessus comptent aussi.
+ */
+export function membresAuPalier(
+  dots: readonly TeamDispersionDot[],
+  palier: RankingTier,
+): number {
+  return dots.filter((dot) => dot.valeur >= palier.minNoteOn5).length;
 }
 
 /** Ce que la piste couvre : la note la plus basse, la plus haute, leur écart. */

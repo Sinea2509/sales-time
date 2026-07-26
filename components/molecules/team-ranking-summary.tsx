@@ -1,6 +1,13 @@
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import {
+  amplitudeDesNotes,
+  membresAuPalier,
+  type TeamDispersionDot,
+} from "@/src/core/domain/team-collective-view";
+import {
   formatNoteFr,
+  PREMIER_PALIER_HAUT,
+  tierFromNoteOn5,
   type TeamRankingSummary as TeamRankingSummaryData,
 } from "@/src/core/domain/team-ranking";
 
@@ -35,29 +42,115 @@ function horsClassement(ranking: TeamRankingSummaryData): string | null {
     : `hors classement : ${raisons.join(", ")}`;
 }
 
+/** Un chiffre posé à côté de la moyenne, avec de quoi le relire. */
+type Satellite = {
+  readonly cle: string;
+  readonly libelle: string;
+  readonly valeur: string;
+  /** Sur quoi le chiffre est pris. Jamais un nombre nu derrière « sur ». */
+  readonly precision: string;
+};
+
 /**
- * L'en-tête de lecture du classement : la référence, qui la compose, et qui en
- * est écarté, avec la raison. Sans elle, un rang est un nombre sans échelle.
+ * Les chiffres qui empêchent de lire la moyenne toute seule.
  *
- * Sans cadre à elle : elle coiffe la piste de répartition, dans la carte de
- * celle-ci. La moyenne annoncée ici est le trait vertical dessiné dix pixels
- * plus bas, et deux cadres l'un sur l'autre auraient séparé un chiffre de sa
- * propre illustration.
+ * Une moyenne est le nombre qui cache le plus de choses : 3,4 vaut aussi bien
+ * pour une équipe entière posée à 3,4 que pour une équipe coupée en deux. Les
+ * trois repères répondent chacun à une question que la moyenne avale : sur
+ * combien de personnes elle est calculée, combien sont déjà au niveau, et sur
+ * quelle largeur l'équipe s'étale.
  *
- * L'échelle des paliers n'est pas répétée non plus : la piste dessine les
- * quatre paliers à leur vraie place sur l'axe des notes, ce qu'une rangée
- * d'insignes ne fait pas, elle qui garde ses bornes dans une infobulle qu'un
- * doigt n'ouvre pas.
+ * Un repère qui n'a pas de base de calcul n'est pas rendu, plutôt que rendu à
+ * zéro ou en « n. c. » : le bandeau se resserre sur ce qu'il sait dire, et une
+ * équipe qui démarre ne lit pas trois cases vides.
+ */
+function listeDesSatellites(
+  ranking: TeamRankingSummaryData,
+  totalCount: number,
+  dots: readonly TeamDispersionDot[],
+): Satellite[] {
+  const liste: Satellite[] = [
+    {
+      cle: "effectif",
+      libelle: "Au classement",
+      valeur: String(ranking.rankedCount),
+      precision: `sur ${membres(totalCount)}`,
+    },
+  ];
+
+  if (ranking.rankedCount > 0) {
+    liste.push({
+      cle: "palier",
+      libelle: `${PREMIER_PALIER_HAUT.nom} ou plus`,
+      valeur: String(membresAuPalier(dots, PREMIER_PALIER_HAUT)),
+      precision: `sur ${ranking.rankedCount} classés`,
+    });
+  }
+
+  /*
+    L'étalement demande deux notes à comparer. Sur un seul membre classé il
+    vaudrait 0, ce qui se lirait « équipe parfaitement groupée » alors qu'il n'y
+    a personne avec qui être groupé.
+  */
+  const bornes = dots.length >= 2 ? amplitudeDesNotes(dots) : null;
+  if (bornes != null) {
+    liste.push({
+      cle: "amplitude",
+      libelle: "Écart dans l'équipe",
+      valeur: formatNoteFr(bornes.amplitude),
+      precision: `de ${formatNoteFr(bornes.basse)} à ${formatNoteFr(
+        bornes.haute,
+      )}`,
+    });
+  }
+
+  return liste;
+}
+
+const ETIQUETTE =
+  "text-[11px] font-semibold tracking-wider text-white/70 uppercase";
+
+/**
+ * Le bandeau d'ouverture de la vue équipe : la moyenne en grand, puis les trois
+ * repères qui interdisent de la lire toute seule.
+ *
+ * Il coiffe la piste de répartition à l'intérieur de la carte de celle-ci, sans
+ * cadre à lui. La moyenne annoncée ici est le trait vertical dessiné quelques
+ * pixels plus bas, et deux cadres l'un sur l'autre auraient séparé un chiffre
+ * de sa propre illustration.
+ *
+ * Le fond sombre est le seul de la page : c'est ce qui fait de ce chiffre le
+ * point d'entrée de l'écran plutôt qu'une valeur parmi les autres. Les deux
+ * halos sont décoratifs et annoncés comme tels ; leur opacité est plafonnée
+ * pour que l'encre reste lisible même à l'endroit où ils se cumulent. Les
+ * contrastes ont été calculés sur le thème clair, seul thème optimisé : sur le
+ * fond le plus pâle que les halos produisent, le blanc plein vaut 8,06:1 et le
+ * blanc à 70 % vaut 4,80:1, au-dessus du seuil de 4,5:1 exigé pour du petit
+ * texte. Rien sous 70 % d'opacité ne porte donc de mot.
+ *
+ * Le palier de la moyenne est écrit, jamais peint : la couleur du palier est
+ * calibrée sur fond blanc, et le dernier palier est précisément ce violet
+ * sombre, qui disparaîtrait ici. La piste juste en dessous dessine les quatre
+ * bandes à leur couleur, sur le fond pour lequel elles ont été mesurées.
+ *
+ * L'échelle des paliers n'est pas répétée non plus : la piste les dessine à
+ * leur vraie place sur l'axe des notes, ce qu'une rangée d'insignes ne fait
+ * pas, elle qui garde ses bornes dans une infobulle qu'un doigt n'ouvre pas.
  */
 export function TeamRankingSummary({
   ranking,
   totalCount,
+  dots,
 }: {
   ranking: TeamRankingSummaryData;
   totalCount: number;
+  /** Les membres classés, tels que la piste les pose. Jamais la page en cours. */
+  dots: readonly TeamDispersionDot[];
 }) {
   const moyenne = ranking.averageNoteOn5;
+  const palier = tierFromNoteOn5(moyenne);
   const exclusions = horsClassement(ranking);
+  const satellites = listeDesSatellites(ranking, totalCount, dots);
   // Jamais un nombre nu derrière « sur » : cette ligne suit immédiatement une
   // note écrite « 3,2/5 », et « classés sur 10 » s'y lit alors « notés sur 10 ».
   // Les deux effectifs sont donc annoncés séparément, du total vers les classés.
@@ -69,30 +162,77 @@ export function TeamRankingSummary({
         )} classés`;
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <span className="text-xs font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
-          Moyenne d&apos;équipe
-        </span>
-        <span
-          className="text-2xl font-semibold text-zinc-950 tabular-nums dark:text-zinc-50"
-          title={
-            moyenne == null
-              ? "Aucun membre classé : la moyenne n'a pas de base de calcul."
-              : `Moyenne des notes affichées des ${membres(
-                  ranking.rankedCount,
-                )} au classement.`
-          }
-        >
-          {moyenne == null
-            ? VALEUR_NON_CALCULABLE
-            : `${formatNoteFr(moyenne)}/5`}
-        </span>
+    <div className="relative isolate overflow-hidden bg-violet-950 text-white">
+      {/*
+        Les deux halos sont posés dans des coins opposés et débordent le cadre :
+        un halo entier tenu à l'intérieur se lirait comme une forme, alors que
+        celui-ci ne doit se lire que comme une lumière.
+      */}
+      <span
+        aria-hidden
+        className="bg-brand/40 pointer-events-none absolute -top-24 -right-16 -z-10 size-64 rounded-full blur-3xl"
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -bottom-28 -left-20 -z-10 size-72 rounded-full bg-violet-500/25 blur-3xl"
+      />
+
+      <div className="px-4 py-5 sm:px-5 sm:py-6">
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0">
+            <p className={ETIQUETTE}>Moyenne d&apos;équipe</p>
+            <p className="mt-1 flex items-baseline gap-1.5">
+              <span
+                className="text-4xl leading-none font-semibold tracking-tight tabular-nums sm:text-5xl"
+                title={
+                  moyenne == null
+                    ? "Aucun membre classé : la moyenne n'a pas de base de calcul."
+                    : `Moyenne des notes affichées des ${membres(
+                        ranking.rankedCount,
+                      )} au classement.`
+                }
+              >
+                {moyenne == null
+                  ? VALEUR_NON_CALCULABLE
+                  : formatNoteFr(moyenne)}
+              </span>
+              {moyenne == null ? null : (
+                <span className="text-lg font-medium text-white/70">/5</span>
+              )}
+            </p>
+          </div>
+          {palier == null ? null : (
+            <span className="mt-0.5 inline-flex items-center rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-xs font-semibold whitespace-nowrap">
+              Palier {palier.nom}
+            </span>
+          )}
+        </div>
+        <p className="mt-2.5 text-xs leading-relaxed text-white/70">
+          {base}
+          {exclusions ? ` · ${exclusions}` : null}
+        </p>
       </div>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        {base}
-        {exclusions ? ` · ${exclusions}` : null}
-      </p>
+
+      {/*
+        Les satellites s'empilent sur téléphone et s'alignent dès qu'il y a la
+        place : à trois de front sur une carte de 232 pixels, « sur 7 classés »
+        se couperait en trois lignes sous un chiffre de deux caractères.
+      */}
+      <div className="flex flex-col divide-y divide-white/15 border-t border-white/15 sm:flex-row sm:divide-x sm:divide-y-0">
+        {satellites.map((satellite) => (
+          <div key={satellite.cle} className="flex-1 px-4 py-3 sm:px-5">
+            <p className={ETIQUETTE}>{satellite.libelle}</p>
+            <p className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-lg font-semibold tabular-nums">
+                {satellite.valeur}
+              </span>
+              <span className="text-xs text-white/70">
+                {satellite.precision}
+              </span>
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

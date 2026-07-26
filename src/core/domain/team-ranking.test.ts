@@ -5,6 +5,7 @@ import {
 } from "./seller-affinity-from-meetings";
 import {
   DEFAULT_MIN_SCORED_MEETINGS,
+  PREMIER_PALIER_HAUT,
   RANKING_TIERS,
   displayedNoteOn5,
   formatDeltaOn5,
@@ -337,5 +338,44 @@ describe("comptes hors classement", () => {
     expect(r.rows[0]?.unrankedReason).toBe("sans-note");
     expect(r.unrankedNoScoreCount).toBe(1);
     expect(r.unrankedLowVolumeCount).toBe(0);
+  });
+});
+
+describe("PREMIER_PALIER_HAUT", () => {
+  it("désigne un palier qui existe dans l'échelle", () => {
+    expect(RANKING_TIERS).toContain(PREMIER_PALIER_HAUT);
+  });
+
+  /*
+    Le repère sert à partager l'équipe en deux : au niveau, pas encore au
+    niveau. Un palier pris dans la moitié basse ne partagerait rien, puisque
+    presque tout le monde le franchit.
+  */
+  it("se tient dans la moitié haute de l'échelle", () => {
+    const rang = RANKING_TIERS.indexOf(PREMIER_PALIER_HAUT);
+    expect(rang).toBeGreaterThanOrEqual(RANKING_TIERS.length / 2);
+  });
+
+  /*
+    Le dernier palier serait le repère le plus flatteur et le plus inutile :
+    sur l'échelle du produit il ne compterait que les commerciaux au-dessus de
+    4 sur 5, et une équipe entière peut travailler un an sans en avoir un seul.
+  */
+  it("n'est pas le dernier palier tant qu'il en existe un autre", () => {
+    if (RANKING_TIERS.length < 2) return;
+    expect(PREMIER_PALIER_HAUT).not.toBe(
+      RANKING_TIERS[RANKING_TIERS.length - 1],
+    );
+  });
+
+  /*
+    Sur l'échelle du produit, telle qu'elle est écrite aujourd'hui. Ce cas
+    tombera le jour où un palier est ajouté : c'est voulu, il faut alors relire
+    la phrase affichée au manager, pas seulement la règle qui la calcule.
+  */
+  it("vaut « Maîtrise » sur les quatre paliers actuels", () => {
+    expect(RANKING_TIERS).toHaveLength(4);
+    expect(PREMIER_PALIER_HAUT.id).toBe("maitrise");
+    expect(PREMIER_PALIER_HAUT.minNoteOn5).toBe(3);
   });
 });

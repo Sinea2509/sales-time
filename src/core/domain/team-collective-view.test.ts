@@ -2,9 +2,11 @@ import {
   SALES_PROFILE_DIMENSION_KEYS,
   type SalesProfileScores,
 } from "./sales-profile-from-meetings";
+import { PREMIER_PALIER_HAUT, RANKING_TIERS } from "./team-ranking";
 import {
   amplitudeDesNotes,
   ecartMinimalSurPiste,
+  membresAuPalier,
   nombreDeStratesParLargeur,
   teamDispersionDots,
   teamSkillOverview,
@@ -430,6 +432,58 @@ describe("amplitudeDesNotes", () => {
     );
     expect(amplitudeDesNotes([...dots].reverse())).toEqual(
       amplitudeDesNotes(dots),
+    );
+  });
+});
+
+describe("membresAuPalier", () => {
+  it("ne compte personne sur une piste vide", () => {
+    expect(membresAuPalier([], PREMIER_PALIER_HAUT)).toBe(0);
+  });
+
+  /*
+    Le palier est atteint à partir de sa borne basse incluse. Une note posée
+    exactement dessus est donc dedans, comme la pastille qui s'appuie sur le
+    bord gauche de la bande de ce palier.
+  */
+  it("compte la note posée exactement sur la borne du palier", () => {
+    const dots = dotsSurUneLargeur([membre("a", 3)], ECART);
+    expect(membresAuPalier(dots, PREMIER_PALIER_HAUT)).toBe(1);
+  });
+
+  it("ne compte pas la note qui manque la borne d'un dixième", () => {
+    const dots = dotsSurUneLargeur([membre("a", 2.9)], ECART);
+    expect(membresAuPalier(dots, PREMIER_PALIER_HAUT)).toBe(0);
+  });
+
+  /*
+    « Maîtrise ou plus » et non « Maîtrise » : quelqu'un qui est passé au palier
+    du dessus a franchi celui-ci aussi, et un compte qui l'oublierait baisserait
+    le jour où un commercial progresse.
+  */
+  it("compte aussi les membres des paliers au-dessus", () => {
+    const dots = dotsSurUneLargeur(
+      [membre("a", 1.2), membre("b", 3.2), membre("c", 4.6)],
+      ECART,
+    );
+    expect(membresAuPalier(dots, PREMIER_PALIER_HAUT)).toBe(2);
+  });
+
+  it("compte toute l'équipe au premier palier, qui part de zéro", () => {
+    const dots = dotsSurUneLargeur(
+      [membre("a", 0), membre("b", 2.5), membre("c", 4.6)],
+      ECART,
+    );
+    expect(membresAuPalier(dots, RANKING_TIERS[0]!)).toBe(3);
+  });
+
+  it("ne dépend pas de l'ordre dans lequel on lui donne les points", () => {
+    const dots = dotsSurUneLargeur(
+      [membre("a", 2.2), membre("b", 3.7), membre("c", 4.5)],
+      ECART,
+    );
+    expect(membresAuPalier([...dots].reverse(), PREMIER_PALIER_HAUT)).toBe(
+      membresAuPalier(dots, PREMIER_PALIER_HAUT),
     );
   });
 });

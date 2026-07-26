@@ -59,6 +59,28 @@ export const RANKING_TIERS: readonly RankingTier[] = [
   { id: "excellence", nom: "Excellence", minNoteOn5: 4, maxNoteOn5: null },
 ];
 
+/**
+ * Le premier palier de la moitié haute de l'échelle.
+ *
+ * À côté d'une moyenne, le manager veut un repère de partage : combien de son
+ * équipe est déjà au niveau, combien reste à y amener. Une moyenne de 3,4 ne le
+ * dit pas, puisqu'elle vaut aussi bien pour une équipe entière posée à 3,4 que
+ * pour une équipe coupée en deux.
+ *
+ * Le palier se déduit de l'échelle au lieu d'être nommé en dur : écrire
+ * « Maîtrise » ailleurs qu'ici ferait mentir ce repère le jour où un palier est
+ * ajouté, renommé ou déplacé, sans que rien ne casse ni ne se voie à l'écran.
+ *
+ * La règle prend le premier palier strictement au-dessus du milieu, jamais le
+ * dernier : sur quatre paliers elle désigne le troisième, et sur une échelle
+ * réduite à un seul palier elle le désigne lui, faute de mieux, plutôt que de
+ * lire hors du tableau.
+ */
+export const PREMIER_PALIER_HAUT: RankingTier =
+  RANKING_TIERS[
+    Math.min(Math.ceil(RANKING_TIERS.length / 2), RANKING_TIERS.length - 1)
+  ];
+
 /** Note maximale de l'échelle affichée. */
 export const NOTE_ON5_MAX = 5;
 

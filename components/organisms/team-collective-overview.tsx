@@ -16,6 +16,7 @@ import {
   teamSkillOverview,
   type TeamDispersionDot,
   type TeamDispersionEntry,
+  type TeamSkillBar,
 } from "@/src/core/domain/team-collective-view";
 import {
   formatNoteFr,
@@ -160,8 +161,15 @@ const GRADUATIONS = [
   son contenu. La piste, qui réclame sa largeur plancher, poussait donc la carte
   entière hors de l'écran d'un téléphone au lieu de défiler dans son cadre.
 */
-const CARTE =
-  "min-w-0 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900";
+const CADRE =
+  "min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
+/*
+  La marge est séparée du cadre parce qu'une des deux cartes porte un bandeau
+  qui va d'un bord à l'autre : appliquée au cadre, elle aurait laissé un liseré
+  blanc de quatre pixels tout autour du fond sombre.
+*/
+const MARGE = "p-4 sm:p-5";
+const CARTE = cn(CADRE, MARGE);
 const TITRE =
   "text-sm font-semibold tracking-tight text-zinc-950 dark:text-zinc-50";
 const LEGENDE = "text-xs leading-relaxed text-zinc-500 dark:text-zinc-400";
@@ -342,6 +350,54 @@ function phraseDeRepartition(
   )}/5, soit ${points(bornes.amplitude)} entre le premier et le dernier.`;
 }
 
+/**
+ * Un des deux gestes que le manager retient de la carte : son nom, son niveau,
+ * et de combien il s'écarte du niveau général de l'équipe.
+ *
+ * Les trois nombres sont ceux des barres du dessous, pas un autre calcul : le
+ * lecteur retrouve l'encart dans la liste, à la même valeur et au même écart.
+ */
+function EncartDeRelief({
+  titre,
+  bar,
+  marque = false,
+}: {
+  titre: string;
+  bar: TeamSkillBar;
+  /** Porte la couleur de marque. Réservé au point fort, jamais aux deux. */
+  marque?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border p-3",
+        marque
+          ? "border-violet-200 bg-violet-50 dark:border-violet-900 dark:bg-violet-950/40"
+          : "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/40",
+      )}
+    >
+      <p
+        className={cn(
+          "text-[11px] font-semibold tracking-wider uppercase",
+          marque
+            ? "text-violet-700 dark:text-violet-300"
+            : "text-zinc-600 dark:text-zinc-400",
+        )}
+      >
+        {titre}
+      </p>
+      <p className="mt-1 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+        {SELLER_SKILL_LABEL_FR[bar.key]}
+      </p>
+      <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">
+        <span className="tabular-nums">{bar.valeur}/100</span> ·{" "}
+        <span className="tabular-nums">{formatEcartCompetence(bar.ecart)}</span>{" "}
+        d&apos;écart au niveau de l&apos;équipe
+      </p>
+    </div>
+  );
+}
+
 /** Les six compétences de l'équipe, de la plus haute à la plus basse. */
 function CarteDesCompetences({
   collectif,
@@ -366,33 +422,36 @@ function CarteDesCompetences({
         </p>
       ) : (
         <>
-          <p className="mt-1.5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-            {vue.relief ? (
-              <>
-                Point fort de l&apos;équipe :{" "}
-                <span className="font-semibold text-zinc-950 dark:text-zinc-50">
-                  {SELLER_SKILL_LABEL_FR[vue.relief.fort.key]}
-                </span>{" "}
-                <span className="tabular-nums">
-                  ({formatEcartCompetence(vue.relief.fort.ecart)})
-                </span>
-                . À travailler en priorité :{" "}
-                <span className="font-semibold text-zinc-950 dark:text-zinc-50">
-                  {SELLER_SKILL_LABEL_FR[vue.relief.faible.key]}
-                </span>{" "}
-                <span className="tabular-nums">
-                  ({formatEcartCompetence(vue.relief.faible.ecart)})
-                </span>
-                .
-              </>
-            ) : (
-              <>
-                Les six compétences de l&apos;équipe sont au même niveau,{" "}
-                <span className="tabular-nums">{vue.niveauMoyen}/100</span> :
-                aucune ne se détache, ni vers le haut ni vers le bas.
-              </>
-            )}
-          </p>
+          {vue.relief ? (
+            /*
+              Les deux gestes qui portent la formation de l'équipe sortent de la
+              phrase et deviennent deux encarts : c'est ce que le manager vient
+              chercher, et une phrase le fait lire trois lignes pour trouver
+              deux noms.
+
+              L'encart du point fort porte la couleur de marque, l'autre reste
+              gris. Aucun vert ni rouge : un geste à travailler n'est pas une
+              alerte, et le produit réserve ses couleurs d'état à ce qui est
+              vraiment un état.
+            */
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <EncartDeRelief
+                titre="Point fort de l'équipe"
+                bar={vue.relief.fort}
+                marque
+              />
+              <EncartDeRelief
+                titre="À travailler en priorité"
+                bar={vue.relief.faible}
+              />
+            </div>
+          ) : (
+            <p className="mt-1.5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+              Les six compétences de l&apos;équipe sont au même niveau,{" "}
+              <span className="tabular-nums">{vue.niveauMoyen}/100</span> :
+              aucune ne se détache, ni vers le haut ni vers le bas.
+            </p>
+          )}
           <ul className="mt-4 space-y-2.5">
             {vue.bars.map((bar) => {
               const extreme =
@@ -490,26 +549,36 @@ export function TeamCollectiveOverview({
 
   return (
     <div className="grid gap-3">
-      <section className={CARTE} aria-label="Répartition de l'équipe">
+      <section className={CADRE} aria-label="Répartition de l'équipe">
         {/*
           La moyenne ouvre la carte que la piste illustre : le grand chiffre et
           le trait vertical qui le marque se lisent d'un seul coup d'œil, ce que
           deux cartes empilées empêchaient.
+
+          Le bandeau touche les bords de la carte au lieu d'être posé dedans :
+          un fond sombre entouré d'un liseré blanc se lirait comme une vignette
+          collée sur la carte, alors qu'il en est l'en-tête.
         */}
-        <TeamRankingSummary ranking={ranking} totalCount={totalCount} />
-        <p className="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-          {phraseDeRepartition(dots, ranking.minScoredMeetings)}
-        </p>
-        <PisteDeRepartition dots={dots} moyenne={ranking.averageNoteOn5} />
-        <p className={cn(LEGENDE, "mt-2")}>
-          Une pastille par membre classé, à sa note. Deux pastilles l&apos;une
-          sur l&apos;autre sont trop proches pour tenir côte à côte.
-          {ranking.averageNoteOn5 != null
-            ? ` Le trait vertical marque la moyenne d'équipe, ${formatNoteFr(
-                ranking.averageNoteOn5,
-              )}/5.`
-            : null}
-        </p>
+        <TeamRankingSummary
+          ranking={ranking}
+          totalCount={totalCount}
+          dots={dots}
+        />
+        <div className={MARGE}>
+          <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+            {phraseDeRepartition(dots, ranking.minScoredMeetings)}
+          </p>
+          <PisteDeRepartition dots={dots} moyenne={ranking.averageNoteOn5} />
+          <p className={cn(LEGENDE, "mt-2")}>
+            Une pastille par membre classé, à sa note. Deux pastilles l&apos;une
+            sur l&apos;autre sont trop proches pour tenir côte à côte.
+            {ranking.averageNoteOn5 != null
+              ? ` Le trait vertical marque la moyenne d'équipe, ${formatNoteFr(
+                  ranking.averageNoteOn5,
+                )}/5.`
+              : null}
+          </p>
+        </div>
       </section>
       <CarteDesCompetences collectif={collectif} />
     </div>
