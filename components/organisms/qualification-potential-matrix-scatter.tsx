@@ -19,9 +19,18 @@ import {
   QualificationMatrixScatterTooltip,
   type QualificationMatrixScatterTooltipMeta,
 } from "@/components/molecules/qualification-matrix-scatter-tooltip";
+import { QualificationMatrixQuadrantLabels } from "@/components/molecules/qualification-matrix-quadrant-labels";
+import { quadrantDeLaMatrice } from "@/src/core/domain/matrice-quadrants";
 
+/*
+  La croix du repère portait le bleu « Proposition », c'est-à-dire la couleur
+  exacte d'une des séries de points du même graphique. Une ligne de repère
+  peinte comme une donnée se lit comme une donnée : on cherche à quel RDV elle
+  correspond. Elle prend maintenant l'encre de chrome du thème, qui n'est
+  attribuée à aucune série et suit le mode clair ou sombre toute seule.
+*/
 const ORIGIN_LINE_STYLE = {
-  stroke: "#0ea5e9",
+  stroke: "var(--muted-foreground)",
   strokeWidth: 1.5,
   strokeDasharray: "6 4",
 };
@@ -76,6 +85,7 @@ function tooltipMetaFromPoint(
   point: QualificationPotentialMatrixPoint,
   options?: { includeSeller?: boolean },
 ): QualificationMatrixScatterTooltipMeta {
+  const quadrant = quadrantDeLaMatrice(point);
   return {
     contactName: point.prospectName,
     potentialAmount: point.potentialAmount,
@@ -83,6 +93,10 @@ function tooltipMetaFromPoint(
     sellerDisplayName: options?.includeSeller
       ? point.sellerDisplayName
       : undefined,
+    // Un point posé sur un axe n'a pas de quadrant, donc pas d'action :
+    // l'info-bulle saute la ligne plutôt que d'en inventer une.
+    quadrantAction: quadrant?.action ?? null,
+    quadrantRaison: quadrant?.raison ?? null,
   };
 }
 
@@ -256,8 +270,25 @@ export function QualificationPotentialMatrixScatter({
             axisId="potential"
             lineStyle={ORIGIN_LINE_STYLE}
           />
+          {/*
+            Sans point à ranger, quatre consignes d'action posées sur un repère
+            vide donneraient des ordres sur rien.
+          */}
+          {isEmpty ? null : <QualificationMatrixQuadrantLabels />}
         </ScatterChart>
       </div>
+      {/*
+        Les deux axes ne se lisent pas de la même façon, et rien ne le disait :
+        l'abscisse est une note absolue, l'ordonnée une position relative aux
+        autres rendez-vous de la période. Deux points identiques sur l'écran
+        peuvent donc porter des montants très différents d'une période à
+        l'autre, ce qui reste incompréhensible tant que la règle n'est pas
+        écrite.
+      */}
+      <p className="text-muted-foreground text-xs text-balance">
+        Horizontale : le SalesScore du rendez-vous, 50 au centre. Verticale :
+        son montant potentiel, comparé aux autres rendez-vous de la période.
+      </p>
       <div className="flex flex-wrap items-center gap-2">
         {legend.map((item) => (
           <span
