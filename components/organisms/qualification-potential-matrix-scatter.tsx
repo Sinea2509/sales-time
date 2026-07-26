@@ -8,6 +8,7 @@ import {
   meetingEtapeScatterColorForLabel,
 } from "@/lib/meeting-etape-pill";
 import { sellerScatterStylesByUserId } from "@/lib/seller-scatter-colors";
+import { ChartTheme } from "@/components/atoms/chart-theme";
 import { cn } from "@/lib/utils";
 import {
   MATRIX_AXIS_MAX,
@@ -30,7 +31,7 @@ import { quadrantDeLaMatrice } from "@/src/core/domain/matrice-quadrants";
   attribuée à aucune série et suit le mode clair ou sombre toute seule.
 */
 const ORIGIN_LINE_STYLE = {
-  stroke: "var(--muted-foreground)",
+  stroke: "var(--chart-ink)",
   strokeWidth: 1.5,
   strokeDasharray: "6 4",
 };
@@ -230,52 +231,54 @@ export function QualificationPotentialMatrixScatter({
             </p>
           </div>
         ) : null}
-        <ScatterChart
-          height={height}
-          series={chartSeries}
-          slots={{ tooltip: QualificationMatrixScatterTooltip }}
-          xAxis={[
-            {
-              id: "qualification",
-              ...matrixAxisConfig,
-              label: "Qualification",
-              height: 28,
-            },
-          ]}
-          yAxis={[
-            {
-              id: "potential",
-              ...matrixAxisConfig,
-              label: "Potentiel",
-              width: 30,
-            },
-          ]}
-          grid={{ vertical: true, horizontal: true }}
-          hideLegend
-          hitAreaRadius={24}
-          margin={{ top: 8, right: 8, bottom: 32, left: 36 }}
-          slotProps={{
-            tooltip: { trigger: "item" },
-            axisTickLabel: { style: compactTickLabel },
-            axisLabel: { style: compactAxisLabel },
-          }}
-        >
-          <ChartsReferenceLine
-            x={0}
-            axisId="qualification"
-            lineStyle={ORIGIN_LINE_STYLE}
-          />
-          <ChartsReferenceLine
-            y={0}
-            axisId="potential"
-            lineStyle={ORIGIN_LINE_STYLE}
-          />
-          {/*
-            Sans point à ranger, quatre consignes d'action posées sur un repère
-            vide donneraient des ordres sur rien.
-          */}
-          {isEmpty ? null : <QualificationMatrixQuadrantLabels />}
-        </ScatterChart>
+        <ChartTheme>
+          <ScatterChart
+            height={height}
+            series={chartSeries}
+            slots={{ tooltip: QualificationMatrixScatterTooltip }}
+            xAxis={[
+              {
+                id: "qualification",
+                ...matrixAxisConfig,
+                label: "Qualification",
+                height: 28,
+              },
+            ]}
+            yAxis={[
+              {
+                id: "potential",
+                ...matrixAxisConfig,
+                label: "Potentiel",
+                width: 30,
+              },
+            ]}
+            grid={{ vertical: true, horizontal: true }}
+            hideLegend
+            hitAreaRadius={24}
+            margin={{ top: 8, right: 8, bottom: 32, left: 36 }}
+            slotProps={{
+              tooltip: { trigger: "item" },
+              axisTickLabel: { style: compactTickLabel },
+              axisLabel: { style: compactAxisLabel },
+            }}
+          >
+            <ChartsReferenceLine
+              x={0}
+              axisId="qualification"
+              lineStyle={ORIGIN_LINE_STYLE}
+            />
+            <ChartsReferenceLine
+              y={0}
+              axisId="potential"
+              lineStyle={ORIGIN_LINE_STYLE}
+            />
+            {/*
+              Sans point à ranger, quatre consignes d'action posées sur un
+              repère vide donneraient des ordres sur rien.
+            */}
+            {isEmpty ? null : <QualificationMatrixQuadrantLabels />}
+          </ScatterChart>
+        </ChartTheme>
       </div>
       {/*
         Les deux axes ne se lisent pas de la même façon, et rien ne le disait :

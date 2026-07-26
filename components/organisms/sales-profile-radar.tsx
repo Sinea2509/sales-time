@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RadarChart } from "@mui/x-charts/RadarChart";
-import { cn } from "@/lib/utils";
+import { ChartTheme } from "@/components/atoms/chart-theme";
 
 export type SalesProfileScores = {
   assertivite: number;
@@ -24,6 +24,21 @@ const METRIC_LABELS = [
 
 const CURRENT_SERIES_ID = "current-profile";
 const PREVIOUS_SERIES_ID = "previous-profile";
+
+/*
+  Les deux couleurs sont déclarées ici et nulle part ailleurs : le graphique
+  et la légende lisent la même constante, donc la légende ne peut plus
+  décrire un trait que le radar ne dessine pas.
+
+  Le profil précédent n'est pas une catégorie de plus, c'est le repère contre
+  lequel se lit le profil actuel : il porte donc l'encre de chrome du thème,
+  comme les axes. Elle était écrite en dur (« #94a3b8 ») ; sur une carte
+  claire ce gris ne tenait que 2,56:1, là où un trait porteur de sens demande
+  3:1. Le jeton tient 4,74:1 en clair et 6,94:1 en sombre, et suivra une
+  organisation qui personnalisera ses couleurs.
+*/
+const CURRENT_SERIES_COLOR = "#8b5cf6";
+const PREVIOUS_SERIES_COLOR = "var(--chart-ink)";
 
 function scoresToData(scores: SalesProfileScores): number[] {
   return [
@@ -65,7 +80,7 @@ export function SalesProfileRadar({
       label: "Profil actuel",
       data: scoresToData(scores),
       fillArea: true,
-      color: "#8b5cf6",
+      color: CURRENT_SERIES_COLOR,
     },
     ...(previousScores
       ? [
@@ -75,7 +90,7 @@ export function SalesProfileRadar({
             data: scoresToData(previousScores),
             fillArea: false,
             hideMark: true,
-            color: "#94a3b8",
+            color: PREVIOUS_SERIES_COLOR,
           },
         ]
       : []),
@@ -83,34 +98,55 @@ export function SalesProfileRadar({
 
   return (
     <div className="w-full space-y-3">
-      <RadarChart
-        height={chartHeight}
-        series={series}
-        radar={{
-          metrics: METRIC_LABELS.map((name) => ({ name, min: 0, max: 100 })),
-        }}
-        shape="circular"
-        divisions={4}
-        hideLegend
-        margin={margin}
-        sx={{
-          "& .MuiChartsAxis-tickLabel": {
-            fontSize: isCompact ? 10 : 11,
-          },
-          ...(previousScores
-            ? {
-                [`& [data-series='${PREVIOUS_SERIES_ID}'] path`]: {
-                  strokeDasharray: "6 4",
-                  strokeWidth: 2,
-                },
-              }
-            : {}),
-        }}
-      />
-      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-neutral-600 dark:text-neutral-400">
+      <ChartTheme>
+        <RadarChart
+          height={chartHeight}
+          series={series}
+          radar={{
+            metrics: METRIC_LABELS.map((name) => ({ name, min: 0, max: 100 })),
+          }}
+          shape="circular"
+          divisions={4}
+          hideLegend
+          margin={margin}
+          /*
+            Deux règles vivaient ici, et aucune des deux n'atteignait quoi que
+            ce soit. La première fixait la taille des libellés via
+            « .MuiChartsAxis-tickLabel » : un radar ne dessine aucun axe
+            cartésien, et cette classe n'existe nulle part dans son SVG. Elle
+            est supprimée, les six libellés sont ceux de MUI.
+
+            La seconde traçait en tirets le profil précédent via
+            « [data-series='previous-profile'] », un sélecteur copié d'un nuage
+            de points. Vérifié au navigateur : seuls ScatterChart et BarChart
+            posent « data-series » ; le radar ne le pose sur rien et ne
+            distingue pas ses deux séries par une classe. Le trait était donc
+            plein alors que la légende le montrait tireté.
+
+            MUI remplit l'aire d'une série non remplie avec « transparent »
+            (RadarSeriesArea.js, getPathProps) : c'est le seul attribut qui
+            sépare les deux tracés. Le tireté compte, car il se lit aussi en
+            noir et blanc et en vision des couleurs déficiente, là où deux gris
+            ne se distinguent pas. Si MUI change cet attribut, le trait
+            redevient plein, ce qui reste lisible.
+          */
+          sx={
+            previousScores
+              ? {
+                  '& .MuiRadarChart-seriesArea[fill="transparent"]': {
+                    strokeDasharray: "6 4",
+                    strokeWidth: 2,
+                  },
+                }
+              : undefined
+          }
+        />
+      </ChartTheme>
+      <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs">
         <span className="inline-flex items-center gap-2">
           <span
-            className="inline-block h-0.5 w-8 rounded-full bg-violet-500"
+            className="inline-block h-0.5 w-8 rounded-full"
+            style={{ backgroundColor: CURRENT_SERIES_COLOR }}
             aria-hidden
           />
           Profil actuel
@@ -118,9 +154,8 @@ export function SalesProfileRadar({
         {previousScores ? (
           <span className="inline-flex items-center gap-2">
             <span
-              className={cn(
-                "inline-block h-0 w-8 border-t-2 border-dashed border-neutral-400",
-              )}
+              className="inline-block h-0 w-8 border-t-2 border-dashed"
+              style={{ borderColor: PREVIOUS_SERIES_COLOR }}
               aria-hidden
             />
             Profil précédent

@@ -102,6 +102,17 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+  /*
+    Le chrome des graphiques, c'est-à-dire tout ce qui n'y est pas une donnée.
+    Ces trois jetons ne portent pas de valeur propre : ils pointent vers
+    l'encre et la bordure du thème. Une organisation qui personnalisera ses
+    couleurs verra donc ses graphiques suivre, et il n'y a rien à redéclarer
+    dans .dark : un var() se résout sur l'élément qui l'utilise, pas à
+    l'endroit où il est écrit.
+  */
+  --chart-ink: var(--muted-foreground);
+  --chart-axis: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
+  --chart-grid: var(--border);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
