@@ -1,5 +1,6 @@
 import { TeamRankingSummary } from "@/components/molecules/team-ranking-summary";
 import { TEAM_TIER_CLASS } from "@/components/molecules/team-tier-badge";
+import type { CardHeadingTag } from "@/lib/page-typography";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { teamMemberDisplayName } from "@/lib/team-member-display-name";
 import { cn } from "@/lib/utils";
@@ -401,8 +402,10 @@ function EncartDeRelief({
 /** Les six compétences de l'équipe, de la plus haute à la plus basse. */
 function CarteDesCompetences({
   collectif,
+  niveauDeTitre: Titre,
 }: {
   collectif: OrgAdminTeamCollective;
+  niveauDeTitre: CardHeadingTag;
 }) {
   const vue = teamSkillOverview(collectif.skillReference);
 
@@ -414,7 +417,7 @@ function CarteDesCompetences({
       lecteur d'écran au premier des deux titres.
     */
     <section className={CARTE} aria-label="Compétences de l'équipe">
-      <h3 className={TITRE}>Compétences de l&apos;équipe</h3>
+      <Titre className={TITRE}>Compétences de l&apos;équipe</Titre>
       {vue == null ? (
         <p className={cn(LEGENDE, "mt-1.5")}>
           Aucun rendez-vous coaché sur la période : les six compétences du
@@ -528,11 +531,21 @@ export function TeamCollectiveOverview({
   collectif,
   ranking,
   totalCount,
+  niveauDeTitre = "h3",
 }: {
   collectif: OrgAdminTeamCollective;
   ranking: TeamRankingSummaryData;
   /** Effectif de l'équipe entière, classés et non classés confondus. */
   totalCount: number;
+  /**
+   * Rang des titres de cartes dans le plan du document.
+   *
+   * « h3 » par défaut : les cartes vivent alors sous le titre de section que
+   * `MonEquipeSection` écrit elle-même. La page dédiée à l'équipe porte ce
+   * titre en « h1 » et fait taire la section ; les cartes montent d'un rang
+   * pour qu'aucun niveau ne manque entre le titre de la page et le leur.
+   */
+  niveauDeTitre?: CardHeadingTag;
 }) {
   const entries: TeamDispersionEntry[] = collectif.dispersion.map((membre) => ({
     cle: membre.userId,
@@ -580,7 +593,10 @@ export function TeamCollectiveOverview({
           </p>
         </div>
       </section>
-      <CarteDesCompetences collectif={collectif} />
+      <CarteDesCompetences
+        collectif={collectif}
+        niveauDeTitre={niveauDeTitre}
+      />
     </div>
   );
 }

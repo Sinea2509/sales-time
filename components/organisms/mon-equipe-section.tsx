@@ -13,14 +13,17 @@ import { formatNoteOn5 } from "@/lib/format-note-on5";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 import {
+  cardHeadingTag,
   cardSubsectionTitleClass,
   sectionHeadingClass,
+  type CardHeadingTag,
 } from "@/lib/page-typography";
 import { teamMemberDisplayName } from "@/lib/team-member-display-name";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import { unrankedExplanation } from "@/src/core/domain/team-ranking";
 import type { OrgAdminMonEquipePage } from "@/src/core/application/get-org-admin-dashboard";
+import type { ReactNode } from "react";
 
 function monEquipeListHref(
   basePath: string,
@@ -58,6 +61,24 @@ function ordreDeLaListe(monEquipe: OrgAdminMonEquipePage): string {
     : `${effectif} · du premier au dernier du classement, puis les membres hors classement`;
 }
 
+/**
+ * Le titre d'une carte, au rang que la section lui donne.
+ *
+ * Le rang arrive par une propriété plutôt que par une variable fabriquée dans
+ * le corps de la section : une majuscule posée sur une variable locale et
+ * employée comme balise se lit, pour l'analyseur, comme un composant redéfini à
+ * chaque rendu, ce qu'il refuse.
+ */
+function TitreDeCarte({
+  niveau: Titre,
+  children,
+}: {
+  niveau: CardHeadingTag;
+  children: ReactNode;
+}) {
+  return <Titre className={cardSubsectionTitleClass}>{children}</Titre>;
+}
+
 export function MonEquipeSection({
   monEquipe,
   statsWindowDays,
@@ -93,6 +114,14 @@ export function MonEquipeSection({
     1,
     Math.ceil(monEquipe.totalCount / monEquipe.pageSize),
   );
+  /*
+    Les titres de cartes prennent leur rang de la section : « h3 » sous le
+    « Mon équipe » qu'elle écrit elle-même, « h2 » quand c'est la page qui le
+    porte et qu'elle se tait. Sans ce report, la page dédiée enchaînait son
+    « h1 » sur des « h3 » : le rang 2 absent se lit, pour qui navigue de titre
+    en titre, comme un titre que l'on n'a pas su atteindre.
+  */
+  const niveauDeTitre = cardHeadingTag(showHeading);
 
   return (
     <section className="space-y-3">
@@ -128,6 +157,7 @@ export function MonEquipeSection({
         collectif={monEquipe.collectif}
         ranking={monEquipe.ranking}
         totalCount={monEquipe.totalCount}
+        niveauDeTitre={niveauDeTitre}
       />
       {/*
         Même cadre que les deux cartes collectives juste au-dessus : le bord
@@ -145,7 +175,7 @@ export function MonEquipeSection({
           alors qu'il ne détaille que le classement.
         */}
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-zinc-200 px-4 py-3.5 sm:px-5 dark:border-zinc-800">
-          <h3 className={cardSubsectionTitleClass}>Membre par membre</h3>
+          <TitreDeCarte niveau={niveauDeTitre}>Membre par membre</TitreDeCarte>
           <p className="text-xs text-zinc-600 dark:text-zinc-400">
             {ordreDeLaListe(monEquipe)}
           </p>
