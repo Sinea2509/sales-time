@@ -43,8 +43,14 @@ const PREVIOUS_SERIES_ID = "previous-profile";
   claire ce gris ne tenait que 2,56:1, là où un trait porteur de sens demande
   3:1. Le jeton tient 4,74:1 en clair et 6,94:1 en sombre, et suivra une
   organisation qui personnalisera ses couleurs.
+
+  Le profil actuel porte le jeton de marque plutôt qu'un violet voisin écrit
+  en dur : le radar est la seule série de la fiche à parler violet, et deux
+  violets presque identiques sur le même écran se lisaient comme deux
+  catégories. Sur blanc, le jeton tient 5,07:1, au-dessus du seuil de 3:1
+  exigé d'une marque de donnée.
 */
-const CURRENT_SERIES_COLOR = "#8b5cf6";
+const CURRENT_SERIES_COLOR = "var(--brand)";
 const PREVIOUS_SERIES_COLOR = "var(--chart-ink)";
 
 function scoresToData(scores: SalesProfileScores): number[] {

@@ -184,17 +184,20 @@ const ETIQUETTE =
  * de sa propre illustration.
  *
  * Le fond sombre est le seul de la page : c'est ce qui fait de ce chiffre le
- * point d'entrée de l'écran plutôt qu'une valeur parmi les autres. Les deux
- * halos sont décoratifs et annoncés comme tels ; leur opacité est plafonnée
- * pour que l'encre reste lisible même à l'endroit où ils se cumulent. Les
- * contrastes ont été calculés sur le thème clair, seul thème optimisé : sur le
- * fond le plus pâle que les halos produisent, le blanc plein vaut 8,06:1 et le
- * blanc à 70 % vaut 4,80:1, au-dessus du seuil de 4,5:1 exigé pour du petit
+ * point d'entrée de l'écran plutôt qu'une valeur parmi les autres. C'est un
+ * noir neutre et non plus un violet : la marque signe les actions et la
+ * navigation, et un aplat violet de cette taille faisait de la couleur un
+ * décor. Les deux halos, eux, restent de la marque : une lumière posée sur le
+ * noir, pas une surface. Leur opacité est plafonnée pour que l'encre reste
+ * lisible même à l'endroit où ils se cumuleraient. Les contrastes ont été
+ * calculés sur le thème clair, seul thème optimisé : sur le fond le plus pâle
+ * que les deux halos cumulés produiraient, le blanc plein tient 13,0:1 et le
+ * blanc à 70 % tient 7,1:1, au-dessus du seuil de 4,5:1 exigé pour du petit
  * texte. Rien sous 70 % d'opacité ne porte donc de mot.
  *
  * Le palier de la moyenne est écrit, jamais peint : la couleur du palier est
- * calibrée sur fond blanc, et le dernier palier est précisément ce violet
- * sombre, qui disparaîtrait ici. La piste juste en dessous dessine les quatre
+ * calibrée sur fond blanc, et le dernier palier est un violet presque noir,
+ * qui disparaîtrait sur ce fond. La piste juste en dessous dessine les quatre
  * bandes à leur couleur, sur le fond pour lequel elles ont été mesurées.
  *
  * L'échelle des paliers n'est pas répétée non plus : la piste les dessine à
@@ -218,7 +221,7 @@ export function TeamRankingSummary({
   const base = baseDeLaMoyenne(ranking, totalCount);
 
   return (
-    <div className="relative isolate overflow-hidden bg-violet-950 text-white">
+    <div className="relative isolate overflow-hidden bg-zinc-950 text-white">
       {/*
         Les deux halos sont posés dans des coins opposés et débordent le cadre :
         un halo entier tenu à l'intérieur se lirait comme une forme, alors que
@@ -226,11 +229,11 @@ export function TeamRankingSummary({
       */}
       <span
         aria-hidden
-        className="bg-brand/40 pointer-events-none absolute -top-24 -right-16 -z-10 size-64 rounded-full blur-3xl"
+        className="bg-brand/30 pointer-events-none absolute -top-24 -right-16 -z-10 size-64 rounded-full blur-3xl"
       />
       <span
         aria-hidden
-        className="pointer-events-none absolute -bottom-28 -left-20 -z-10 size-72 rounded-full bg-violet-500/25 blur-3xl"
+        className="bg-brand/15 pointer-events-none absolute -bottom-28 -left-20 -z-10 size-72 rounded-full blur-3xl"
       />
 
       <div className="px-4 py-5 sm:px-5 sm:py-6">

@@ -2,6 +2,10 @@ import Link from "next/link";
 import { MeetingOutcomeBadge } from "@/components/atoms/meeting-outcome-badge";
 import { formatPotentialEuro } from "@/lib/format-potential-euro";
 import { meetingOutcomeLabel } from "@/lib/meeting-outcome-display";
+import {
+  salesScoreBarClass,
+  salesScoreColorClass,
+} from "@/lib/sales-score-color";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 
@@ -89,8 +93,14 @@ function OpportunityRow({
               className="block h-2 min-w-0 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-800"
               aria-hidden
             >
+              {/*
+                La barre et le chiffre prennent le ton du score, celui du
+                tableau des rendez-vous : une barre de marque sous un 47 rouge
+                racontait deux histoires, et le violet signe les actions, pas
+                les données.
+              */}
               <span
-                className="bg-brand block h-full rounded-full"
+                className={`block h-full rounded-full ${salesScoreBarClass(score)}`}
                 style={{ width: `${score}%` }}
               />
             </span>
@@ -98,7 +108,9 @@ function OpportunityRow({
             <span className="block h-2 min-w-0 flex-1" aria-hidden />
           )}
           {score != null ? (
-            <span className="w-10 shrink-0 text-right text-xs font-medium tabular-nums">
+            <span
+              className={`w-10 shrink-0 text-right text-xs font-semibold tabular-nums ${salesScoreColorClass(score)}`}
+            >
               {score}
             </span>
           ) : (

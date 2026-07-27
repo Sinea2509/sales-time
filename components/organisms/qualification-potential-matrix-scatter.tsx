@@ -39,13 +39,14 @@ const ORIGIN_LINE_STYLE = {
 /*
   La couleur des points quand il n'y a qu'une série.
 
-  Le jeton de marque suit le mode clair ou sombre tout seul, et suivra une
-  organisation qui personnalisera ses couleurs. Mesuré au validateur de contraste,
-  il tient le seuil de 3:1 exigé d'une marque de donnée dans les deux modes :
-  #6c4dff sur blanc, #8b7cff sur la carte sombre. Aucune autre série ne
-  l'utilise dans ce graphique, donc rien ne peut le confondre avec autre chose.
+  Ce n'est plus le jeton de marque : la fiche porte déjà le radar en violet,
+  et douze points violets de plus faisaient du violet la couleur de toute
+  donnée, alors qu'il signe les actions et la navigation. Un bleu calme,
+  qu'aucune autre série de la page n'utilise, tient 4,10:1 sur blanc, au-dessus
+  du seuil de 3:1 exigé d'une marque de donnée sur le thème clair, seul thème
+  optimisé.
 */
-const POINT_COLOR = "var(--brand)";
+const POINT_COLOR = "#0284c7";
 
 const compactTickLabel = { fontSize: 10 };
 const compactAxisLabel = { fontSize: 11 };

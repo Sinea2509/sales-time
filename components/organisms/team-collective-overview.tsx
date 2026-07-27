@@ -368,28 +368,34 @@ function phraseDeRepartition(
 function EncartDeRelief({
   titre,
   bar,
-  marque = false,
+  ton,
 }: {
   titre: string;
   bar: TeamSkillBar;
-  /** Porte la couleur de marque. Réservé au point fort, jamais aux deux. */
-  marque?: boolean;
+  /**
+   * « fort » se lit en vert, « travail » en ambre : les tons des cartes de
+   * priorités du tableau de bord, qui disent déjà « ce qui va » en vert et
+   * « où agir » en ambre. La couleur double l'intitulé, jamais à sa place, et
+   * la marque n'y figure pas : elle est réservée aux actions et à la
+   * navigation.
+   */
+  ton: "fort" | "travail";
 }) {
   return (
     <div
       className={cn(
         "rounded-xl border p-3",
-        marque
-          ? "border-violet-200 bg-violet-50 dark:border-violet-900 dark:bg-violet-950/40"
-          : "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/40",
+        ton === "fort"
+          ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/40"
+          : "border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/40",
       )}
     >
       <p
         className={cn(
           "text-[11px] font-semibold tracking-wider uppercase",
-          marque
-            ? "text-violet-700 dark:text-violet-300"
-            : "text-zinc-600 dark:text-zinc-400",
+          ton === "fort"
+            ? "text-emerald-700 dark:text-emerald-400"
+            : "text-amber-700 dark:text-amber-400",
         )}
       >
         {titre}
@@ -439,20 +445,22 @@ function CarteDesCompetences({
               chercher, et une phrase le fait lire trois lignes pour trouver
               deux noms.
 
-              L'encart du point fort porte la couleur de marque, l'autre reste
-              gris. Aucun vert ni rouge : un geste à travailler n'est pas une
-              alerte, et le produit réserve ses couleurs d'état à ce qui est
-              vraiment un état.
+              Les deux encarts parlent la langue des cartes de priorités du
+              tableau de bord : vert pour ce qui va, ambre pour où agir. Le
+              point fort portait la couleur de marque ; elle est depuis
+              réservée aux actions et à la navigation, et un geste d'équipe
+              n'est ni l'un ni l'autre.
             */
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <EncartDeRelief
                 titre="Point fort de l'équipe"
                 bar={vue.relief.fort}
-                marque
+                ton="fort"
               />
               <EncartDeRelief
                 titre="À travailler en priorité"
                 bar={vue.relief.faible}
+                ton="travail"
               />
             </div>
           ) : (
@@ -497,15 +505,21 @@ function CarteDesCompetences({
                       className="block h-2 rounded-full bg-neutral-200 dark:bg-neutral-800"
                       aria-hidden
                     >
+                      {/*
+                        La barre est de l'encre, pas de la marque : six barres
+                        violettes faisaient du violet la couleur du fond de
+                        page, alors qu'il signe les actions. Le niveau se lit à
+                        la longueur ; la couleur n'y ajoutait rien.
+                      */}
                       <span
-                        className="bg-brand block h-full rounded-full"
+                        className="block h-full rounded-full bg-zinc-700 dark:bg-zinc-300"
                         style={{ width: `${bar.valeur}%` }}
                       />
                     </span>
                     {/*
                       Le repère déborde la barre en haut et en bas plutôt que de
                       la traverser : à l'intérieur, il faudrait une couleur qui
-                      tienne à la fois sur le violet du rempli et sur le gris du
+                      tienne à la fois sur l'encre du rempli et sur le gris du
                       vide, et aucune ne tient sur les deux.
                     */}
                     <span
