@@ -1,7 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   DEFAULT_TRIAL_LIMIT,
-  filterRowsByTeamUserIds,
   resolveManagerTeamUserIds,
   resolveSellerTeamUserIds,
 } from "./team-seller-scope";
@@ -104,32 +103,6 @@ describe("team-seller-scope", () => {
         { internalUserId: "rep_1" },
       );
       expect(result).toEqual(["mgr_1", "rep_2", "rep_1"]);
-    });
-  });
-
-  describe("filterRowsByTeamUserIds", () => {
-    it("returns all rows when teamUserIds is undefined", () => {
-      const rows = [{ sellerUserId: "a" }, { sellerUserId: "b" }];
-      expect(filterRowsByTeamUserIds(rows, undefined)).toEqual(rows);
-    });
-
-    it("filters by sellerUserId by default", () => {
-      const rows = [
-        { sellerUserId: "a" },
-        { sellerUserId: "b" },
-        { sellerUserId: "c" },
-      ];
-      expect(filterRowsByTeamUserIds(rows, ["a", "c"])).toEqual([
-        { sellerUserId: "a" },
-        { sellerUserId: "c" },
-      ]);
-    });
-
-    it("filters by userId when key is userId", () => {
-      const rows = [{ userId: "u1" }, { userId: "u2" }];
-      expect(filterRowsByTeamUserIds(rows, ["u2"], "userId")).toEqual([
-        { userId: "u2" },
-      ]);
     });
   });
 

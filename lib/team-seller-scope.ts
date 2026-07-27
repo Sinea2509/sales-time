@@ -12,15 +12,20 @@ export { DEFAULT_TRIAL_LIMIT };
  * `resolveSellerTeamUserIds` : sans lui, les deux écrans ne calculeraient déjà
  * plus la même moyenne.
  *
- * Renvoie `undefined` pour dire « pas de cadrage », ce que
- * `filterRowsByTeamUserIds` lit comme l'organisation entière. Trois situations y
- * mènent : aucun compte interne, un compte qui n'administre pas l'organisation,
- * ou un administrateur auquel personne n'est rattaché. La dernière mérite d'être
- * dite : sur une organisation où personne n'a encore déclaré son manager, cadrer
- * sur une équipe vide n'afficherait aucun chiffre à celui qui vient d'ouvrir le
- * produit.
+ * `undefined` veut dire « pas de cadrage », donc « tout », jamais « rien ».
+ * Ce sont les deux appelants qui lui donnent ce sens, `getOrgAdminDashboard` et
+ * `getTeamMemberStanding`, chacun avec la même ligne : une liste absente ou
+ * vide, et toutes les lignes passent.
  *
- * À retenir : ici `undefined` veut dire « tout », jamais « rien ».
+ * Trois `return undefined` suivent, mais un seul se produit en vrai : l'équipe
+ * vide. Les deux premiers protègent une signature plus large que les appels,
+ * car les trois pages concernées n'entrent qu'après
+ * `workspaceRoleMode === "admin"`, qui exige `canManageOrganization`, et un
+ * acteur authentifié porte toujours un `internalUserId`.
+ *
+ * L'équipe vide mérite d'être dite : sur une organisation où personne n'a
+ * encore déclaré son manager, cadrer sur une équipe vide n'afficherait aucun
+ * chiffre à celui qui vient d'ouvrir le produit.
  */
 export async function resolveManagerTeamUserIds(
   deps: { users: UserRepositoryPort },
@@ -65,19 +70,4 @@ export async function resolveSellerTeamUserIds(
   // `resolveManagerTeamUserIds` : sans lui, les deux écrans ne calculeraient
   // déjà plus la même moyenne.
   return [...new Set([managerId, ...reports, input.internalUserId])];
-}
-
-export function filterRowsByTeamUserIds<
-  T extends { sellerUserId?: string; userId?: string },
->(
-  rows: T[],
-  teamUserIds: string[] | undefined,
-  key: "sellerUserId" | "userId" = "sellerUserId",
-): T[] {
-  if (!teamUserIds?.length) return rows;
-  const allowed = new Set(teamUserIds);
-  return rows.filter((row) => {
-    const id = key === "sellerUserId" ? row.sellerUserId : row.userId;
-    return id != null && allowed.has(id);
-  });
 }
