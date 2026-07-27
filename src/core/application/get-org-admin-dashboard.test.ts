@@ -56,6 +56,32 @@ describe("buildOrgAdminProgressBullets", () => {
     );
     expect(bullets.length).toBeGreaterThan(0);
   });
+
+  it("accorde « point » au nombre écrit, sur les deux tendances en points", () => {
+    const unSeul = buildOrgAdminProgressBullets(
+      baseHome({ tucTrendPoints: 1, noteGlobaleTrendPoints: 1 }),
+    );
+    expect(unSeul.some((b) => b.includes("+1 point de pourcentage"))).toBe(
+      true,
+    );
+    expect(unSeul.some((b) => b.includes("+1 point sur 5"))).toBe(true);
+    const plusieurs = buildOrgAdminProgressBullets(
+      baseHome({ tucTrendPoints: 2, noteGlobaleTrendPoints: 2 }),
+    );
+    expect(plusieurs.some((b) => b.includes("+2 points de pourcentage"))).toBe(
+      true,
+    );
+    expect(plusieurs.some((b) => b.includes("+2 points sur 5"))).toBe(true);
+  });
+
+  it("n'écrit plus « (s) » ni un point décimal anglais sur le SalesScore", () => {
+    const bullets = buildOrgAdminProgressBullets(
+      baseHome({ noteGlobaleTrendPoints: 0.2 }),
+    );
+    const ligne = bullets.find((b) => b.startsWith("SalesScore moyen")) ?? "";
+    expect(ligne).toContain("+0,2 point sur 5");
+    expect(ligne).not.toContain("(s)");
+  });
 });
 
 describe("buildOrgAdminImprovementBullets", () => {

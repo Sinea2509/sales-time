@@ -13,6 +13,7 @@ import {
 } from "@/src/core/domain/dashboard-home-from-meetings";
 import { noteGlobaleOn5FromSalesScores } from "@/src/core/domain/note-globale-on5";
 import {
+  formatNoteFr,
   rankTeamMembers,
   type MemberRanking,
   type TeamRankingSummary,
@@ -41,6 +42,7 @@ import {
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
 import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
+import { plurielFr } from "@/lib/pluriel-fr";
 import {
   scopeMeetingsToTeam,
   scopeMembersToTeam,
@@ -599,6 +601,23 @@ export function buildKissTeamRollupFromMeetings(
   };
 }
 
+/**
+ * Les phrases de progrès lues par le manager, sur son tableau de bord.
+ *
+ * Les deux tendances exprimées en points s'accordent par `plurielFr`, comme
+ * partout ailleurs dans le produit, et non par un « (s) » écrit à la main :
+ * c'était ici la dernière parenthèse de ce genre. Les deux valeurs arrivent
+ * déjà arrondies au dixième par `dashboardHomeFromMeetings`, si bien que
+ * l'accord porte bien sur le nombre écrit, jamais sur un nombre plus précis
+ * que lui.
+ *
+ * Ce qui reste faux dans ces quatre phrases : les nombres y sont interpolés
+ * bruts, si bien qu'un écart de TUC s'écrit « +2.5 » et non « +2,5 », et que
+ * les deux pourcentages collent leur signe au chiffre, « 8% » et non « 8 % ».
+ * Le SalesScore, lui, passe par `formatNoteFr` parce qu'il est bien une note
+ * sur 5 ; les deux autres échelles n'ont pas leur formateur, et l'inventer ici
+ * dépasserait ce que cette fonction corrige.
+ */
 export function buildOrgAdminProgressBullets(
   home: DashboardHomeFigures,
 ): string[] {
@@ -615,12 +634,12 @@ export function buildOrgAdminProgressBullets(
   }
   if (home.tucTrendPoints != null && home.tucTrendPoints > 0) {
     out.push(
-      `TUC optimisé : +${home.tucTrendPoints} points de pourcentage vs la période précédente.`,
+      `TUC optimisé : +${home.tucTrendPoints} ${plurielFr(home.tucTrendPoints, "point")} de pourcentage vs la période précédente.`,
     );
   }
   if (home.noteGlobaleTrendPoints != null && home.noteGlobaleTrendPoints > 0) {
     out.push(
-      `SalesScore moyen : +${home.noteGlobaleTrendPoints} point(s) sur 5 vs la période précédente.`,
+      `SalesScore moyen : +${formatNoteFr(home.noteGlobaleTrendPoints)} ${plurielFr(home.noteGlobaleTrendPoints, "point")} sur 5 vs la période précédente.`,
     );
   }
   if (out.length === 0) {
