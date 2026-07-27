@@ -5,7 +5,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  GuideDeGrille,
+  TermeDeGrille,
+} from "@/components/molecules/reference-commerciale";
 import { cardTitleClass } from "@/lib/page-typography";
+import { GRILLES } from "@/lib/grilles-commerciales";
 import { MIN_RDV_FOR_STATS } from "@/src/core/domain/dashboard-stats-window";
 import type { OrgAdminDistributionPie } from "@/src/core/application/get-org-admin-dashboard";
 
@@ -29,15 +34,19 @@ function conicGradientStops(slices: OrgAdminDistributionPie["slices"]) {
 export function OrgAdminDonutDistributionCard({
   title,
   data,
+  grilleCle,
 }: {
   title: string;
   data: OrgAdminDistributionPie;
+  /** Quand fournie, chaque part de la légende explique son profil au clic. */
+  grilleCle?: "disc" | "soncas";
 }) {
   const total = data.slices.reduce((a, s) => a + s.value, 0);
   const gradient = conicGradientStops(data.slices);
   const rdvCount = data.analyzedMeetings;
   const showChart =
     data.analyzedMeetings >= MIN_RDV_FOR_STATS && gradient != null;
+  const grille = grilleCle ? GRILLES[grilleCle] : null;
 
   const description = data.isDefaultEqual
     ? "Répartition par défaut (parts égales), en attente d'analyses"
@@ -46,7 +55,12 @@ export function OrgAdminDonutDistributionCard({
   return (
     <Card className="border-neutral-200 shadow-sm dark:border-neutral-800">
       <CardHeader>
-        <CardTitle className={cardTitleClass}>{title}</CardTitle>
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+          <CardTitle className={cardTitleClass}>{title}</CardTitle>
+          {grille ? (
+            <GuideDeGrille grille={grille} className="mt-0.5 shrink-0" />
+          ) : null}
+        </div>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -83,9 +97,18 @@ export function OrgAdminDonutDistributionCard({
                       style={{ backgroundColor: s.color }}
                       aria-hidden
                     />
-                    <span className="truncate text-zinc-800 dark:text-zinc-200">
-                      {s.label}
-                    </span>
+                    {grille ? (
+                      <TermeDeGrille
+                        grille={grille}
+                        code={s.id}
+                        libelle={s.label}
+                        className="min-w-0 text-zinc-800 dark:text-zinc-200"
+                      />
+                    ) : (
+                      <span className="truncate text-zinc-800 dark:text-zinc-200">
+                        {s.label}
+                      </span>
+                    )}
                   </span>
                   <span className="shrink-0 tabular-nums text-zinc-600 dark:text-zinc-400">
                     {Math.round((100 * s.value) / total)}%

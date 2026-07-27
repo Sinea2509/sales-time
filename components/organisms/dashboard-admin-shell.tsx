@@ -111,14 +111,21 @@ export function DashboardAdminShell({
         <h2 className={sectionHeadingClass}>
           Profils rencontrés en rendez-vous
         </h2>
+        <p className="text-muted-foreground -mt-2 max-w-3xl text-sm leading-relaxed">
+          Qui votre équipe rencontre : le DISC décrit le style de communication
+          des prospects, le SONCAS leur motivation d&apos;achat. Touchez un
+          profil, ou « Comprendre », pour savoir comment s&apos;y adapter.
+        </p>
         <div className="grid gap-4 lg:grid-cols-2">
           <OrgAdminDonutDistributionCard
             title="Répartition par DISC"
             data={discPie}
+            grilleCle="disc"
           />
           <OrgAdminDonutDistributionCard
             title="Répartition par SONCAS"
             data={soncasPie}
+            grilleCle="soncas"
           />
         </div>
       </section>
