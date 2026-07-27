@@ -258,50 +258,6 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     });
   }
 
-  async countMeetingsWithMeetingAtSinceAndOutcome(input: {
-    organizationId: string;
-    since: Date;
-    outcome: MeetingOutcome;
-    sellerUserId?: string;
-  }): Promise<number> {
-    return this.db.meeting.count({
-      where: {
-        organizationId: input.organizationId,
-        meetingAt: { gte: input.since },
-        outcome: input.outcome,
-        ...sellerWhere(input.sellerUserId),
-      },
-    });
-  }
-
-  async listAnalysesForOrgMeetingsSince(input: {
-    organizationId: string;
-    meetingAtSince: Date;
-    kinds: MeetingAnalysisKind[];
-    sellerUserId?: string;
-  }): Promise<MeetingAnalysisRow[]> {
-    const rows = await this.db.meetingAnalysis.findMany({
-      where: {
-        kind: { in: input.kinds },
-        meeting: {
-          organizationId: input.organizationId,
-          meetingAt: { gte: input.meetingAtSince },
-          ...sellerWhere(input.sellerUserId),
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        meetingId: true,
-        kind: true,
-        model: true,
-        result: true,
-        createdAt: true,
-      },
-    });
-    return rows.map(mapAnalysis);
-  }
-
   async countMeetingsForOrg(input: {
     organizationId: string;
   }): Promise<number> {

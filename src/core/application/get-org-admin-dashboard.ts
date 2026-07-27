@@ -35,10 +35,6 @@ import {
   getOrgDashboardHome,
   type OrgDashboardHome,
 } from "./get-org-dashboard-home";
-import {
-  getOrgDashboardKpis,
-  type OrgDashboardKpis,
-} from "./get-org-dashboard-kpis";
 import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
 
 /** Limite de RDV chargés pour agrégations équipe (perf). */
@@ -173,11 +169,6 @@ export type OrgAdminKissTeamRollup = {
 export type OrgAdminDashboard = {
   statsWindowDays: StatsWindowDays;
   home: OrgDashboardHome;
-  kpis: OrgDashboardKpis;
-  /** Moyenne SalesScore (0–100) sur les RDV analysés dans la fenêtre. */
-  avgSalesScoreInWindow: number | null;
-  /** Nombre de commerciaux ayant au moins un RDV dans la fenêtre. */
-  activeCommercialsCount: number;
   monEquipe: OrgAdminMonEquipePage;
   discPie: OrgAdminDistributionPie;
   soncasPie: OrgAdminDistributionPie;
@@ -677,14 +668,10 @@ export async function getOrgAdminDashboard(
 
   const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
 
-  const [home, kpis, meetings, teamList] = await Promise.all([
+  const [home, meetings, teamList] = await Promise.all([
     getOrgDashboardHome(deps, {
       organizationId: input.organizationId,
       statsWindowDays: input.statsWindowDays,
-    }),
-    getOrgDashboardKpis(deps, {
-      organizationId: input.organizationId,
-      meetingAtSince: sinceCurrent,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: input.organizationId,
@@ -699,7 +686,10 @@ export async function getOrgAdminDashboard(
     ),
   ]);
 
-  if (!home || !kpis) return null;
+  // Rétrécissement de type, pas un cas d'usage : `getOrgDashboardHome` ne rend
+  // `null` que sur un `organizationId` absent, déjà écarté au début de cette
+  // fonction.
+  if (!home) return null;
 
   const teamIds = input.teamUserIds?.length ? new Set(input.teamUserIds) : null;
   const scopedMeetings = teamIds
@@ -708,19 +698,6 @@ export async function getOrgAdminDashboard(
   const scopedMembers = teamIds
     ? teamList.members.filter((m) => teamIds.has(m.userId))
     : teamList.members;
-
-  const activeCommercialsCount = new Set(
-    scopedMeetings.map((m) => m.sellerUserId),
-  ).size;
-  const scoreVals = scopedMeetings
-    .map((m) => m.salesScore)
-    .filter((s): s is number => s != null);
-  const avgSalesScoreInWindow =
-    scoreVals.length === 0
-      ? null
-      : Math.round(
-          (scoreVals.reduce((a, b) => a + b, 0) / scoreVals.length) * 10,
-        ) / 10;
 
   const monEquipe = buildMonEquipePage({
     members: scopedMembers,
@@ -735,9 +712,6 @@ export async function getOrgAdminDashboard(
   return {
     statsWindowDays: input.statsWindowDays,
     home,
-    kpis,
-    avgSalesScoreInWindow,
-    activeCommercialsCount,
     monEquipe,
     discPie,
     soncasPie,

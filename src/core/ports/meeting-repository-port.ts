@@ -158,20 +158,6 @@ export interface MeetingRepositoryPort {
     sellerUserId?: string;
   }): Promise<number>;
 
-  countMeetingsWithMeetingAtSinceAndOutcome(input: {
-    organizationId: string;
-    since: Date;
-    outcome: MeetingOutcome;
-    sellerUserId?: string;
-  }): Promise<number>;
-
-  listAnalysesForOrgMeetingsSince(input: {
-    organizationId: string;
-    meetingAtSince: Date;
-    kinds: MeetingAnalysisKind[];
-    sellerUserId?: string;
-  }): Promise<MeetingAnalysisRow[]>;
-
   countMeetingsForOrg(input: { organizationId: string }): Promise<number>;
 
   countMeetingsWithMeetingAtBetween(input: {
