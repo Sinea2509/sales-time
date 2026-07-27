@@ -68,9 +68,22 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       ? (actor.internalUserId ?? undefined)
       : undefined;
 
+  /*
+    L'équipe se résout avant les comptes de période, et non plus en parallèle
+    du chargement des RDV : ces comptes pilotent le sélecteur, qui annonce la
+    disponibilité de cet écran et peut même rediriger vers une autre période.
+    Ils doivent donc porter sur la population que l'écran affiche. Un manager y
+    gagne un aller-retour de plus ; un commercial n'en paie aucun, cette
+    résolution sortant sans requête quand la personne n'encadre personne.
+  */
+  const teamUserIds = await resolveManagerTeamUserIds(deps, {
+    canManageOrganization: actor.canManageOrganization,
+    internalUserId: actor.internalUserId,
+  });
+
   const windowCounts = await getStatsWindowRdvsCounts(deps, {
     organizationId: actor.activeOrganizationId,
-    sellerUserId: sellerScope,
+    sellerUserIds: sellerScope ? [sellerScope] : teamUserIds,
   });
   const statsWindowDays = ensureEligibleStatsWindowDays({
     searchParams: sp,
@@ -82,31 +95,24 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
 
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
-  const [meetingsForWindow, teamUserIds, globalKissJson, orgSettings] =
-    await Promise.all([
-      deps.meetings.listRecentMeetingsForDashboard({
-        organizationId: actor.activeOrganizationId,
-        // Le plafond est un garde-fou de volume, pas un périmètre : la requête
-        // est déjà cadrée par `sellerUserId` pour un commercial, et par le
-        // filtre d'équipe ci-dessous pour un manager.
-        limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
-        meetingAtSince: sincePreviousWindow,
-        includeLatestSoncasResult: true,
-        includeLatestDiscResult: true,
-        includeLatestKissResult: true,
-        sellerUserId: sellerScope,
-      }),
-      resolveManagerTeamUserIds(deps, {
-        canManageOrganization: actor.canManageOrganization,
-        internalUserId: actor.internalUserId,
-      }),
-      aiEnabled
-        ? deps.globalKissCoachingPrompts.getPrompts()
-        : Promise.resolve(null),
-      deps.organizationSettings.findByOrganizationId(
-        actor.activeOrganizationId,
-      ),
-    ]);
+  const [meetingsForWindow, globalKissJson, orgSettings] = await Promise.all([
+    deps.meetings.listRecentMeetingsForDashboard({
+      organizationId: actor.activeOrganizationId,
+      // Le plafond est un garde-fou de volume, pas un périmètre : la requête
+      // est déjà cadrée par `sellerUserId` pour un commercial, et par le
+      // filtre d'équipe ci-dessous pour un manager.
+      limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
+      meetingAtSince: sincePreviousWindow,
+      includeLatestSoncasResult: true,
+      includeLatestDiscResult: true,
+      includeLatestKissResult: true,
+      sellerUserId: sellerScope,
+    }),
+    aiEnabled
+      ? deps.globalKissCoachingPrompts.getPrompts()
+      : Promise.resolve(null),
+    deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
+  ]);
 
   /*
     L'ordre dans lequel l'organisation a écrit ses étapes, pour ranger la

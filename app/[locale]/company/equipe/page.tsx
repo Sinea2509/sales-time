@@ -52,8 +52,17 @@ export default async function MonEquipePage({ searchParams }: Props) {
   const monEquipePage = parseEquipePage(sp.equipePage);
   const deps = getApplicationDeps();
 
+  // L'équipe se résout avant les comptes, parce que les comptes doivent porter
+  // sur elle : le sélecteur de période annonce la disponibilité de cet écran,
+  // et cet écran ne montre que l'équipe du manager.
+  const teamUserIds = await resolveManagerTeamUserIds(deps, {
+    canManageOrganization: actor.canManageOrganization,
+    internalUserId: actor.internalUserId,
+  });
+
   const windowCounts = await getStatsWindowRdvsCounts(deps, {
     organizationId: actor.activeOrganizationId,
+    sellerUserIds: teamUserIds,
   });
   // La requête entière, et pas seulement `jours` : si cette période n'a pas
   // assez de RDV, la redirection qui suit doit ramener le lecteur sur la page
@@ -64,11 +73,6 @@ export default async function MonEquipePage({ searchParams }: Props) {
     redirectPath: "/company/equipe",
   });
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
-
-  const teamUserIds = await resolveManagerTeamUserIds(deps, {
-    canManageOrganization: actor.canManageOrganization,
-    internalUserId: actor.internalUserId,
-  });
 
   const admin = await getOrgAdminDashboard(deps, {
     organizationId: actor.activeOrganizationId,

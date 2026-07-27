@@ -58,8 +58,16 @@ export default async function DashboardHomePage({
   }
 
   if (actor.workspaceRoleMode === "admin") {
+    // L'équipe se résout avant les comptes, parce que les comptes doivent
+    // porter sur elle : le sélecteur de période annonce la disponibilité de
+    // cet écran, et cet écran est cadré sur l'équipe du manager.
+    const teamUserIds = await resolveManagerTeamUserIds(deps, {
+      canManageOrganization: actor.canManageOrganization,
+      internalUserId: actor.internalUserId,
+    });
     const windowCounts = await getStatsWindowRdvsCounts(deps, {
       organizationId: actor.activeOrganizationId,
+      sellerUserIds: teamUserIds,
     });
     const statsWindowDays = ensureEligibleStatsWindowDays({
       searchParams: sp,
@@ -67,10 +75,6 @@ export default async function DashboardHomePage({
       redirectPath: "/company",
     });
     const disabledStatsDays = disabledStatsWindowDays(windowCounts);
-    const teamUserIds = await resolveManagerTeamUserIds(deps, {
-      canManageOrganization: actor.canManageOrganization,
-      internalUserId: actor.internalUserId,
-    });
     const [admin, globalKissJson] = await Promise.all([
       getOrgAdminDashboard(deps, {
         organizationId: actor.activeOrganizationId,
@@ -122,7 +126,7 @@ export default async function DashboardHomePage({
   const sellerId = actor.internalUserId!;
   const windowCounts = await getStatsWindowRdvsCounts(deps, {
     organizationId: actor.activeOrganizationId,
-    sellerUserId: sellerId,
+    sellerUserIds: [sellerId],
   });
   const statsWindowDays = ensureEligibleStatsWindowDays({
     searchParams: sp,

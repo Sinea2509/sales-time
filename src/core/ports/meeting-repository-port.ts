@@ -155,7 +155,18 @@ export interface MeetingRepositoryPort {
   countMeetingsWithMeetingAtSince(input: {
     organizationId: string;
     since: Date;
-    sellerUserId?: string;
+    /**
+     * Périmètre de comptage : ces commerciaux, ou toute l'organisation.
+     *
+     * Une liste absente ou vide veut dire « pas de cadrage », donc « tout »,
+     * jamais « rien » : c'est la convention de `lib/team-seller-scope.ts`, et
+     * les appelants la partagent avec les écrans qu'ils alimentent.
+     *
+     * Une liste plutôt qu'un seul identifiant parce que le sélecteur de période
+     * annonce la disponibilité d'un écran : sur un écran d'équipe, il doit donc
+     * compter l'équipe, et non son manager seul ni l'organisation entière.
+     */
+    sellerUserIds?: string[];
   }): Promise<number>;
 
   countMeetingsForOrg(input: { organizationId: string }): Promise<number>;

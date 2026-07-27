@@ -7,24 +7,35 @@ import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-
 
 export type StatsWindowRdvsCounts = Record<StatsWindowDays, number>;
 
+/**
+ * Combien de rendez-vous chaque période propose, pour un écran donné.
+ *
+ * Ces comptes pilotent le sélecteur de période : ils décident des périodes
+ * grisées, et `ensureEligibleStatsWindowDays` va jusqu'à rediriger vers une
+ * autre période. Ils doivent donc nommer exactement la population que l'écran
+ * affiche, sans quoi le sélecteur propose, voire impose, une période que la
+ * page rend vide.
+ *
+ * D'où une liste de commerciaux et non un seul identifiant : un écran d'équipe
+ * compte son équipe. Absente ou vide, elle veut dire « pas de cadrage », donc
+ * l'organisation entière, jamais personne : c'est la convention de
+ * `lib/team-seller-scope.ts`, tenue d'un bout à l'autre de la chaîne.
+ */
 export async function getStatsWindowRdvsCounts(
   deps: { meetings: MeetingRepositoryPort },
   input: {
     organizationId: string;
-    sellerUserId?: string | null;
+    sellerUserIds?: string[] | null;
   },
 ): Promise<StatsWindowRdvsCounts> {
-  const seller =
-    input.sellerUserId != null && input.sellerUserId !== ""
-      ? input.sellerUserId
-      : undefined;
+  const scope = input.sellerUserIds?.length ? input.sellerUserIds : undefined;
 
   const entries = await Promise.all(
     STATS_WINDOW_DAYS_OPTIONS.map(async (days) => {
       const count = await deps.meetings.countMeetingsWithMeetingAtSince({
         organizationId: input.organizationId,
         since: meetingAtSinceForStatsWindow(days),
-        sellerUserId: seller,
+        sellerUserIds: scope,
       });
       return [days, count] as const;
     }),

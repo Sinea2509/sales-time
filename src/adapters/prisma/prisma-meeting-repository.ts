@@ -89,6 +89,18 @@ function sellerWhere(sellerUserId?: string) {
   return sellerUserId != null ? { sellerUserId } : {};
 }
 
+/**
+ * Le même filtre, pour plusieurs commerciaux : l'équipe d'un manager.
+ *
+ * Une liste absente ou vide ne pose aucune condition, c'est-à-dire compte
+ * l'organisation entière. Écrire `{ in: [] }` dirait l'inverse et ne rendrait
+ * jamais rien ; c'est la convention de `lib/team-seller-scope.ts`, tenue ici
+ * jusque dans la requête.
+ */
+function sellersWhere(sellerUserIds?: string[]) {
+  return sellerUserIds?.length ? { sellerUserId: { in: sellerUserIds } } : {};
+}
+
 export class PrismaMeetingRepository implements MeetingRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
@@ -247,13 +259,13 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   async countMeetingsWithMeetingAtSince(input: {
     organizationId: string;
     since: Date;
-    sellerUserId?: string;
+    sellerUserIds?: string[];
   }): Promise<number> {
     return this.db.meeting.count({
       where: {
         organizationId: input.organizationId,
         meetingAt: { gte: input.since },
-        ...sellerWhere(input.sellerUserId),
+        ...sellersWhere(input.sellerUserIds),
       },
     });
   }
