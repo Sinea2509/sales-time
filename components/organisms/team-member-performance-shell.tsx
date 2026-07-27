@@ -10,7 +10,10 @@ import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analy
 import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-quadrant-grid";
 import type { SalesProfileScores } from "@/components/organisms/sales-profile-radar";
 import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
-import { GuideDeGrille } from "@/components/molecules/reference-commerciale";
+import {
+  GuideDeGrille,
+  GuideKiss,
+} from "@/components/molecules/reference-commerciale";
 import { GRILLE_DISC, GRILLE_SONCAS } from "@/lib/grilles-commerciales";
 import { SkillSignatureBadges } from "@/components/molecules/seller-skill-signature-view";
 import { TeamMemberStanding } from "@/components/molecules/team-member-standing";
@@ -450,7 +453,10 @@ export function TeamMemberPerformanceShell({
       </div>
 
       <section className="space-y-4">
-        <h2 className={sectionHeadingClass}>Coaching KISS</h2>
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <h2 className={sectionHeadingClass}>Coaching KISS</h2>
+          <GuideKiss className="shrink-0" />
+        </div>
         {kissSellerStrengthsNarrative?.trim() ? (
           <p className={cn(cardProseBodyClass, "max-w-3xl")}>
             {kissSellerStrengthsNarrative.trim()}

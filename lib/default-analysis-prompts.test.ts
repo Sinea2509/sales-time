@@ -70,4 +70,12 @@ describe("contrat de précision des prompts de coaching", () => {
     expect(DEFAULT_KISS_MARKDOWN).toContain("next meeting");
     expect(DEFAULT_KISS_MARKDOWN).toContain("any seller in any meeting");
   });
+
+  it("le prompt KISS demande une voix de coach, pas de preneur de notes", () => {
+    expect(DEFAULT_KISS_MARKDOWN).toContain("the seller's coach, not a note");
+    // Le geste concret : une question, une phrase, un exercice, utilisable au
+    // prochain appel. Sans lui, la puce redevient une étiquette.
+    expect(DEFAULT_KISS_MARKDOWN).toContain("the concrete move");
+    expect(DEFAULT_KISS_MARKDOWN).toContain("is a label, not coaching");
+  });
 });

@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import {
+  GRILLE_KISS,
   profilDeLaGrille,
   type GrilleCommerciale,
 } from "@/lib/grilles-commerciales";
@@ -128,6 +129,49 @@ export function GuideDeGrille({
                 <span className="mt-0.5 block text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
                   {p.enRendezVous}
                 </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/**
+ * « Comment lire ces quatre colonnes » : ce que trient Keep, Improve, Start et
+ * Stop, pour qui découvre la méthode KISS.
+ *
+ * Les titres restent en anglais, c'est le nom de la méthode ; la bulle en donne
+ * la clé en français, une fois, à côté du bloc où ils apparaissent.
+ */
+export function GuideKiss({ className }: { className?: string }) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        className={cn(
+          "focus-visible:ring-brand/60 text-brand inline-flex items-center gap-1 rounded-sm text-xs font-medium outline-none hover:underline focus-visible:ring-2",
+          className,
+        )}
+      >
+        <Info className="size-3.5 shrink-0" aria-hidden />
+        Comment lire ces colonnes
+      </PopoverTrigger>
+      <PopoverContent className="w-80">
+        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          La méthode KISS
+        </p>
+        <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          {GRILLE_KISS.intro}
+        </p>
+        <ul className="mt-3 space-y-2.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+          {GRILLE_KISS.quadrants.map((q) => (
+            <li key={q.cle}>
+              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                {q.nom}
+              </span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                {q.resume}
               </span>
             </li>
           ))}

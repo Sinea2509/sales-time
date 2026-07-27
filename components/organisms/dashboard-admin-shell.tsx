@@ -5,6 +5,7 @@ import { MonEquipeSection } from "@/components/organisms/mon-equipe-section";
 import { OrgAdminActionCards } from "@/components/organisms/org-admin-action-cards";
 import { OrgAdminDonutDistributionCard } from "@/components/organisms/org-admin-donut-distribution-card";
 import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-quadrant-grid";
+import { GuideKiss } from "@/components/molecules/reference-commerciale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import {
@@ -131,7 +132,10 @@ export function DashboardAdminShell({
       </section>
 
       <section className="space-y-4">
-        <h2 className={sectionHeadingClass}>Coaching KISS</h2>
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <h2 className={sectionHeadingClass}>Coaching KISS</h2>
+          <GuideKiss className="shrink-0" />
+        </div>
         {kissTeamStrengthsNarrative?.trim() ? (
           <p className="text-foreground max-w-3xl text-sm leading-relaxed">
             {kissTeamStrengthsNarrative.trim()}

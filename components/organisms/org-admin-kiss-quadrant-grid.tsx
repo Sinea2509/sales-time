@@ -32,7 +32,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
   {
     key: "keep" as const,
     title: "Keep",
-    subtitle: "Ce que votre équipe a bien fait",
+    subtitle: "Ce que l'équipe réussit déjà, à sécuriser",
     bulletsKey: "keepBullets" as const,
     icon: UserRound,
     iconWrapClass:
@@ -41,7 +41,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
   {
     key: "improve" as const,
     title: "Improve",
-    subtitle: "Ce que votre équipe peut améliorer",
+    subtitle: "Presque là, à affiner ensemble",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
     iconWrapClass: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
@@ -49,15 +49,15 @@ const quadrantsTeam: readonly KissQuadrant[] = [
   {
     key: "start" as const,
     title: "Start",
-    subtitle: "Ce que votre équipe devrait commencer à faire",
+    subtitle: "Le réflexe qui manque, à installer",
     bulletsKey: "startBullets" as const,
     icon: Play,
-    iconWrapClass: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
+    iconWrapClass: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
   },
   {
     key: "stop" as const,
     title: "Stop",
-    subtitle: "Ce que votre équipe devrait arrêter",
+    subtitle: "Ce qui coûte des rendez-vous, à couper",
     bulletsKey: "stopBullets" as const,
     icon: Ban,
     iconWrapClass: "bg-red-600/15 text-red-700 dark:text-red-400",
@@ -69,7 +69,7 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
   {
     key: "keep" as const,
     title: "Keep",
-    subtitle: "Ce que vous devez continuer à valoriser",
+    subtitle: "Ses points forts, à valoriser au prochain point",
     bulletsKey: "keepBullets" as const,
     icon: UserRound,
     iconWrapClass:
@@ -78,7 +78,7 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
   {
     key: "improve" as const,
     title: "Improve",
-    subtitle: "Sujets de coaching à adresser",
+    subtitle: "À travailler ensemble, dès le prochain coaching",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
     iconWrapClass: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
@@ -86,15 +86,15 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
   {
     key: "start" as const,
     title: "Start",
-    subtitle: "Type de rituels à lancer",
+    subtitle: "Le réflexe à installer avec ce commercial",
     bulletsKey: "startBullets" as const,
     icon: Play,
-    iconWrapClass: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
+    iconWrapClass: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
   },
   {
     key: "stop" as const,
     title: "Stop",
-    subtitle: "Comportements managériaux à éviter",
+    subtitle: "À l'aider à couper, ça lui coûte des rendez-vous",
     bulletsKey: "stopBullets" as const,
     icon: Ban,
     iconWrapClass: "bg-red-600/15 text-red-700 dark:text-red-400",
@@ -104,17 +104,16 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
 /**
  * Les mêmes cases que `quadrantsTeam`, dites au commercial sur lui-même.
  *
- * Elles ne peuvent pas emprunter celles du manager : « Sujets de coaching à
- * adresser » et « Comportements managériaux à éviter » demandent au lecteur
- * d'encadrer quelqu'un. Servies à un commercial qui lit sa propre fiche, elles
- * lui feraient prendre ses propres axes de progrès pour un plan de coaching à
- * mener sur un tiers.
+ * Elles ne peuvent pas emprunter celles du manager : « à valoriser au prochain
+ * point », « à l'aider à couper » demandent au lecteur d'encadrer quelqu'un.
+ * Servies à un commercial qui lit sa propre fiche, elles lui feraient prendre
+ * ses propres axes de progrès pour un plan de coaching à mener sur un tiers.
  */
 const quadrantsSellerSelf: readonly KissQuadrant[] = [
   {
     key: "keep" as const,
     title: "Keep",
-    subtitle: "Ce que vous avez bien fait",
+    subtitle: "Ce que vous réussissez, gardez-le tel quel",
     bulletsKey: "keepBullets" as const,
     icon: UserRound,
     iconWrapClass:
@@ -123,7 +122,7 @@ const quadrantsSellerSelf: readonly KissQuadrant[] = [
   {
     key: "improve" as const,
     title: "Improve",
-    subtitle: "Ce que vous pouvez améliorer",
+    subtitle: "Presque acquis, à affiner d'un cran",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
     iconWrapClass: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
@@ -131,15 +130,15 @@ const quadrantsSellerSelf: readonly KissQuadrant[] = [
   {
     key: "start" as const,
     title: "Start",
-    subtitle: "Ce que vous devriez commencer à faire",
+    subtitle: "Le réflexe à installer dès le prochain rendez-vous",
     bulletsKey: "startBullets" as const,
     icon: Play,
-    iconWrapClass: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
+    iconWrapClass: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
   },
   {
     key: "stop" as const,
     title: "Stop",
-    subtitle: "Ce que vous devriez arrêter",
+    subtitle: "À couper, ça vous coûte des rendez-vous",
     bulletsKey: "stopBullets" as const,
     icon: Ban,
     iconWrapClass: "bg-red-600/15 text-red-700 dark:text-red-400",
@@ -197,7 +196,7 @@ export function OrgAdminKissQuadrantGrid({
             <CardContent>
               <DotBulletList
                 items={bullets}
-                density="compact"
+                density="comfortable"
                 emptyMessage="Aucune recommandation KISS sur la période. Lancez des analyses sur vos rendez-vous."
               />
             </CardContent>
