@@ -6,6 +6,7 @@ import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { CommercialCoachingFocus } from "@/components/molecules/commercial-coaching-focus";
+import { CommercialActionPlan } from "@/components/organisms/commercial-action-plan";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import { DashboardStandingCard } from "@/components/organisms/dashboard-standing-card";
 import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type { TeamMemberStanding } from "@/src/core/application/get-org-admin-dashboard";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
+import type { CoachingAction } from "@/src/core/domain/seller-action-plan";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
@@ -31,6 +33,7 @@ export function DashboardHomeShell({
   standing = null,
   comparisonGroup = "team",
   managerNameLine = null,
+  coachingActions = [],
   meetingTypeOptions,
   pipelineStageOptions,
   disabledStatsDays = [],
@@ -42,6 +45,8 @@ export function DashboardHomeShell({
   comparisonGroup?: TeamScopeGroup;
   /** Nom du manager qui donne son périmètre au rang. `null` s'il n'y en a pas. */
   managerNameLine?: string | null;
+  /** Les gestes de la semaine, tirés du coaching KISS. Vide sans rendez-vous analysé. */
+  coachingActions?: CoachingAction[];
   meetingTypeOptions: string[];
   pipelineStageOptions: string[];
   disabledStatsDays?: StatsWindowDays[];
@@ -92,6 +97,21 @@ export function DashboardHomeShell({
 
         <DashboardKpiCards home={home} />
       </div>
+
+      {/*
+        Le plan d'action se pose entre les chiffres et la liste : « voilà où
+        j'en suis, voilà quoi faire cette semaine, voilà mes rendez-vous ». Ses
+        gestes viennent du même coaching KISS que sa fiche, resserrés aux deux
+        ou trois à prendre en premier. Il ne s'affiche que dans une organisation
+        et pour un commercial dont on connaît la place : le même contexte que le
+        focus au-dessus, faute de quoi il n'aurait aucun coaching à réduire.
+      */}
+      {standing ? (
+        <CommercialActionPlan
+          actions={coachingActions}
+          coachingHref="/company/analyse"
+        />
+      ) : null}
 
       <section className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

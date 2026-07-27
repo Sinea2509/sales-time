@@ -20,6 +20,7 @@ import {
   getOrgAdminDashboard,
   getTeamMemberStanding,
 } from "@/src/core/application/get-org-admin-dashboard";
+import { getSellerCoachingActionPlan } from "@/src/core/application/get-seller-coaching-action-plan";
 import { getCachedOrgKissRollupNarrative } from "@/src/core/application/get-cached-org-kiss-rollup-narrative";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
@@ -145,31 +146,44 @@ export default async function DashboardHomePage({
   const teamUserIds = await resolveSellerTeamUserIds(deps, {
     internalUserId: sellerId,
   });
-  const [home, orgSettings, standing, managerNameLine] = await Promise.all([
-    getOrgDashboardHome(deps, {
-      organizationId: actor.activeOrganizationId,
-      statsWindowDays,
-      sellerUserId: sellerId,
-    }),
-    deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
-    getTeamMemberStanding(deps, {
-      organizationId: actor.activeOrganizationId,
-      statsWindowDays,
-      sellerUserId: sellerId,
-      teamUserIds,
-    }),
-    /*
-      Le nom qui désigne ce cadrage. Il relit le rattachement que
-      `resolveSellerTeamUserIds` vient de lire, une ligne de plus sur une clé
-      primaire, menée en parallèle des trois requêtes lourdes de cette salve :
-      les fondre en une seule aurait demandé une troisième fonction dont
-      « Ma performance », qui cadre sans nommer le manager, n'aurait rien fait.
-    */
-    resolveSellerManagerNameLine(deps, {
-      organizationId: actor.activeOrganizationId,
-      internalUserId: sellerId,
-    }),
-  ]);
+  const [home, orgSettings, standing, managerNameLine, coachingActions] =
+    await Promise.all([
+      getOrgDashboardHome(deps, {
+        organizationId: actor.activeOrganizationId,
+        statsWindowDays,
+        sellerUserId: sellerId,
+      }),
+      deps.organizationSettings.findByOrganizationId(
+        actor.activeOrganizationId,
+      ),
+      getTeamMemberStanding(deps, {
+        organizationId: actor.activeOrganizationId,
+        statsWindowDays,
+        sellerUserId: sellerId,
+        teamUserIds,
+      }),
+      /*
+        Le nom qui désigne ce cadrage. Il relit le rattachement que
+        `resolveSellerTeamUserIds` vient de lire, une ligne de plus sur une clé
+        primaire, menée en parallèle des trois requêtes lourdes de cette salve :
+        les fondre en une seule aurait demandé une troisième fonction dont
+        « Ma performance », qui cadre sans nommer le manager, n'aurait rien fait.
+      */
+      resolveSellerManagerNameLine(deps, {
+        organizationId: actor.activeOrganizationId,
+        internalUserId: sellerId,
+      }),
+      /*
+        Le plan d'action de la semaine, tiré des puces KISS de ses propres
+        rendez-vous. Sa requête est cadrée sur lui et n'appelle aucune IA : les
+        puces sont déjà écrites à l'analyse de chaque rendez-vous.
+      */
+      getSellerCoachingActionPlan(deps, {
+        organizationId: actor.activeOrganizationId,
+        statsWindowDays,
+        sellerUserId: sellerId,
+      }),
+    ]);
   const { meetingTypeOptions, pipelineStageOptions } =
     orgMeetingFormOptionsFromSettings(orgSettings);
 
@@ -188,6 +202,7 @@ export default async function DashboardHomePage({
           standing={standing}
           comparisonGroup={teamScopeGroup(teamUserIds)}
           managerNameLine={managerNameLine}
+          coachingActions={coachingActions}
           meetingTypeOptions={meetingTypeOptions}
           pipelineStageOptions={pipelineStageOptions}
           disabledStatsDays={disabledStatsDays}
