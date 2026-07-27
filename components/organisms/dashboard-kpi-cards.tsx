@@ -7,7 +7,7 @@ import { KpiTile } from "@/components/molecules/kpi-tile";
 import { KpiVsPreviousBadge } from "@/components/molecules/trend-pill";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import { MIN_RDV_FOR_STATS } from "@/src/core/domain/dashboard-stats-window";
-import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
+import type { DashboardHomeFigures } from "@/src/core/domain/dashboard-home-from-meetings";
 
 const TAM_SANS_DONNEE =
   "Non calculable : aucun rendez-vous renseigné sur la période. Le gain administratif se compte sur les rendez-vous dont la durée est saisie.";
@@ -16,7 +16,9 @@ const TUC_SANS_DONNEE =
   "Non calculable : aucun temps de prospection n'est fixé dans les paramètres de l'organisation, et le TUC se calcule par rapport à lui.";
 
 /**
- * Les trois cartes de tête du tableau de bord du commercial.
+ * Les trois cartes de tête d'un tableau de bord, celui d'un commercial comme
+ * celui d'un manager. Elles ne prennent que des chiffres, sans savoir sur
+ * quelle population ils ont été comptés : c'est leur appelant qui en répond.
  *
  * Chaque carte porte trois choses : ce qu'elle mesure, sa valeur, et de quoi
  * cette valeur est faite. Le pied de carte n'est pas décoratif, c'est lui qui
@@ -28,7 +30,7 @@ const TUC_SANS_DONNEE =
  * l'infobulle. Un zéro afficherait une performance nulle là où il n'y a
  * simplement rien eu à mesurer.
  */
-export function DashboardKpiCards({ home }: { home: OrgDashboardHome }) {
+export function DashboardKpiCards({ home }: { home: DashboardHomeFigures }) {
   const trendCommon = {
     statsWindowDays: home.statsWindowDays,
     minSampleCount: MIN_RDV_FOR_STATS,

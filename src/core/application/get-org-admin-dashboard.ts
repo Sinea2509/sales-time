@@ -2,7 +2,15 @@ import {
   computeTeamDiscPie,
   computeTeamSoncasPie,
 } from "@/src/core/domain/org-profile-distribution-pie";
-import { averageTamMinutes } from "@/src/core/domain/dashboard-tam-tuc";
+import {
+  averageTamMinutes,
+  prospectingMinutesForStatsWindow,
+} from "@/src/core/domain/dashboard-tam-tuc";
+import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
+import {
+  dashboardHomeFromMeetings,
+  type DashboardHomeFigures,
+} from "@/src/core/domain/dashboard-home-from-meetings";
 import { noteGlobaleOn5FromSalesScores } from "@/src/core/domain/note-globale-on5";
 import {
   rankTeamMembers,
@@ -29,12 +37,9 @@ import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organi
 import type { OrganizationTeamRepositoryPort } from "@/src/core/ports/organization-team-repository-port";
 import {
   meetingAtSinceForStatsWindow,
+  previousMeetingAtWindowStart,
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
-import {
-  getOrgDashboardHome,
-  type OrgDashboardHome,
-} from "./get-org-dashboard-home";
 import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
 
 /** Limite de RDV chargés pour agrégations équipe (perf). */
@@ -168,7 +173,13 @@ export type OrgAdminKissTeamRollup = {
 
 export type OrgAdminDashboard = {
   statsWindowDays: StatsWindowDays;
-  home: OrgDashboardHome;
+  /**
+   * Les chiffres de tête, sur la même population que le reste de la page.
+   *
+   * Les chiffres seuls, sans liste de derniers RDV : le tableau de bord du
+   * manager n'en affiche pas, il affiche son équipe.
+   */
+  home: DashboardHomeFigures;
   monEquipe: OrgAdminMonEquipePage;
   discPie: OrgAdminDistributionPie;
   soncasPie: OrgAdminDistributionPie;
@@ -590,7 +601,9 @@ export function buildKissTeamRollupFromMeetings(
   };
 }
 
-export function buildOrgAdminProgressBullets(home: OrgDashboardHome): string[] {
+export function buildOrgAdminProgressBullets(
+  home: DashboardHomeFigures,
+): string[] {
   const out: string[] = [];
   if (home.tamCumuleTrendPercent != null && home.tamCumuleTrendPercent > 0) {
     out.push(
@@ -667,12 +680,9 @@ export async function getOrgAdminDashboard(
   if (!input.organizationId) return null;
 
   const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
+  const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays);
 
-  const [home, meetings, teamList] = await Promise.all([
-    getOrgDashboardHome(deps, {
-      organizationId: input.organizationId,
-      statsWindowDays: input.statsWindowDays,
-    }),
+  const [meetings, prevMeetings, teamList, orgSettings] = await Promise.all([
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: input.organizationId,
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
@@ -681,23 +691,50 @@ export async function getOrgAdminDashboard(
       includeLatestDiscResult: true,
       includeLatestKissResult: true,
     }),
+    // La fenêtre précédente ne sert qu'aux variations, qui ne lisent que la
+    // durée et le SalesScore : ses analyses détaillées ne sont pas demandées.
+    deps.meetings.listRecentMeetingsForDashboard({
+      organizationId: input.organizationId,
+      limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
+      meetingAtSince: sincePrev,
+      meetingAtBefore: sinceCurrent,
+    }),
     deps.organizationTeam.listMembersAndPendingInvitations(
       input.organizationId,
     ),
+    deps.organizationSettings.findByOrganizationId(input.organizationId),
   ]);
-
-  // Rétrécissement de type, pas un cas d'usage : `getOrgDashboardHome` ne rend
-  // `null` que sur un `organizationId` absent, déjà écarté au début de cette
-  // fonction.
-  if (!home) return null;
 
   const teamIds = input.teamUserIds?.length ? new Set(input.teamUserIds) : null;
   const scopedMeetings = teamIds
     ? meetings.filter((m) => teamIds.has(m.sellerUserId))
     : meetings;
+  const scopedPrevMeetings = teamIds
+    ? prevMeetings.filter((m) => teamIds.has(m.sellerUserId))
+    : prevMeetings;
   const scopedMembers = teamIds
     ? teamList.members.filter((m) => teamIds.has(m.userId))
     : teamList.members;
+
+  /*
+    Les chiffres de tête se comptent sur les mêmes rendez-vous que le tableau
+    qui les suit. Ils venaient jusqu'ici du tableau de bord d'accueil, appelé
+    sans périmètre : un manager de trois commerciaux lisait « 128 RDV » à
+    l'échelle de l'organisation, puis, quatre centimètres plus bas, la liste
+    nominative de ses trois commerciaux et leurs 19 RDV. Le premier chiffre
+    n'était pas faux, il répondait à une autre question que celle que la page
+    posait.
+  */
+  const home = dashboardHomeFromMeetings({
+    statsWindowDays: input.statsWindowDays,
+    tamMinutesPerRdv: tamMinutesSavedPerMeetingFromSettings(orgSettings),
+    prospectingMinutes: prospectingMinutesForStatsWindow(
+      orgSettings?.tamObjectiveMinutesPerMonth ?? 180,
+      input.statsWindowDays,
+    ),
+    current: scopedMeetings,
+    previous: scopedPrevMeetings,
+  });
 
   const monEquipe = buildMonEquipePage({
     members: scopedMembers,

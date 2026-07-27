@@ -6,6 +6,7 @@ import {
   buildOrgAdminImprovementBullets,
   buildOrgAdminProgressBullets,
   buildTeamMemberStanding,
+  getOrgAdminDashboard,
 } from "./get-org-admin-dashboard";
 import type { OrgAdminMonEquipeRankedRow } from "./get-org-admin-dashboard";
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
@@ -382,5 +383,149 @@ describe("buildTeamMemberStanding", () => {
     expect(standing.row?.rank).toBeNull();
     expect(standing.row?.tier).toBeNull();
     expect(standing.row?.unrankedReason).toBe("volume-insuffisant");
+  });
+});
+
+/**
+ * Ce que ces cas vérifient : que les chiffres de tête du tableau de bord d'un
+ * manager comptent les mêmes rendez-vous que le tableau nominatif affiché juste
+ * en dessous, sur la fenêtre courante comme sur la précédente.
+ *
+ * Ce qu'ils ne vérifient pas : d'où vient le périmètre. La liste des
+ * commerciaux rattachés est résolue en amont, dans la page ; cette fonction la
+ * reçoit et l'applique.
+ */
+describe("getOrgAdminDashboard", () => {
+  type ArgsDePlage = { meetingAtSince: Date; meetingAtBefore?: Date };
+
+  function rdvIdentifie(
+    sellerUserId: string,
+    rang: number,
+  ): RecentMeetingListRow {
+    // Le calcul d'empreinte lit ces trois colonnes-là, dont les cas précédents
+    // n'ont pas besoin.
+    return {
+      ...rdv(sellerUserId, { salesScore: 60, durationMin: 30 }),
+      id: `${sellerUserId}-${rang}`,
+      status: "READY",
+      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    };
+  }
+
+  function rdvsDe(sellerUserId: string, combien: number) {
+    return Array.from({ length: combien }, (_, i) =>
+      rdvIdentifie(sellerUserId, i),
+    );
+  }
+
+  function depsAvec(plages: {
+    courants: RecentMeetingListRow[];
+    precedents: RecentMeetingListRow[];
+  }) {
+    return {
+      meetings: {
+        // La fenêtre précédente est la seule bornée par le haut : c'est à cela
+        // que le double se reconnaît, plutôt qu'à l'ordre des appels.
+        listRecentMeetingsForDashboard: jest.fn((args: ArgsDePlage) =>
+          Promise.resolve(
+            args.meetingAtBefore == null ? plages.courants : plages.precedents,
+          ),
+        ),
+      },
+      organizationTeam: {
+        listMembersAndPendingInvitations: jest.fn().mockResolvedValue({
+          members: [membre("u1"), membre("u2"), membre("u3")],
+          invitations: [],
+        }),
+      },
+      organizationSettings: {
+        findByOrganizationId: jest.fn().mockResolvedValue(null),
+      },
+    };
+  }
+
+  const EQUIPE_DU_MANAGER = ["u1", "u2"];
+
+  const DEUX_PLAGES = {
+    // 5 RDV pour l'équipe et 10 pour l'organisation sur la fenêtre courante ;
+    // 1 et 10 sur la précédente. Les deux populations donnent donc des
+    // variations opposées, ce qui rend visible celle qui est comptée.
+    courants: [...rdvsDe("u1", 3), ...rdvsDe("u2", 2), ...rdvsDe("u3", 5)],
+    precedents: [...rdvsDe("u1", 1), ...rdvsDe("u3", 9)],
+  };
+
+  it("compte les chiffres de tête sur la seule équipe du manager", async () => {
+    const deps = depsAvec(DEUX_PLAGES);
+
+    const admin = await getOrgAdminDashboard(deps as never, {
+      organizationId: "org-1",
+      statsWindowDays: 30,
+      teamUserIds: EQUIPE_DU_MANAGER,
+    });
+
+    expect(admin?.home.nbRdvs).toBe(5);
+  });
+
+  it("annonce le nombre de RDV que le tableau juste en dessous totalise", async () => {
+    const deps = depsAvec(DEUX_PLAGES);
+
+    const admin = await getOrgAdminDashboard(deps as never, {
+      organizationId: "org-1",
+      statsWindowDays: 30,
+      teamUserIds: EQUIPE_DU_MANAGER,
+    });
+
+    const sommeDuTableau = (admin?.monEquipe.rows ?? []).reduce(
+      (acc, ligne) => acc + ligne.nbRdvs,
+      0,
+    );
+    expect(admin?.home.nbRdvs).toBe(sommeDuTableau);
+  });
+
+  it("compare l'équipe à sa propre fenêtre précédente", async () => {
+    const deps = depsAvec(DEUX_PLAGES);
+
+    const admin = await getOrgAdminDashboard(deps as never, {
+      organizationId: "org-1",
+      statsWindowDays: 30,
+      teamUserIds: EQUIPE_DU_MANAGER,
+    });
+
+    // 5 RDV contre 1 : l'équipe a quintuplé. À l'échelle de l'organisation, la
+    // même page annoncerait 0 %, la variation de 10 contre 10.
+    expect(admin?.home.nbRdvsTrendPercent).toBe(400);
+  });
+
+  it("couvre l'organisation entière quand aucun périmètre n'est donné", async () => {
+    const deps = depsAvec(DEUX_PLAGES);
+
+    const admin = await getOrgAdminDashboard(deps as never, {
+      organizationId: "org-1",
+      statsWindowDays: 30,
+    });
+
+    expect(admin?.home.nbRdvs).toBe(10);
+    expect(admin?.home.nbRdvsTrendPercent).toBe(0);
+  });
+
+  it("n'ouvre pas la fenêtre précédente sur la fenêtre courante", async () => {
+    const deps = depsAvec(DEUX_PLAGES);
+
+    await getOrgAdminDashboard(deps as never, {
+      organizationId: "org-1",
+      statsWindowDays: 30,
+      teamUserIds: EQUIPE_DU_MANAGER,
+    });
+
+    const appels = deps.meetings.listRecentMeetingsForDashboard.mock.calls.map(
+      ([args]) => args,
+    );
+    expect(appels).toHaveLength(2);
+    // Sans borne haute, la fenêtre dite précédente contiendrait la courante et
+    // chaque variation se comparerait à elle-même.
+    expect(appels[1].meetingAtBefore).toEqual(appels[0].meetingAtSince);
+    expect(appels[1].meetingAtSince.getTime()).toBeLessThan(
+      appels[0].meetingAtSince.getTime(),
+    );
   });
 });
