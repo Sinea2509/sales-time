@@ -1,6 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   DEFAULT_TRIAL_LIMIT,
+  isOutsideScopedTeam,
   resolveManagerTeamUserIds,
   resolveSellerTeamUserIds,
   scopeMeetingsToTeam,
@@ -184,6 +185,50 @@ describe("team-seller-scope", () => {
       const membres = [{ userId: "rep_1", membershipId: "mem_1" }];
       expect(scopeMembersToTeam(membres, ["rep_1"])).toHaveLength(1);
       expect(scopeMembersToTeam(membres, ["mem_1"])).toHaveLength(0);
+    });
+  });
+
+  /*
+    Ce que les cas qui suivent ne couvrent pas : ce que la fiche en fait. Ils
+    fixent la réponse, pas la phrase affichée ni le fait qu'un écran pense à
+    poser la question.
+  */
+  describe("isOutsideScopedTeam", () => {
+    /*
+      « Pas de périmètre » veut dire « tout le monde », donc personne n'en est
+      dehors. Répondre l'inverse écrirait « hors de votre équipe » sur chaque
+      fiche d'une organisation où personne n'a encore déclaré son manager,
+      c'est-à-dire de celle qui vient d'ouvrir le produit.
+    */
+    it("puts nobody outside when no team is scoped", () => {
+      expect(isOutsideScopedTeam(undefined, "rep_1")).toBe(false);
+      expect(isOutsideScopedTeam(null, "rep_1")).toBe(false);
+      expect(isOutsideScopedTeam([], "rep_1")).toBe(false);
+    });
+
+    // Le manager fait partie de l'équipe qu'il administre : sa propre fiche ne
+    // doit pas s'annoncer hors de sa propre équipe.
+    it("puts a member of the scoped team inside", () => {
+      expect(isOutsideScopedTeam(["mgr_1", "rep_1"], "rep_1")).toBe(false);
+      expect(isOutsideScopedTeam(["mgr_1", "rep_1"], "mgr_1")).toBe(false);
+    });
+
+    it("puts a colleague of another team outside", () => {
+      expect(isOutsideScopedTeam(["mgr_1", "rep_1"], "autre_1")).toBe(true);
+    });
+
+    /*
+      La fiche s'en sert pour expliquer une absence que `scopeMembersToTeam`
+      vient de produire. Les deux doivent donc retenir exactement les mêmes
+      personnes : sinon la fiche explique un classement qui s'affiche, ou ne dit
+      rien d'un classement qui manque.
+    */
+    it("agrees with scopeMembersToTeam on every case", () => {
+      const equipe = ["mgr_1", "rep_1"];
+      for (const userId of ["mgr_1", "rep_1", "autre_1"]) {
+        const retenu = scopeMembersToTeam([{ userId }], equipe).length === 1;
+        expect(isOutsideScopedTeam(equipe, userId)).toBe(!retenu);
+      }
     });
   });
 

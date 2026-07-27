@@ -109,3 +109,20 @@ export function scopeMembersToTeam<T extends { userId: string }>(
 ): T[] {
   return scopeRows(members, teamUserIds, (m) => m.userId);
 }
+
+/**
+ * Cette personne est-elle en dehors du périmètre d'équipe reçu ?
+ *
+ * Faux quand il n'y a pas de périmètre : une liste absente ou vide veut dire
+ * « tout le monde », donc personne n'en est dehors. C'est la convention des
+ * fonctions ci-dessus, et il faut que ce soit exactement la même : la fiche
+ * d'un commercial s'en sert pour expliquer une absence de classement que
+ * `scopeMembersToTeam` vient de produire.
+ */
+export function isOutsideScopedTeam(
+  teamUserIds: string[] | undefined | null,
+  userId: string,
+): boolean {
+  if (!teamUserIds?.length) return false;
+  return !teamUserIds.includes(userId);
+}

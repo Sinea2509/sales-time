@@ -10,7 +10,10 @@ import { countMeetingTypes } from "@/lib/team-member-performance-helpers";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
-import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
+import {
+  isOutsideScopedTeam,
+  resolveManagerTeamUserIds,
+} from "@/lib/team-seller-scope";
 import { getTeamMemberPerformanceProfile } from "@/src/core/application/get-team-member-performance-profile";
 import { getCachedSellerRelationalAffinity } from "@/src/core/application/get-cached-seller-relational-affinity";
 import {
@@ -19,6 +22,7 @@ import {
   ORG_ADMIN_DASHBOARD_MEETING_CAP,
 } from "@/src/core/application/get-org-admin-dashboard";
 import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
+import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
 import { summarizeTeamCoachingRecommendations } from "@/src/core/application/summarize-team-coaching-recommendations";
 import {
   aggregateDiscAffinityBarsFromMeetings,
@@ -32,6 +36,7 @@ import {
 } from "@/src/core/domain/seller-affinity-from-meetings";
 import {
   DEFAULT_STATS_WINDOW_DAYS,
+  disabledStatsWindowDays,
   parseStatsWindowDays,
   partitionMeetingsByStatsWindow,
   previousMeetingAtWindowStart,
@@ -87,25 +92,45 @@ export default async function ManagerCommercialViewPage({
   const orgId = actor.activeOrganizationId;
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
 
-  const [member, home, globalKissJson, orgSettings] = await Promise.all([
-    deps.organizationTeam.findMembershipForManagerView(orgId, userId),
-    getOrgDashboardHome(
-      {
-        meetings: deps.meetings,
-        organizationSettings: deps.organizationSettings,
-      },
-      {
+  /*
+    Le sélecteur de période de cette fiche compte les rendez-vous de ce
+    commercial, et de lui seul : tout ce que la page affiche est à lui. Sans
+    ces comptes, il annonçait les trois périodes également disponibles, et le
+    manager qui choisissait « 7 jours » sur quelqu'un qui n'y a rien tombait
+    sur des cartes vides sans explication.
+
+    Griser, mais ne pas rediriger : `ensureEligibleStatsWindowDays` réécrirait
+    la période, or c'est elle que `retourEquipeHref` rend au manager en le
+    ramenant à sa liste. Elle écrit de plus `jours` en toutes lettres, que la
+    redirection du haut de page retire aussitôt, la période par défaut de cette
+    fiche se disant par son absence.
+  */
+  const [member, home, globalKissJson, orgSettings, windowCounts] =
+    await Promise.all([
+      deps.organizationTeam.findMembershipForManagerView(orgId, userId),
+      getOrgDashboardHome(
+        {
+          meetings: deps.meetings,
+          organizationSettings: deps.organizationSettings,
+        },
+        {
+          organizationId: orgId,
+          statsWindowDays,
+          sellerUserId: userId,
+        },
+      ),
+      deps.globalKissCoachingPrompts.getPrompts(),
+      deps.organizationSettings.findByOrganizationId(orgId),
+      getStatsWindowRdvsCounts(deps, {
         organizationId: orgId,
-        statsWindowDays,
-        sellerUserId: userId,
-      },
-    ),
-    deps.globalKissCoachingPrompts.getPrompts(),
-    deps.organizationSettings.findByOrganizationId(orgId),
-  ]);
+        sellerUserIds: [userId],
+      }),
+    ]);
 
   if (!member) notFound();
   if (!home) redirect("/company");
+
+  const disabledStatsDays = disabledStatsWindowDays(windowCounts);
 
   const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
   const meetingsForWindow = await deps.meetings.listRecentMeetingsForDashboard({
@@ -134,6 +159,15 @@ export default async function ManagerCommercialViewPage({
     sellerUserId: userId,
     teamUserIds,
   });
+
+  /*
+    Le cadrage d'équipe décide d'un rang, pas d'un droit d'accès : la recherche
+    globale conduit à la fiche de n'importe quel membre de l'organisation, et
+    `findMembershipForManagerView` l'ouvre sans regarder les équipes. La fiche
+    doit donc dire ce qu'elle ne peut pas calculer, plutôt que de le retirer en
+    silence.
+  */
+  const horsEquipeDuManager = isOutsideScopedTeam(teamUserIds, userId);
 
   const priorityOpportunities: AnalysePriorityOpportunityRow[] = [...meetings]
     .filter((m) => m.potentialAmount != null && m.potentialAmount > 0)
@@ -238,6 +272,7 @@ export default async function ManagerCommercialViewPage({
       sellerUserId={userId}
       backHref={retourEquipeHref}
       statsWindowDays={statsWindowDays}
+      disabledStatsDays={disabledStatsDays}
       performanceFingerprint={performanceProfile.fingerprint}
       nameLine={nameLine}
       initials={prospectInitials(nameLine)}
@@ -250,6 +285,7 @@ export default async function ManagerCommercialViewPage({
       skillSignature={standing?.row?.skillSignature ?? null}
       skillMeetings={standing?.row?.skillMeetings ?? 0}
       standing={standing}
+      horsEquipeDuManager={horsEquipeDuManager}
       nbRdvs={home.nbRdvs}
       decouverte={decouverte}
       proposition={proposition}

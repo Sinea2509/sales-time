@@ -83,6 +83,15 @@ export type TeamMemberPerformanceShellProps = {
    */
   backHref: string;
   statsWindowDays: StatsWindowDays;
+  /**
+   * Périodes trop pauvres pour être choisies, options grisées du sélecteur.
+   *
+   * Elles portent sur ce commercial seul, comme tout le reste de la fiche.
+   * Absentes, le sélecteur annonce les trois périodes également disponibles, y
+   * compris celles où cette personne n'a conduit aucun rendez-vous : le manager
+   * y arrive alors sur des cartes vides, sans rien qui l'explique.
+   */
+  disabledStatsDays?: StatsWindowDays[];
   performanceFingerprint: string;
   nameLine: string;
   initials: string;
@@ -107,6 +116,17 @@ export type TeamMemberPerformanceShellProps = {
    * vient de l'annoncer. `null` quand la page ne peut pas la calculer.
    */
   standing: TeamMemberStandingData | null;
+  /**
+   * Ce commercial n'est pas rattaché au manager qui le regarde.
+   *
+   * La recherche globale liste tous les membres de l'organisation et conduit à
+   * cette fiche, que `findMembershipForManagerView` ouvre sans regarder les
+   * équipes. Sa place, son palier et son profil, eux, se mesurent par rapport à
+   * une équipe : hors de celle du lecteur, ils n'ont aucun terme de
+   * comparaison. La fiche l'écrit alors, au lieu de retirer les trois sans un
+   * mot.
+   */
+  horsEquipeDuManager?: boolean;
   nbRdvs: number;
   decouverte: number;
   proposition: number;
@@ -156,12 +176,14 @@ export function TeamMemberPerformanceShell({
   sellerUserId,
   backHref,
   statsWindowDays,
+  disabledStatsDays,
   performanceFingerprint,
   nameLine,
   initials,
   skillSignature,
   skillMeetings,
   standing,
+  horsEquipeDuManager = false,
   nbRdvs,
   decouverte,
   proposition,
@@ -217,17 +239,42 @@ export function TeamMemberPerformanceShell({
           </span>
           <div className="flex max-w-md flex-col items-center gap-1.5 text-center sm:items-start sm:text-left">
             <p className={pageTitleClass}>{nameLine}</p>
-            <SkillSignatureBadges
-              signature={skillSignature}
-              skillMeetings={skillMeetings}
-              className="mt-0.5 justify-center sm:justify-start"
-            />
-            {standing ? (
-              <TeamMemberStanding
-                standing={standing}
-                className="mt-1 items-center sm:items-start"
-              />
-            ) : null}
+            {/*
+              Hors de l'équipe du lecteur, ces deux blocs ne disparaissent plus
+              en silence. La place et le palier se mesurent par rapport à une
+              équipe, celle-ci n'en fournit pas ; quant à l'insigne de profil,
+              il annonçait « n. c. » en expliquant « aucun rendez-vous coaché »,
+              ce qui est faux : la colonne de droite en compte peut-être douze.
+              Ils ne servent simplement pas de comparaison ici.
+
+              La phrase reprend la mise en forme de « Hors classement. » juste
+              à côté, dont elle est le voisin le plus proche : même cause dite
+              au lecteur, même façon de la dire.
+            */}
+            {horsEquipeDuManager ? (
+              <p className="text-muted-foreground mt-1 max-w-prose text-xs leading-relaxed">
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                  Hors de votre équipe.
+                </span>{" "}
+                Sa place, son palier et son profil se lisent par rapport aux
+                commerciaux qui vous sont rattachés, dont cette personne ne fait
+                pas partie. Le reste de la fiche est bien le sien.
+              </p>
+            ) : (
+              <>
+                <SkillSignatureBadges
+                  signature={skillSignature}
+                  skillMeetings={skillMeetings}
+                  className="mt-0.5 justify-center sm:justify-start"
+                />
+                {standing ? (
+                  <TeamMemberStanding
+                    standing={standing}
+                    className="mt-1 items-center sm:items-start"
+                  />
+                ) : null}
+              </>
+            )}
           </div>
         </div>
 
@@ -343,7 +390,10 @@ export function TeamMemberPerformanceShell({
       <section className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className={sectionHeadingClass}>Performance</h2>
-          <AnalysePagePeriodFallback value={statsWindowDays} />
+          <AnalysePagePeriodFallback
+            value={statsWindowDays}
+            disabledDays={disabledStatsDays}
+          />
         </div>
 
         <AnalyseKpiCards home={home} isOrgAdmin sellerScoped />
@@ -356,6 +406,7 @@ export function TeamMemberPerformanceShell({
             rdvSurLaPeriode={rdvSurLaPeriode}
             etapeOrder={etapeOrder}
             statsWindowDays={statsWindowDays}
+            disabledStatsDays={disabledStatsDays}
           />
         </div>
 
