@@ -6,10 +6,12 @@ import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { CommercialCoachingFocus } from "@/components/molecules/commercial-coaching-focus";
+import { MeetingActionBadge } from "@/components/molecules/meeting-action-badge";
 import { CommercialActionPlan } from "@/components/organisms/commercial-action-plan";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import { DashboardStandingCard } from "@/components/organisms/dashboard-standing-card";
 import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
+import { meetingsTodoSummary } from "@/src/core/domain/meeting-next-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPotentialEuro } from "@/lib/format-potential-euro";
 import { sectionHeadingClass } from "@/lib/page-typography";
@@ -131,6 +133,39 @@ export function DashboardHomeShell({
           />
         </div>
 
+        {/*
+          Ce que la liste attend du commercial, compté d'un coup, avant de la
+          lire ligne à ligne. Deux nombres, ceux qui appellent un geste : à
+          analyser, à relancer. Portés sur les rendez-vous affichés ; une fois
+          tout à jour, la barre le dit plutôt que de disparaître, pour qu'un
+          écran sans rien à faire se lise comme une bonne nouvelle et non comme
+          un oubli.
+        */}
+        {home.recentMeetings.length > 0
+          ? (() => {
+              const todo = meetingsTodoSummary(home.recentMeetings);
+              const puce =
+                "inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300";
+              return todo.aAnalyser > 0 || todo.aRelancer > 0 ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                    À faire :
+                  </span>
+                  {todo.aAnalyser > 0 ? (
+                    <span className={puce}>{todo.aAnalyser} à analyser</span>
+                  ) : null}
+                  {todo.aRelancer > 0 ? (
+                    <span className={puce}>{todo.aRelancer} à relancer</span>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Ces rendez-vous sont à jour : rien à analyser ni à relancer.
+                </p>
+              );
+            })()
+          : null}
+
         <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
           <div className="overflow-x-auto">
             {/*
@@ -164,7 +199,16 @@ export function DashboardHomeShell({
                     <span className="sm:hidden">Date</span>
                     <span className="hidden sm:inline">Date du RDV</span>
                   </DataTableHead>
+                  {/*
+                    « État » dit ce qu'il reste à faire sur le rendez-vous, pas
+                    où il en est dans le pipeline : c'est la colonne qui rend la
+                    liste actionnable. Sur téléphone elle descend sous le nom du
+                    prospect, avec l'étape, faute de largeur pour une colonne.
+                  */}
                   <DataTableHead className="hidden px-4 py-3.5 sm:table-cell dark:text-zinc-400">
+                    État
+                  </DataTableHead>
+                  <DataTableHead className="hidden px-4 py-3.5 md:table-cell dark:text-zinc-400">
                     Étape
                   </DataTableHead>
                   <DataTableHead className="hidden px-4 py-3.5 lg:table-cell dark:text-zinc-400">
@@ -191,7 +235,7 @@ export function DashboardHomeShell({
                     marche depuis cet écran, celui du bouton juste au-dessus.
                   */
                   <TableEmptyRow
-                    colSpan={6}
+                    colSpan={7}
                     message="Aucun rendez-vous sur la période affichée."
                     description="Préparez un rendez-vous avec le bouton ci-dessus : il apparaîtra ici."
                     size="large"
@@ -215,12 +259,18 @@ export function DashboardHomeShell({
                           company={m.prospectCompany}
                         />
                         {/*
-                          Sous « sm » l'étape n'a plus de colonne à elle : elle
-                          descend sous le nom du prospect, dans la seule cellule
-                          qui reste. L'information ne coûte alors que de la
-                          hauteur, là où une colonne coûtait de la largeur.
+                          Sous « sm » l'état et l'étape n'ont plus de colonne à
+                          eux : ils descendent sous le nom du prospect, dans la
+                          seule cellule qui reste. L'état vient d'abord, c'est le
+                          geste ; l'étape suit, c'est le contexte. L'information
+                          ne coûte alors que de la hauteur, là où une colonne
+                          coûtait de la largeur.
                         */}
-                        <div className="mt-1.5 sm:hidden">
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:hidden">
+                          <MeetingActionBadge
+                            meeting={m}
+                            href={`/company/rendez-vous/${m.id}`}
+                          />
                           <MeetingEtapeBadge
                             meetingType={m.meetingType}
                             pipelineStage={m.pipelineStage}
@@ -234,6 +284,12 @@ export function DashboardHomeShell({
                         {dateShort.format(new Date(m.meetingAt))}
                       </td>
                       <td className="hidden px-4 py-3.5 align-middle sm:table-cell">
+                        <MeetingActionBadge
+                          meeting={m}
+                          href={`/company/rendez-vous/${m.id}`}
+                        />
+                      </td>
+                      <td className="hidden px-4 py-3.5 align-middle md:table-cell">
                         <MeetingEtapeBadge
                           meetingType={m.meetingType}
                           pipelineStage={m.pipelineStage}
