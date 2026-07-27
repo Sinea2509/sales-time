@@ -76,12 +76,28 @@ function statColumn({
 export type TeamMemberPerformanceShellProps = {
   sellerUserId: string;
   /**
+   * Qui lit cette fiche : son manager, ou le commercial lui-même.
+   *
+   * Les chiffres ne s'en occupent pas. Un seul chargeur les rassemble pour les
+   * deux, et c'est tout l'intérêt : le manager et son commercial ne peuvent pas
+   * lire deux totaux différents de la même personne. Ne changent ici que les
+   * phrases qui s'adressent à quelqu'un, « de ce commercial » d'un côté,
+   * « vos » et « mes » de l'autre, et le rang du nom, qui est le titre de la
+   * page chez le manager et une simple identification chez le commercial, dont
+   * la page porte déjà le sien.
+   */
+  perspective?: "manager" | "commercial";
+  /**
    * L'adresse de la liste d'équipe, période et page de liste comprises.
    *
    * Elle est calculée par la page plutôt que fixée ici : le retour doit rendre
    * au manager la vue qu'il avait, et cette vue tient dans la requête.
+   *
+   * Absente, le lien de retour ne s'affiche pas. C'est bien la présence d'une
+   * destination qui décide, et non le lecteur : le commercial qui lit sa propre
+   * fiche n'arrive de nulle part, il est chez lui.
    */
-  backHref: string;
+  backHref?: string;
   statsWindowDays: StatsWindowDays;
   /**
    * Périodes trop pauvres pour être choisies, options grisées du sélecteur.
@@ -174,6 +190,7 @@ export type TeamMemberPerformanceShellProps = {
 
 export function TeamMemberPerformanceShell({
   sellerUserId,
+  perspective = "manager",
   backHref,
   statsWindowDays,
   disabledStatsDays,
@@ -210,6 +227,7 @@ export function TeamMemberPerformanceShell({
   improvementBullets,
   home,
 }: TeamMemberPerformanceShellProps) {
+  const luParSonManager = perspective === "manager";
   return (
     <div className="space-y-8">
       {/*
@@ -220,25 +238,39 @@ export function TeamMemberPerformanceShell({
         promet rien de vérifiable, et il emporte la période et la page de liste
         pour rendre la vue telle qu'elle était.
       */}
-      <NavLinkButton
-        href={backHref}
-        variant="ghost"
-        size="sm"
-        // Le retrait annule le remplissage gauche du bouton : la flèche se pose
-        // alors sur la même verticale que la pastille d'initiales au-dessous,
-        // au lieu d'être décalée de dix pixels vers l'intérieur.
-        className="-ml-2.5"
-      >
-        <ArrowLeft aria-hidden="true" />
-        Retour à l&apos;équipe
-      </NavLinkButton>
+      {backHref ? (
+        <NavLinkButton
+          href={backHref}
+          variant="ghost"
+          size="sm"
+          // Le retrait annule le remplissage gauche du bouton : la flèche se
+          // pose alors sur la même verticale que la pastille d'initiales
+          // au-dessous, au lieu d'être décalée de dix pixels vers l'intérieur.
+          className="-ml-2.5"
+        >
+          <ArrowLeft aria-hidden="true" />
+          Retour à l&apos;équipe
+        </NavLinkButton>
+      ) : null}
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:gap-4">
           <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xl font-semibold text-zinc-800 shadow-sm ring-1 ring-zinc-200/80 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-700/80">
             {initials}
           </span>
           <div className="flex max-w-md flex-col items-center gap-1.5 text-center sm:items-start sm:text-left">
-            <p className={pageTitleClass}>{nameLine}</p>
+            {/*
+              Chez le manager, ce nom est le titre de la page : c'est la seule
+              chose que la fiche annonce en haut, et elle le disait dans un
+              paragraphe, laissant l'écran sans titre de niveau un. Chez le
+              commercial, la page porte déjà le sien, « Ma performance » : son
+              propre nom y redescend d'un rang, où il ne fait plus que
+              confirmer de qui l'on parle.
+            */}
+            {luParSonManager ? (
+              <h1 className={pageTitleClass}>{nameLine}</h1>
+            ) : (
+              <p className={sectionHeadingClass}>{nameLine}</p>
+            )}
             {/*
               Hors de l'équipe du lecteur, ces deux blocs ne disparaissent plus
               en silence. La place et le palier se mesurent par rapport à une
@@ -304,9 +336,11 @@ export function TeamMemberPerformanceShell({
                 : VALEUR_NON_CALCULABLE,
             label: "TAM",
             title:
-              tamMinutesAvg != null
-                ? "Temps d'appel moyen sur les rendez-vous connectés de ce commercial, c'est-à-dire ceux dont la durée est renseignée."
-                : "Non calculable : aucun rendez-vous connecté avec une durée renseignée sur la période.",
+              tamMinutesAvg == null
+                ? "Non calculable : aucun rendez-vous connecté avec une durée renseignée sur la période."
+                : luParSonManager
+                  ? "Temps d'appel moyen sur les rendez-vous connectés de ce commercial, c'est-à-dire ceux dont la durée est renseignée."
+                  : "Temps d'appel moyen sur vos rendez-vous connectés, c'est-à-dire ceux dont la durée est renseignée.",
           })}
         </div>
       </div>
@@ -383,7 +417,7 @@ export function TeamMemberPerformanceShell({
         ) : null}
         <OrgAdminKissQuadrantGrid
           rollup={kissSellerRollup}
-          presentation="managerMemberProfile"
+          presentation={luParSonManager ? "managerMemberProfile" : "sellerSelf"}
         />
       </section>
 
@@ -396,7 +430,17 @@ export function TeamMemberPerformanceShell({
           />
         </div>
 
-        <AnalyseKpiCards home={home} isOrgAdmin sellerScoped />
+        {/*
+          Les deux drapeaux ne décrivent pas le lecteur mais ce qu'il regarde :
+          « un administrateur » et « un commercial en particulier ». Ils sont
+          donc vrais ensemble ou faux ensemble ici, le commercial qui se lit
+          lui-même n'étant ni l'un ni l'autre.
+        */}
+        <AnalyseKpiCards
+          home={home}
+          isOrgAdmin={luParSonManager}
+          sellerScoped={luParSonManager}
+        />
 
         <div className="space-y-4">
           <h3 className={sectionHeadingClass}>Statistiques globales</h3>
@@ -418,8 +462,8 @@ export function TeamMemberPerformanceShell({
             rdvCount={salesProfileRdvCount}
             progressBullets={progressBullets}
             improvementBullets={improvementBullets}
-            isOrgAdmin
-            sellerScoped
+            isOrgAdmin={luParSonManager}
+            sellerScoped={luParSonManager}
           />
         </div>
       </section>

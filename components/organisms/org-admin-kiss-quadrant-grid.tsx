@@ -1,15 +1,34 @@
 import { DotBulletList } from "@/components/atoms/dot-bullet-list";
 import { Ban, Play, TrendingUp, UserRound } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import type { OrgAdminKissTeamRollup } from "@/src/core/application/get-org-admin-dashboard";
 
+/**
+ * À qui la grille parle. Les quatre cases et leurs puces sont les mêmes ; seul
+ * le sous-titre change, parce qu'il dit au lecteur de qui il est question et
+ * qu'un même texte ne peut pas s'adresser à la fois au manager et au commercial.
+ */
 export type OrgAdminKissQuadrantPresentation =
   | "teamDashboard"
-  | "managerMemberProfile";
+  | "managerMemberProfile"
+  | "sellerSelf";
 
-const quadrantsTeam = [
+type KissQuadrant = {
+  key: "keep" | "improve" | "start" | "stop";
+  title: string;
+  subtitle: string;
+  bulletsKey: keyof Pick<
+    OrgAdminKissTeamRollup,
+    "keepBullets" | "improveBullets" | "startBullets" | "stopBullets"
+  >;
+  icon: LucideIcon;
+  iconWrapClass: string;
+};
+
+const quadrantsTeam: readonly KissQuadrant[] = [
   {
     key: "keep" as const,
     title: "Keep",
@@ -43,10 +62,10 @@ const quadrantsTeam = [
     icon: Ban,
     iconWrapClass: "bg-red-600/15 text-red-700 dark:text-red-400",
   },
-] as const;
+];
 
 /** Libellés orientés manager sur la fiche d’un commercial (≠ tableau de bord équipe). */
-const quadrantsManagerMember = [
+const quadrantsManagerMember: readonly KissQuadrant[] = [
   {
     key: "keep" as const,
     title: "Keep",
@@ -80,7 +99,66 @@ const quadrantsManagerMember = [
     icon: Ban,
     iconWrapClass: "bg-red-600/15 text-red-700 dark:text-red-400",
   },
-] as const;
+];
+
+/**
+ * Les mêmes cases que `quadrantsTeam`, dites au commercial sur lui-même.
+ *
+ * Elles ne peuvent pas emprunter celles du manager : « Sujets de coaching à
+ * adresser » et « Comportements managériaux à éviter » demandent au lecteur
+ * d'encadrer quelqu'un. Servies à un commercial qui lit sa propre fiche, elles
+ * lui feraient prendre ses propres axes de progrès pour un plan de coaching à
+ * mener sur un tiers.
+ */
+const quadrantsSellerSelf: readonly KissQuadrant[] = [
+  {
+    key: "keep" as const,
+    title: "Keep",
+    subtitle: "Ce que vous avez bien fait",
+    bulletsKey: "keepBullets" as const,
+    icon: UserRound,
+    iconWrapClass:
+      "bg-emerald-500/20 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300",
+  },
+  {
+    key: "improve" as const,
+    title: "Improve",
+    subtitle: "Ce que vous pouvez améliorer",
+    bulletsKey: "improveBullets" as const,
+    icon: TrendingUp,
+    iconWrapClass: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+  },
+  {
+    key: "start" as const,
+    title: "Start",
+    subtitle: "Ce que vous devriez commencer à faire",
+    bulletsKey: "startBullets" as const,
+    icon: Play,
+    iconWrapClass: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
+  },
+  {
+    key: "stop" as const,
+    title: "Stop",
+    subtitle: "Ce que vous devriez arrêter",
+    bulletsKey: "stopBullets" as const,
+    icon: Ban,
+    iconWrapClass: "bg-red-600/15 text-red-700 dark:text-red-400",
+  },
+];
+
+/**
+ * Un enregistrement plutôt qu'une suite de tests : ajouter une présentation
+ * sans écrire ses libellés ne compile pas, au lieu de retomber en silence sur
+ * ceux de l'équipe et de parler au lecteur de quelqu'un d'autre.
+ */
+const quadrantsParPresentation: Record<
+  OrgAdminKissQuadrantPresentation,
+  readonly KissQuadrant[]
+> = {
+  teamDashboard: quadrantsTeam,
+  managerMemberProfile: quadrantsManagerMember,
+  sellerSelf: quadrantsSellerSelf,
+};
 
 export function OrgAdminKissQuadrantGrid({
   rollup,
@@ -89,10 +167,7 @@ export function OrgAdminKissQuadrantGrid({
   rollup: OrgAdminKissTeamRollup;
   presentation?: OrgAdminKissQuadrantPresentation;
 }) {
-  const quadrants =
-    presentation === "managerMemberProfile"
-      ? quadrantsManagerMember
-      : quadrantsTeam;
+  const quadrants = quadrantsParPresentation[presentation];
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -112,7 +187,7 @@ export function OrgAdminKissQuadrantGrid({
               </span>
               <div className="min-w-0">
                 <CardTitle className={cardTitleClass}>{q.title}</CardTitle>
-                {"subtitle" in q && q.subtitle ? (
+                {q.subtitle ? (
                   <p className="text-muted-foreground mt-0.5 text-xs leading-snug">
                     {q.subtitle}
                   </p>

@@ -8,12 +8,14 @@ import {
 import { AnalyseKpiCards } from "@/components/organisms/analyse-kpi-cards";
 import { AnalyseRecommandationsSection } from "@/components/organisms/analyse-recommandations-section";
 import { AnalyseStatistiquesGlobalesSection } from "@/components/organisms/analyse-statistiques-globales-section";
+import { TeamMemberPerformanceShell } from "@/components/organisms/team-member-performance-shell";
 import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analyse-priority-opportunities-table";
 import { summarizeTeamCoachingRecommendations } from "@/src/core/application/summarize-team-coaching-recommendations";
 import { getEnv } from "@/lib/env";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { sectionHeadingClass } from "@/lib/page-typography";
+import { loadTeamMemberPerformanceView } from "@/lib/team-member-performance-view";
 import {
   disabledStatsWindowDays,
   partitionMeetingsByStatsWindow,
@@ -27,6 +29,7 @@ import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
 import {
   resolveManagerTeamUserIds,
+  resolveSellerTeamUserIds,
   scopeMeetingsToTeam,
 } from "@/lib/team-seller-scope";
 import { dashboardHomeFromMeetings } from "@/src/core/domain/dashboard-home-from-meetings";
@@ -50,7 +53,12 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   if (actor.workspaceRoleMode === "member" && !actor.internalUserId) {
     return (
       <div className="space-y-6">
-        <PageHeaderSimple title="Performance" />
+        {/*
+          Le titre est celui que cette page portera de toute façon pour ce
+          lecteur : annoncer « Performance » ici, puis « Ma performance » une
+          fois le compte réparé, laissait croire à deux écrans différents.
+        */}
+        <PageHeaderSimple title="Ma performance" />
         <InfoCard
           title="Compte"
           description="Profil utilisateur non synchronisé. Impossible de charger votre analyse personnelle."
@@ -62,19 +70,89 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   const sp = searchParams != null ? await searchParams : {};
 
   const deps = getApplicationDeps();
-  const isOrgAdmin = actor.workspaceRoleMode === "admin";
-  const sellerScope =
-    actor.workspaceRoleMode === "member"
-      ? (actor.internalUserId ?? undefined)
-      : undefined;
 
   /*
-    L'équipe se résout avant les comptes de période, et non plus en parallèle
-    du chargement des RDV : ces comptes pilotent le sélecteur, qui annonce la
+    Le commercial lit ici, sur lui-même, la fiche que son manager ouvre sur lui
+    depuis « Mon équipe » : même composant, même chargeur, mêmes chiffres. Deux
+    assemblages parallèles auraient divergé au premier indicateur ajouté d'un
+    seul côté, et les deux se seraient assis en entretien devant deux écrans qui
+    ne disent pas la même chose. Seule la voix change, portée par `audience` et
+    `perspective` ; aucun nombre n'en dépend.
+  */
+  if (actor.workspaceRoleMode === "member") {
+    const sellerId = actor.internalUserId;
+    /*
+      Ces comptes refont ceux que le chargeur établit pour griser le sélecteur :
+      trois `count` de plus, lancés en parallèle sur exactement les mêmes
+      lignes, donc incapables de se contredire. Ils se paient pour garder la
+      redirection, que le chargeur ne fait pas : sans elle, un commercial arrivé
+      sur « 7 jours » sans rendez-vous y resterait devant des cartes vides,
+      alors que le reste de son portail le pose sur une période lisible.
+    */
+    const windowCounts = await getStatsWindowRdvsCounts(deps, {
+      organizationId: actor.activeOrganizationId,
+      sellerUserIds: [sellerId],
+    });
+    const statsWindowDays = ensureEligibleStatsWindowDays({
+      searchParams: sp,
+      counts: windowCounts,
+      redirectPath: "/company/analyse",
+    });
+    /*
+      Le rang se mesure dans l'équipe de son manager, exactement le groupe que
+      ce manager voit dans « Mon équipe ». Sans ce cadrage, cet écran et la
+      fiche du manager annonceraient deux places différentes pour la même
+      personne.
+    */
+    const teamUserIds = await resolveSellerTeamUserIds(deps, {
+      internalUserId: sellerId,
+    });
+    const chargement = await loadTeamMemberPerformanceView(deps, {
+      organizationId: actor.activeOrganizationId,
+      sellerUserId: sellerId,
+      statsWindowDays,
+      teamUserIds,
+      audience: "commercial",
+    });
+    /*
+      Un seul refus atteignable, donc une seule issue. « Tableau indisponible »
+      ne se produit pas ici : il vient d'un identifiant d'organisation vide, que
+      le garde en tête de page a déjà renvoyé. Reste « membre introuvable »,
+      c'est-à-dire un lecteur dont l'adhésion a disparu pendant que sa session
+      durait. Ce n'est pas une adresse qui ne désigne personne, c'est un compte
+      à remettre en ordre, et l'accueil du portail est l'écran qui le dit.
+    */
+    if (!chargement.ok) {
+      redirect("/company");
+    }
+
+    return (
+      <div className="space-y-6">
+        {/*
+          Le titre reprend mot pour mot celui de la navigation qui y mène. Il
+          reste le titre de niveau un ; c'est le nom du commercial, dans la
+          fiche en dessous, qui redescend d'un rang derrière lui.
+        */}
+        <PageHeaderSimple title="Ma performance" />
+        <TeamMemberPerformanceShell
+          {...chargement.view}
+          perspective="commercial"
+        />
+      </div>
+    );
+  }
+
+  /*
+    Reste le manager, et lui seul : le commercial est reparti avec sa fiche
+    juste au-dessus, et `workspaceRoleMode` ne vaut `null` que sans organisation
+    active, cas déjà renvoyé à l'accueil en tête de page. Tout ce qui suit est
+    donc l'écran d'équipe, sans voix à choisir ni cadrage individuel à porter.
+
+    L'équipe se résout avant les comptes de période, et non en parallèle du
+    chargement des RDV : ces comptes pilotent le sélecteur, qui annonce la
     disponibilité de cet écran et peut même rediriger vers une autre période.
-    Ils doivent donc porter sur la population que l'écran affiche. Un manager y
-    gagne un aller-retour de plus ; un commercial n'en paie aucun, cette
-    résolution sortant sans requête quand la personne n'encadre personne.
+    Ils doivent donc porter sur la population que l'écran affiche, ce qui coûte
+    un aller-retour de plus avant les autres.
   */
   const teamUserIds = await resolveManagerTeamUserIds(deps, {
     canManageOrganization: actor.canManageOrganization,
@@ -83,7 +161,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
 
   const windowCounts = await getStatsWindowRdvsCounts(deps, {
     organizationId: actor.activeOrganizationId,
-    sellerUserIds: sellerScope ? [sellerScope] : teamUserIds,
+    sellerUserIds: teamUserIds,
   });
   const statsWindowDays = ensureEligibleStatsWindowDays({
     searchParams: sp,
@@ -98,15 +176,13 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   const [meetingsForWindow, globalKissJson, orgSettings] = await Promise.all([
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: actor.activeOrganizationId,
-      // Le plafond est un garde-fou de volume, pas un périmètre : la requête
-      // est déjà cadrée par `sellerUserId` pour un commercial, et par le
-      // filtre d'équipe ci-dessous pour un manager.
+      // Le plafond est un garde-fou de volume, pas un périmètre : le cadrage
+      // est fait par le filtre d'équipe ci-dessous.
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
       meetingAtSince: sincePreviousWindow,
       includeLatestSoncasResult: true,
       includeLatestDiscResult: true,
       includeLatestKissResult: true,
-      sellerUserId: sellerScope,
     }),
     aiEnabled
       ? deps.globalKissCoachingPrompts.getPrompts()
@@ -180,12 +256,9 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     teamSalesProfile,
     previousSalesProfile,
     statsWindowDays,
-    audience: isOrgAdmin ? "manager" : "commercial",
+    audience: "manager",
     organizationKissPromptAppendix: aiEnabled
-      ? kissMarkdownAppendixForAudience(
-          globalKissJson,
-          isOrgAdmin ? "manager" : "commercial",
-        )
+      ? kissMarkdownAppendixForAudience(globalKissJson, "manager")
       : null,
     home,
     cacheContext: {
@@ -197,8 +270,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
         chacun chassait celui de l'autre à chaque visite. Un manager cadré sur
         son équipe porte donc son propre identifiant.
       */
-      sellerUserId:
-        sellerScope ?? (teamUserIds?.length ? actor.internalUserId : null),
+      sellerUserId: teamUserIds?.length ? actor.internalUserId : null,
     },
   });
   const { progressBullets, improvementBullets } = coachingBullets;
@@ -207,7 +279,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     <div className="space-y-8">
       <div className="space-y-3">
         <PageHeader
-          title={isOrgAdmin ? "Performance" : "Ma performance"}
+          title="Performance"
           actions={
             <AnalysePagePeriodFallback
               value={home.statsWindowDays}
@@ -216,7 +288,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
           }
         />
 
-        <AnalyseKpiCards home={home} isOrgAdmin={isOrgAdmin} />
+        <AnalyseKpiCards home={home} isOrgAdmin />
       </div>
 
       <section className="space-y-4">
@@ -226,7 +298,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
           qualificationPotentialPoints={qualificationPotentialPoints}
           priorityOpportunities={priorityOpportunities}
           rdvSurLaPeriode={meetings.length}
-          isTeamView={isOrgAdmin}
+          isTeamView
           etapeOrder={etapeOrder}
           statsWindowDays={home.statsWindowDays}
           disabledStatsDays={disabledStatsDays}
@@ -241,7 +313,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
           rdvCount={teamSalesProfile.rdvCount}
           progressBullets={progressBullets}
           improvementBullets={improvementBullets}
-          isOrgAdmin={isOrgAdmin}
+          isOrgAdmin
         />
       </section>
     </div>

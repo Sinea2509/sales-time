@@ -66,6 +66,7 @@ export default async function ManagerCommercialViewPage({
     sellerUserId: userId,
     statsWindowDays,
     teamUserIds,
+    audience: "manager",
   });
   /*
     Deux refus, deux issues différentes : un membre introuvable est une adresse

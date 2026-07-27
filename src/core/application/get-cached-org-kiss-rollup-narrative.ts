@@ -29,16 +29,23 @@ export async function getCachedOrgKissRollupNarrative(
     rollup: OrgKissRollupForSummary;
     organizationKissPromptAppendix?: string | null;
     sellerUserId?: string | null;
+    /**
+     * À qui ce texte s'adresse. Obligatoire, et non pas défaut « manager » :
+     * l'annexe passée au prompt juste en dessous en dépend, et un appelant qui
+     * oublierait de le dire écrirait dans le cache de l'autre lecteur.
+     */
+    audience: "manager" | "commercial";
   },
 ): Promise<string | null> {
   if (!getEnv().AI_GATEWAY_API_KEY) {
     return null;
   }
 
-  const scopeKey = orgKissRollupScopeKey(
-    input.statsWindowDays,
-    input.sellerUserId,
-  );
+  const scopeKey = orgKissRollupScopeKey({
+    statsWindowDays: input.statsWindowDays,
+    sellerUserId: input.sellerUserId,
+    audience: input.audience,
+  });
 
   return readThroughAiSummaryCache(deps, {
     organizationId: input.organizationId,

@@ -91,6 +91,7 @@ export default async function DashboardHomePage({
             statsWindowDays,
             meetingsFingerprint: admin.meetingsFingerprint,
             rollup: admin.kissTeamRollup,
+            audience: "manager",
             organizationKissPromptAppendix: kissMarkdownAppendixForAudience(
               globalKissJson,
               "manager",

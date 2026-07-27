@@ -72,6 +72,12 @@ export type TeamMemberPerformanceViewResult =
  * fait dans une équipe, et laquelle dépend de qui regarde. Le manager y met la
  * sienne, le commercial celle de son manager. Absent, il n'y a pas de cadrage,
  * donc le classement porte sur l'organisation, jamais sur personne.
+ *
+ * `audience` ne change aucun chiffre : les deux lecteurs comptent les mêmes
+ * rendez-vous, et c'est tout l'intérêt d'un chargeur unique. Il ne pilote que
+ * les trois textes écrits par l'IA, qui parlent à quelqu'un et doivent donc
+ * savoir à qui. Il entre aussi dans leurs clés de cache, sans quoi le premier
+ * des deux écrans ouvert imposerait sa voix au second.
  */
 export async function loadTeamMemberPerformanceView(
   deps: ApplicationDeps,
@@ -80,9 +86,15 @@ export async function loadTeamMemberPerformanceView(
     sellerUserId: string;
     statsWindowDays: StatsWindowDays;
     teamUserIds: string[] | undefined;
+    audience: "manager" | "commercial";
   },
 ): Promise<TeamMemberPerformanceViewResult> {
-  const { organizationId: orgId, sellerUserId, statsWindowDays } = input;
+  const {
+    organizationId: orgId,
+    sellerUserId,
+    statsWindowDays,
+    audience,
+  } = input;
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
 
   /*
@@ -190,9 +202,9 @@ export async function loadTeamMemberPerformanceView(
     teamSalesProfile,
     previousSalesProfile,
     statsWindowDays,
-    audience: "manager",
+    audience,
     organizationKissPromptAppendix: aiEnabled
-      ? kissMarkdownAppendixForAudience(globalKissJson, "manager")
+      ? kissMarkdownAppendixForAudience(globalKissJson, audience)
       : null,
     home,
     cacheContext: {
@@ -236,9 +248,10 @@ export async function loadTeamMemberPerformanceView(
         meetingsFingerprint,
         rollup: kissSellerRollup,
         sellerUserId,
+        audience,
         organizationKissPromptAppendix: kissMarkdownAppendixForAudience(
           globalKissJson,
-          "manager",
+          audience,
         ),
       })
     : null;
