@@ -8,6 +8,7 @@ import { TeamTierBadge } from "@/components/molecules/team-tier-badge";
 import { TeamCollectiveOverview } from "@/components/organisms/team-collective-overview";
 import { buttonVariants } from "@/components/ui/button";
 import { membres, rdvNotes } from "@/lib/accord-fr";
+import { avertissementDeCadrage } from "@/lib/avertissement-de-cadrage";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
 import { ficheMembreHref, monEquipeListHref } from "@/lib/liens-mon-equipe";
@@ -20,6 +21,7 @@ import {
   type CardHeadingTag,
 } from "@/lib/page-typography";
 import { teamMemberDisplayName } from "@/lib/team-member-display-name";
+import type { TeamScopeGroup } from "@/lib/team-seller-scope";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import { unrankedExplanation } from "@/src/core/domain/team-ranking";
@@ -70,12 +72,23 @@ export function MonEquipeSection({
   listBasePath = "/company/equipe",
   showHeading = true,
   showInvite = true,
+  comparisonGroup = "team",
 }: {
   monEquipe: OrgAdminMonEquipePage;
   statsWindowDays: number;
   currentUserEmail: string;
   /** Base path for pagination links (default: dedicated team page). */
   listBasePath?: string;
+  /**
+   * Groupe réellement listé, tel que `teamScopeGroup` le nomme.
+   *
+   * Optionnel et non exigé, contrairement à `TeamMemberStanding` : la section
+   * n'écrit pas le mot « équipe » dans une phrase de comparaison, elle se
+   * contente de dire ce qu'il recouvre quand ce qu'elle liste dépasse l'équipe.
+   * Un appelant qui l'oublie retrouve donc la page telle qu'elle était, sans le
+   * mensonge en plus.
+   */
+  comparisonGroup?: TeamScopeGroup;
   /**
    * Titre porté par la section elle-même.
    *
@@ -106,6 +119,7 @@ export function MonEquipeSection({
     en titre, comme un titre que l'on n'a pas su atteindre.
   */
   const niveauDeTitre = cardHeadingTag(showHeading);
+  const avertissement = avertissementDeCadrage(comparisonGroup);
 
   return (
     <section className="space-y-3">
@@ -129,6 +143,23 @@ export function MonEquipeSection({
             <TeamMemberInviteDialog currentUserEmail={currentUserEmail} />
           ) : null}
         </div>
+      ) : null}
+      {/*
+        La phrase passe avant les cartes collectives, et non après : la première
+        d'entre elles ouvre sur « Moyenne d'équipe », et emploie donc le mot
+        avant qu'il ait été défini. Lue après, la définition arrive trop tard ;
+        lue avant, elle dit de quoi parle tout ce qui suit.
+      */}
+      {avertissement ? (
+        <p className="border-brand/30 bg-brand/5 text-foreground rounded-xl border px-4 py-3 text-sm leading-relaxed">
+          {avertissement}{" "}
+          <Link
+            href="/company/settings/equipe"
+            className="text-brand font-medium hover:underline"
+          >
+            Renseigner les rattachements
+          </Link>
+        </p>
       ) : null}
       {/*
         Les deux lectures collectives viennent avant le tableau : elles portent

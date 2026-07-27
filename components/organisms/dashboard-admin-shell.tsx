@@ -6,6 +6,7 @@ import { OrgAdminDonutDistributionCard } from "@/components/organisms/org-admin-
 import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-quadrant-grid";
 import { Skeleton } from "@/components/ui/skeleton";
 import { sectionHeadingClass } from "@/lib/page-typography";
+import type { TeamScopeGroup } from "@/lib/team-seller-scope";
 import type { OrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 
@@ -14,11 +15,20 @@ export function DashboardAdminShell({
   kissTeamStrengthsNarrative,
   currentUserEmail,
   disabledStatsDays = [],
+  comparisonGroup,
 }: {
   admin: OrgAdminDashboard;
   kissTeamStrengthsNarrative?: string | null;
   currentUserEmail: string;
   disabledStatsDays?: StatsWindowDays[];
+  /**
+   * Groupe réellement listé, passé tel quel à la section d'équipe.
+   *
+   * La coque ne s'en sert pas elle-même : elle le transporte, parce que c'est la
+   * page qui connaît le cadrage et la section qui écrit la phrase. Optionnel
+   * comme il l'est sur la section, pour la même raison.
+   */
+  comparisonGroup?: TeamScopeGroup;
 }) {
   const { home, monEquipe, discPie, soncasPie, kissTeamRollup } = admin;
   const jours = admin.statsWindowDays;
@@ -48,6 +58,7 @@ export function DashboardAdminShell({
         statsWindowDays={jours}
         currentUserEmail={currentUserEmail}
         listBasePath="/company"
+        comparisonGroup={comparisonGroup}
       />
 
       <section className="space-y-4">

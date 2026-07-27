@@ -8,7 +8,10 @@ import { TeamMemberInviteDialog } from "@/components/organisms/team-member-invit
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
+import {
+  resolveManagerTeamUserIds,
+  teamScopeGroup,
+} from "@/lib/team-seller-scope";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
 import {
@@ -134,6 +137,7 @@ export default async function MonEquipePage({ searchParams }: Props) {
         currentUserEmail={actor.email}
         showHeading={false}
         showInvite={false}
+        comparisonGroup={teamScopeGroup(teamUserIds)}
       />
     </div>
   );

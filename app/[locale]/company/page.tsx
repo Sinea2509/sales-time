@@ -109,6 +109,7 @@ export default async function DashboardHomePage({
             kissTeamStrengthsNarrative={kissTeamStrengthsNarrative}
             currentUserEmail={actor.email}
             disabledStatsDays={disabledStatsDays}
+            comparisonGroup={teamScopeGroup(teamUserIds)}
           />
         )}
       </div>

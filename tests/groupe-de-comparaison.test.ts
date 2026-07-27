@@ -1,6 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { sousTitreDuGroupe } from "@/components/organisms/dashboard-standing-card";
+import { avertissementDeCadrage } from "@/lib/avertissement-de-cadrage";
 import { scopeMembersToTeam, teamScopeGroup } from "@/lib/team-seller-scope";
 
 /**
@@ -17,12 +18,19 @@ import { scopeMembersToTeam, teamScopeGroup } from "@/lib/team-seller-scope";
  * sur quarante personnes. Le défaut ne lève aucune erreur et ne se voit sur
  * aucune capture ; il fait seulement mentir la phrase.
  *
+ * Le même défaut a une seconde face, du côté du manager : la page « Mon équipe »
+ * porte ce titre en listant l'organisation entière quand personne ne lui est
+ * rattaché. Ce n'est pas une phrase de comparaison qu'il faut y corriger, mais
+ * un mot qu'il faut définir, d'où un second libellé tiré du même périmètre. Le
+ * démentir ne marcherait pas : les cartes posées juste au-dessous emploient
+ * « équipe » une dizaine de fois sans rien savoir du périmètre.
+ *
  * Ce que ces tests ne couvrent pas : ils ne rendent rien. Ils ne disent rien de
- * la place de ces libellés à l'écran, ni du fait que la carte les affiche
- * vraiment, ni de la propagation de `comparisonGroup` depuis les pages jusqu'aux
- * composants, qui n'est gardée que par le typage. Ils ne couvrent pas non plus
- * la formulation elle-même : « la moyenne de l'organisation » pourrait être
- * remplacée par n'importe quelle autre tournure sans qu'aucune assertion ne
+ * la place de ces libellés à l'écran, ni du fait que la carte ou la section les
+ * affichent vraiment, ni de la propagation de `comparisonGroup` depuis les pages
+ * jusqu'aux composants, qui n'est gardée que par le typage. Ils ne couvrent pas
+ * non plus la formulation elle-même : « la moyenne de l'organisation » pourrait
+ * être remplacée par n'importe quelle autre tournure sans qu'aucune assertion ne
  * bouge, dès lors qu'elle diffère de celle de l'équipe.
  */
 
@@ -30,6 +38,16 @@ import { scopeMembersToTeam, teamScopeGroup } from "@/lib/team-seller-scope";
 function membre(userId: string) {
   return { userId };
 }
+
+/**
+ * Les six périmètres qui servent de témoin aux deux vérifications de cohérence.
+ *
+ * La liste doit être la même des deux côtés, sans quoi les deux tests
+ * n'établiraient plus que le mot et le silence répondent à la question que
+ * `scopeMembersToTeam` pose pour filtrer. Le sixième ne retient personne tout
+ * en cadrant : le rang porte alors sur une équipe, même déserte.
+ */
+const LISTE_DE_CADRAGES = [undefined, null, [], ["u1"], ["u1", "u2"], ["u3"]];
 
 describe("teamScopeGroup", () => {
   it("nomme l'organisation quand aucun périmètre n'a été résolu", () => {
@@ -55,18 +73,10 @@ describe("teamScopeGroup", () => {
       Le point de tout l'exercice : le mot et le filtre doivent répondre à la
       même question. `scopeMembersToTeam` rend le tableau reçu par identité
       quand il ne cadre rien, ce qui donne un témoin exact du cadrage sans
-      dépendre de son écriture interne. Le sixième périmètre ne retient personne
-      tout en cadrant : le rang porte alors sur une équipe, même déserte.
+      dépendre de son écriture interne.
     */
     const membres = [membre("u1"), membre("u2")];
-    for (const cadrage of [
-      undefined,
-      null,
-      [],
-      ["u1"],
-      ["u1", "u2"],
-      ["u3"],
-    ]) {
+    for (const cadrage of LISTE_DE_CADRAGES) {
       const filtre = scopeMembersToTeam(membres, cadrage) !== membres;
       expect(teamScopeGroup(cadrage)).toBe(filtre ? "team" : "organization");
     }
@@ -109,5 +119,49 @@ describe("sousTitreDuGroupe", () => {
     // Ce cas est assez rare pour mériter sa phrase : sans elle, le lecteur ne
     // saurait pas pourquoi son équipe n'a pas de nom.
     expect(sousTitre.title).toBeTruthy();
+  });
+});
+
+describe("avertissementDeCadrage", () => {
+  it("se tait quand la page montre bien une équipe", () => {
+    // Le cas courant. Une bannière posée là en permanence perdrait tout son
+    // sens le jour où elle dirait quelque chose.
+    expect(avertissementDeCadrage("team")).toBeNull();
+  });
+
+  it("définit le mot quand la page liste l'organisation entière", () => {
+    const phrase = avertissementDeCadrage("organization");
+    expect(phrase).not.toBeNull();
+    // Le lecteur a « Mon équipe » sous les yeux : la phrase doit nommer ce
+    // qu'il regarde vraiment, sans quoi elle ne corrige rien.
+    expect(phrase).toContain("organisation");
+  });
+
+  it("dit lesquels des chiffres affichés sont concernés", () => {
+    /*
+      La page pose trois lectures collectives au-dessus du tableau : un
+      classement, une moyenne et des paliers. Prévenir du périmètre sans dire
+      qu'il les commande toutes les trois laisserait le lecteur croire que seule
+      la liste est en cause, et sa moyenne juste.
+    */
+    const phrase = avertissementDeCadrage("organization") ?? "";
+    expect(phrase).toContain("classement");
+    expect(phrase).toContain("moyenne");
+    expect(phrase).toContain("paliers");
+  });
+
+  it("parle exactement quand le périmètre ne filtre pas", () => {
+    /*
+      Même témoin que pour `teamScopeGroup`, et pour la même raison : la phrase
+      et le filtre doivent répondre à la même question. Un avertissement qui
+      s'afficherait sur une équipe réellement cadrée serait un mensonge de plus,
+      pas un de moins.
+    */
+    const membres = [membre("u1"), membre("u2")];
+    for (const cadrage of LISTE_DE_CADRAGES) {
+      const filtre = scopeMembersToTeam(membres, cadrage) !== membres;
+      const phrase = avertissementDeCadrage(teamScopeGroup(cadrage));
+      expect(phrase === null).toBe(filtre);
+    }
   });
 });
