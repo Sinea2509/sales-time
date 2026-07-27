@@ -5,6 +5,7 @@ import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
+import { CommercialCoachingFocus } from "@/components/molecules/commercial-coaching-focus";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import { DashboardStandingCard } from "@/components/organisms/dashboard-standing-card";
 import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
@@ -63,34 +64,52 @@ export function DashboardHomeShell({
         </div>
 
         {/*
-          La position vient avant les KPI opérationnels, et non après : c'est la
-          seule ligne de l'écran qui réponde à « où j'en suis », les autres
-          répondant à « ce que j'ai fait ». Elle dépend de la même période que
-          les cartes, d'où sa place sous le sélecteur qui la commande.
+          Position et focus viennent avant les KPI opérationnels, et non après :
+          ce sont les deux lignes qui répondent à « où j'en suis » et « sur quoi
+          progresser », les cartes en dessous répondant à « ce que j'ai fait ».
+          Le focus est le même signal que la carte « à coacher » du manager, sur
+          la même personne : le commercial voit enfin ce qu'on lit de lui. Les
+          deux dépendent de la période, d'où leur place sous le sélecteur.
+
+          Les deux cartes s'affichent ensemble dès qu'il y a une place : le focus
+          se remplit d'un axe, ou invite à analyser des rendez-vous quand il n'y
+          en a pas encore. Sans place du tout, ni l'une ni l'autre n'a de quoi
+          parler, et la grille reste vide.
         */}
         {standing ? (
-          <DashboardStandingCard
-            standing={standing}
-            comparisonGroup={comparisonGroup}
-            managerNameLine={managerNameLine}
-          />
+          <>
+            <DashboardStandingCard
+              standing={standing}
+              comparisonGroup={comparisonGroup}
+              managerNameLine={managerNameLine}
+            />
+            <CommercialCoachingFocus
+              skillSignature={standing.row?.skillSignature ?? null}
+              coachingHref="/company/analyse"
+            />
+          </>
         ) : null}
 
         <DashboardKpiCards home={home} />
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-        <MeetingCreateDialog
-          meetingTypeOptions={meetingTypeOptions}
-          pipelineStageOptions={pipelineStageOptions}
-          showPlusIcon={false}
-          dataFeedbackId="dashboard-prepare-rdv"
-          className="h-10 rounded-md shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_2px_8px_rgba(108,77,255,0.35)]"
-        />
-      </div>
-
       <section className="space-y-3">
-        <h2 className={sectionHeadingClass}>Mes rendez-vous</h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className={sectionHeadingClass}>Mes rendez-vous</h2>
+          {/*
+            L'action d'analyse vit dans l'en-tête des rendez-vous, là où on la
+            cherche : elle nourrit ce tableau et toute la page. Elle flottait
+            avant seule sur une ligne, entre la position et la liste, sans dire
+            à quoi elle se rattachait.
+          */}
+          <MeetingCreateDialog
+            meetingTypeOptions={meetingTypeOptions}
+            pipelineStageOptions={pipelineStageOptions}
+            showPlusIcon={false}
+            dataFeedbackId="dashboard-prepare-rdv"
+            className="h-10 shrink-0 rounded-md shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_2px_8px_rgba(108,77,255,0.35)]"
+          />
+        </div>
 
         <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
           <div className="overflow-x-auto">

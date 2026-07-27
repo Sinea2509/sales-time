@@ -1,13 +1,10 @@
 import { ficheMembreHref } from "@/lib/liens-mon-equipe";
 import { membres, membresClasses } from "@/lib/accord-fr";
+import { libelleATravailler, libellePointFort } from "@/lib/competence-focus";
 import { plurielFr } from "@/lib/pluriel-fr";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { teamMemberDisplayName } from "@/lib/team-member-display-name";
-import {
-  formatEcartCompetence,
-  SELLER_SKILL_LABEL_FR,
-  type SellerSkillSignature,
-} from "@/src/core/domain/seller-skill-signature";
+import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signature";
 import { formatNoteFr, rankLabel } from "@/src/core/domain/team-ranking";
 
 /**
@@ -151,9 +148,7 @@ export function essentielDuManager(input: {
           ranking,
           (() => {
             const s = signatureDeLaLigne(rows, premier.userId);
-            return s == null
-              ? null
-              : `Point fort · ${SELLER_SKILL_LABEL_FR[s.fort]} ${formatEcartCompetence(s.ecartFort)}`;
+            return s == null ? null : libellePointFort(s);
           })(),
           input.statsWindowDays,
           input.equipePage,
@@ -172,9 +167,7 @@ export function essentielDuManager(input: {
           ranking,
           (() => {
             const s = signatureDeLaLigne(rows, dernier.userId);
-            return s == null
-              ? null
-              : `À travailler · ${SELLER_SKILL_LABEL_FR[s.faible]} ${formatEcartCompetence(s.ecartFaible)}`;
+            return s == null ? null : libelleATravailler(s);
           })(),
           input.statsWindowDays,
           input.equipePage,
