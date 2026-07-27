@@ -160,21 +160,6 @@ export interface MeetingRepositoryPort {
 
   countMeetingsForOrg(input: { organizationId: string }): Promise<number>;
 
-  countMeetingsWithMeetingAtBetween(input: {
-    organizationId: string;
-    meetingAtGte: Date;
-    meetingAtLt: Date;
-    sellerUserId?: string;
-  }): Promise<number>;
-
-  /** Moyenne de `durationMin` (> 0) sur [gte, lt), [gte, +∞) ou l'ensemble si aucune borne date. */
-  averageDurationMinForMeetingsInWindow(input: {
-    organizationId: string;
-    meetingAtGte?: Date;
-    meetingAtLt?: Date;
-    sellerUserId?: string;
-  }): Promise<number | null>;
-
   listRecentMeetingsForDashboard(input: {
     organizationId: string;
     limit?: number;

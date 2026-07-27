@@ -266,49 +266,6 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     });
   }
 
-  async countMeetingsWithMeetingAtBetween(input: {
-    organizationId: string;
-    meetingAtGte: Date;
-    meetingAtLt: Date;
-    sellerUserId?: string;
-  }): Promise<number> {
-    return this.db.meeting.count({
-      where: {
-        organizationId: input.organizationId,
-        meetingAt: { gte: input.meetingAtGte, lt: input.meetingAtLt },
-        ...sellerWhere(input.sellerUserId),
-      },
-    });
-  }
-
-  async averageDurationMinForMeetingsInWindow(input: {
-    organizationId: string;
-    meetingAtGte?: Date;
-    meetingAtLt?: Date;
-    sellerUserId?: string;
-  }): Promise<number | null> {
-    const meetingAtFilter =
-      input.meetingAtGte != null || input.meetingAtLt != null
-        ? {
-            meetingAt: {
-              ...(input.meetingAtGte != null ? { gte: input.meetingAtGte } : {}),
-              ...(input.meetingAtLt != null ? { lt: input.meetingAtLt } : {}),
-            },
-          }
-        : {};
-    const row = await this.db.meeting.aggregate({
-      where: {
-        organizationId: input.organizationId,
-        ...meetingAtFilter,
-        durationMin: { gt: 0 },
-        ...sellerWhere(input.sellerUserId),
-      },
-      _avg: { durationMin: true },
-    });
-    if (row._avg.durationMin == null) return null;
-    return Math.round(Number(row._avg.durationMin));
-  }
-
   async listRecentMeetingsForDashboard(input: {
     organizationId: string;
     limit?: number;
