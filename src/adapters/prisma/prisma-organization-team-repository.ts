@@ -26,6 +26,7 @@ export class PrismaOrganizationTeamRepository implements OrganizationTeamReposit
               email: true,
               firstName: true,
               lastName: true,
+              managerId: true,
             },
           },
         },
@@ -49,6 +50,7 @@ export class PrismaOrganizationTeamRepository implements OrganizationTeamReposit
       lastName: m.user.lastName,
       role: mapRole(m.role),
       joinedAt: m.createdAt.toISOString(),
+      managerUserId: m.user.managerId,
     }));
 
     const invRows: OrgTeamInvitationRow[] = invitations.map((i) => ({

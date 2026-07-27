@@ -214,4 +214,14 @@ export class PrismaUserRepository implements UserRepositoryPort {
     });
     return row?.managerId ?? null;
   }
+
+  async setManagerUserId(input: {
+    userId: string;
+    managerUserId: string | null;
+  }): Promise<void> {
+    await this.db.user.update({
+      where: { id: input.userId },
+      data: { managerId: input.managerUserId },
+    });
+  }
 }

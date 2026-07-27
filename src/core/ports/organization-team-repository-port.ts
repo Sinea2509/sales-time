@@ -9,6 +9,15 @@ export type OrgTeamMemberRow = {
   lastName: string | null;
   role: OrganizationMembershipRole;
   joinedAt: string;
+  /**
+   * Manager this person reports to, or null when none is declared.
+   *
+   * Read from the user, not from the membership: one person has a single
+   * declared manager even when they belong to several organizations. The
+   * screen that writes this column only offers members of the organization it
+   * has just listed, so the link stays inside one organization in practice.
+   */
+  managerUserId: string | null;
 };
 
 export type OrgTeamInvitationRow = {

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  changeManagerAction,
   changeRoleAction,
   inviteMemberAction,
   removeMemberAction,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/native-select-class";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
+import { managerChoicesForMember } from "@/src/core/domain/manager-assignment";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
 
 export type TeamMemberRow = {
@@ -35,6 +37,7 @@ export type TeamMemberRow = {
   lastName: string | null;
   role: "ADMIN" | "MEMBER";
   joinedAt: string;
+  managerUserId: string | null;
 };
 
 export type TeamInvitationRow = {
@@ -67,6 +70,44 @@ export function OrgSettingsTeamList({
   function displayName(m: TeamMemberRow) {
     const n = [m.firstName, m.lastName].filter(Boolean).join(" ").trim();
     return n || m.email;
+  }
+
+  /*
+    Le nom d'un rattachement déjà écrit, y compris quand il n'est plus offert
+    au choix. Deux chemins y mènent et se disent autrement : le rôle Manager
+    retiré par le sélecteur d'à côté laisse le rattachement en place, et la
+    personne reste nommable ; `managerId` appartenant à l'utilisateur et non à
+    son appartenance, un manager peut aussi avoir été déclaré depuis une autre
+    organisation, et celui-là, cette page ne le connaît pas.
+  */
+  function libelleDuRattachement(managerUserId: string) {
+    const connu = members.find((x) => x.userId === managerUserId);
+    if (!connu) return "Hors de cette organisation";
+    return connu.role === "ADMIN"
+      ? displayName(connu)
+      : `${displayName(connu)} (n'est plus manager)`;
+  }
+
+  /*
+    Les choix d'une ligne : « aucun », puis les managers de l'organisation, et
+    enfin le rattachement en place s'il ne figure dans aucun des précédents.
+    Sans cette dernière ligne il disparaîtrait du menu : un `<select>` dont la
+    valeur ne correspond à aucune option retombe sur la première, et l'écran
+    annoncerait « aucun manager » alors qu'il y en a un.
+  */
+  function choixDeManager(m: TeamMemberRow) {
+    const choix = [
+      { value: "", label: "Aucun manager" },
+      ...managerChoicesForMember(members, m.userId).map((c) => ({
+        value: c.userId,
+        label: displayName(c),
+      })),
+    ];
+    const rattache = m.managerUserId;
+    if (rattache && !choix.some((c) => c.value === rattache)) {
+      choix.push({ value: rattache, label: libelleDuRattachement(rattache) });
+    }
+    return choix;
   }
 
   function sendInvitation() {
@@ -178,7 +219,21 @@ export function OrgSettingsTeamList({
       </section>
 
       <section className="space-y-3">
-        <h2 className={sectionHeadingClass}>Membres</h2>
+        {/*
+          Le rattachement n'était écrit nulle part avant cet écran, et c'est lui
+          qui fait exister « Mon équipe » : sans lui, chaque manager voit
+          l'organisation entière sous ce titre. La phrase le dit, sinon la
+          colonne passe pour un champ d'annuaire de plus.
+        */}
+        <div className="space-y-1.5">
+          <h2 className={sectionHeadingClass}>Membres</h2>
+          <p className="text-muted-foreground max-w-prose text-sm">
+            La colonne Manager dessine les équipes : dans « Mon équipe », un
+            manager retrouve les personnes qui lui sont rattachées, et lui-même.
+            Tant que personne n&apos;est rattaché, chacun est classé sur
+            l&apos;organisation entière.
+          </p>
+        </div>
         <div className="rounded-xl border px-3 sm:px-4">
           <Table>
             <TableHeader>
@@ -186,6 +241,7 @@ export function OrgSettingsTeamList({
                 <TableHead>Utilisateur</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Rôle</TableHead>
+                <TableHead>Manager</TableHead>
                 <TableHead className="hidden sm:table-cell">
                   Rejoint le
                 </TableHead>
@@ -235,6 +291,47 @@ export function OrgSettingsTeamList({
                       </select>
                     ) : (
                       organizationMembershipRoleLabel(m.role)
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {canManageTeam ? (
+                      <select
+                        className={cn(
+                          nativeSelectCompactClassName,
+                          "min-w-[10rem]",
+                        )}
+                        aria-label={`Manager de ${displayName(m)}`}
+                        value={m.managerUserId ?? ""}
+                        disabled={pending}
+                        onChange={(e) => {
+                          const choisi = e.target.value || null;
+                          startTransition(async () => {
+                            setMsg(null);
+                            const r = await changeManagerAction(
+                              m.userId,
+                              choisi,
+                            );
+                            if (!r.ok) {
+                              setMsg(r.message);
+                              e.target.value = m.managerUserId ?? "";
+                              return;
+                            }
+                            router.refresh();
+                          });
+                        }}
+                      >
+                        {choixDeManager(m).map((c) => (
+                          <option key={c.value} value={c.value}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">
+                        {m.managerUserId
+                          ? libelleDuRattachement(m.managerUserId)
+                          : "Aucun manager"}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
