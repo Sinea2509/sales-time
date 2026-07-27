@@ -9,7 +9,7 @@ import { plurielFr } from "@/lib/pluriel-fr";
 import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import { MIN_RDV_FOR_STATS } from "@/src/core/domain/dashboard-stats-window";
-import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
+import type { DashboardHomeFigures } from "@/src/core/domain/dashboard-home-from-meetings";
 
 const TAM_SANS_DONNEE =
   "Non calculable : aucun rendez-vous renseigné sur la période. Le gain administratif se compte sur les rendez-vous dont la durée est saisie.";
@@ -22,7 +22,7 @@ export function AnalyseKpiCards({
   isOrgAdmin,
   sellerScoped = false,
 }: {
-  home: OrgDashboardHome;
+  home: DashboardHomeFigures;
   isOrgAdmin: boolean;
   sellerScoped?: boolean;
 }) {

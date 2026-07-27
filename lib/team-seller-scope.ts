@@ -71,3 +71,41 @@ export async function resolveSellerTeamUserIds(
   // déjà plus la même moyenne.
   return [...new Set([managerId, ...reports, input.internalUserId])];
 }
+
+/**
+ * La règle d'application d'un périmètre d'équipe, écrite une fois.
+ *
+ * Les deux résolutions ci-dessus rendent `undefined` quand aucune équipe n'est
+ * déclarée, et cet `undefined` veut dire « tout », jamais « rien ». La règle
+ * vivait jusqu'ici recopiée sur chaque écran, une ligne à chaque fois ;
+ * recopiée, elle pouvait être oubliée, et elle l'a été sur `/company/analyse`,
+ * qui annonçait « l'équipe » en comptant l'organisation entière.
+ *
+ * Le tableau reçu est rendu tel quel quand il n'y a pas de périmètre : le cas
+ * le plus fréquent ne paie pas de copie.
+ */
+function scopeRows<T>(
+  rows: T[],
+  teamUserIds: string[] | undefined | null,
+  userIdOf: (row: T) => string,
+): T[] {
+  if (!teamUserIds?.length) return rows;
+  const ids = new Set(teamUserIds);
+  return rows.filter((row) => ids.has(userIdOf(row)));
+}
+
+/** Les rendez-vous de l'équipe, désignée par le commercial qui les a menés. */
+export function scopeMeetingsToTeam<T extends { sellerUserId: string }>(
+  meetings: T[],
+  teamUserIds: string[] | undefined | null,
+): T[] {
+  return scopeRows(meetings, teamUserIds, (m) => m.sellerUserId);
+}
+
+/** Les membres de l'équipe, parmi ceux de l'organisation. */
+export function scopeMembersToTeam<T extends { userId: string }>(
+  members: T[],
+  teamUserIds: string[] | undefined | null,
+): T[] {
+  return scopeRows(members, teamUserIds, (m) => m.userId);
+}

@@ -2,7 +2,7 @@ import {
   buildOrgAdminProgressBullets,
   buildKissTeamRollupFromMeetings,
 } from "@/src/core/application/get-org-admin-dashboard";
-import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
+import type { DashboardHomeFigures } from "@/src/core/domain/dashboard-home-from-meetings";
 import { kissCoachingBulletsFromMeetings } from "@/src/core/domain/kiss-coaching-bullets-from-meetings";
 import type { TeamSalesProfileAggregate } from "@/src/core/domain/sales-profile-from-meetings";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
@@ -30,7 +30,7 @@ export type TeamCoachingRecommendationBullets = {
 
 function fallbackBullets(input: {
   meetings: RecentMeetingListRow[];
-  home: OrgDashboardHome;
+  home: DashboardHomeFigures;
 }): TeamCoachingRecommendationBullets {
   const kissImprove = kissCoachingBulletsFromMeetings(input.meetings, "improve");
   const kissStart = kissCoachingBulletsFromMeetings(input.meetings, "start");
@@ -63,7 +63,7 @@ export async function summarizeTeamCoachingRecommendations(
     statsWindowDays: StatsWindowDays;
     audience: "manager" | "commercial";
     organizationKissPromptAppendix?: string | null;
-    home: OrgDashboardHome;
+    home: DashboardHomeFigures;
     cacheContext?: {
       organizationId: string;
       sellerUserId: string | null;

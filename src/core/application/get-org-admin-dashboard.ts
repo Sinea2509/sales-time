@@ -41,6 +41,10 @@ import {
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
 import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
+import {
+  scopeMeetingsToTeam,
+  scopeMembersToTeam,
+} from "@/lib/team-seller-scope";
 
 /** Limite de RDV chargés pour agrégations équipe (perf). */
 export const ORG_ADMIN_DASHBOARD_MEETING_CAP = 5000;
@@ -484,15 +488,9 @@ export async function getTeamMemberStanding(
     }),
   ]);
 
-  const teamIds = input.teamUserIds?.length ? new Set(input.teamUserIds) : null;
-
   return buildTeamMemberStanding({
-    members: teamIds
-      ? teamList.members.filter((m) => teamIds.has(m.userId))
-      : teamList.members,
-    meetings: teamIds
-      ? meetings.filter((m) => teamIds.has(m.sellerUserId))
-      : meetings,
+    members: scopeMembersToTeam(teamList.members, input.teamUserIds),
+    meetings: scopeMeetingsToTeam(meetings, input.teamUserIds),
     sellerUserId: input.sellerUserId,
   });
 }
@@ -705,16 +703,12 @@ export async function getOrgAdminDashboard(
     deps.organizationSettings.findByOrganizationId(input.organizationId),
   ]);
 
-  const teamIds = input.teamUserIds?.length ? new Set(input.teamUserIds) : null;
-  const scopedMeetings = teamIds
-    ? meetings.filter((m) => teamIds.has(m.sellerUserId))
-    : meetings;
-  const scopedPrevMeetings = teamIds
-    ? prevMeetings.filter((m) => teamIds.has(m.sellerUserId))
-    : prevMeetings;
-  const scopedMembers = teamIds
-    ? teamList.members.filter((m) => teamIds.has(m.userId))
-    : teamList.members;
+  const scopedMeetings = scopeMeetingsToTeam(meetings, input.teamUserIds);
+  const scopedPrevMeetings = scopeMeetingsToTeam(
+    prevMeetings,
+    input.teamUserIds,
+  );
+  const scopedMembers = scopeMembersToTeam(teamList.members, input.teamUserIds);
 
   /*
     Les chiffres de tête se comptent sur les mêmes rendez-vous que le tableau

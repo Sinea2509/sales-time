@@ -24,8 +24,14 @@ import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
 import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-admin-dashboard";
-import { getOrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
+import {
+  resolveManagerTeamUserIds,
+  scopeMeetingsToTeam,
+} from "@/lib/team-seller-scope";
+import { dashboardHomeFromMeetings } from "@/src/core/domain/dashboard-home-from-meetings";
+import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
+import { prospectingMinutesForStatsWindow } from "@/src/core/domain/dashboard-tam-tuc";
 import { buildQualificationPotentialMatrixPoints } from "@/src/core/domain/meeting-analyse-matrices";
 import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-profile-from-meetings";
 
@@ -76,21 +82,23 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
 
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
-  const [home, meetingsForWindow, globalKissJson, orgSettings] =
+  const [meetingsForWindow, teamUserIds, globalKissJson, orgSettings] =
     await Promise.all([
-      getOrgDashboardHome(deps, {
-        organizationId: actor.activeOrganizationId,
-        statsWindowDays,
-        sellerUserId: sellerScope,
-      }),
       deps.meetings.listRecentMeetingsForDashboard({
         organizationId: actor.activeOrganizationId,
-        limit: isOrgAdmin ? ORG_ADMIN_DASHBOARD_MEETING_CAP : 200,
+        // Le plafond est un garde-fou de volume, pas un périmètre : la requête
+        // est déjà cadrée par `sellerUserId` pour un commercial, et par le
+        // filtre d'équipe ci-dessous pour un manager.
+        limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
         meetingAtSince: sincePreviousWindow,
         includeLatestSoncasResult: true,
         includeLatestDiscResult: true,
         includeLatestKissResult: true,
         sellerUserId: sellerScope,
+      }),
+      resolveManagerTeamUserIds(deps, {
+        canManageOrganization: actor.canManageOrganization,
+        internalUserId: actor.internalUserId,
       }),
       aiEnabled
         ? deps.globalKissCoachingPrompts.getPrompts()
@@ -110,20 +118,38 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     orgMeetingFormOptionsFromSettings(orgSettings),
   );
 
-  const { currentWindow: meetings, previousWindow: previousMeetings } =
-    partitionMeetingsByStatsWindow(meetingsForWindow, statsWindowDays);
+  /*
+    Cette page dit « équipe » huit fois à un manager : profil de vente de
+    l'équipe, progrès de l'équipe, axes d'amélioration de l'équipe. Elle
+    comptait pourtant l'organisation entière, faute de cadrage. Un manager de
+    trois commerciaux lisait donc le profil de vente de ses quarante collègues
+    sous le titre « Profil de vente de l'équipe ».
 
-  if (!home) {
-    return (
-      <div className="space-y-6">
-        <PageHeaderSimple title="Performance" />
-        <InfoCard
-          title="Organisation"
-          description="Sélectionnez une organisation pour afficher les statistiques."
-        />
-      </div>
-    );
-  }
+    Le périmètre est le même que celui de `/company` et de `/company/equipe` :
+    le manager et les commerciaux qui lui sont rattachés. Une équipe non
+    déclarée rend `undefined`, donc « pas de cadrage », donc l'organisation.
+  */
+  const scopedMeetings = scopeMeetingsToTeam(meetingsForWindow, teamUserIds);
+
+  const { currentWindow: meetings, previousWindow: previousMeetings } =
+    partitionMeetingsByStatsWindow(scopedMeetings, statsWindowDays);
+
+  /*
+    Les chiffres de tête se comptent sur les rendez-vous que la page a déjà
+    chargés, et non sur une requête séparée : « 128 RDV » en carte au-dessus de
+    « 19 RDV sur la période » en légende de matrice était deux réponses à la
+    même question.
+  */
+  const home = dashboardHomeFromMeetings({
+    statsWindowDays,
+    tamMinutesPerRdv: tamMinutesSavedPerMeetingFromSettings(orgSettings),
+    prospectingMinutes: prospectingMinutesForStatsWindow(
+      orgSettings?.tamObjectiveMinutesPerMonth ?? 180,
+      statsWindowDays,
+    ),
+    current: meetings,
+    previous: previousMeetings,
+  });
 
   const priorityOpportunities: AnalysePriorityOpportunityRow[] = [...meetings]
     .filter((m) => m.potentialAmount != null && m.potentialAmount > 0)
@@ -158,7 +184,15 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     home,
     cacheContext: {
       organizationId: actor.activeOrganizationId,
-      sellerUserId: sellerScope ?? null,
+      /*
+        La clé de cache doit nommer la population résumée. Deux managers de la
+        même organisation partageaient jusqu'ici la clé « org » ; leurs textes
+        ne se mélangeaient pas, l'empreinte des RDV les en empêchait, mais
+        chacun chassait celui de l'autre à chaque visite. Un manager cadré sur
+        son équipe porte donc son propre identifiant.
+      */
+      sellerUserId:
+        sellerScope ?? (teamUserIds?.length ? actor.internalUserId : null),
     },
   });
   const { progressBullets, improvementBullets } = coachingBullets;
