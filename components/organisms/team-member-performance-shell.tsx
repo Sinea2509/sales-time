@@ -13,6 +13,7 @@ import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-af
 import { SkillSignatureBadges } from "@/components/molecules/seller-skill-signature-view";
 import { TeamMemberStanding } from "@/components/molecules/team-member-standing";
 import { TeamMemberPerformanceProfileCard } from "@/components/organisms/team-member-performance-profile-card";
+import type { TeamScopeGroup } from "@/lib/team-seller-scope";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type {
   OrgAdminKissTeamRollup,
@@ -133,6 +134,18 @@ export type TeamMemberPerformanceShellProps = {
    */
   standing: TeamMemberStandingData | null;
   /**
+   * Le groupe sur lequel cette place a été calculée, tel que `teamScopeGroup`
+   * le nomme.
+   *
+   * Il vaut « équipe » dès qu'un périmètre a cadré le classement, et c'est le
+   * cas courant des deux écrans qui montent cette fiche. Il vaut
+   * « organisation » quand rien ne l'a cadré : un manager qui n'a encore
+   * personne de rattaché, un commercial dont le manager n'est pas déclaré. La
+   * fiche écrit alors « la moyenne de l'organisation », faute de quoi elle
+   * annoncerait une équipe là où elle a compté quarante personnes.
+   */
+  comparisonGroup?: TeamScopeGroup;
+  /**
    * Ce commercial n'est pas rattaché au manager qui le regarde.
    *
    * La recherche globale liste tous les membres de l'organisation et conduit à
@@ -200,6 +213,7 @@ export function TeamMemberPerformanceShell({
   skillSignature,
   skillMeetings,
   standing,
+  comparisonGroup = "team",
   horsEquipeDuManager = false,
   nbRdvs,
   decouverte,
@@ -302,6 +316,7 @@ export function TeamMemberPerformanceShell({
                 {standing ? (
                   <TeamMemberStanding
                     standing={standing}
+                    comparisonGroup={comparisonGroup}
                     className="mt-1 items-center sm:items-start"
                   />
                 ) : null}

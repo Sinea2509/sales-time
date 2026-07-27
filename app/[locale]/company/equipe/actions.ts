@@ -10,6 +10,7 @@ import {
   partitionMeetingsByStatsWindow,
   previousMeetingAtWindowStart,
 } from "@/src/core/domain/dashboard-stats-window";
+import { memberNameLine } from "@/src/core/domain/member-name-line";
 
 const userIdSchema = z.string().cuid();
 
@@ -46,11 +47,7 @@ async function assertCanViewSellerPerformance(userId: string) {
     return { ok: false as const, error: "NOT_FOUND" as const };
   }
 
-  const nameLine =
-    [member.user.firstName?.trim() ?? "", member.user.lastName?.trim() ?? ""]
-      .filter(Boolean)
-      .join(" ")
-      .trim() || member.user.email;
+  const nameLine = memberNameLine(member.user);
 
   return {
     ok: true as const,

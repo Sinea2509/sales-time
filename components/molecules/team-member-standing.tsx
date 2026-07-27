@@ -1,5 +1,6 @@
 import { TeamTierBadge } from "@/components/molecules/team-tier-badge";
 import { membresClasses, rdvNotes } from "@/lib/accord-fr";
+import type { TeamScopeGroup } from "@/lib/team-seller-scope";
 import { cn } from "@/lib/utils";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
 import {
@@ -11,14 +12,41 @@ import {
 import type { TeamMemberStanding as TeamMemberStandingData } from "@/src/core/application/get-org-admin-dashboard";
 
 /**
- * Phrase de comparaison à la moyenne d'équipe.
+ * Comment nommer le groupe auquel cette place compare, selon le cadrage.
+ *
+ * Presque toujours l'équipe, et c'est le défaut. Mais un rang que rien n'a
+ * cadré se mesure sur l'organisation entière : c'est le cas du commercial dont
+ * aucun manager n'est déclaré, et celui du manager qui n'a encore personne de
+ * rattaché. Leur écrire « moyenne d'équipe » leur fait compter une équipe de
+ * quarante, et contredit le titre affiché juste au-dessus.
+ *
+ * Les deux libellés sont écrits en entier plutôt qu'assemblés autour d'un nom
+ * variable : « la moyenne d'équipe » s'élide, « la moyenne de l'organisation »
+ * non, et une règle d'élision codée à la main se serait trompée au premier
+ * groupe commençant par une consonne.
+ */
+const GROUPE = {
+  team: { moyenne: "la moyenne d'équipe", parmi: "de l'équipe" },
+  organization: {
+    moyenne: "la moyenne de l'organisation",
+    parmi: "de l'organisation",
+  },
+} as const;
+
+/**
+ * Phrase de comparaison à la moyenne du groupe.
  *
  * En français « point » ne prend la marque du pluriel qu'à partir de deux :
  * « 1,4 point », « 2 points ». La phrase se construit donc en entier ici plutôt
  * qu'en collant des morceaux dans le rendu, où l'accord passerait inaperçu.
  */
-function phraseEcart(ecart: number, moyenne: number, rankedCount: number) {
-  const reference = `la moyenne d'équipe (${formatNoteFr(
+function phraseEcart(
+  ecart: number,
+  moyenne: number,
+  rankedCount: number,
+  groupe: TeamScopeGroup,
+) {
+  const reference = `${GROUPE[groupe].moyenne} (${formatNoteFr(
     moyenne,
   )}/5, calculée sur ${membresClasses(rankedCount)}).`;
   if (ecart === 0) return `Exactement à ${reference}`;
@@ -71,9 +99,19 @@ function NoteAvecBase({
  */
 export function TeamMemberStanding({
   standing,
+  comparisonGroup,
   className,
 }: {
   standing: TeamMemberStandingData;
+  /**
+   * Groupe auquel la place compare, tel que `teamScopeGroup` le nomme.
+   *
+   * Exigé, sans valeur par défaut : « équipe » est le cas courant, et un
+   * défaut aurait laissé le mot juste par habitude sur les écrans où il est
+   * faux. Le compilateur oblige donc chaque écran qui affiche une place à dire
+   * sur quel groupe il l'a calculée.
+   */
+  comparisonGroup: TeamScopeGroup;
   className?: string;
 }) {
   const row = standing.row;
@@ -148,7 +186,7 @@ export function TeamMemberStanding({
           className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
           title={`${rankLabel(row.rank)} parmi les ${membresClasses(
             ranking.rankedCount,
-          )} de l'équipe${row.tied ? ", ex æquo" : ""}.`}
+          )} ${GROUPE[comparisonGroup].parmi}${row.tied ? ", ex æquo" : ""}.`}
         >
           <span className="tabular-nums">{rankLabel(row.rank)}</span>
           {/*
@@ -176,7 +214,7 @@ export function TeamMemberStanding({
       </div>
       {moyenne != null && ecart != null ? (
         <p className="text-muted-foreground text-[11px] leading-tight">
-          {phraseEcart(ecart, moyenne, ranking.rankedCount)}
+          {phraseEcart(ecart, moyenne, ranking.rankedCount, comparisonGroup)}
         </p>
       ) : null}
     </div>

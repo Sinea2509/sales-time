@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatPotentialEuro } from "@/lib/format-potential-euro";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import { salesScoreColorClass } from "@/lib/sales-score-color";
+import type { TeamScopeGroup } from "@/lib/team-seller-scope";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type { TeamMemberStanding } from "@/src/core/application/get-org-admin-dashboard";
@@ -27,6 +28,8 @@ const dateShort = new Intl.DateTimeFormat("fr-FR", {
 export function DashboardHomeShell({
   home,
   standing = null,
+  comparisonGroup = "team",
+  managerNameLine = null,
   meetingTypeOptions,
   pipelineStageOptions,
   disabledStatsDays = [],
@@ -34,6 +37,10 @@ export function DashboardHomeShell({
   home: OrgDashboardHome;
   /** Place du commercial dans son équipe. `null` hors organisation ou hors équipe. */
   standing?: TeamMemberStanding | null;
+  /** Groupe sur lequel le rang a été calculé, tel que `teamScopeGroup` le nomme. */
+  comparisonGroup?: TeamScopeGroup;
+  /** Nom du manager qui donne son périmètre au rang. `null` s'il n'y en a pas. */
+  managerNameLine?: string | null;
   meetingTypeOptions: string[];
   pipelineStageOptions: string[];
   disabledStatsDays?: StatsWindowDays[];
@@ -61,7 +68,13 @@ export function DashboardHomeShell({
           répondant à « ce que j'ai fait ». Elle dépend de la même période que
           les cartes, d'où sa place sous le sélecteur qui la commande.
         */}
-        {standing ? <DashboardStandingCard standing={standing} /> : null}
+        {standing ? (
+          <DashboardStandingCard
+            standing={standing}
+            comparisonGroup={comparisonGroup}
+            managerNameLine={managerNameLine}
+          />
+        ) : null}
 
         <DashboardKpiCards home={home} />
       </div>

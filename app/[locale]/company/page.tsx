@@ -12,7 +12,9 @@ import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import {
   resolveManagerTeamUserIds,
+  resolveSellerManagerNameLine,
   resolveSellerTeamUserIds,
+  teamScopeGroup,
 } from "@/lib/team-seller-scope";
 import {
   getOrgAdminDashboard,
@@ -142,7 +144,7 @@ export default async function DashboardHomePage({
   const teamUserIds = await resolveSellerTeamUserIds(deps, {
     internalUserId: sellerId,
   });
-  const [home, orgSettings, standing] = await Promise.all([
+  const [home, orgSettings, standing, managerNameLine] = await Promise.all([
     getOrgDashboardHome(deps, {
       organizationId: actor.activeOrganizationId,
       statsWindowDays,
@@ -154,6 +156,17 @@ export default async function DashboardHomePage({
       statsWindowDays,
       sellerUserId: sellerId,
       teamUserIds,
+    }),
+    /*
+      Le nom qui désigne ce cadrage. Il relit le rattachement que
+      `resolveSellerTeamUserIds` vient de lire, une ligne de plus sur une clé
+      primaire, menée en parallèle des trois requêtes lourdes de cette salve :
+      les fondre en une seule aurait demandé une troisième fonction dont
+      « Ma performance », qui cadre sans nommer le manager, n'aurait rien fait.
+    */
+    resolveSellerManagerNameLine(deps, {
+      organizationId: actor.activeOrganizationId,
+      internalUserId: sellerId,
     }),
   ]);
   const { meetingTypeOptions, pipelineStageOptions } =
@@ -172,6 +185,8 @@ export default async function DashboardHomePage({
         <DashboardHomeShell
           home={home}
           standing={standing}
+          comparisonGroup={teamScopeGroup(teamUserIds)}
+          managerNameLine={managerNameLine}
           meetingTypeOptions={meetingTypeOptions}
           pipelineStageOptions={pipelineStageOptions}
           disabledStatsDays={disabledStatsDays}

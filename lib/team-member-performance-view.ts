@@ -5,7 +5,7 @@ import { prospectInitials } from "@/lib/prospect-initials";
 import { countMeetingTypes } from "@/lib/team-member-performance-helpers";
 import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
-import { isOutsideScopedTeam } from "@/lib/team-seller-scope";
+import { isOutsideScopedTeam, teamScopeGroup } from "@/lib/team-seller-scope";
 import type { ApplicationDeps } from "@/lib/application-deps";
 import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analyse-priority-opportunities-table";
 import type { TeamMemberPerformanceShellProps } from "@/components/organisms/team-member-performance-shell";
@@ -38,6 +38,7 @@ import {
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
 import { buildQualificationPotentialMatrixPoints } from "@/src/core/domain/meeting-analyse-matrices";
+import { memberNameLine } from "@/src/core/domain/member-name-line";
 import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-profile-from-meetings";
 import type { SellerRelationalAffinitySummary } from "@/src/core/ports/analysis-port";
 
@@ -215,11 +216,7 @@ export async function loadTeamMemberPerformanceView(
   const { progressBullets, improvementBullets } = coachingBullets;
 
   const { decouverte, proposition } = countMeetingTypes(meetings);
-  const nameLine =
-    [member.user.firstName?.trim() ?? "", member.user.lastName?.trim() ?? ""]
-      .filter(Boolean)
-      .join(" ")
-      .trim() || member.user.email;
+  const nameLine = memberNameLine(member.user);
 
   const meetingDigests = buildMeetingDigestsForAiSummary(meetings);
   const meetingsFingerprint = teamMemberMeetingsFingerprint(meetings);
@@ -288,6 +285,15 @@ export async function loadTeamMemberPerformanceView(
       skillSignature: standing?.row?.skillSignature ?? null,
       skillMeetings: standing?.row?.skillMeetings ?? 0,
       standing,
+      /*
+        Le mot que la fiche mettra sur ce rang vient du périmètre qui vient de
+        le calculer, et non d'un réglage à part : les deux ne peuvent donc pas
+        se contredire. Sans cadrage, la fiche disait « la moyenne d'équipe »
+        d'un chiffre pris sur l'organisation entière, ce qui arrive au manager
+        qui n'a encore personne de rattaché comme au commercial dont le manager
+        n'est pas déclaré.
+      */
+      comparisonGroup: teamScopeGroup(input.teamUserIds),
       horsEquipeDuManager,
       nbRdvs: home.nbRdvs,
       decouverte,

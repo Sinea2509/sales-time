@@ -1,3 +1,5 @@
+import { memberNameLine } from "@/src/core/domain/member-name-line";
+import type { OrganizationTeamRepositoryPort } from "@/src/core/ports/organization-team-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 
 const DEFAULT_TRIAL_LIMIT = 5;
@@ -70,6 +72,59 @@ export async function resolveSellerTeamUserIds(
   // `resolveManagerTeamUserIds` : sans lui, les deux écrans ne calculeraient
   // déjà plus la même moyenne.
   return [...new Set([managerId, ...reports, input.internalUserId])];
+}
+
+/**
+ * Le nom du manager d'un commercial, ou `null` s'il n'en a pas.
+ *
+ * Sa place se mesure sur l'équipe de son manager, pas sur l'organisation. Tant
+ * que cet écran ne disait pas de quelle équipe il parlait, « 3e sur 7 » restait
+ * un chiffre sans référent : sept qui ? Le nom du manager désigne le groupe, et
+ * son absence dit l'autre cas, celui où la place se mesure faute de mieux sur
+ * toute l'organisation.
+ *
+ * La recherche passe par l'adhésion à l'organisation plutôt que par le compte :
+ * le rattachement est une propriété de la personne, qu'aucune organisation ne
+ * borne. Un manager qui a quitté celle-ci ne doit pas y laisser son nom, et
+ * `null` renvoie alors l'écran au cas sans équipe, qui est déjà écrit.
+ */
+export async function resolveSellerManagerNameLine(
+  deps: {
+    users: UserRepositoryPort;
+    organizationTeam: OrganizationTeamRepositoryPort;
+  },
+  input: { organizationId: string; internalUserId: string | null },
+): Promise<string | null> {
+  if (!input.internalUserId) return null;
+  const managerId = await deps.users.findManagerUserId(input.internalUserId);
+  if (!managerId) return null;
+  const membership = await deps.organizationTeam.findMembershipForManagerView(
+    input.organizationId,
+    managerId,
+  );
+  if (!membership) return null;
+  return memberNameLine(membership.user);
+}
+
+/**
+ * Le groupe sur lequel un rang cadré par ce périmètre se mesure.
+ *
+ * Les écrans qui affichent une place écrivent « la moyenne d'équipe » et
+ * « parmi les 7 de l'équipe ». C'est vrai tant qu'un périmètre existe. Quand il
+ * n'y en a pas, les mêmes phrases désignent l'organisation entière sans le
+ * dire, et le lecteur compte une équipe de quarante.
+ *
+ * Le test est celui de `scopeRows`, mot pour mot : une liste absente ou vide
+ * laisse passer toutes les lignes, donc le rang porte sur l'organisation. Les
+ * deux ne peuvent pas diverger, puisque c'est la même question posée au même
+ * tableau.
+ */
+export type TeamScopeGroup = "team" | "organization";
+
+export function teamScopeGroup(
+  teamUserIds: string[] | undefined | null,
+): TeamScopeGroup {
+  return teamUserIds?.length ? "team" : "organization";
 }
 
 /**

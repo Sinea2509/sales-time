@@ -3,6 +3,7 @@ import {
   DEFAULT_TRIAL_LIMIT,
   isOutsideScopedTeam,
   resolveManagerTeamUserIds,
+  resolveSellerManagerNameLine,
   resolveSellerTeamUserIds,
   scopeMeetingsToTeam,
   scopeMembersToTeam,
@@ -106,6 +107,115 @@ describe("team-seller-scope", () => {
         { internalUserId: "rep_1" },
       );
       expect(result).toEqual(["mgr_1", "rep_2", "rep_1"]);
+    });
+  });
+
+  /*
+    Ce que les cas qui suivent ne couvrent pas : la phrase affichée. Ils fixent
+    le nom rendu et la manière de le chercher, pas le fait que la carte écrive
+    « Équipe de » devant, ni qu'elle change de titre quand il manque.
+  */
+  describe("resolveSellerManagerNameLine", () => {
+    const membershipDe = (user: {
+      firstName?: string | null;
+      lastName?: string | null;
+      email: string;
+    }) => ({
+      user: { firstName: null, lastName: null, ...user },
+    });
+
+    it("returns null when the seller has no internal user id", async () => {
+      const findManagerUserId = jest.fn();
+      const result = await resolveSellerManagerNameLine(
+        {
+          users: { findManagerUserId },
+          organizationTeam: { findMembershipForManagerView: jest.fn() },
+        } as never,
+        { organizationId: "org_1", internalUserId: null },
+      );
+      expect(result).toBeNull();
+      expect(findManagerUserId).not.toHaveBeenCalled();
+    });
+
+    /*
+      L'adhésion ne se cherche pas quand il n'y a personne à chercher. Le stub
+      rendrait un nom si on l'appelait : sans cette précaution, retirer la
+      garde laisserait le cas passer par une recherche qui ne trouve rien, et
+      le `null` obtenu ressemblerait à celui qu'on voulait.
+    */
+    it("returns null without a lookup when no manager is declared", async () => {
+      const findMembershipForManagerView = jest
+        .fn()
+        .mockResolvedValue(membershipDe({ email: "chef@exemple.fr" }));
+      const result = await resolveSellerManagerNameLine(
+        {
+          users: { findManagerUserId: jest.fn().mockResolvedValue(null) },
+          organizationTeam: { findMembershipForManagerView },
+        } as never,
+        { organizationId: "org_1", internalUserId: "rep_1" },
+      );
+      expect(result).toBeNull();
+      expect(findMembershipForManagerView).not.toHaveBeenCalled();
+    });
+
+    /*
+      Le rattachement est une propriété de la personne, qu'aucune organisation
+      ne borne : rien n'empêche un manager d'avoir quitté celle qu'on regarde.
+      La recherche passe donc par l'adhésion, et son absence renvoie l'écran au
+      cas sans équipe, déjà écrit, plutôt qu'au nom d'un tiers.
+    */
+    it("returns null when the declared manager left this organization", async () => {
+      const result = await resolveSellerManagerNameLine(
+        {
+          users: { findManagerUserId: jest.fn().mockResolvedValue("mgr_1") },
+          organizationTeam: {
+            findMembershipForManagerView: jest.fn().mockResolvedValue(null),
+          },
+        } as never,
+        { organizationId: "org_1", internalUserId: "rep_1" },
+      );
+      expect(result).toBeNull();
+    });
+
+    it("looks the manager up inside the organization being read", async () => {
+      const findMembershipForManagerView = jest
+        .fn()
+        .mockResolvedValue(
+          membershipDe({ firstName: "Camille", lastName: "Roy", email: "c@x" }),
+        );
+      const result = await resolveSellerManagerNameLine(
+        {
+          users: { findManagerUserId: jest.fn().mockResolvedValue("mgr_1") },
+          organizationTeam: { findMembershipForManagerView },
+        } as never,
+        { organizationId: "org_1", internalUserId: "rep_1" },
+      );
+      expect(result).toBe("Camille Roy");
+      expect(findMembershipForManagerView).toHaveBeenCalledWith(
+        "org_1",
+        "mgr_1",
+      );
+    });
+
+    /*
+      Le nom se compose par `memberNameLine`, la règle que la fiche du manager
+      et ses actions de rafraîchissement appliquent déjà. Un manager invité qui
+      n'a pas renseigné son identité s'affiche donc par son adresse, ici comme
+      ailleurs, plutôt que par une carte muette.
+    */
+    it("falls back to the manager e-mail like the rest of the app", async () => {
+      const result = await resolveSellerManagerNameLine(
+        {
+          users: { findManagerUserId: jest.fn().mockResolvedValue("mgr_1") },
+          organizationTeam: {
+            findMembershipForManagerView: jest
+              .fn()
+              .mockResolvedValue(membershipDe({ email: "chef@exemple.fr" })),
+          },
+        } as never,
+        { organizationId: "org_1", internalUserId: "rep_1" },
+      );
+      expect(result).toBe("chef@exemple.fr");
     });
   });
 
