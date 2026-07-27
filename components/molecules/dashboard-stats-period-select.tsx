@@ -9,7 +9,6 @@ import {
   STATS_WINDOW_DAYS_OPTIONS,
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
-import { cn } from "@/lib/utils";
 
 const LABELS: Record<StatsWindowDays, string> = {
   7: "7 jours",
@@ -21,10 +20,7 @@ export function DashboardStatsPeriodSelect(props: {
   value: StatsWindowDays;
   /** Fenêtres sans assez de RDV : options grisées dans le sélecteur. */
   disabledDays?: StatsWindowDays[];
-  /** Style pour fond sombre (tableau de bord). */
-  theme?: "default" | "dark";
 }) {
-  const dark = props.theme === "dark";
   const disabledDays = props.disabledDays ?? [];
   const disabledSet = new Set(disabledDays);
   const router = useRouter();
@@ -44,13 +40,8 @@ export function DashboardStatsPeriodSelect(props: {
   */
   if (areAllStatsWindowsDisabled(disabledDays)) {
     return (
-      <div
-        className={cn(
-          "text-sm sm:max-w-[17rem] sm:text-right",
-          dark ? "text-zinc-400" : "text-muted-foreground",
-        )}
-      >
-        <p className={dark ? "text-zinc-200" : "text-foreground"}>
+      <div className="text-sm text-muted-foreground sm:max-w-[17rem] sm:text-right">
+        <p className="text-foreground">
           <span className="sr-only">Période des statistiques : </span>
           {LABELS[props.value]}
         </p>
@@ -63,12 +54,7 @@ export function DashboardStatsPeriodSelect(props: {
   }
 
   return (
-    <div
-      className={cn(
-        "relative inline-flex items-center text-sm whitespace-nowrap",
-        dark ? "text-zinc-400" : "text-muted-foreground",
-      )}
-    >
+    <div className="relative inline-flex items-center text-sm whitespace-nowrap text-muted-foreground">
       {/*
         « outline-none » sans rien en échange rendait cette commande muette au
         clavier : on tabulait dessus et rien ne bougeait à l'écran. C'est
@@ -82,11 +68,7 @@ export function DashboardStatsPeriodSelect(props: {
       */}
       <select
         aria-label="Période des statistiques (jours glissants)"
-        className={cn(
-          "h-8 appearance-none rounded-md bg-transparent pr-5 pl-1 text-sm font-normal outline-none",
-          "focus-visible:ring-brand focus-visible:ring-2 disabled:opacity-60",
-          dark ? "text-zinc-200" : "text-foreground",
-        )}
+        className="h-8 appearance-none rounded-md bg-transparent pr-5 pl-1 text-sm font-normal text-foreground outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
         value={String(props.value)}
         disabled={pending}
         onChange={(e) => {
@@ -110,12 +92,7 @@ export function DashboardStatsPeriodSelect(props: {
           </option>
         ))}
       </select>
-      <ChevronDown
-        className={cn(
-          "pointer-events-none absolute right-0 size-4",
-          dark ? "text-zinc-400" : "text-muted-foreground",
-        )}
-      />
+      <ChevronDown className="pointer-events-none absolute right-0 size-4 text-muted-foreground" />
     </div>
   );
 }

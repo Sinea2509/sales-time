@@ -4,7 +4,24 @@ const DEFAULT_TRIAL_LIMIT = 5;
 
 export { DEFAULT_TRIAL_LIMIT };
 
-/** Returns user ids a manager may view; undefined = full org (owner). */
+/**
+ * Périmètre de lecture d'un manager : lui-même et les commerciaux qui lui sont
+ * rattachés.
+ *
+ * Il fait partie de l'équipe qu'il administre, exactement comme dans
+ * `resolveSellerTeamUserIds` : sans lui, les deux écrans ne calculeraient déjà
+ * plus la même moyenne.
+ *
+ * Renvoie `undefined` pour dire « pas de cadrage », ce que
+ * `filterRowsByTeamUserIds` lit comme l'organisation entière. Trois situations y
+ * mènent : aucun compte interne, un compte qui n'administre pas l'organisation,
+ * ou un administrateur auquel personne n'est rattaché. La dernière mérite d'être
+ * dite : sur une organisation où personne n'a encore déclaré son manager, cadrer
+ * sur une équipe vide n'afficherait aucun chiffre à celui qui vient d'ouvrir le
+ * produit.
+ *
+ * À retenir : ici `undefined` veut dire « tout », jamais « rien ».
+ */
 export async function resolveManagerTeamUserIds(
   deps: { users: UserRepositoryPort },
   input: {
