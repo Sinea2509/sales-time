@@ -5,11 +5,10 @@ import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
 import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-meeting-row-actions";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
-import { CommercialCoachingFocus } from "@/components/molecules/commercial-coaching-focus";
 import { MeetingActionBadge } from "@/components/molecules/meeting-action-badge";
 import { CommercialActionPlan } from "@/components/organisms/commercial-action-plan";
+import { CommercialStandingHero } from "@/components/organisms/commercial-standing-hero";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
-import { DashboardStandingCard } from "@/components/organisms/dashboard-standing-card";
 import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
 import { meetingsTodoSummary } from "@/src/core/domain/meeting-next-action";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,50 +54,61 @@ export function DashboardHomeShell({
 }) {
   return (
     <div className="space-y-8" data-feedback-id="dashboard-home">
-      <div className="space-y-3">
+      {/*
+        L'écran s'ouvre sur « où j'en suis » : la position et le focus, les deux
+        lignes qui répondent à cette question, avant les indicateurs qui disent
+        « ce que j'ai fait ». Le focus est le même signal que la carte « à
+        coacher » du manager, sur la même personne : le commercial voit enfin ce
+        qu'on lit de lui. Le sélecteur de période coiffe ce bloc, car tout ce qui
+        suit en dépend.
+
+        Sans place, ce bloc n'a rien à dire et disparaît : le sélecteur passe
+        alors sur les indicateurs, seul écran qui reste, pour ne pas se retrouver
+        sans point d'ancrage.
+      */}
+      {standing ? (
+        <section className="space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className={sectionHeadingClass}>Où j&apos;en suis</h2>
+            <Suspense
+              fallback={
+                <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
+              }
+            >
+              <DashboardStatsPeriodSelect
+                value={home.statsWindowDays}
+                disabledDays={disabledStatsDays}
+              />
+            </Suspense>
+          </div>
+          <CommercialStandingHero
+            standing={standing}
+            comparisonGroup={comparisonGroup}
+            managerNameLine={managerNameLine}
+            skillSignature={standing.row?.skillSignature ?? null}
+            coachingHref="/company/analyse"
+          />
+        </section>
+      ) : null}
+
+      <section className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className={sectionHeadingClass}>Mes KPI opérationnels</h2>
-          <Suspense
-            fallback={
-              <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
-            }
-          >
-            <DashboardStatsPeriodSelect
-              value={home.statsWindowDays}
-              disabledDays={disabledStatsDays}
-            />
-          </Suspense>
+          <h2 className={sectionHeadingClass}>Mes indicateurs de la période</h2>
+          {standing ? null : (
+            <Suspense
+              fallback={
+                <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
+              }
+            >
+              <DashboardStatsPeriodSelect
+                value={home.statsWindowDays}
+                disabledDays={disabledStatsDays}
+              />
+            </Suspense>
+          )}
         </div>
-
-        {/*
-          Position et focus viennent avant les KPI opérationnels, et non après :
-          ce sont les deux lignes qui répondent à « où j'en suis » et « sur quoi
-          progresser », les cartes en dessous répondant à « ce que j'ai fait ».
-          Le focus est le même signal que la carte « à coacher » du manager, sur
-          la même personne : le commercial voit enfin ce qu'on lit de lui. Les
-          deux dépendent de la période, d'où leur place sous le sélecteur.
-
-          Les deux cartes s'affichent ensemble dès qu'il y a une place : le focus
-          se remplit d'un axe, ou invite à analyser des rendez-vous quand il n'y
-          en a pas encore. Sans place du tout, ni l'une ni l'autre n'a de quoi
-          parler, et la grille reste vide.
-        */}
-        {standing ? (
-          <>
-            <DashboardStandingCard
-              standing={standing}
-              comparisonGroup={comparisonGroup}
-              managerNameLine={managerNameLine}
-            />
-            <CommercialCoachingFocus
-              skillSignature={standing.row?.skillSignature ?? null}
-              coachingHref="/company/analyse"
-            />
-          </>
-        ) : null}
-
         <DashboardKpiCards home={home} />
-      </div>
+      </section>
 
       {/*
         Le plan d'action se pose entre les chiffres et la liste : « voilà où

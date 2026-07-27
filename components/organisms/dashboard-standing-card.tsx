@@ -90,11 +90,21 @@ export function DashboardStandingCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:gap-6 dark:border-zinc-800 dark:bg-zinc-900",
+        "relative isolate flex flex-col gap-3 overflow-hidden rounded-2xl border border-brand/15 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-5 dark:border-zinc-800 dark:bg-zinc-900",
         className,
       )}
       data-feedback-id="dashboard-standing"
     >
+      {/*
+        Un halo de marque, la seule touche de couleur du bloc : il fait de cette
+        carte le point d'entrée de l'écran, sans peser comme un aplat. Décoratif
+        et annoncé comme tel ; posé derrière le contenu, il ne mange aucun
+        contraste, l'encre restant sur le blanc que le halo effleure à peine.
+      */}
+      <span
+        aria-hidden
+        className="bg-brand/10 dark:bg-brand/20 pointer-events-none absolute -top-20 -right-12 -z-10 size-44 rounded-full blur-3xl"
+      />
       <div className="flex min-w-0 flex-col gap-1.5">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-xs font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
