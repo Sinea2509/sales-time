@@ -3,6 +3,11 @@ import {
   computeTeamSoncasPie,
 } from "@/src/core/domain/org-profile-distribution-pie";
 import {
+  DISC_HEX,
+  DISC_LABEL_FR,
+  SONCAS_HEX,
+} from "@/src/core/domain/seller-affinity-from-meetings";
+import {
   averageTamMinutes,
   prospectingMinutesForStatsWindow,
 } from "@/src/core/domain/dashboard-tam-tuc";
@@ -497,19 +502,14 @@ export async function getTeamMemberStanding(
   });
 }
 
+/*
+  Les couleurs et les mots des camemberts viennent du module des barres de la
+  fiche : « Influent » y était ambre quand le camembert le peignait en bleu et
+  l'appelait « I », et le lecteur devait recoller les deux tout seul. Les
+  quatre lettres deviennent les quatre noms, et le même profil garde la même
+  couleur d'une page à l'autre.
+*/
 const DISC_PIE_ORDER = ["D", "I", "S", "C"] as const;
-const DISC_PIE_COLORS: Record<(typeof DISC_PIE_ORDER)[number], string> = {
-  D: "#ef4444",
-  I: "#3b82f6",
-  S: "#22c55e",
-  C: "#7c3aed",
-};
-const DISC_PIE_LABELS: Record<(typeof DISC_PIE_ORDER)[number], string> = {
-  D: "D",
-  I: "I",
-  S: "S",
-  C: "C",
-};
 
 const SONCAS_PIE_ORDER = [
   "securite",
@@ -520,15 +520,6 @@ const SONCAS_PIE_ORDER = [
   "sympathie",
 ] as const;
 
-const SONCAS_PIE_COLORS: Record<(typeof SONCAS_PIE_ORDER)[number], string> = {
-  securite: "#6366f1",
-  orgueil: "#ec4899",
-  nouveaute: "#f97316",
-  confort: "#14b8a6",
-  argent: "#eab308",
-  sympathie: "#06b6d4",
-};
-
 function buildDiscPie(
   meetings: RecentMeetingListRow[],
 ): OrgAdminDistributionPie {
@@ -537,9 +528,9 @@ function buildDiscPie(
   );
   const slices: OrgAdminPieSlice[] = DISC_PIE_ORDER.map((key) => ({
     id: key,
-    label: DISC_PIE_LABELS[key],
+    label: DISC_LABEL_FR[key],
     value: pie.values[key],
-    color: DISC_PIE_COLORS[key],
+    color: DISC_HEX[key],
   }));
   return {
     analyzedMeetings: pie.analyzedMeetings,
@@ -558,7 +549,7 @@ function buildSoncasPie(
     id: key,
     label: DRIVER_LABEL_FR[key],
     value: pie.values[key],
-    color: SONCAS_PIE_COLORS[key],
+    color: SONCAS_HEX[key],
   }));
   return {
     analyzedMeetings: pie.analyzedMeetings,
