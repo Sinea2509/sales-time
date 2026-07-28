@@ -19,7 +19,6 @@ import { loadTeamMemberPerformanceView } from "@/lib/team-member-performance-vie
 import {
   disabledStatsWindowDays,
   partitionMeetingsByStatsWindow,
-  previousMeetingAtWindowStart,
 } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
@@ -37,8 +36,19 @@ import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboa
 import { prospectingMinutesForStatsWindow } from "@/src/core/domain/dashboard-tam-tuc";
 import { buildQualificationPotentialMatrixPoints } from "@/src/core/domain/meeting-analyse-matrices";
 import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-profile-from-meetings";
+import {
+  meetingAtSinceForWindows,
+  salesProfileHistory,
+} from "@/src/core/domain/sales-profile-history";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Combien de périodes la trajectoire du profil couvre. La page charge donc les
+ * rendez-vous d'autant de fenêtres en arrière, non plus seulement l'actuelle et
+ * la précédente : la courbe a besoin du chemin, pas du dernier pas.
+ */
+const SALES_PROFILE_HISTORY_PERIODS = 6;
 
 type AnalysePageProps = {
   searchParams?: Promise<{ jours?: string }>;
@@ -170,7 +180,10 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   });
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
 
-  const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
+  const sinceProfileHistory = meetingAtSinceForWindows(
+    statsWindowDays,
+    SALES_PROFILE_HISTORY_PERIODS,
+  );
 
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
   const [meetingsForWindow, globalKissJson, orgSettings] = await Promise.all([
@@ -179,7 +192,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       // Le plafond est un garde-fou de volume, pas un périmètre : le cadrage
       // est fait par le filtre d'équipe ci-dessous.
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
-      meetingAtSince: sincePreviousWindow,
+      meetingAtSince: sinceProfileHistory,
       includeLatestSoncasResult: true,
       includeLatestDiscResult: true,
       includeLatestKissResult: true,
@@ -215,6 +228,12 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
 
   const { currentWindow: meetings, previousWindow: previousMeetings } =
     partitionMeetingsByStatsWindow(scopedMeetings, statsWindowDays);
+
+  const profileHistory = salesProfileHistory(
+    scopedMeetings,
+    statsWindowDays,
+    SALES_PROFILE_HISTORY_PERIODS,
+  );
 
   /*
     Les chiffres de tête se comptent sur les rendez-vous que la page a déjà
@@ -315,6 +334,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
           improvementBullets={improvementBullets}
           isOrgAdmin
           statsWindowDays={home.statsWindowDays}
+          profileHistory={profileHistory}
         />
       </section>
     </div>

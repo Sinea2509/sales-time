@@ -21,7 +21,9 @@ import {
   coachingProgressBulletsForDisplay,
 } from "@/src/core/domain/coaching-progress-eligibility";
 import { SalesProfileEvolutionList } from "@/components/molecules/sales-profile-evolution-list";
+import { SalesProfileTrajectory } from "@/components/molecules/sales-profile-trajectory";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type { SalesProfilePeriodPoint } from "@/src/core/domain/sales-profile-history";
 
 export function AnalyseRecommandationsSection({
   salesProfile,
@@ -32,6 +34,7 @@ export function AnalyseRecommandationsSection({
   isOrgAdmin,
   sellerScoped = false,
   statsWindowDays,
+  profileHistory,
 }: {
   salesProfile: SalesProfileScores | null;
   previousSalesProfile?: SalesProfileScores | null;
@@ -43,6 +46,8 @@ export function AnalyseRecommandationsSection({
   sellerScoped?: boolean;
   /** Fenêtre stats active, pour le « vs N j. préc. » de la croissance. */
   statsWindowDays?: StatsWindowDays;
+  /** Trajectoire du profil global sur plusieurs périodes. Absente sur la fiche. */
+  profileHistory?: SalesProfilePeriodPoint[];
 }) {
   const profileTitle = sellerScoped
     ? "Profil de vente du commercial"
@@ -134,6 +139,12 @@ export function AnalyseRecommandationsSection({
                 scores={salesProfile}
                 previousScores={previousSalesProfile}
               />
+              {profileHistory ? (
+                <SalesProfileTrajectory
+                  history={profileHistory}
+                  statsWindowDays={statsWindowDays}
+                />
+              ) : null}
               <SalesProfileEvolutionList
                 scores={salesProfile}
                 previousScores={previousSalesProfile}
