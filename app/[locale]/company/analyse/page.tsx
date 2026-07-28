@@ -314,6 +314,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
           progressBullets={progressBullets}
           improvementBullets={improvementBullets}
           isOrgAdmin
+          statsWindowDays={home.statsWindowDays}
         />
       </section>
     </div>

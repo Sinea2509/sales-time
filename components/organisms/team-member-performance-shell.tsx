@@ -511,6 +511,7 @@ export function TeamMemberPerformanceShell({
             improvementBullets={improvementBullets}
             isOrgAdmin={luParSonManager}
             sellerScoped={luParSonManager}
+            statsWindowDays={statsWindowDays}
           />
         </div>
       </section>

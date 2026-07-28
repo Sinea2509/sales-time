@@ -20,6 +20,8 @@ import {
   MIN_ANALYZED_RDV_FOR_PROGRESS,
   coachingProgressBulletsForDisplay,
 } from "@/src/core/domain/coaching-progress-eligibility";
+import { SalesProfileEvolutionList } from "@/components/molecules/sales-profile-evolution-list";
+import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 
 export function AnalyseRecommandationsSection({
   salesProfile,
@@ -29,6 +31,7 @@ export function AnalyseRecommandationsSection({
   improvementBullets,
   isOrgAdmin,
   sellerScoped = false,
+  statsWindowDays,
 }: {
   salesProfile: SalesProfileScores | null;
   previousSalesProfile?: SalesProfileScores | null;
@@ -38,6 +41,8 @@ export function AnalyseRecommandationsSection({
   isOrgAdmin: boolean;
   /** Manager view of one commercial : seller-specific copy instead of team/self. */
   sellerScoped?: boolean;
+  /** Fenêtre stats active, pour le « vs N j. préc. » de la croissance. */
+  statsWindowDays?: StatsWindowDays;
 }) {
   const profileTitle = sellerScoped
     ? "Profil de vente du commercial"
@@ -124,10 +129,18 @@ export function AnalyseRecommandationsSection({
         </CardHeader>
         <CardContent className="flex flex-1 flex-col justify-center">
           {salesProfile ? (
-            <SalesProfileRadar
-              scores={salesProfile}
-              previousScores={previousSalesProfile}
-            />
+            <>
+              <SalesProfileRadar
+                scores={salesProfile}
+                previousScores={previousSalesProfile}
+              />
+              <SalesProfileEvolutionList
+                scores={salesProfile}
+                previousScores={previousSalesProfile}
+                rdvCount={rdvCount}
+                statsWindowDays={statsWindowDays}
+              />
+            </>
           ) : (
             <p className="text-muted-foreground mx-auto max-w-prose py-12 text-center text-sm">
               {profileEmptyMessage}
