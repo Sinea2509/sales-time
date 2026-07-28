@@ -51,6 +51,7 @@
   --color-brand-muted: var(--brand-muted);
   --color-brand-soft: var(--brand-soft);
   --color-brand-ring: var(--brand-ring);
+  --color-gold: var(--gold);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -95,6 +96,14 @@
   --brand-muted: #c4b5fd;
   --brand-soft: color-mix(in srgb, var(--brand) 12%, transparent);
   --brand-ring: color-mix(in srgb, var(--brand) 30%, transparent);
+  /*
+    L'or de la direction « Ivoire et Encre ». Réservé au hero du commercial quand
+    il atteint le palier Excellence, en filet fin et en halo décoratif : jamais
+    de texte posé dessus, et le violet reste la couleur des actions. Le palier
+    lui-même garde sa rampe violette ordonnée, un or au sommet casserait la
+    lecture clair vers foncé.
+  */
+  --gold: oklch(0.7115 0.1204 82.3);
   --secondary: oklch(0.9495 0.0099 87.5);
   --secondary-foreground: oklch(0.2063 0.0107 80.5);
   --muted: oklch(0.9495 0.0099 87.5);

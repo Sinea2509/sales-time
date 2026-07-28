@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 import { CommercialCoachingFocus } from "@/components/molecules/commercial-coaching-focus";
 import {
   DashboardStandingCard,
@@ -83,16 +84,45 @@ export function CommercialStandingHero({
 
   const sousTitre = sousTitreDuGroupe(comparisonGroup, managerNameLine);
 
+  // L'or ne pare que le sommet du classement : au palier Excellence, le hero
+  // reçoit un filet et un halo dorés ; partout ailleurs il garde le halo de
+  // marque. C'est la seule entorse au violet, et elle dit « haut du tableau »
+  // sans toucher la rampe ordonnée des paliers.
+  const estExcellence = row.tier?.id === "excellence";
+
   return (
-    <div className="relative isolate overflow-hidden rounded-2xl border border-brand/15 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <div
+      className={cn(
+        "relative isolate overflow-hidden rounded-2xl border bg-white shadow-sm dark:bg-zinc-900",
+        estExcellence
+          ? "border-gold/30 dark:border-gold/30"
+          : "border-brand/15 dark:border-zinc-800",
+      )}
+    >
       {/*
-        Le halo de marque, seule couleur de fond du hero : il en fait le point
-        d'entrée de l'écran sans peser comme un aplat. Décoratif, posé derrière
-        l'encre, qui reste sur le blanc qu'il effleure à peine.
+        Au palier Excellence, un filet doré court en haut du hero, clippé par les
+        coins arrondis. Décoratif, sans texte, il signe le haut du classement.
+      */}
+      {estExcellence ? (
+        <span
+          aria-hidden
+          className="from-gold/50 via-gold to-gold/50 pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r"
+        />
+      ) : null}
+      {/*
+        Un halo, seule couleur de fond du hero : il en fait le point d'entrée de
+        l'écran sans peser comme un aplat. Doré au palier Excellence, de marque
+        sinon. Décoratif, posé derrière l'encre, qui reste sur le blanc qu'il
+        effleure à peine.
       */}
       <span
         aria-hidden
-        className="bg-brand/10 dark:bg-brand/20 pointer-events-none absolute -top-24 -right-16 -z-10 size-56 rounded-full blur-3xl"
+        className={cn(
+          "pointer-events-none absolute -top-24 -right-16 -z-10 size-56 rounded-full blur-3xl",
+          estExcellence
+            ? "bg-gold/15 dark:bg-gold/20"
+            : "bg-brand/10 dark:bg-brand/20",
+        )}
       />
 
       <div className="flex flex-col gap-5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-6 sm:py-5">
