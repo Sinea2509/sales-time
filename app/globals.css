@@ -65,13 +65,21 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /*
+    Charte « Ardoise Indigo ». Les neutres ne sont plus un gris pur mais portent
+    une pointe d'indigo (teinte 286 à 293), la même famille que la marque, et le
+    fond de page se détache des cartes restées blanches pour donner de la
+    profondeur. Tout reste en mode clair. La marque ne bouge pas : #6c4dff.
+    Contrastes mesurés au navigateur : encre 17:1 sur la page, muted 4,9:1 sur
+    la surface secondaire, marque 5,07:1 sur blanc.
+  */
+  --background: oklch(0.9716 0.0066 286.3);
+  --foreground: oklch(0.1896 0.0202 293.5);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.1896 0.0202 293.5);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.1896 0.0202 293.5);
+  --primary: oklch(0.247 0.0227 292.3);
   --primary-foreground: oklch(0.985 0 0);
   --brand: #6c4dff;
   /*
@@ -87,16 +95,16 @@
   --brand-muted: #c4b5fd;
   --brand-soft: color-mix(in srgb, var(--brand) 12%, transparent);
   --brand-ring: color-mix(in srgb, var(--brand) 30%, transparent);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.9571 0.0093 286.2);
+  --secondary-foreground: oklch(0.1896 0.0202 293.5);
+  --muted: oklch(0.9571 0.0093 286.2);
+  --muted-foreground: oklch(0.5201 0.0344 289.3);
+  --accent: oklch(0.9571 0.0093 286.2);
+  --accent-foreground: oklch(0.1896 0.0202 293.5);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.9259 0.0148 290.3);
+  --input: oklch(0.9259 0.0148 290.3);
+  --ring: oklch(0.6367 0.0357 289.2);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -114,24 +122,24 @@
   --chart-axis: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
   --chart-grid: var(--border);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar: oklch(0.9859 0.004 286.3);
+  --sidebar-foreground: oklch(0.1896 0.0202 293.5);
+  --sidebar-primary: oklch(0.247 0.0227 292.3);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --app-shell-surface: oklch(0.99 0 0);
-  --app-shell-sidebar-bg: oklch(0.98 0 0);
-  --app-shell-sidebar-text: oklch(0.205 0 0);
-  --app-shell-sidebar-muted: oklch(0.46 0 0);
-  --app-shell-sidebar-border: oklch(0.91 0 0);
-  --app-shell-sidebar-hover-bg: oklch(0.94 0 0);
+  --sidebar-accent: oklch(0.9571 0.0093 286.2);
+  --sidebar-accent-foreground: oklch(0.1896 0.0202 293.5);
+  --sidebar-border: oklch(0.9259 0.0148 290.3);
+  --sidebar-ring: oklch(0.6367 0.0357 289.2);
+  --app-shell-surface: oklch(0.9716 0.0066 286.3);
+  --app-shell-sidebar-bg: oklch(0.9773 0.0053 286.3);
+  --app-shell-sidebar-text: oklch(0.1896 0.0202 293.5);
+  --app-shell-sidebar-muted: oklch(0.46 0.03 289);
+  --app-shell-sidebar-border: oklch(0.91 0.012 289);
+  --app-shell-sidebar-hover-bg: oklch(0.9481 0.0093 286.2);
   --app-shell-sidebar-active-bg: oklch(0.94 0.03 292);
   --app-shell-sidebar-active-text: oklch(0.29 0.07 291);
   --app-shell-sidebar-accent: oklch(0.58 0.23 292);
-  --app-shell-sidebar-card-bg: oklch(0.965 0 0);
+  --app-shell-sidebar-card-bg: oklch(0.965 0.006 286);
 }
 
 .dark {
