@@ -23,6 +23,7 @@ import {
 import { getApplicationDeps } from "@/lib/application-deps";
 import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
+import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
 import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-admin-dashboard";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
@@ -273,6 +274,8 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     organizationKissPromptAppendix: aiEnabled
       ? kissMarkdownAppendixForAudience(globalKissJson, "manager")
       : null,
+    organizationPlaybookMarkdown:
+      organizationPlaybookMarkdownForAnalysis(orgSettings),
     home,
     cacheContext: {
       organizationId: actor.activeOrganizationId,

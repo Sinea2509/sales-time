@@ -5,6 +5,7 @@ import { prospectInitials } from "@/lib/prospect-initials";
 import { countMeetingTypes } from "@/lib/team-member-performance-helpers";
 import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
+import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { isOutsideScopedTeam, teamScopeGroup } from "@/lib/team-seller-scope";
 import type { ApplicationDeps } from "@/lib/application-deps";
 import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analyse-priority-opportunities-table";
@@ -218,6 +219,14 @@ export async function loadTeamMemberPerformanceView(
   const etapeOrder = etapeVocabularyFromOptions(
     orgMeetingFormOptionsFromSettings(orgSettings),
   );
+  /*
+    Le playbook de l'organisation, rendu une fois pour les deux textes que
+    cette fiche fait écrire : les recommandations de coaching et le récit KISS.
+    Le rendre deux fois laisserait deux chemins pouvoir diverger, alors que les
+    deux prompts doivent décrire la même méthode de vente.
+  */
+  const organizationPlaybookMarkdown =
+    organizationPlaybookMarkdownForAnalysis(orgSettings);
   const teamSalesProfile = aggregateTeamSalesProfileFromMeetings(meetings);
   const previousSalesProfile =
     aggregateTeamSalesProfileFromMeetings(previousMeetings);
@@ -231,6 +240,7 @@ export async function loadTeamMemberPerformanceView(
     organizationKissPromptAppendix: aiEnabled
       ? kissMarkdownAppendixForAudience(globalKissJson, audience)
       : null,
+    organizationPlaybookMarkdown,
     home,
     cacheContext: {
       organizationId: orgId,
@@ -274,6 +284,7 @@ export async function loadTeamMemberPerformanceView(
           globalKissJson,
           audience,
         ),
+        organizationPlaybookMarkdown,
       })
     : null;
 

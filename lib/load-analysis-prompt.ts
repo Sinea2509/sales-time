@@ -16,16 +16,3 @@ export async function loadAnalysisPromptMarkdown(
   }
   return DEFAULT_ANALYSIS_PROMPT_MARKDOWN[kind];
 }
-
-const ORG_APPENDIX_HEADER =
-  "Consignes spécifiques fournies par l'organisation (à respecter si compatibles avec les données) :";
-
-/** Appends optional org KISS coaching consignes to a system prompt. */
-export function appendOrganizationKissPromptAppendix(
-  systemMarkdown: string,
-  organizationKissPromptAppendix?: string | null,
-): string {
-  const appendix = organizationKissPromptAppendix?.trim();
-  if (!appendix) return systemMarkdown;
-  return `${systemMarkdown.trim()}\n\n---\n\n${ORG_APPENDIX_HEADER}\n${appendix}`;
-}

@@ -8,6 +8,7 @@ import { getEnv } from "@/lib/env";
 import { disabledStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
+import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import {
@@ -78,7 +79,13 @@ export default async function DashboardHomePage({
       redirectPath: "/company",
     });
     const disabledStatsDays = disabledStatsWindowDays(windowCounts);
-    const [admin, globalKissJson] = await Promise.all([
+    /*
+      Les réglages de l'organisation rejoignent cette salve pour son playbook :
+      le récit d'équipe parlait de la méthode de vente de l'organisation sans
+      lire celle qu'elle avait décrite. Une ligne sur une clé primaire, menée en
+      parallèle de la requête lourde du tableau de bord.
+    */
+    const [admin, globalKissJson, orgSettings] = await Promise.all([
       getOrgAdminDashboard(deps, {
         organizationId: actor.activeOrganizationId,
         statsWindowDays,
@@ -86,6 +93,9 @@ export default async function DashboardHomePage({
         teamUserIds,
       }),
       deps.globalKissCoachingPrompts.getPrompts(),
+      deps.organizationSettings.findByOrganizationId(
+        actor.activeOrganizationId,
+      ),
     ]);
     const kissTeamStrengthsNarrative =
       admin && getEnv().AI_GATEWAY_API_KEY
@@ -99,6 +109,8 @@ export default async function DashboardHomePage({
               globalKissJson,
               "manager",
             ),
+            organizationPlaybookMarkdown:
+              organizationPlaybookMarkdownForAnalysis(orgSettings),
           })
         : null;
     return (

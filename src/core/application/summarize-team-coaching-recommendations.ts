@@ -11,12 +11,14 @@ import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-templ
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
 import { buildMeetingDigestsForAiSummary } from "@/lib/meeting-ai-digest";
 import { getEnv } from "@/lib/env";
-import {
-  appendOrganizationKissPromptAppendix,
-  loadAnalysisPromptMarkdown,
-} from "@/lib/load-analysis-prompt";
+import { loadAnalysisPromptMarkdown } from "@/lib/load-analysis-prompt";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
+import { aiSummaryCacheFingerprint } from "@/src/core/application/ai-summary-cache-fingerprint";
 import { sellerCoachingScopeKey } from "@/src/core/application/ai-summary-cache-scopes";
+import {
+  composeAnalysisSystemMarkdown,
+  synthesisContextBlocks,
+} from "@/src/core/domain/analysis-system-markdown";
 import { readThroughAiSummaryCache } from "@/src/core/application/read-through-ai-summary-cache";
 import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
 import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
@@ -63,6 +65,8 @@ export async function summarizeTeamCoachingRecommendations(
     statsWindowDays: StatsWindowDays;
     audience: "manager" | "commercial";
     organizationKissPromptAppendix?: string | null;
+    /** Bloc playbook de l'organisation, tel que le reçoit une analyse de RDV. */
+    organizationPlaybookMarkdown?: string | null;
     home: DashboardHomeFigures;
     cacheContext?: {
       organizationId: string;
@@ -78,12 +82,20 @@ export async function summarizeTeamCoachingRecommendations(
     });
   }
 
+  /*
+    Les blocs sont calculés une fois et servent deux fois : à écrire le prompt,
+    et à l'empreinte sous laquelle les puces produites seront relues. Les
+    séparer laisserait la porte ouverte à une clé qui ignore un bloc que le
+    prompt contient, ce qui est exactement le défaut corrigé ici.
+  */
+  const contextBlocks = synthesisContextBlocks(input);
+
   const computeBullets = async (): Promise<TeamCoachingRecommendationBullets | null> => {
     try {
       const basePrompt = await loadAnalysisPromptMarkdown(deps.prompts, "TEAM_COACHING");
-      const systemMarkdown = appendOrganizationKissPromptAppendix(
+      const systemMarkdown = composeAnalysisSystemMarkdown(
         basePrompt,
-        input.organizationKissPromptAppendix,
+        contextBlocks,
       );
       const model = await resolvePromptGatewayModel(deps.prompts, "TEAM_COACHING");
       const result = await deps.analysis.summarizeTeamCoachingRecommendations({
@@ -107,7 +119,10 @@ export async function summarizeTeamCoachingRecommendations(
   };
 
   if (deps.aiSummaryCache && input.cacheContext) {
-    const meetingsFingerprint = teamMemberMeetingsFingerprint(input.meetings);
+    const meetingsFingerprint = aiSummaryCacheFingerprint({
+      meetingsFingerprint: teamMemberMeetingsFingerprint(input.meetings),
+      promptContext: contextBlocks,
+    });
     const scopeKey = sellerCoachingScopeKey({
       sellerUserId: input.cacheContext.sellerUserId,
       statsWindowDays: input.statsWindowDays,

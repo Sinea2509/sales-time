@@ -25,6 +25,17 @@ const BLOCK_SEPARATOR = "\n\n---\n\n";
 export const KISS_PLATFORM_BLOCK_HEADING = "## Consignes KISS (plateforme)";
 
 /**
+ * Titre du bloc de consignes propres à une organisation, dans les synthèses.
+ *
+ * Il se termine par un deux-points et n'est pas un titre markdown, à la
+ * différence des autres. C'est la forme employée depuis l'origine sur ce
+ * chemin, et la changer modifierait le prompt de toutes les organisations qui
+ * ont rempli leurs consignes, sans rien améliorer pour elles.
+ */
+export const ORGANIZATION_APPENDIX_HEADING =
+  "Consignes spécifiques fournies par l'organisation (à respecter si compatibles avec les données) :";
+
+/**
  * Construit un bloc titré, ou `null` si le corps est vide.
  *
  * Un titre seul serait pire que rien : le modèle lirait une section annoncée
@@ -60,4 +71,30 @@ export function composeAnalysisSystemMarkdown(
   }
   if (kept.length === 0) return baseMarkdown;
   return [baseMarkdown.trim(), ...kept].join(BLOCK_SEPARATOR);
+}
+
+/**
+ * Les blocs de contexte d'une synthèse, dans l'ordre où ils sont collés.
+ *
+ * Les synthèses d'équipe et le récit KISS de l'organisation lisaient jusqu'ici
+ * les seules consignes de l'organisation, en ignorant son playbook : elles
+ * parlaient de sa méthode de vente sans savoir laquelle elle avait décrite. La
+ * liste est exportée séparément du rendu parce que l'empreinte de cache doit
+ * porter sur les mêmes blocs, dans le même ordre, sans risquer de diverger.
+ * Un appelant la passe donc deux fois : à `composeAnalysisSystemMarkdown` pour
+ * écrire le prompt, et à l'empreinte sous laquelle le texte sera relu.
+ *
+ * L'ordre suit celui du chemin par rendez-vous, consignes puis playbook, pour
+ * qu'un lecteur d'`AiRequestLog` retrouve la même structure quel que soit le
+ * texte qu'il relit.
+ */
+export function synthesisContextBlocks(input: {
+  organizationKissPromptAppendix?: string | null;
+  organizationPlaybookMarkdown?: string | null;
+}): (string | null)[] {
+  const appendix = input.organizationKissPromptAppendix?.trim();
+  return [
+    appendix ? `${ORGANIZATION_APPENDIX_HEADING}\n${appendix}` : null,
+    input.organizationPlaybookMarkdown ?? null,
+  ];
 }

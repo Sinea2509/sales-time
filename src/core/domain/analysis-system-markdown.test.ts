@@ -2,6 +2,8 @@ import {
   analysisSystemBlock,
   composeAnalysisSystemMarkdown,
   KISS_PLATFORM_BLOCK_HEADING,
+  ORGANIZATION_APPENDIX_HEADING,
+  synthesisContextBlocks,
 } from "./analysis-system-markdown";
 
 const SEP = "\n\n---\n\n";
@@ -110,5 +112,101 @@ describe("composeAnalysisSystemMarkdown", () => {
       "## Playbook",
     ]);
     expect(rendu).not.toContain(TIRET_CADRATIN);
+  });
+});
+
+describe("synthesisContextBlocks", () => {
+  it("expose le titre déjà servi aux organisations", () => {
+    /*
+      Ce titre part dans le prompt de toute organisation qui a rempli ses
+      consignes. Le changer changerait leurs textes sans rien leur apporter,
+      la valeur est donc vérifiée mot pour mot.
+    */
+    expect(ORGANIZATION_APPENDIX_HEADING).toBe(
+      "Consignes spécifiques fournies par l'organisation (à respecter si compatibles avec les données) :",
+    );
+  });
+
+  it("ne rend aucun bloc sans consignes ni playbook", () => {
+    expect(synthesisContextBlocks({})).toEqual([null, null]);
+  });
+
+  it("titre les consignes de l'organisation", () => {
+    expect(
+      synthesisContextBlocks({ organizationKissPromptAppendix: "consigne" }),
+    ).toEqual([`${ORGANIZATION_APPENDIX_HEADING}\nconsigne`, null]);
+  });
+
+  it("rogne les consignes avant de les titrer", () => {
+    expect(
+      synthesisContextBlocks({
+        organizationKissPromptAppendix: "\n  consigne  \n",
+      }),
+    ).toEqual([`${ORGANIZATION_APPENDIX_HEADING}\nconsigne`, null]);
+  });
+
+  it("ne titre rien quand les consignes sont vides", () => {
+    for (const vide of ["", "   \n\t ", null, undefined]) {
+      expect(
+        synthesisContextBlocks({ organizationKissPromptAppendix: vide }),
+      ).toEqual([null, null]);
+    }
+  });
+
+  it("rend le playbook tel quel, sans titre ajouté", () => {
+    /*
+      Le playbook porte déjà ses propres titres markdown, écrits par
+      `buildOrganizationPlaybookMarkdown`. En coiffer un de plus le rangerait
+      d'un cran plus bas que sur le chemin par rendez-vous.
+    */
+    const playbook = "## Playbook\n\n### Offre\n\n- un";
+    expect(
+      synthesisContextBlocks({ organizationPlaybookMarkdown: playbook }),
+    ).toEqual([null, playbook]);
+  });
+
+  it("normalise un playbook absent en null", () => {
+    expect(
+      synthesisContextBlocks({ organizationPlaybookMarkdown: undefined }),
+    ).toEqual([null, null]);
+  });
+
+  it("place les consignes avant le playbook", () => {
+    /*
+      Le même ordre que `runMeetingAnalysis` sur le chemin par rendez-vous, pour
+      qu'un lecteur d'`AiRequestLog` retrouve la même structure quel que soit le
+      texte qu'il relit.
+    */
+    expect(
+      synthesisContextBlocks({
+        organizationKissPromptAppendix: "consigne",
+        organizationPlaybookMarkdown: "## Playbook",
+      }),
+    ).toEqual([`${ORGANIZATION_APPENDIX_HEADING}\nconsigne`, "## Playbook"]);
+  });
+
+  it("reproduit la concaténation historique des consignes", () => {
+    /*
+      Forme exacte produite par `appendOrganizationKissPromptAppendix` avant sa
+      suppression : base rognée, règle horizontale, titre, un seul saut de
+      ligne, consignes rognées. Une organisation qui n'a rempli que ses
+      consignes doit recevoir le prompt qu'elle recevait hier, à l'octet près.
+    */
+    const base = "prompt de synthèse\n\n";
+    const consigne = "  parle en tutoyant  ";
+    const attendu = `prompt de synthèse\n\n---\n\n${ORGANIZATION_APPENDIX_HEADING}\nparle en tutoyant`;
+    expect(
+      composeAnalysisSystemMarkdown(
+        base,
+        synthesisContextBlocks({ organizationKissPromptAppendix: consigne }),
+      ),
+    ).toBe(attendu);
+  });
+
+  it("laisse la base intacte quand rien n'est rempli", () => {
+    const base = "prompt de synthèse\n\n";
+    expect(
+      composeAnalysisSystemMarkdown(base, synthesisContextBlocks({})),
+    ).toBe(base);
   });
 });
