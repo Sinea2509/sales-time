@@ -6,6 +6,15 @@ import {
 
 const SEP = "\n\n---\n\n";
 
+/**
+ * Construit par point de code, jamais écrit.
+ *
+ * Le test de typographie balaie tout le dépôt et n'admet le caractère que dans
+ * une courte liste de fichiers. Un test qui vérifie son absence n'a aucune
+ * raison d'être la sixième exception : il lui suffit de ne pas le contenir.
+ */
+const TIRET_CADRATIN = String.fromCodePoint(0x2014);
+
 describe("analysisSystemBlock", () => {
   it("titre le corps fourni", () => {
     expect(analysisSystemBlock("## Titre", "corps")).toBe("## Titre\n\ncorps");
@@ -100,6 +109,6 @@ describe("composeAnalysisSystemMarkdown", () => {
       analysisSystemBlock(KISS_PLATFORM_BLOCK_HEADING, "consigne"),
       "## Playbook",
     ]);
-    expect(rendu).not.toContain("—");
+    expect(rendu).not.toContain(TIRET_CADRATIN);
   });
 });

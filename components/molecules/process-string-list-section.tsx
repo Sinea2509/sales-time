@@ -44,9 +44,15 @@ function simpleHash(str: string): string {
   return (h >>> 0).toString(36);
 }
 
-/** Stable across SSR/client; unique per index + value at first paint. */
+/**
+ * Stable across SSR/client; unique per index + value at first paint.
+ *
+ * Le préfixe distingue deux listes affichées sur le même écran. Il est libre :
+ * l'écran Playbook en aligne quatre, et la clé de rendu doit rester unique
+ * d'une liste à l'autre.
+ */
 export function processItemsFromStrings(
-  prefix: "mt" | "pl",
+  prefix: string,
   values: string[],
 ): ProcessStringListItem[] {
   return values.map((value, index) => ({

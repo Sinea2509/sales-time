@@ -172,6 +172,7 @@ jest.mock("@/lib/application-deps", () => {
       upsertContextFields: jest.fn().mockResolvedValue(undefined),
       upsertCoachFields: jest.fn().mockResolvedValue(undefined),
       upsertProcessFields: jest.fn().mockResolvedValue(undefined),
+      upsertPlaybook: jest.fn().mockResolvedValue(undefined),
       upsertLogoUrl: jest.fn().mockResolvedValue(undefined),
       upsertEmailFields: jest.fn().mockResolvedValue(undefined),
       findByOrganizationId: jest.fn().mockResolvedValue(null),
@@ -228,6 +229,7 @@ import {
   updateOrganizationCoach,
   updateOrganizationContext,
   updateOrganizationEmailSettings,
+  updateOrganizationPlaybook,
   updateOrganizationProcess,
   uploadOrganizationLogo,
   removeOrganizationLogo,
@@ -414,6 +416,102 @@ describe("updateOrganizationProcess", () => {
     expect(result).toEqual({ ok: true });
     expect(organizationSettingsMock.upsertProcessFields).toHaveBeenCalled();
     expect(revalidatePathMock).toHaveBeenCalledWith("/company/rendez-vous/nouveau");
+  });
+});
+
+/*
+  Le formulaire est toujours envoyé complet, donc les cas de test le sont aussi.
+  Cette fabrique écrit les huit champs en clair plutôt que d'appeler la fonction
+  du domaine qui construit un formulaire vide : un test qui se sert du code
+  testé pour fabriquer son entrée valide les deux ensemble et ne verrait pas
+  une erreur commune aux deux.
+*/
+function playbookForm(
+  overrides: Partial<{
+    offer: string;
+    idealCustomer: string;
+    differentiators: string[];
+    competitors: string[];
+    salesMethod: string;
+    qualificationCriteria: string[];
+    pricingRules: string;
+    redLines: string[];
+  }> = {},
+) {
+  return {
+    offer: "",
+    idealCustomer: "",
+    differentiators: [] as string[],
+    competitors: [] as string[],
+    salesMethod: "",
+    qualificationCriteria: [] as string[],
+    pricingRules: "",
+    redLines: [] as string[],
+    ...overrides,
+  };
+}
+
+describe("updateOrganizationPlaybook", () => {
+  it("rejects users without settings access", async () => {
+    loadOrgSettingsActorMock.mockResolvedValue(null);
+    const result = await updateOrganizationPlaybook(playbookForm());
+    expect(result).toEqual({ ok: false, message: "Accès refusé." });
+    expect(organizationSettingsMock.upsertPlaybook).not.toHaveBeenCalled();
+  });
+
+  it("rejects a field longer than its limit", async () => {
+    const result = await updateOrganizationPlaybook(
+      playbookForm({ offer: "x".repeat(1501) }),
+    );
+    expect(result).toEqual({
+      ok: false,
+      message: "Playbook trop long : raccourcissez les champs signalés.",
+    });
+    expect(organizationSettingsMock.upsertPlaybook).not.toHaveBeenCalled();
+  });
+
+  it("rejects a list with too many items", async () => {
+    const result = await updateOrganizationPlaybook(
+      playbookForm({
+        redLines: Array.from({ length: 13 }, (_, i) => `Ligne ${i}`),
+      }),
+    );
+    expect(result.ok).toBe(false);
+    expect(organizationSettingsMock.upsertPlaybook).not.toHaveBeenCalled();
+  });
+
+  it("clears the column when every field is blank", async () => {
+    const result = await updateOrganizationPlaybook(
+      playbookForm({ offer: "   ", differentiators: ["", "  "] }),
+    );
+    expect(result).toEqual({ ok: true });
+    expect(organizationSettingsMock.upsertPlaybook).toHaveBeenCalledWith(
+      ORG_ID,
+      null,
+    );
+  });
+
+  it("persists only the filled fields, trimmed", async () => {
+    const result = await updateOrganizationPlaybook(
+      playbookForm({
+        offer: "  Formation commerciale sur mesure  ",
+        differentiators: ["  Formateurs issus du terrain  ", "   ", ""],
+        redLines: ["Jamais de garantie de résultat"],
+      }),
+    );
+    expect(result).toEqual({ ok: true });
+    expect(organizationSettingsMock.upsertPlaybook).toHaveBeenCalledWith(
+      ORG_ID,
+      {
+        offer: "Formation commerciale sur mesure",
+        differentiators: ["Formateurs issus du terrain"],
+        redLines: ["Jamais de garantie de résultat"],
+      },
+    );
+    expect(revalidatePathMock).toHaveBeenCalledWith(
+      "/company/settings",
+      "layout",
+    );
   });
 });
 
