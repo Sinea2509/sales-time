@@ -26,6 +26,7 @@ import type {
 } from "@/src/core/application/get-org-admin-dashboard";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { QualificationPotentialMatrixPoint } from "@/src/core/domain/meeting-analyse-matrices";
+import type { SalesProfilePeriodPoint } from "@/src/core/domain/sales-profile-history";
 import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signature";
 import {
   MIN_RDV_FOR_STATS,
@@ -189,6 +190,14 @@ export type TeamMemberPerformanceShellProps = {
   salesProfile: SalesProfileScores | null;
   previousSalesProfile: SalesProfileScores | null;
   /**
+   * La trajectoire du profil sur plusieurs périodes, la plus ancienne d'abord.
+   *
+   * Optionnel parce que la courbe demande un historique que tous les appelants
+   * ne chargent pas : sans lui la fiche garde sa croissance chiffrée, qui dit le
+   * dernier pas, et se passe du chemin.
+   */
+  profileHistory?: SalesProfilePeriodPoint[];
+  /**
    * Les rendez-vous qui portent un profil de vente, c'est-à-dire ceux dont
    * l'analyse a pu noter le commercial. Sert aux recommandations.
    */
@@ -240,6 +249,7 @@ export function TeamMemberPerformanceShell({
   priorityOpportunities,
   salesProfile,
   previousSalesProfile,
+  profileHistory,
   salesProfileRdvCount,
   rdvSurLaPeriode,
   progressBullets,
@@ -506,6 +516,7 @@ export function TeamMemberPerformanceShell({
           <AnalyseRecommandationsSection
             salesProfile={salesProfile}
             previousSalesProfile={previousSalesProfile}
+            profileHistory={profileHistory}
             rdvCount={salesProfileRdvCount}
             progressBullets={progressBullets}
             improvementBullets={improvementBullets}

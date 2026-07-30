@@ -39,16 +39,10 @@ import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-p
 import {
   meetingAtSinceForWindows,
   salesProfileHistory,
+  SALES_PROFILE_HISTORY_PERIODS,
 } from "@/src/core/domain/sales-profile-history";
 
 export const dynamic = "force-dynamic";
-
-/**
- * Combien de périodes la trajectoire du profil couvre. La page charge donc les
- * rendez-vous d'autant de fenêtres en arrière, non plus seulement l'actuelle et
- * la précédente : la courbe a besoin du chemin, pas du dernier pas.
- */
-const SALES_PROFILE_HISTORY_PERIODS = 6;
 
 type AnalysePageProps = {
   searchParams?: Promise<{ jours?: string }>;

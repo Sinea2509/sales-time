@@ -27,6 +27,16 @@ export type SalesProfilePeriodPoint = {
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+/**
+ * Combien de périodes la trajectoire couvre.
+ *
+ * Le nombre vit ici et non dans les pages qui dessinent la courbe : deux
+ * chemins de données y mènent, celui de « Performance » et celui de la fiche
+ * d'un commercial, et deux courbes de profondeurs différentes présentées comme
+ * la même trajectoire mentiraient sur ce qu'elles comparent.
+ */
+export const SALES_PROFILE_HISTORY_PERIODS = 6;
+
 /** Début de la fenêtre qui couvre les `count` dernières périodes de `days` jours. */
 export function meetingAtSinceForWindows(
   days: StatsWindowDays,

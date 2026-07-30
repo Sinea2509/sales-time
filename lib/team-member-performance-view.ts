@@ -34,9 +34,13 @@ import {
 import {
   disabledStatsWindowDays,
   partitionMeetingsByStatsWindow,
-  previousMeetingAtWindowStart,
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
+import {
+  meetingAtSinceForWindows,
+  salesProfileHistory,
+  SALES_PROFILE_HISTORY_PERIODS,
+} from "@/src/core/domain/sales-profile-history";
 import { buildQualificationPotentialMatrixPoints } from "@/src/core/domain/meeting-analyse-matrices";
 import { memberNameLine } from "@/src/core/domain/member-name-line";
 import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-profile-from-meetings";
@@ -138,11 +142,21 @@ export async function loadTeamMemberPerformanceView(
 
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
 
-  const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
+  /*
+    La fenêtre de chargement couvre les six périodes de la trajectoire, non plus
+    seulement l'actuelle et la précédente. Élargir est sans effet sur le reste :
+    `partitionMeetingsByStatsWindow` découpe par dates, si bien que les KPI et la
+    croissance lisent les deux mêmes fenêtres qu'avant sur un ensemble plus
+    profond. Le plafond de volume et le cadrage sur un commercial ne bougent pas.
+  */
+  const sinceProfileHistory = meetingAtSinceForWindows(
+    statsWindowDays,
+    SALES_PROFILE_HISTORY_PERIODS,
+  );
   const meetingsForWindow = await deps.meetings.listRecentMeetingsForDashboard({
     organizationId: orgId,
     limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
-    meetingAtSince: sincePreviousWindow,
+    meetingAtSince: sinceProfileHistory,
     sellerUserId,
     includeLatestSoncasResult: true,
     includeLatestDiscResult: true,
@@ -151,6 +165,16 @@ export async function loadTeamMemberPerformanceView(
 
   const { currentWindow: meetings, previousWindow: previousMeetings } =
     partitionMeetingsByStatsWindow(meetingsForWindow, statsWindowDays);
+
+  /*
+    La trajectoire se calcule sur l'ensemble chargé, pas sur la fenêtre courante :
+    c'est justement le chemin parcouru avant elle qui l'intéresse.
+  */
+  const profileHistory = salesProfileHistory(
+    meetingsForWindow,
+    statsWindowDays,
+    SALES_PROFILE_HISTORY_PERIODS,
+  );
 
   const standing = await getTeamMemberStanding(deps, {
     organizationId: orgId,
@@ -325,6 +349,7 @@ export async function loadTeamMemberPerformanceView(
       priorityOpportunities,
       salesProfile: teamSalesProfile.scores,
       previousSalesProfile: previousSalesProfile.scores,
+      profileHistory,
       salesProfileRdvCount: teamSalesProfile.rdvCount,
       rdvSurLaPeriode: meetings.length,
       progressBullets,
