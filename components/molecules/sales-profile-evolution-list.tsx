@@ -93,7 +93,7 @@ export function SalesProfileEvolutionList({
       {previousScores === null ? (
         <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
           Pas encore de période précédente à comparer : la croissance apparaîtra
-          dès qu'une période complète la précède.
+          dès qu&apos;une période complète la précède.
         </p>
       ) : null}
     </div>
