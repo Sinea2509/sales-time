@@ -320,6 +320,8 @@ model OrganizationSettings {
   industryVocabulary String? @db.Text
   /** Consignes optionnelles par quadrant KISS (global / manager / commercial), Coach IA. */
   kissCoachingPrompts Json?
+  /** Playbook de l'organisation : offre, cible, methode, criteres, limites. Lu par les analyses. */
+  playbook            Json?
 
   meetingTypes   Json?
   pipelineStages Json?

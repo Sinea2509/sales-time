@@ -82,4 +82,51 @@ describe("runAllMeetingAnalysesForOrg", () => {
       expect.objectContaining({ status: "FAILED", errorMessage: "boom" }),
     );
   });
+
+  it("lit le playbook une seule fois et le donne aux trois analyses", async () => {
+    runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
+    const findByOrganizationId = jest.fn().mockResolvedValue({
+      companyName: "Acme",
+      playbook: { offer: "Formation commerciale" },
+    });
+    const deps = {
+      ...makeDeps(),
+      organizationSettings: { findByOrganizationId },
+    };
+
+    await runAllMeetingAnalysesForOrg(deps as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    /*
+      Une seule lecture pour les trois analyses : une modification du playbook
+      en cours de séquence ne doit pas faire juger le même RDV sur deux
+      contextes différents.
+    */
+    expect(findByOrganizationId).toHaveBeenCalledTimes(1);
+    expect(findByOrganizationId).toHaveBeenCalledWith("org1");
+    for (const call of runMeetingAnalysisMock.mock.calls) {
+      const markdown = call[1].organizationPlaybookMarkdown ?? "";
+      expect(markdown).toContain("## Playbook de l'organisation");
+      expect(markdown).toContain("Formation commerciale");
+      expect(markdown).toContain("Acme");
+    }
+  });
+
+  it("tourne sans playbook quand le port des réglages est absent", async () => {
+    runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
+
+    const result = await runAllMeetingAnalysesForOrg(makeDeps() as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    expect(result).toEqual({ ok: true });
+    for (const call of runMeetingAnalysisMock.mock.calls) {
+      expect(call[1].organizationPlaybookMarkdown).toBeNull();
+    }
+  });
 });

@@ -10,6 +10,11 @@ import {
   recordAiRequestError,
   recordAiRequestSuccess,
 } from "@/lib/record-ai-request-log";
+import {
+  analysisSystemBlock,
+  composeAnalysisSystemMarkdown,
+  KISS_PLATFORM_BLOCK_HEADING,
+} from "@/src/core/domain/analysis-system-markdown";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type {
   AiCallKind,
@@ -67,6 +72,14 @@ export async function runMeetingAnalysis(
     jobId?: string | null;
     /** Suffixe markdown (paramètres org.) concaténé au prompt KISS global. */
     kissSystemMarkdownAppendix?: string | null;
+    /**
+     * Bloc playbook de l'organisation, ajouté aux trois analyses.
+     *
+     * SONCAS et DISC ne recevaient jusqu'ici aucun contexte d'entreprise : le
+     * modèle jugeait la découverte d'un prospect sans savoir ce qui se vend,
+     * à qui, ni ce que la maison interdit de promettre.
+     */
+    organizationPlaybookMarkdown?: string | null;
   },
 ): Promise<RunMeetingAnalysisResult> {
   if (!input.organizationId) {
@@ -139,7 +152,11 @@ export async function runMeetingAnalysis(
 
   try {
     if (input.kind === "SONCAS" || input.kind === "DISC") {
-      const systemPrompt = withDataScopeSystemPrompt(promptVersion.markdown);
+      const profileSystemMarkdown = composeAnalysisSystemMarkdown(
+        promptVersion.markdown,
+        [input.organizationPlaybookMarkdown],
+      );
+      const systemPrompt = withDataScopeSystemPrompt(profileSystemMarkdown);
       const userPrompt = buildDelimitedMeetingUserContent({
         transcript: transcriptForAnalysis,
         notes: meeting.notes,
@@ -162,7 +179,7 @@ export async function runMeetingAnalysis(
           : deps.analysis.analyzeDisc;
       try {
         const out = await analyze({
-          systemMarkdown: promptVersion.markdown,
+          systemMarkdown: profileSystemMarkdown,
           transcript: transcriptForAnalysis,
           notes: meeting.notes,
           model,
@@ -204,11 +221,16 @@ export async function runMeetingAnalysis(
       }),
     ]);
 
-    const appendix = input.kissSystemMarkdownAppendix?.trim();
-    const kissSystemMarkdown =
-      appendix && appendix.length > 0
-        ? `${promptVersion.markdown}\n\n---\n\n## Consignes KISS (plateforme)\n\n${appendix}`
-        : promptVersion.markdown;
+    const kissSystemMarkdown = composeAnalysisSystemMarkdown(
+      promptVersion.markdown,
+      [
+        analysisSystemBlock(
+          KISS_PLATFORM_BLOCK_HEADING,
+          input.kissSystemMarkdownAppendix,
+        ),
+        input.organizationPlaybookMarkdown,
+      ],
+    );
     const systemPrompt = withDataScopeSystemPrompt(kissSystemMarkdown);
     const userPrompt = buildKissUserPrompt({
       transcript: transcriptForAnalysis,

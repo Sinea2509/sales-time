@@ -19,6 +19,7 @@ function mapRow(row: {
   keyArguments: unknown;
   industryVocabulary: string | null;
   kissCoachingPrompts: unknown | null;
+  playbook: unknown | null;
   meetingTypes: unknown;
   pipelineStages: unknown;
   emailTone: string | null;
@@ -44,6 +45,7 @@ function mapRow(row: {
     keyArguments: row.keyArguments,
     industryVocabulary: row.industryVocabulary,
     kissCoachingPrompts: row.kissCoachingPrompts ?? null,
+    playbook: row.playbook ?? null,
     meetingTypes: row.meetingTypes,
     pipelineStages: row.pipelineStages,
     emailTone: row.emailTone,
@@ -119,6 +121,27 @@ export class PrismaOrganizationSettingsRepository implements OrganizationSetting
         ...kissUpdate,
       },
       update: { ...base, ...kissUpdate },
+    });
+  }
+
+  async upsertPlaybook(
+    organizationId: string,
+    playbook: unknown,
+  ): Promise<void> {
+    /*
+      Un playbook entièrement vide vaut `null` côté domaine. Il faut alors
+      effacer la colonne, pas y écrire le JSON `null`, sans quoi la lecture
+      distinguerait deux vides différents. `Prisma.DbNull` dit bien : la
+      colonne redevient NULL.
+    */
+    const value =
+      playbook === null || playbook === undefined
+        ? Prisma.DbNull
+        : (playbook as Prisma.InputJsonValue);
+    await this.db.organizationSettings.upsert({
+      where: { organizationId },
+      create: { organizationId, playbook: value },
+      update: { playbook: value },
     });
   }
 

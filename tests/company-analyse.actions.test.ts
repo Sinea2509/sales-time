@@ -45,15 +45,26 @@ jest.mock("@/lib/meeting-mutation-access", () => {
 
 import { runMeetingAnalysisAction } from "@/app/[locale]/company/analyse/actions";
 
+let findOrganizationSettingsMock: JestFn;
+
 beforeEach(() => {
   jest.clearAllMocks();
+  findOrganizationSettingsMock = jest.fn().mockResolvedValue({
+    companyName: "Acme",
+    playbook: { offer: "Du conseil" },
+  });
   requireAnalysisActorMock.mockResolvedValue({
     ok: true,
     organizationId: ORG_ID,
     actorUserId: "user_1",
     email: "seller@test.com",
     canManageOrganization: true,
-    deps: { meetings: {} },
+    deps: {
+      meetings: {},
+      organizationSettings: {
+        findByOrganizationId: findOrganizationSettingsMock,
+      },
+    },
   });
   requireMeetingMutationAccessMock.mockResolvedValue({
     ok: true,
@@ -127,6 +138,25 @@ describe("company analyse actions", () => {
       error: "ANALYSIS_FAILED",
       message: "boom",
     });
+  });
+
+  it("joint le playbook de l organisation a l analyse", async () => {
+    await runMeetingAnalysisAction(MEETING_ID, "SONCAS");
+    expect(findOrganizationSettingsMock).toHaveBeenCalledWith(ORG_ID);
+    const passe = runMeetingAnalysisMock.mock.calls[0][1] as {
+      organizationPlaybookMarkdown: string | null;
+    };
+    expect(passe.organizationPlaybookMarkdown).toContain("Du conseil");
+    expect(passe.organizationPlaybookMarkdown).toContain("Acme");
+  });
+
+  it("n envoie aucun playbook quand l organisation n a rien renseigne", async () => {
+    findOrganizationSettingsMock.mockResolvedValue(null);
+    await runMeetingAnalysisAction(MEETING_ID, "SONCAS");
+    const passe = runMeetingAnalysisMock.mock.calls[0][1] as {
+      organizationPlaybookMarkdown: string | null;
+    };
+    expect(passe.organizationPlaybookMarkdown).toBeNull();
   });
 
   it("returns forbidden when mutation access is denied", async () => {

@@ -4,6 +4,7 @@ import {
 } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
+import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { AiRequestLogRepositoryPort } from "@/src/core/ports/ai-request-log-repository-port";
@@ -13,6 +14,7 @@ import type {
   MeetingRepositoryPort,
 } from "@/src/core/ports/meeting-repository-port";
 import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
+import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 import { generateAndPersistMeetingVisitReport } from "./summarize-meeting-detail";
@@ -34,6 +36,8 @@ export async function runAllMeetingAnalysesForOrg(
     analysis: AnalysisPort;
     aiLogs?: AiRequestLogRepositoryPort;
     globalKissCoachingPrompts?: GlobalKissCoachingPromptsRepositoryPort;
+    /** Absent : les analyses tournent sans le playbook de l'organisation. */
+    organizationSettings?: OrganizationSettingsRepositoryPort;
     notifications?: NotificationRepositoryPort;
     users?: UserRepositoryPort;
   },
@@ -72,6 +76,17 @@ export async function runAllMeetingAnalysesForOrg(
     "commercial",
   );
 
+  /*
+    Le playbook est lu une fois pour les trois analyses. Les lire séparément
+    exposerait la séquence à une modification faite en cours de route : SONCAS
+    verrait un playbook, KISS un autre, et la fiche RDV mélangerait deux
+    versions du contexte sans que personne puisse le voir.
+  */
+  const settingsRow = deps.organizationSettings
+    ? await deps.organizationSettings.findByOrganizationId(input.organizationId)
+    : null;
+  const playbookMarkdown = organizationPlaybookMarkdownForAnalysis(settingsRow);
+
   let lastError = "";
   let failedKind: MeetingAnalysisKind | undefined;
 
@@ -89,6 +104,7 @@ export async function runAllMeetingAnalysesForOrg(
         kind,
         jobId: input.jobId ?? null,
         kissSystemMarkdownAppendix: kind === "KISS" ? kissAppendix : undefined,
+        organizationPlaybookMarkdown: playbookMarkdown,
       },
     );
     if (!r.ok) {

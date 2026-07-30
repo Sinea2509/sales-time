@@ -13,6 +13,8 @@ export type OrganizationSettingsRow = {
   industryVocabulary: string | null;
   /** Donnée historique ; les consignes KISS actives sont globales (super admin). */
   kissCoachingPrompts: unknown;
+  /** Playbook de l'organisation, lu par les prompts d'analyse. */
+  playbook: unknown;
   meetingTypes: unknown;
   pipelineStages: unknown;
   emailTone: string | null;
@@ -52,6 +54,9 @@ export interface OrganizationSettingsRepositoryPort {
       kissCoachingPrompts?: unknown | null;
     },
   ): Promise<void>;
+
+  /** `null` efface le playbook ; la colonne redevient vide. */
+  upsertPlaybook(organizationId: string, playbook: unknown): Promise<void>;
 
   upsertProcessFields(
     organizationId: string,

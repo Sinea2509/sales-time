@@ -466,3 +466,152 @@ describe("runMeetingAnalysis", () => {
     });
   });
 });
+
+describe("runMeetingAnalysis : prompt système composé", () => {
+  const PLAYBOOK = "## Playbook de l'organisation\n\n### Offre\n\nDu conseil.";
+
+  function harness(kind: "SONCAS" | "DISC" | "KISS") {
+    const meetings = {
+      findMeetingByIdForOrg: jest.fn().mockResolvedValue({
+        id: "m1",
+        organizationId: "org_1",
+        transcript: "t",
+        notes: null,
+      }),
+      createAnalysis: jest.fn().mockResolvedValue({
+        id: "a1",
+        meetingId: "m1",
+        kind,
+        model: "m",
+        result: {},
+        createdAt: new Date(),
+      }),
+      findLatestAnalysisForMeeting: jest.fn().mockResolvedValue(null),
+    };
+    const prompts = {
+      ensureCurrentVersion: jest.fn().mockResolvedValue({
+        id: "pv",
+        markdown: "base",
+        templateId: "t",
+        kind,
+        version: 1,
+        authorUserId: "u1",
+        createdAt: new Date(),
+      }),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+    };
+    const analysis = {
+      analyzeSoncas: jest.fn().mockResolvedValue({ result: {} }),
+      analyzeDisc: jest.fn().mockResolvedValue({ result: {} }),
+      analyzeKiss: jest.fn().mockResolvedValue({ result: {} }),
+    };
+    return { meetings, prompts, analysis };
+  }
+
+  function systemMarkdownSentFor(
+    analysis: ReturnType<typeof harness>["analysis"],
+    kind: "SONCAS" | "DISC" | "KISS",
+  ): string {
+    const fn =
+      kind === "SONCAS"
+        ? analysis.analyzeSoncas
+        : kind === "DISC"
+          ? analysis.analyzeDisc
+          : analysis.analyzeKiss;
+    return (fn.mock.calls[0][0] as { systemMarkdown: string }).systemMarkdown;
+  }
+
+  it.each(["SONCAS", "DISC", "KISS"] as const)(
+    "envoie le prompt de base inchangé à %s sans playbook",
+    async (kind) => {
+      /*
+        Garde-fou de non-régression : une organisation qui n'a rien renseigné
+        doit recevoir exactement le prompt d'avant le playbook.
+      */
+      const { meetings, prompts, analysis } = harness(kind);
+      await runMeetingAnalysis({ meetings, prompts, analysis } as never, {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind,
+      });
+      expect(systemMarkdownSentFor(analysis, kind)).toBe("base");
+    },
+  );
+
+  it.each(["SONCAS", "DISC", "KISS"] as const)(
+    "colle le playbook au prompt %s",
+    async (kind) => {
+      const { meetings, prompts, analysis } = harness(kind);
+      await runMeetingAnalysis({ meetings, prompts, analysis } as never, {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind,
+        organizationPlaybookMarkdown: PLAYBOOK,
+      });
+      expect(systemMarkdownSentFor(analysis, kind)).toBe(
+        `base\n\n---\n\n${PLAYBOOK}`,
+      );
+    },
+  );
+
+  it.each(["SONCAS", "DISC", "KISS"] as const)(
+    "ignore un playbook vide pour %s",
+    async (kind) => {
+      const { meetings, prompts, analysis } = harness(kind);
+      await runMeetingAnalysis({ meetings, prompts, analysis } as never, {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind,
+        organizationPlaybookMarkdown: "   \n\t ",
+      });
+      expect(systemMarkdownSentFor(analysis, kind)).toBe("base");
+    },
+  );
+
+  it("garde la forme historique du bloc KISS plateforme", async () => {
+    const { meetings, prompts, analysis } = harness("KISS");
+    await runMeetingAnalysis({ meetings, prompts, analysis } as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "KISS",
+      kissSystemMarkdownAppendix: "  consigne  ",
+    });
+    expect(systemMarkdownSentFor(analysis, "KISS")).toBe(
+      "base\n\n---\n\n## Consignes KISS (plateforme)\n\nconsigne",
+    );
+  });
+
+  it("place le playbook après les consignes KISS de la plateforme", async () => {
+    /*
+      L'ordre compte : les consignes de la plateforme cadrent la méthode
+      d'analyse, le playbook décrit l'entreprise analysée. Le contexte le plus
+      spécifique vient en dernier, au plus près de la tâche.
+    */
+    const { meetings, prompts, analysis } = harness("KISS");
+    await runMeetingAnalysis({ meetings, prompts, analysis } as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "KISS",
+      kissSystemMarkdownAppendix: "consigne",
+      organizationPlaybookMarkdown: PLAYBOOK,
+    });
+    expect(systemMarkdownSentFor(analysis, "KISS")).toBe(
+      `base\n\n---\n\n## Consignes KISS (plateforme)\n\nconsigne\n\n---\n\n${PLAYBOOK}`,
+    );
+  });
+
+  it("journalise le prompt réellement composé", async () => {
+    const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
+    const { meetings, prompts, analysis } = harness("SONCAS");
+    await runMeetingAnalysis({ meetings, prompts, analysis, aiLogs } as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "SONCAS",
+      organizationPlaybookMarkdown: PLAYBOOK,
+    });
+    const logged = aiLogs.createLog.mock.calls[0][0] as {
+      systemPrompt: string;
+    };
+    expect(logged.systemPrompt).toContain(PLAYBOOK);
+  });
+});
