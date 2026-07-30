@@ -37,6 +37,54 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  */
 export const SALES_PROFILE_HISTORY_PERIODS = 6;
 
+/**
+ * L'écart minimal, en points, que la bande verticale de la courbe couvre.
+ *
+ * Une courbe tracée sur toute l'échelle de 0 à 100 est une ligne plate : les
+ * notes de profil d'un même commercial tiennent en quelques points d'écart, si
+ * bien qu'une progression réelle de 68 à 74 occupait deux pixels et se lisait
+ * « stagne ». La bande se resserre donc autour des relevés.
+ *
+ * Elle ne se resserre pas jusqu'à eux pour autant : sous cet écart plancher, un
+ * frémissement de deux points remplirait la hauteur et se lirait « décolle ».
+ * Vingt points laissent un pas de cinq points occuper un quart de la hauteur,
+ * visible sans être spectaculaire.
+ */
+export const SALES_PROFILE_TRAJECTORY_MIN_SPAN = 20;
+
+/** Les bornes verticales entre lesquelles la courbe se dessine. */
+export type SalesProfileTrajectoryBand = {
+  low: number;
+  high: number;
+};
+
+/**
+ * La bande verticale à donner à la courbe pour que ses variations se voient.
+ *
+ * Le résultat contient toujours toutes les valeurs reçues, couvre au moins
+ * `minSpan` points et reste dans l'échelle de 0 à 100. Les bornes sont entières
+ * pour être affichables telles quelles : une échelle resserrée n'est honnête
+ * qu'annoncée, et la courbe écrit ces deux nombres sur son flanc.
+ */
+export function salesProfileTrajectoryBand(
+  values: readonly number[],
+  minSpan: number = SALES_PROFILE_TRAJECTORY_MIN_SPAN,
+): SalesProfileTrajectoryBand {
+  if (values.length === 0) return { low: 0, high: 100 };
+  const lowest = Math.min(...values);
+  const highest = Math.max(...values);
+  // Jamais plus large que l'échelle elle-même : sans ce plafond, un écart
+  // plancher démesuré rendrait des bornes en dehors de 0 et 100.
+  const span = Math.min(Math.max(highest - lowest, minSpan), 100);
+  // Centrée sur les relevés, puis glissée, non rognée, quand elle dépasse une
+  // borne de l'échelle : rogner lui ferait perdre son écart et rendrait la
+  // pente d'un très bon commercial plus raide que celle d'un autre.
+  let low = (lowest + highest) / 2 - span / 2;
+  if (low < 0) low = 0;
+  if (low + span > 100) low = 100 - span;
+  return { low: Math.floor(low), high: Math.ceil(low + span) };
+}
+
 /** Début de la fenêtre qui couvre les `count` dernières périodes de `days` jours. */
 export function meetingAtSinceForWindows(
   days: StatsWindowDays,

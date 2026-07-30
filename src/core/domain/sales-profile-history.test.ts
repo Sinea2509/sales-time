@@ -1,8 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  SALES_PROFILE_TRAJECTORY_MIN_SPAN,
   meetingAtSinceForWindows,
   salesProfileHistory,
   salesProfileHistoryFilledCount,
+  salesProfileTrajectoryBand,
 } from "./sales-profile-history";
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
 
@@ -152,5 +154,73 @@ describe("salesProfileHistoryFilledCount", () => {
       NOW,
     );
     expect(salesProfileHistoryFilledCount(points)).toBe(2);
+  });
+});
+
+describe("salesProfileTrajectoryBand", () => {
+  it("resserre la bande autour de relevés proches, sans descendre sous l'écart plancher", () => {
+    const bande = salesProfileTrajectoryBand([68, 70, 71, 74]);
+    expect(bande.high - bande.low).toBe(SALES_PROFILE_TRAJECTORY_MIN_SPAN);
+    // Centrée sur 71, soit 61 à 81 : la progression de 68 à 74 occupe alors
+    // presque un tiers de la hauteur au lieu de deux pixels sur 0 à 100.
+    expect(bande).toEqual({ low: 61, high: 81 });
+  });
+
+  it("élargit la bande quand les relevés s'écartent plus que le plancher", () => {
+    const bande = salesProfileTrajectoryBand([40, 92]);
+    expect(bande).toEqual({ low: 40, high: 92 });
+  });
+
+  it("contient toujours tous les relevés reçus", () => {
+    const cas = [[50], [3, 5], [96, 99], [0, 100], [12, 88, 45], [77, 77, 77]];
+    for (const valeurs of cas) {
+      const bande = salesProfileTrajectoryBand(valeurs);
+      expect(Math.min(...valeurs)).toBeGreaterThanOrEqual(bande.low);
+      expect(Math.max(...valeurs)).toBeLessThanOrEqual(bande.high);
+      expect(bande.high - bande.low).toBeGreaterThanOrEqual(
+        SALES_PROFILE_TRAJECTORY_MIN_SPAN,
+      );
+    }
+  });
+
+  it("glisse la bande dans l'échelle au lieu de la rogner près des bornes", () => {
+    // Un excellent commercial à 96 et 99 garde les 20 points d'écart, faute de
+    // quoi sa pente paraîtrait plus raide que celle d'un collègue au milieu.
+    expect(salesProfileTrajectoryBand([96, 99])).toEqual({
+      low: 80,
+      high: 100,
+    });
+    expect(salesProfileTrajectoryBand([1, 4])).toEqual({ low: 0, high: 20 });
+  });
+
+  it("rend l'échelle entière quand les relevés la couvrent déjà", () => {
+    expect(salesProfileTrajectoryBand([0, 100])).toEqual({ low: 0, high: 100 });
+  });
+
+  it("rend des bornes entières même sur un centre à la demie", () => {
+    const bande = salesProfileTrajectoryBand([50, 53]);
+    expect(Number.isInteger(bande.low)).toBe(true);
+    expect(Number.isInteger(bande.high)).toBe(true);
+    expect(bande).toEqual({ low: 41, high: 62 });
+  });
+
+  it("accepte un écart plancher passé par l'appelant", () => {
+    expect(salesProfileTrajectoryBand([70, 72], 4)).toEqual({
+      low: 69,
+      high: 73,
+    });
+  });
+
+  it("ne sort pas de l'échelle sur un écart plancher démesuré", () => {
+    // Relevés volontairement décentrés : une bande plafonnée un point trop bas
+    // passerait inaperçue sur des relevés au milieu de l'échelle.
+    expect(salesProfileTrajectoryBand([10, 20], 150)).toEqual({
+      low: 0,
+      high: 100,
+    });
+  });
+
+  it("rend l'échelle entière sans aucun relevé", () => {
+    expect(salesProfileTrajectoryBand([])).toEqual({ low: 0, high: 100 });
   });
 });
