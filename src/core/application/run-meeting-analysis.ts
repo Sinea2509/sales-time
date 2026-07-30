@@ -1,4 +1,7 @@
-import { withDataScopeSystemPrompt } from "@/lib/ai-system-prompt";
+import {
+  withDataScopeSystemPrompt,
+  withKissSystemPrompt,
+} from "@/lib/ai-system-prompt";
 import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "@/lib/default-analysis-prompts";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import {
@@ -231,7 +234,14 @@ export async function runMeetingAnalysis(
         input.organizationPlaybookMarkdown,
       ],
     );
-    const systemPrompt = withDataScopeSystemPrompt(kissSystemMarkdown);
+    /*
+      Le même enrobage que celui appliqué par l'adaptateur, et non l'enrobage
+      générique. Le modèle recevait déjà le bon texte ; c'est la ligne
+      d'`AiRequestLog` relue après coup qui en omettait la définition des six
+      notes et l'échelle du coachingScore, soit précisément les consignes qu'on
+      vient chercher dans un journal quand une note surprend.
+    */
+    const systemPrompt = withKissSystemPrompt(kissSystemMarkdown);
     const userPrompt = buildKissUserPrompt({
       transcript: transcriptForAnalysis,
       notes: meeting.notes,

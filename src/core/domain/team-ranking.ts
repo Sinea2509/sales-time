@@ -85,6 +85,39 @@ export const PREMIER_PALIER_HAUT: RankingTier =
 export const NOTE_ON5_MAX = 5;
 
 /**
+ * Points de SalesScore que vaut un point de la note affichée.
+ *
+ * Le SalesScore court de 0 à 100, la note affichée de 0 à 5. Le facteur se
+ * déduit des deux échelles plutôt que d'être écrit en dur, pour qu'il suive
+ * celle des deux qui bougera.
+ */
+export const POINTS_PAR_NOTE = 100 / NOTE_ON5_MAX;
+
+/**
+ * Palier atteint par un SalesScore de 0 à 100, sans détour par la note affichée.
+ *
+ * Les bornes sont celles de `RANKING_TIERS`, ramenées sur l'échelle centésimale :
+ * 40, 60 et 80. Passer par `tierFromNoteOn5` serait faux ici, car celle-là
+ * arrondit d'abord au dixième affiché, comme le veut le classement : un score de
+ * 39 vaudrait une note de 2,0 et remonterait d'un palier. Devant un classement,
+ * le lecteur a ce dixième sous les yeux et comprend le passage. Devant un score
+ * écrit « 39 sur 100 », il ne verrait qu'une frontière posée nulle part. La
+ * comparaison se fait donc sur le score reçu, sans arrondi.
+ *
+ * Un score négatif ou supérieur à cent n'existe pas dans les données servies ;
+ * il tombe respectivement sur le premier et sur le dernier palier, plutôt que
+ * de rendre `null` et de forcer chaque appelant à inventer une réponse.
+ */
+export function tierFromSalesScore(score: number | null): RankingTier | null {
+  if (score == null || !Number.isFinite(score)) return null;
+  for (let i = RANKING_TIERS.length - 1; i >= 0; i -= 1) {
+    const tier = RANKING_TIERS[i];
+    if (tier && score >= tier.minNoteOn5 * POINTS_PAR_NOTE) return tier;
+  }
+  return RANKING_TIERS[0] ?? null;
+}
+
+/**
  * Volume minimum de rendez-vous notés pour entrer au classement.
  *
  * C'est 3 pour tout le monde. `rankTeamMembers` accepte bien une autre valeur,

@@ -5,6 +5,7 @@ import {
 } from "./seller-affinity-from-meetings";
 import {
   DEFAULT_MIN_SCORED_MEETINGS,
+  POINTS_PAR_NOTE,
   PREMIER_PALIER_HAUT,
   RANKING_TIERS,
   displayedNoteOn5,
@@ -13,6 +14,7 @@ import {
   rankLabel,
   rankTeamMembers,
   tierFromNoteOn5,
+  tierFromSalesScore,
   tierRangeLabel,
   unrankedExplanation,
 } from "./team-ranking";
@@ -50,6 +52,66 @@ describe("tierFromNoteOn5", () => {
       else expect(tier.maxNoteOn5).toBeNull();
     });
     expect(RANKING_TIERS[0]?.minNoteOn5).toBe(0);
+  });
+});
+
+describe("tierFromSalesScore", () => {
+  it("vaut vingt points de score par point de note", () => {
+    /*
+      Le facteur qui relie les deux échelles du produit. Il traînait écrit en
+      dur à trois endroits, dont deux se contentaient d'un « / 20 » sans un mot
+      d'explication.
+    */
+    expect(POINTS_PAR_NOTE).toBe(20);
+  });
+
+  it("place chaque borne dans le bon palier", () => {
+    expect(tierFromSalesScore(0)?.id).toBe("demarrage");
+    expect(tierFromSalesScore(39)?.id).toBe("demarrage");
+    expect(tierFromSalesScore(40)?.id).toBe("progression");
+    expect(tierFromSalesScore(59)?.id).toBe("progression");
+    expect(tierFromSalesScore(60)?.id).toBe("maitrise");
+    expect(tierFromSalesScore(79)?.id).toBe("maitrise");
+    expect(tierFromSalesScore(80)?.id).toBe("excellence");
+    expect(tierFromSalesScore(100)?.id).toBe("excellence");
+  });
+
+  it("classe sur le score reçu, sans passer par la note affichée", () => {
+    /*
+      La différence avec `tierFromNoteOn5`, et la raison d'être de cette
+      fonction. 39 sur 100 vaut une note brute de 1,95, qui s'affiche « 2,0 » et
+      ouvre donc le palier suivant à qui lit un classement. Devant un score
+      écrit « 39 sur 100 », ce même passage ne serait qu'une frontière posée
+      nulle part.
+    */
+    expect(displayedNoteOn5(39 / POINTS_PAR_NOTE)).toBe(2);
+    expect(tierFromNoteOn5(39 / POINTS_PAR_NOTE)?.id).toBe("progression");
+    expect(tierFromSalesScore(39)?.id).toBe("demarrage");
+  });
+
+  it("s'accorde avec la note affichée sur les bornes rondes", () => {
+    for (const tier of RANKING_TIERS) {
+      expect([
+        tier.id,
+        tierFromSalesScore(tier.minNoteOn5 * POINTS_PAR_NOTE),
+      ]).toEqual([tier.id, tierFromNoteOn5(tier.minNoteOn5)]);
+    }
+  });
+
+  it("ne renvoie aucun palier sans score", () => {
+    expect(tierFromSalesScore(null)).toBeNull();
+    expect(tierFromSalesScore(Number.NaN)).toBeNull();
+  });
+
+  it("borne les scores que le modèle de données ne produit pas", () => {
+    /*
+      Ni négatif ni au-dessus de cent n'existent en base. Les rendre `null`
+      forcerait chaque appelant à inventer une réponse pour un cas qu'il ne
+      verra jamais ; le premier et le dernier palier sont les seuls choix qui ne
+      demandent rien à personne.
+    */
+    expect(tierFromSalesScore(-1)?.id).toBe("demarrage");
+    expect(tierFromSalesScore(101)?.id).toBe("excellence");
   });
 });
 

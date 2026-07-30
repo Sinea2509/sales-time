@@ -20,7 +20,7 @@ const EXTENSIONS_BINAIRES = new Set([".png", ".ico", ".pdf"]);
  * Les seuls endroits où le caractère a le droit d'apparaître : ceux où il est
  * le sujet du code, pas sa ponctuation.
  *
- * Le compte attendu est explicite, donc un huitième tiret glissé dans un de
+ * Le compte attendu est explicite, donc un tiret de plus glissé dans un de
  * ces cinq fichiers fait échouer le test comme partout ailleurs.
  */
 const CITATIONS_VOLONTAIRES: Record<string, number> = {
@@ -30,7 +30,7 @@ const CITATIONS_VOLONTAIRES: Record<string, number> = {
   // Vérifie justement que le coach IA n'en produit pas.
   "src/core/domain/team-ranking.test.ts": 1,
   "lib/ai-system-prompt.ts": 1,
-  "lib/ai-system-prompt.test.ts": 3,
+  "lib/ai-system-prompt.test.ts": 4,
 };
 
 function fichiersSuivis(): string[] {

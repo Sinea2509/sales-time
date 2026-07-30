@@ -1,4 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
+import {
+  KISS_SELLER_SKILLS_INSTRUCTION,
+  withKissSystemPrompt,
+} from "@/lib/ai-system-prompt";
+import { coachingScoreScaleInstruction } from "@/src/core/domain/coaching-score-scale";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
 
 describe("runMeetingAnalysis", () => {
@@ -613,5 +618,31 @@ describe("runMeetingAnalysis : prompt système composé", () => {
       systemPrompt: string;
     };
     expect(logged.systemPrompt).toContain(PLAYBOOK);
+  });
+
+  it("journalise pour KISS le texte que l'adaptateur envoie vraiment", async () => {
+    /*
+      La trace était composée avec l'enrobage générique alors que l'adaptateur
+      applique l'enrobage KISS. Le modèle recevait le bon texte ; c'est le
+      journal qui mentait, en omettant la définition des six notes et l'échelle
+      du coachingScore. Or on ne va lire `AiRequestLog` que dans un cas : une
+      note surprend et on cherche ce qui a été demandé.
+    */
+    const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
+    const { meetings, prompts, analysis } = harness("KISS");
+    await runMeetingAnalysis({ meetings, prompts, analysis, aiLogs } as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "KISS",
+      organizationPlaybookMarkdown: PLAYBOOK,
+    });
+    const logged = aiLogs.createLog.mock.calls[0][0] as {
+      systemPrompt: string;
+    };
+    expect(logged.systemPrompt).toBe(
+      withKissSystemPrompt(systemMarkdownSentFor(analysis, "KISS")),
+    );
+    expect(logged.systemPrompt).toContain(KISS_SELLER_SKILLS_INSTRUCTION);
+    expect(logged.systemPrompt).toContain(coachingScoreScaleInstruction());
   });
 });

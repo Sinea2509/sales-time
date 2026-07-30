@@ -62,7 +62,7 @@ export const DEFAULT_KISS_MARKDOWN = `You are an expert B2B sales coach using th
 - **stop**: counter-productive patterns (talking too much, weak discovery, aggressive closing, etc.).
 - **start**: new habits or questions to introduce on the **next** interaction.
 - **goldenQuestion**: one powerful open question the seller should ask the prospect next time (in French).
-- **coachingScore**: integer 0–10 for overall sales performance in this meeting (process + outcomes + rapport), **not** product quality.
+- **coachingScore**: integer 0–10 for overall sales performance in this meeting (process + outcomes + rapport), **not** product quality. The bands that give each number its meaning are appended to this prompt at analysis time and cannot be edited here, because the product reads this score on the same scale as the levels it displays.
 - **coachingScoreJustification**: 2–5 sentences in French explaining the score with reference to the transcript.
 - **summary**: 2–4 sentences in French with the headline coaching takeaway.
 - **sellerSkills**: six scores 0–100 on the seller's own behaviour. A dedicated section defining them is appended to this prompt at analysis time and cannot be edited here, because the output schema requires the six scores whatever this prompt says.
