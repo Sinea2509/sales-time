@@ -96,3 +96,23 @@ export function meetingsTodoSummary(
   }
   return { aAnalyser, aRelancer };
 }
+
+/**
+ * Les rendez-vous qui appellent un geste d'une nature donnée.
+ *
+ * Le résumé « à faire » compte, il ne montre pas : sur deux cents lignes
+ * réparties en pages de dix, savoir qu'il en reste sept à analyser n'apprend
+ * pas lesquelles, et les chercher page à page est le travail que ce résumé
+ * prétendait épargner. Ce filtre est la moitié qui manquait, celle qui réduit
+ * la liste à ce qu'un nombre vient d'annoncer.
+ *
+ * `null` ne retient rien plutôt que de tout rejeter : c'est l'état de repos
+ * d'un filtre, la liste entière.
+ */
+export function filterMeetingsByTodoCategory<T extends MeetingActionInput>(
+  meetings: readonly T[],
+  category: MeetingActionCategory,
+): T[] {
+  if (category == null) return [...meetings];
+  return meetings.filter((m) => meetingNextAction(m).category === category);
+}

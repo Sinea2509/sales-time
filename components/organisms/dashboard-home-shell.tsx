@@ -269,18 +269,27 @@ export function DashboardHomeShell({
                           company={m.prospectCompany}
                         />
                         {/*
-                          Sous « sm » l'état et l'étape n'ont plus de colonne à
-                          eux : ils descendent sous le nom du prospect, dans la
-                          seule cellule qui reste. L'état vient d'abord, c'est le
-                          geste ; l'étape suit, c'est le contexte. L'information
-                          ne coûte alors que de la hauteur, là où une colonne
-                          coûtait de la largeur.
+                          Ce que les colonnes n'affichent pas encore descend
+                          sous le nom du prospect, dans la seule cellule qui
+                          reste. L'état vient d'abord, c'est le geste ; l'étape
+                          suit, c'est le contexte. L'information ne coûte alors
+                          que de la hauteur, là où une colonne coûtait de la
+                          largeur.
+
+                          Les deux pastilles ne remontent pas au même palier, et
+                          elles se cachent donc séparément : d'un seul
+                          « sm:hidden » l'étape s'effaçait d'ici en même temps
+                          que l'état, alors que sa colonne ne s'allume qu'à
+                          « md », et un écran de tablette perdait l'étape des
+                          deux côtés à la fois.
                         */}
-                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:hidden">
-                          <MeetingActionBadge
-                            meeting={m}
-                            href={`/company/rendez-vous/${m.id}`}
-                          />
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                          <span className="sm:hidden">
+                            <MeetingActionBadge
+                              meeting={m}
+                              href={`/company/rendez-vous/${m.id}`}
+                            />
+                          </span>
                           <MeetingEtapeBadge
                             meetingType={m.meetingType}
                             pipelineStage={m.pipelineStage}

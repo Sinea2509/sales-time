@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ProspectIdentityCell } from "@/components/molecules/prospect-identity-cell";
 import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
+import { MeetingActionBadge } from "@/components/molecules/meeting-action-badge";
 import { MeetingEtapeBadge } from "@/components/atoms/meeting-etape-badge";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { DataTableHead } from "@/components/molecules/data-table-head";
@@ -23,17 +24,79 @@ import { meetingEtapeDisplayLabel } from "@/lib/meeting-etape-pill";
 import { cn } from "@/lib/utils";
 import { salesScoreColorClass } from "@/lib/sales-score-color";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
+import {
+  filterMeetingsByTodoCategory,
+  meetingsTodoSummary,
+  type MeetingActionCategory,
+  type MeetingActionInput,
+} from "@/src/core/domain/meeting-next-action";
 
-export type RendezVousMeetingRow = {
+/**
+ * Une ligne de la liste des rendez-vous.
+ *
+ * Elle hérite de `MeetingActionInput` plutôt que de recopier ses champs : la
+ * colonne « État » lit l'état réel du rendez-vous, et le compilateur refuse
+ * désormais une ligne servie sans de quoi le calculer. `salesScore` en fait
+ * partie, il n'est donc plus déclaré ici.
+ */
+export type RendezVousMeetingRow = MeetingActionInput & {
   id: string;
   prospectName: string;
   prospectCompany: string | null;
   meetingAt: string;
   meetingType: string | null;
   pipelineStage: string | null;
-  salesScore: number | null;
   potentialAmount: number | null;
 };
+
+/** Ce que le libellé d'une pastille de filtre annonce, au singulier comme au pluriel. */
+const LIBELLE_A_FAIRE: Record<"analyse" | "relance", string> = {
+  analyse: "à analyser",
+  relance: "à relancer",
+};
+
+/**
+ * Une des deux natures de geste, en pastille qui filtre la liste.
+ *
+ * Le résumé « à faire » de l'accueil se contentait de compter, parce qu'il
+ * surplombe huit lignes : les trois à analyser se voient. Ici la liste porte
+ * jusqu'à deux cents rendez-vous en pages de dix, et un nombre seul envoie
+ * chercher page à page. La pastille est donc un bouton, et le compte qu'elle
+ * annonce ne bouge pas quand on l'enfonce : il est pris avant le filtre, sans
+ * quoi elle effacerait sous elle la raison de la relâcher.
+ */
+function PastilleAFaire({
+  nature,
+  compte,
+  actif,
+  onToggle,
+}: {
+  nature: "analyse" | "relance";
+  compte: number;
+  actif: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={actif}
+      onClick={onToggle}
+      title={
+        actif
+          ? "Filtre actif. Cliquez pour retrouver la liste entière."
+          : `N'afficher que les rendez-vous ${LIBELLE_A_FAIRE[nature]}.`
+      }
+      className={cn(
+        "focus-visible:ring-brand/50 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap outline-none transition-colors focus-visible:ring-2",
+        actif
+          ? "border-amber-800 bg-amber-800 text-white hover:bg-amber-900 dark:border-amber-400 dark:bg-amber-400 dark:text-amber-950"
+          : "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300",
+      )}
+    >
+      {compte} {LIBELLE_A_FAIRE[nature]}
+    </button>
+  );
+}
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -117,8 +180,9 @@ export function RendezVousMeetingsShell({
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [todoFilter, setTodoFilter] = useState<MeetingActionCategory>(null);
 
-  const filtered = useMemo(() => {
+  const parRecherche = useMemo(() => {
     const q = query.trim().toLowerCase();
     return meetings.filter((m) => {
       if (!q) return true;
@@ -128,12 +192,41 @@ export function RendezVousMeetingsShell({
     });
   }, [meetings, query]);
 
+  /*
+    Le compte se prend après la recherche et avant le filtre d'état : après,
+    parce que les deux pastilles doivent parler de la liste qu'on regarde, comme
+    l'export ; avant, parce qu'un compteur qui tombe à zéro dès qu'on enfonce
+    l'autre pastille retirerait de l'écran la seule chose qui dit combien il
+    reste à faire ailleurs.
+
+    Il porte sur toutes les pages du filtre courant, pas sur les dix lignes
+    affichées : un « à faire » qui change en tournant la page ne serait plus une
+    charge de travail mais un accident d'affichage. Le plafond de chargement de
+    la page reste au-dessus, comme pour le reste du tableau.
+  */
+  const todo = useMemo(() => meetingsTodoSummary(parRecherche), [parRecherche]);
+
+  const filtered = useMemo(
+    () => filterMeetingsByTodoCategory(parRecherche, todoFilter),
+    [parRecherche, todoFilter],
+  );
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
   const currentPage = Math.min(Math.max(1, page), totalPages);
 
   const setQueryAndResetPage = useCallback((value: string) => {
     setQuery(value);
+    setPage(1);
+  }, []);
+
+  /*
+    Enfoncer une pastille ramène à la première page : la page 4 d'une liste de
+    deux cents lignes n'existe plus dans une liste de sept, et le tableau se
+    serait affiché vide alors que le filtre a bien trouvé de quoi le remplir.
+  */
+  const toggleTodoFilter = useCallback((nature: "analyse" | "relance") => {
+    setTodoFilter((prev) => (prev === nature ? null : nature));
     setPage(1);
   }, []);
 
@@ -258,6 +351,54 @@ export function RendezVousMeetingsShell({
         </div>
       </div>
 
+      {/*
+        Le bandeau « à faire » de l'accueil, mais actionnable : là il annonçait
+        la charge, ici il la sort de la liste. Les deux pastilles restent
+        affichées quand leur compte est à zéro pour ne pas déplacer celle qui
+        reste sous le curseur au moment où l'on vide la sienne.
+
+        Le bouton de retour ne dépend pas des comptes : une recherche peut
+        ramener un filtre actif à zéro ligne, et c'est justement là qu'il faut
+        pouvoir revenir à la liste entière.
+      */}
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-muted-foreground font-medium">À faire :</span>
+        {todo.aAnalyser === 0 && todo.aRelancer === 0 ? (
+          <span className="text-muted-foreground">
+            {parRecherche.length === 0
+              ? "rien pour l'instant."
+              : "ces rendez-vous sont à jour, rien à analyser ni à relancer."}
+          </span>
+        ) : (
+          <>
+            <PastilleAFaire
+              nature="analyse"
+              compte={todo.aAnalyser}
+              actif={todoFilter === "analyse"}
+              onToggle={() => toggleTodoFilter("analyse")}
+            />
+            <PastilleAFaire
+              nature="relance"
+              compte={todo.aRelancer}
+              actif={todoFilter === "relance"}
+              onToggle={() => toggleTodoFilter("relance")}
+            />
+          </>
+        )}
+        {todoFilter == null ? null : (
+          <button
+            type="button"
+            onClick={() => {
+              setTodoFilter(null);
+              setPage(1);
+            }}
+            className="text-muted-foreground hover:text-foreground focus-visible:ring-brand/50 rounded-md underline decoration-dotted underline-offset-2 outline-none focus-visible:ring-2"
+          >
+            Voir tous les rendez-vous
+          </button>
+        )}
+      </div>
+
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
         <div className="overflow-x-auto">
           {/*
@@ -266,7 +407,7 @@ export function RendezVousMeetingsShell({
             si bien qu'elles ne se déclenchent que sur un écran plus étroit que
             prévu, pour faire défiler plutôt qu'écraser les colonnes.
           */}
-          <table className="w-full min-w-[300px] text-left text-sm sm:min-w-[540px] md:min-w-[640px] lg:min-w-[760px]">
+          <table className="w-full min-w-[300px] text-left text-sm sm:min-w-[560px] md:min-w-[660px] lg:min-w-[780px]">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50/80 dark:border-neutral-800 dark:bg-neutral-900/50">
                 {/*
@@ -300,7 +441,22 @@ export function RendezVousMeetingsShell({
                   <span className="sm:hidden">Date</span>
                   <span className="hidden sm:inline">Date du RDV</span>
                 </DataTableHead>
+                {/*
+                  « État » dit ce qu'il reste à faire sur le rendez-vous, pas où
+                  il en est dans le pipeline : c'est la colonne qui rend la liste
+                  actionnable, et elle s'allume avant l'étape parce qu'elle
+                  appelle un geste là où l'étape n'est qu'un contexte.
+
+                  L'étape passe de « sm » à « md », largeur où l'accueil
+                  l'allume : c'est le même rendez-vous vu deux fois, et une
+                  colonne qui apparaît ici et pas là sur le même écran se lit
+                  comme une donnée manquante. Elle ne disparaît pas pour autant
+                  entre les deux paliers, elle reste sous le nom du prospect.
+                */}
                 <DataTableHead className="hidden px-4 py-3.5 sm:table-cell">
+                  État
+                </DataTableHead>
+                <DataTableHead className="hidden px-4 py-3.5 md:table-cell">
                   Étape
                 </DataTableHead>
                 <DataTableHead className="hidden px-4 py-3.5 lg:table-cell">
@@ -313,17 +469,28 @@ export function RendezVousMeetingsShell({
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
               {filtered.length === 0 ? (
+                /*
+                  Trois façons d'arriver sur un tableau vide, trois phrases :
+                  aucun rendez-vous du tout, une recherche sans résultat, ou un
+                  filtre d'état qui ne trouve rien. Les confondre indiquerait le
+                  mauvais geste, et le plus coûteux : effacer sa recherche quand
+                  il suffisait de relâcher une pastille.
+                */
                 <TableEmptyRow
-                  colSpan={7}
+                  colSpan={8}
                   message={
                     meetings.length === 0
                       ? "Aucun rendez-vous enregistré."
-                      : "Aucun résultat pour cette recherche."
+                      : todoFilter != null
+                        ? `Aucun rendez-vous ${LIBELLE_A_FAIRE[todoFilter]} ici.`
+                        : "Aucun résultat pour cette recherche."
                   }
                   description={
                     meetings.length === 0
                       ? "Créez votre premier rendez-vous pour lancer une analyse SONCAS, DISC et KISS : c'est elle qui alimente votre SalesScore et vos statistiques."
-                      : `La recherche porte sur le nom du prospect et sur son entreprise. Videz le champ pour retrouver vos ${meetings.length} rendez-vous.`
+                      : todoFilter != null
+                        ? "Relâchez la pastille pour retrouver la liste, ou videz la recherche si elle réduit ce que le filtre peut trouver."
+                        : `La recherche porte sur le nom du prospect et sur son entreprise. Videz le champ pour retrouver vos ${meetings.length} rendez-vous.`
                   }
                   size="large"
                 />
@@ -361,12 +528,24 @@ export function RendezVousMeetingsShell({
                           company={m.prospectCompany}
                         />
                         {/*
-                          Sous « sm » l'étape n'a plus de colonne à elle : elle
-                          descend sous le nom du prospect, dans la seule cellule
-                          qui reste. L'information ne coûte alors que de la
-                          hauteur, là où une colonne coûtait de la largeur.
+                          Ce que les colonnes n'affichent pas encore descend
+                          sous le nom du prospect, dans la seule cellule qui
+                          reste : l'information ne coûte alors que de la hauteur,
+                          là où une colonne coûtait de la largeur.
+
+                          Les deux pastilles ne remontent pas au même palier, et
+                          elles se cachent donc séparément : sans quoi l'étape
+                          s'effacerait à « sm » avec l'état, alors que sa colonne
+                          ne s'allume qu'à « md », et un écran de tablette
+                          perdrait l'étape des deux côtés à la fois.
                         */}
-                        <div className="mt-1.5 sm:hidden">
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                          <span className="sm:hidden">
+                            <MeetingActionBadge
+                              meeting={m}
+                              href={`/company/rendez-vous/${m.id}`}
+                            />
+                          </span>
                           <MeetingEtapeBadge
                             meetingType={m.meetingType}
                             pipelineStage={m.pipelineStage}
@@ -380,6 +559,12 @@ export function RendezVousMeetingsShell({
                         {dateShort.format(new Date(m.meetingAt))}
                       </td>
                       <td className="hidden px-4 py-3.5 align-middle sm:table-cell">
+                        <MeetingActionBadge
+                          meeting={m}
+                          href={`/company/rendez-vous/${m.id}`}
+                        />
+                      </td>
+                      <td className="hidden px-4 py-3.5 align-middle md:table-cell">
                         <MeetingEtapeBadge
                           meetingType={m.meetingType}
                           pipelineStage={m.pipelineStage}

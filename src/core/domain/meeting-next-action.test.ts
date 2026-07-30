@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  filterMeetingsByTodoCategory,
   meetingNextAction,
   meetingsTodoSummary,
   type MeetingActionInput,
@@ -99,5 +100,48 @@ describe("meetingsTodoSummary", () => {
 
   it("rend deux zéros sur une liste vide", () => {
     expect(meetingsTodoSummary([])).toEqual({ aAnalyser: 0, aRelancer: 0 });
+  });
+});
+
+describe("filterMeetingsByTodoCategory", () => {
+  const liste = [
+    { ...meeting({ hasKiss: false, salesScore: null }), id: "a" }, // à analyser
+    { ...meeting({ status: "FAILED" }), id: "b" }, // à analyser (échec)
+    { ...meeting({ outcome: "FOLLOW_UP" }), id: "c" }, // à relancer
+    { ...meeting({ outcome: "WON" }), id: "d" }, // rien
+    { ...meeting({ status: "PROCESSING" }), id: "e" }, // rien (en cours)
+  ];
+
+  it("ne retient que les rendez-vous à analyser", () => {
+    expect(
+      filterMeetingsByTodoCategory(liste, "analyse").map((m) => m.id),
+    ).toEqual(["a", "b"]);
+  });
+
+  it("ne retient que les rendez-vous à relancer", () => {
+    expect(
+      filterMeetingsByTodoCategory(liste, "relance").map((m) => m.id),
+    ).toEqual(["c"]);
+  });
+
+  it("rend la liste entière sans catégorie", () => {
+    expect(filterMeetingsByTodoCategory(liste, null).map((m) => m.id)).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+    ]);
+  });
+
+  it("garde l'ordre reçu et ne touche pas la liste d'origine", () => {
+    const filtre = filterMeetingsByTodoCategory(liste, null);
+    expect(filtre).not.toBe(liste);
+    expect(filtre).toEqual(liste);
+  });
+
+  it("rend une liste vide quand rien n'appelle ce geste", () => {
+    const clos = [meeting({ outcome: "WON" }), meeting({ outcome: "LOST" })];
+    expect(filterMeetingsByTodoCategory(clos, "analyse")).toEqual([]);
   });
 });
