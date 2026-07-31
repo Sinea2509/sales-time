@@ -21,7 +21,7 @@ const EXTENSIONS_BINAIRES = new Set([".png", ".ico", ".pdf"]);
  * le sujet du code, pas sa ponctuation.
  *
  * Le compte attendu est explicite, donc un tiret de plus glissé dans un de
- * ces cinq fichiers fait échouer le test comme partout ailleurs.
+ * ces six fichiers fait échouer le test comme partout ailleurs.
  */
 const CITATIONS_VOLONTAIRES: Record<string, number> = {
   // Nettoie une puce collée par l'IA, quel que soit le tiret qu'elle a choisi.
@@ -30,7 +30,8 @@ const CITATIONS_VOLONTAIRES: Record<string, number> = {
   // Vérifie justement que le coach IA n'en produit pas.
   "src/core/domain/team-ranking.test.ts": 1,
   "lib/ai-system-prompt.ts": 1,
-  "lib/ai-system-prompt.test.ts": 5,
+  "lib/ai-system-prompt.test.ts": 7,
+  "src/core/domain/profile-score-scale.test.ts": 1,
 };
 
 function fichiersSuivis(): string[] {

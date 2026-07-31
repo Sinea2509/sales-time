@@ -1,4 +1,8 @@
 import { coachingScoreScaleInstruction } from "@/src/core/domain/coaching-score-scale";
+import {
+  discScoreScaleInstruction,
+  soncasScoreScaleInstruction,
+} from "@/src/core/domain/profile-score-scale";
 import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
 import { scorecardGridInstruction } from "@/src/core/domain/scorecard-prompt";
 
@@ -49,6 +53,30 @@ export function withDataScopeSystemPrompt(systemMarkdown: string): string {
     FRENCH_QUALITY_INSTRUCTION,
     FRENCH_TYPOGRAPHY_INSTRUCTION,
     systemMarkdown,
+  ].join("\n\n");
+}
+
+/**
+ * Consigne SONCAS éditable, plus l'échelle des six leviers.
+ *
+ * Un enrobage à part plutôt qu'une ligne ajoutée à `withDataScopeSystemPrompt` :
+ * ce dernier sert aussi au brouillon de mail, au briefing, aux synthèses, qui
+ * n'ont pas de score de profil à rendre. Une échelle SONCAS collée à tous leur
+ * arriverait sans objet, et le prix d'un enrobage de trois lignes est plus bas
+ * que celui d'une consigne qui parle de champs absents du schéma qu'on lit.
+ */
+export function withSoncasSystemPrompt(systemMarkdown: string): string {
+  return [
+    withDataScopeSystemPrompt(systemMarkdown),
+    soncasScoreScaleInstruction(),
+  ].join("\n\n");
+}
+
+/** Consigne DISC éditable, plus l'échelle des quatre styles. */
+export function withDiscSystemPrompt(systemMarkdown: string): string {
+  return [
+    withDataScopeSystemPrompt(systemMarkdown),
+    discScoreScaleInstruction(),
   ].join("\n\n");
 }
 

@@ -20,8 +20,10 @@ import type {
 } from "@/src/core/ports/analysis-port";
 import {
   withDataScopeSystemPrompt,
+  withDiscSystemPrompt,
   withKissSystemPrompt,
   withScorecardSystemPrompt,
+  withSoncasSystemPrompt,
 } from "@/lib/ai-system-prompt";
 import {
   buildDelimitedMeetingUserContent,
@@ -50,7 +52,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       transcript: input.transcript,
       notes: input.notes,
     });
-    const systemPrompt = withDataScopeSystemPrompt(input.systemMarkdown);
+    const systemPrompt = withSoncasSystemPrompt(input.systemMarkdown);
 
     const { object, usage } = await generateObject({
       model: input.model,
@@ -80,7 +82,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       transcript: input.transcript,
       notes: input.notes,
     });
-    const systemPrompt = withDataScopeSystemPrompt(input.systemMarkdown);
+    const systemPrompt = withDiscSystemPrompt(input.systemMarkdown);
 
     const { object, usage } = await generateObject({
       model: input.model,

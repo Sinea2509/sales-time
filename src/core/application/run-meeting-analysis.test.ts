@@ -1,10 +1,17 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   KISS_SELLER_SKILLS_INSTRUCTION,
+  withDiscSystemPrompt,
   withKissSystemPrompt,
   withScorecardSystemPrompt,
+  withSoncasSystemPrompt,
 } from "@/lib/ai-system-prompt";
 import { coachingScoreScaleInstruction } from "@/src/core/domain/coaching-score-scale";
+import {
+  discScoreScaleInstruction,
+  PROFILE_SCORE_UNPROVEN_MAX,
+  soncasScoreScaleInstruction,
+} from "@/src/core/domain/profile-score-scale";
 import {
   DEFAULT_SCORECARD_GRID,
   scorecardCriteria,
@@ -649,6 +656,201 @@ describe("runMeetingAnalysis : prompt système composé", () => {
     );
     expect(logged.systemPrompt).toContain(KISS_SELLER_SKILLS_INSTRUCTION);
     expect(logged.systemPrompt).toContain(coachingScoreScaleInstruction());
+  });
+
+  /*
+    Le même piège que pour KISS, et il vient de se rouvrir : SONCAS et DISC ont
+    désormais chacun leur enrobage, appliqué par l'adaptateur. Composer la trace
+    avec l'enrobage générique donnerait un journal qui décrit une consigne sans
+    échelle, alors que le modèle en a reçu une, c'est-à-dire pire qu'un journal
+    absent, puisqu'on ne le relit que pour comprendre une note surprenante.
+  */
+  it("journalise pour SONCAS le texte que l'adaptateur envoie vraiment", async () => {
+    const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
+    const { meetings, prompts, analysis } = harness("SONCAS");
+    await runMeetingAnalysis({ meetings, prompts, analysis, aiLogs } as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "SONCAS",
+      organizationPlaybookMarkdown: PLAYBOOK,
+    });
+    const logged = aiLogs.createLog.mock.calls[0][0] as {
+      systemPrompt: string;
+    };
+    expect(logged.systemPrompt).toBe(
+      withSoncasSystemPrompt(systemMarkdownSentFor(analysis, "SONCAS")),
+    );
+    expect(logged.systemPrompt).toContain(soncasScoreScaleInstruction());
+    expect(logged.systemPrompt).not.toContain(discScoreScaleInstruction());
+  });
+
+  it("journalise pour DISC le texte que l'adaptateur envoie vraiment", async () => {
+    const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
+    const { meetings, prompts, analysis } = harness("DISC");
+    await runMeetingAnalysis({ meetings, prompts, analysis, aiLogs } as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "DISC",
+      organizationPlaybookMarkdown: PLAYBOOK,
+    });
+    const logged = aiLogs.createLog.mock.calls[0][0] as {
+      systemPrompt: string;
+    };
+    expect(logged.systemPrompt).toBe(
+      withDiscSystemPrompt(systemMarkdownSentFor(analysis, "DISC")),
+    );
+    expect(logged.systemPrompt).toContain(discScoreScaleInstruction());
+    expect(logged.systemPrompt).not.toContain(soncasScoreScaleInstruction());
+  });
+});
+
+/*
+  « Pas de preuve, pas de note », vu depuis l'application. La règle elle-même est
+  couverte dans `soncas-evidence-rule.test.ts` ; ce qui se joue ici, c'est
+  qu'elle soit branchée du bon côté : après le journal, avant l'enregistrement,
+  et sur SONCAS seulement.
+*/
+describe("runMeetingAnalysis : verbatim obligatoire sur SONCAS", () => {
+  /**
+   * Ce que rendrait un modèle qui pose un levier haut sans rien pour l'appuyer.
+   *
+   * Confort est appuyé et monte à 70 : sans lui, Argent ramené à 19 resterait le
+   * mieux noté des six et le dominant ne bougerait pas, si bien que le test ne
+   * dirait rien de la façon dont on le recalcule.
+   */
+  function soncasSansPreuveSurArgent() {
+    const plancher = { score: 10, evidence: ["on l a entendu"] };
+    return {
+      drivers: {
+        securite: plancher,
+        orgueil: plancher,
+        nouveaute: plancher,
+        confort: { score: 70, evidence: ["je veux que ca roule tout seul"] },
+        argent: { score: 90, evidence: [] },
+        sympathie: plancher,
+      },
+      dominant: "argent" as const,
+      summary: "Un prospect qui compte.",
+    };
+  }
+
+  function harness(kind: "SONCAS" | "DISC", resultatRendu: unknown) {
+    const meetings = {
+      findMeetingByIdForOrg: jest.fn().mockResolvedValue({
+        id: "m1",
+        organizationId: "org_1",
+        transcript: "t",
+        notes: null,
+      }),
+      createAnalysis: jest.fn().mockResolvedValue({
+        id: "a1",
+        meetingId: "m1",
+        kind,
+        model: "m",
+        result: {},
+        createdAt: new Date(),
+      }),
+      findLatestAnalysisForMeeting: jest.fn().mockResolvedValue(null),
+    };
+    const prompts = {
+      ensureCurrentVersion: jest.fn().mockResolvedValue({
+        id: "pv",
+        markdown: "base",
+        templateId: "t",
+        kind,
+        version: 1,
+        authorUserId: "u1",
+        createdAt: new Date(),
+      }),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+    };
+    const analysis = {
+      analyzeSoncas: jest.fn().mockResolvedValue({ result: resultatRendu }),
+      analyzeDisc: jest.fn().mockResolvedValue({ result: resultatRendu }),
+      analyzeKiss: jest.fn(),
+    };
+    const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
+    return { meetings, prompts, analysis, aiLogs };
+  }
+
+  it("enregistre le levier sans preuve ramené au seuil", async () => {
+    const deps = harness("SONCAS", soncasSansPreuveSurArgent());
+    await runMeetingAnalysis(deps as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "SONCAS",
+    });
+    const persiste = deps.meetings.createAnalysis.mock.calls[0][0] as {
+      result: { drivers: Record<string, { score: number }>; dominant: string };
+    };
+    expect(persiste.result.drivers.argent?.score).toBe(
+      PROFILE_SCORE_UNPROVEN_MAX,
+    );
+    expect(persiste.result.dominant).toBe("confort");
+  });
+
+  /*
+    Le journal garde ce que le modèle a rendu, pas ce que le produit en a fait.
+    C'est la seule trace où l'on puisse constater qu'un 90 avait été annoncé sans
+    citation : la fiche, elle, ne montrera plus que le 19, et un journal corrigé
+    en même temps qu'elle rendrait la correction invisible partout.
+  */
+  it("laisse dans le journal la note que le modèle avait annoncée", async () => {
+    const deps = harness("SONCAS", soncasSansPreuveSurArgent());
+    await runMeetingAnalysis(deps as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "SONCAS",
+    });
+    const logged = deps.aiLogs.createLog.mock.calls[0][0] as {
+      rawOutput: { drivers: Record<string, { score: number }> };
+    };
+    expect(logged.rawOutput.drivers.argent?.score).toBe(90);
+  });
+
+  it("n'applique aucune correction à un SONCAS entièrement appuyé", async () => {
+    const rendu = {
+      ...soncasSansPreuveSurArgent(),
+      drivers: {
+        ...soncasSansPreuveSurArgent().drivers,
+        argent: { score: 90, evidence: ["c est trop cher"] },
+      },
+    };
+    const deps = harness("SONCAS", rendu);
+    await runMeetingAnalysis(deps as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "SONCAS",
+    });
+    const persiste = deps.meetings.createAnalysis.mock.calls[0][0] as {
+      result: unknown;
+    };
+    expect(persiste.result).toBe(rendu);
+  });
+
+  /*
+    DISC passe sans correction, et pas par oubli : son schéma porte une seule
+    liste `evidence` pour quatre styles, si bien qu'aucune preuve n'est
+    rattachable à une note en particulier. Une règle automatique y jetterait les
+    quatre notes dès que la liste est vide, ou n'en jetterait aucune.
+  */
+  it("enregistre le résultat DISC tel que le modèle l'a rendu", async () => {
+    const rendu = {
+      scores: { D: 80, I: 20, S: 20, C: 20 },
+      dominant: "D" as const,
+      evidence: [],
+      summary: "Direct.",
+    };
+    const deps = harness("DISC", rendu);
+    await runMeetingAnalysis(deps as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "DISC",
+    });
+    const persiste = deps.meetings.createAnalysis.mock.calls[0][0] as {
+      result: unknown;
+    };
+    expect(persiste.result).toBe(rendu);
   });
 });
 

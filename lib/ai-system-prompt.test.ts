@@ -4,8 +4,10 @@ import {
   FRENCH_TYPOGRAPHY_INSTRUCTION,
   KISS_SELLER_SKILLS_INSTRUCTION,
   withDataScopeSystemPrompt,
+  withDiscSystemPrompt,
   withKissSystemPrompt,
   withScorecardSystemPrompt,
+  withSoncasSystemPrompt,
 } from "./ai-system-prompt";
 import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "./default-analysis-prompts";
 import {
@@ -13,6 +15,10 @@ import {
   coachingScoreScaleInstruction,
 } from "@/src/core/domain/coaching-score-scale";
 import { sellerSkillScoresSchema } from "@/src/core/domain/kiss-result-zod";
+import {
+  discScoreScaleInstruction,
+  soncasScoreScaleInstruction,
+} from "@/src/core/domain/profile-score-scale";
 import {
   DEFAULT_SCORECARD_GRID,
   scorecardCriteria,
@@ -39,6 +45,19 @@ describe("withDataScopeSystemPrompt", () => {
       la hauteur du vendeur.
     */
     expect(withDataScopeSystemPrompt("x")).not.toContain("coachingScore");
+  });
+
+  /*
+    Cet enrobage sert aussi au brouillon de mail, au briefing, aux synthèses et
+    aux agrégats : aucun d'eux ne rend de score de profil. Y coller l'échelle
+    SONCAS ferait arriver au rédacteur d'un mail de relance une consigne de
+    notation sans objet, et un modèle à qui l'on parle de champs absents du
+    schéma trouve des façons de les rendre quand même.
+  */
+  it("does not calibrate the profile scores, which belong to SONCAS and DISC", () => {
+    const prompt = withDataScopeSystemPrompt("x");
+    expect(prompt).not.toContain(soncasScoreScaleInstruction());
+    expect(prompt).not.toContain(discScoreScaleInstruction());
   });
 
   /*
@@ -72,7 +91,127 @@ describe("les consignes livrées", () => {
     expect(KISS_SELLER_SKILLS_INSTRUCTION).not.toContain("—");
     expect(FRENCH_QUALITY_INSTRUCTION).not.toContain("—");
     expect(coachingScoreScaleInstruction()).not.toContain("—");
+    expect(soncasScoreScaleInstruction()).not.toContain("—");
+    expect(discScoreScaleInstruction()).not.toContain("—");
     expect(scorecardGridInstruction(DEFAULT_SCORECARD_GRID)).not.toContain("—");
+  });
+});
+
+/*
+  SONCAS et DISC reçoivent chacun l'échelle de ses propres notes, et rien de
+  plus. Ces deux enrobages ont la même raison d'être que celui de KISS : la
+  consigne éditable ne dit pas ce que vaut un 60, un super-admin qui la réécrit
+  ne doit pas pouvoir emporter l'échelle avec elle, et sur toute installation
+  qui a publié sa version, la consigne par défaut n'est même plus lue.
+*/
+describe("withSoncasSystemPrompt", () => {
+  it("keeps the editable markdown and appends the SONCAS scale", () => {
+    const prompt = withSoncasSystemPrompt("CONSIGNE SONCAS DE L'ORG");
+    expect(prompt).toContain("CONSIGNE SONCAS DE L'ORG");
+    expect(prompt).toContain(soncasScoreScaleInstruction());
+  });
+
+  it("appends the scale exactly once", () => {
+    const calibration = soncasScoreScaleInstruction();
+    expect(withSoncasSystemPrompt("CONSIGNE").split(calibration)).toHaveLength(
+      2,
+    );
+  });
+
+  it("survives a super-admin rewriting the whole SONCAS prompt", () => {
+    expect(withSoncasSystemPrompt("Note comme tu le sens.")).toContain(
+      soncasScoreScaleInstruction(),
+    );
+  });
+
+  it("forbids the em dash like every other analysis", () => {
+    expect(withSoncasSystemPrompt("CONSIGNE")).toContain(
+      FRENCH_TYPOGRAPHY_INSTRUCTION,
+    );
+  });
+
+  /*
+    L'échelle ferme la consigne, comme la grille ferme celle de la scorecard :
+    ce que le super-admin écrit au-dessus se lit alors comme un préambule, et
+    non comme une correction de ce qui suit.
+  */
+  it("closes with the scale, after everything the org may write", () => {
+    const calibration = soncasScoreScaleInstruction();
+    const prompt = withSoncasSystemPrompt("CONSIGNE MAISON");
+    expect(prompt.indexOf("CONSIGNE MAISON")).toBeLessThan(
+      prompt.indexOf(calibration),
+    );
+    expect(prompt.endsWith(calibration)).toBe(true);
+  });
+
+  /*
+    L'échelle DISC parle d'une seule liste `evidence` partagée par quatre
+    styles. Collée à SONCAS, elle enverrait les preuves ailleurs que dans le
+    champ où le schéma SONCAS les attend, et la règle du produit ramènerait
+    alors les six leviers au seuil, tous les six.
+  */
+  it("does not carry the DISC scale", () => {
+    expect(withSoncasSystemPrompt("CONSIGNE")).not.toContain(
+      discScoreScaleInstruction(),
+    );
+  });
+
+  it("leaves out what belongs to the KISS output alone", () => {
+    const prompt = withSoncasSystemPrompt("CONSIGNE");
+    expect(prompt).not.toContain("sellerSkills");
+    expect(prompt).not.toContain("coachingScore");
+  });
+});
+
+describe("withDiscSystemPrompt", () => {
+  it("keeps the editable markdown and appends the DISC scale", () => {
+    const prompt = withDiscSystemPrompt("CONSIGNE DISC DE L'ORG");
+    expect(prompt).toContain("CONSIGNE DISC DE L'ORG");
+    expect(prompt).toContain(discScoreScaleInstruction());
+  });
+
+  it("appends the scale exactly once", () => {
+    const calibration = discScoreScaleInstruction();
+    expect(withDiscSystemPrompt("CONSIGNE").split(calibration)).toHaveLength(2);
+  });
+
+  it("survives a super-admin rewriting the whole DISC prompt", () => {
+    expect(withDiscSystemPrompt("Note comme tu le sens.")).toContain(
+      discScoreScaleInstruction(),
+    );
+  });
+
+  it("forbids the em dash like every other analysis", () => {
+    expect(withDiscSystemPrompt("CONSIGNE")).toContain(
+      FRENCH_TYPOGRAPHY_INSTRUCTION,
+    );
+  });
+
+  it("closes with the scale, after everything the org may write", () => {
+    const calibration = discScoreScaleInstruction();
+    const prompt = withDiscSystemPrompt("CONSIGNE MAISON");
+    expect(prompt.indexOf("CONSIGNE MAISON")).toBeLessThan(
+      prompt.indexOf(calibration),
+    );
+    expect(prompt.endsWith(calibration)).toBe(true);
+  });
+
+  /*
+    L'échelle SONCAS nomme le champ `evidence` de chaque levier et annonce que
+    le produit y ramène les notes sans preuve. Collée à DISC, elle promettrait
+    un rattrapage qui ne tourne pas, et nommerait six leviers que le schéma DISC
+    ne connaît pas.
+  */
+  it("does not carry the SONCAS scale", () => {
+    expect(withDiscSystemPrompt("CONSIGNE")).not.toContain(
+      soncasScoreScaleInstruction(),
+    );
+  });
+
+  it("leaves out what belongs to the KISS output alone", () => {
+    const prompt = withDiscSystemPrompt("CONSIGNE");
+    expect(prompt).not.toContain("sellerSkills");
+    expect(prompt).not.toContain("coachingScore");
   });
 });
 

@@ -1,7 +1,8 @@
 import {
-  withDataScopeSystemPrompt,
+  withDiscSystemPrompt,
   withKissSystemPrompt,
   withScorecardSystemPrompt,
+  withSoncasSystemPrompt,
 } from "@/lib/ai-system-prompt";
 import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "@/lib/default-analysis-prompts";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
@@ -21,6 +22,7 @@ import {
 } from "@/src/core/domain/analysis-system-markdown";
 import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { computeScorecardScore } from "@/src/core/domain/scorecard-score";
+import { applySoncasEvidenceRule } from "@/src/core/domain/soncas-evidence-rule";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type {
   AiCallKind,
@@ -172,7 +174,18 @@ export async function runMeetingAnalysis(
         promptVersion.markdown,
         [input.organizationPlaybookMarkdown],
       );
-      const systemPrompt = withDataScopeSystemPrompt(profileSystemMarkdown);
+      /*
+        Le même choix qu'à la ligne de l'appel, plus bas, et il faut qu'il le
+        reste : ce `systemPrompt` ne part pas au modèle, il part au journal.
+        L'adaptateur refabrique le sien depuis `profileSystemMarkdown`. Deux
+        enrobages différents ici et là-bas donneraient un journal qui décrit une
+        consigne qui n'a jamais été envoyée, c'est-à-dire pire qu'un journal
+        absent, puisqu'on le relit justement pour comprendre une note surprenante.
+      */
+      const systemPrompt =
+        input.kind === "SONCAS"
+          ? withSoncasSystemPrompt(profileSystemMarkdown)
+          : withDiscSystemPrompt(profileSystemMarkdown);
       const userPrompt = buildDelimitedMeetingUserContent({
         transcript: transcriptForAnalysis,
         notes: meeting.notes,
@@ -200,18 +213,28 @@ export async function runMeetingAnalysis(
           notes: meeting.notes,
           model,
         });
+        /*
+          Le journal garde ce que le modèle a rendu, pas ce que le produit en a
+          fait, comme pour la scorecard plus bas. C'est la seule trace où l'on
+          puisse constater qu'un levier avait été annoncé à 80 sans une citation
+          pour le tenir : la fiche, elle, ne montrera plus que le 19.
+        */
         await recordAiRequestSuccess(deps.aiLogs, logBase, {
           rawOutput: out.result,
           inputTokens: out.usage?.inputTokens ?? null,
           outputTokens: out.usage?.outputTokens ?? null,
           latencyMs: Date.now() - started,
         });
+        const result =
+          input.kind === "SONCAS"
+            ? applySoncasEvidenceRule(out.result)
+            : out.result;
         const row = await deps.meetings.createAnalysis({
           meetingId: meeting.id,
           kind: input.kind,
           promptVersionId: promptVersion.id,
           model,
-          result: out.result,
+          result,
         });
         return { ok: true, analysisId: row.id };
       } catch (e) {
