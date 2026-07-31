@@ -30,7 +30,7 @@ const CITATIONS_VOLONTAIRES: Record<string, number> = {
   // Vérifie justement que le coach IA n'en produit pas.
   "src/core/domain/team-ranking.test.ts": 1,
   "lib/ai-system-prompt.ts": 1,
-  "lib/ai-system-prompt.test.ts": 4,
+  "lib/ai-system-prompt.test.ts": 5,
 };
 
 function fichiersSuivis(): string[] {

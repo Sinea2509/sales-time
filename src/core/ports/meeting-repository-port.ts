@@ -5,7 +5,7 @@ import type {
 } from "@/src/core/domain/meeting-status";
 
 /** Analysis kinds persisted on \`MeetingAnalysis\`. */
-export type MeetingAnalysisKind = "SONCAS" | "DISC" | "KISS";
+export type MeetingAnalysisKind = "SONCAS" | "DISC" | "KISS" | "SCORECARD";
 
 export type MeetingRow = {
   id: string;
@@ -53,6 +53,20 @@ export type RecentMeetingListRow = MeetingRow & {
   hasSoncas: boolean;
   hasDisc: boolean;
   hasKiss: boolean;
+  /*
+    Pas de `hasScorecard`, et c'est une décision, pas un oubli.
+
+    Ces trois drapeaux existent parce que quelque chose les lit : le tableau
+    de bord compte les rendez-vous coachés sur `hasKiss`, et la prochaine
+    action à mener tient un rendez-vous pour analysé s'il a un KISS ou un
+    SalesScore. Une scorecard rejoindrait bien ces deux comptes, mais elle en
+    changerait la définition sans que personne l'ait demandé : un chiffre
+    affiché depuis des mois se mettrait à monter du jour au lendemain.
+
+    Le jour où la scorecard entrera dans ces mesures, ce sera parce qu'on
+    aura tranché ce que « coaché » veut dire, pas parce qu'un drapeau était
+    disponible.
+  */
   /** Moyenne des scores SONCAS (6 leviers), si analyse présente. */
   salesScore: number | null;
   /** Dernier résultat SONCAS brut (agrégations admin / radar équipe). */

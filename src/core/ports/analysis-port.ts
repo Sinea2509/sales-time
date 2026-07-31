@@ -3,6 +3,8 @@ import type {
   SoncasAnalysisResult,
 } from "@/src/core/domain/analysis-result-zod";
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
+import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
+import type { ScorecardGeneratedResult } from "@/src/core/domain/scorecard-result-zod";
 import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod";
 import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
 import type { MeetingDetailSynthesisResult } from "@/src/core/domain/meeting-detail-synthesis-zod";
@@ -77,6 +79,30 @@ export interface AnalysisPort {
     priorSoncasResult?: unknown;
     priorDiscResult?: unknown;
   }): Promise<{ result: KissAnalysisResult; rawText?: string } & AiCallTrace>;
+
+  /**
+   * Note le rendez-vous critère par critère, sur la grille de son type.
+   *
+   * La grille voyage jusqu'ici parce que c'est elle qui écrit la moitié non
+   * modifiable de la consigne, celle qui porte les clés attendues. Elle n'est
+   * pas choisie à ce niveau : l'appelant l'a déjà déduite du type de RDV, et
+   * c'est aussi lui qui calculera le score depuis les niveaux rendus.
+   *
+   * Ni SONCAS ni DISC ne sont joints, à la différence de KISS. Ces deux
+   * analyses décrivent le prospect, quand la scorecard mesure ce que le
+   * commercial est allé chercher : un profil d'interlocuteur ne rend pas un
+   * critère mieux couvert, il donne seulement au modèle de quoi excuser un
+   * critère absent.
+   */
+  analyzeScorecard(input: {
+    systemMarkdown: string;
+    grid: ScorecardGrid;
+    transcript: string;
+    notes: string | null;
+    model: string;
+  }): Promise<
+    { result: ScorecardGeneratedResult; rawText?: string } & AiCallTrace
+  >;
 
   generateFollowUpEmail(input: {
     systemMarkdown: string;

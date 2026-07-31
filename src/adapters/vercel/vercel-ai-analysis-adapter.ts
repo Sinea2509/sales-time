@@ -5,6 +5,8 @@ import {
   soncasAnalysisOutputSchema,
 } from "@/src/core/domain/analysis-result-zod";
 import { kissGeneratedResultSchema } from "@/src/core/domain/kiss-result-zod";
+import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
+import { scorecardGeneratedResultSchema } from "@/src/core/domain/scorecard-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import { meetingDetailSynthesisSchema } from "@/src/core/domain/meeting-detail-synthesis-zod";
@@ -19,6 +21,7 @@ import type {
 import {
   withDataScopeSystemPrompt,
   withKissSystemPrompt,
+  withScorecardSystemPrompt,
 } from "@/lib/ai-system-prompt";
 import {
   buildDelimitedMeetingUserContent,
@@ -120,6 +123,44 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       schema: kissGeneratedResultSchema,
+      system: systemPrompt,
+      prompt: userPrompt,
+    });
+
+    return {
+      result: object,
+      systemPrompt,
+      userPrompt,
+      usage: {
+        inputTokens: usage?.inputTokens,
+        outputTokens: usage?.outputTokens,
+      },
+    };
+  }
+
+  async analyzeScorecard(input: {
+    systemMarkdown: string;
+    grid: ScorecardGrid;
+    transcript: string;
+    notes: string | null;
+    model: string;
+  }) {
+    const userPrompt = buildDelimitedMeetingUserContent({
+      transcript: input.transcript,
+      notes: input.notes,
+    });
+    const systemPrompt = withScorecardSystemPrompt(
+      input.systemMarkdown,
+      input.grid,
+    );
+
+    // Le schéma de génération : des niveaux et des preuves, aucun total. Le
+    // schéma de lecture porte en plus le score et les sous-totaux, que le
+    // produit calcule après cet appel ; les réclamer ici reviendrait à demander
+    // au modèle l'addition qu'on lui retire justement des mains.
+    const { object, usage } = await generateObject({
+      model: input.model,
+      schema: scorecardGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
     });

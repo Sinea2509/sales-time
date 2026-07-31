@@ -77,8 +77,8 @@ export async function runAllMeetingAnalysesForOrg(
   );
 
   /*
-    Le playbook est lu une fois pour les trois analyses. Les lire séparément
-    exposerait la séquence à une modification faite en cours de route : SONCAS
+    Le playbook est lu une fois pour toute la séquence. Le lire à chaque analyse
+    exposerait celle-ci à une modification faite en cours de route : SONCAS
     verrait un playbook, KISS un autre, et la fiche RDV mélangerait deux
     versions du contexte sans que personne puisse le voir.
   */
@@ -90,7 +90,19 @@ export async function runAllMeetingAnalysesForOrg(
   let lastError = "";
   let failedKind: MeetingAnalysisKind | undefined;
 
-  for (const kind of ["SONCAS", "DISC", "KISS"] as const) {
+  /*
+    La scorecard passe en dernier, et cet ordre porte une décision.
+
+    Elle est la seule des quatre à pouvoir ne pas s'appliquer : tant qu'un type
+    de rendez-vous n'a pas de grille, il n'y a rien à noter. La placer après les
+    trois autres garantit qu'un rendez-vous dont la grille manque garde malgré
+    tout son analyse SONCAS, DISC et KISS, et arrive en READY comme avant.
+
+    C'est aussi la seule qui ne nourrit personne : KISS relit SONCAS et DISC, le
+    compte rendu de visite relit les trois. Un échec de la scorecard n'invalide
+    donc rien de ce qui précède, à la différence d'un échec de SONCAS.
+  */
+  for (const kind of ["SONCAS", "DISC", "KISS", "SCORECARD"] as const) {
     const r = await runMeetingAnalysis(
       {
         meetings: deps.meetings,
@@ -107,6 +119,15 @@ export async function runAllMeetingAnalysesForOrg(
         organizationPlaybookMarkdown: playbookMarkdown,
       },
     );
+    /*
+      Absence de grille : ce n'est pas un incident, c'est un type de rendez-vous
+      qu'on ne sait pas encore noter. Le compter comme un échec marquerait le
+      rendez-vous en FAILED et priverait le commercial de trois analyses réussies
+      pour une fonctionnalité qui ne le concerne pas encore.
+    */
+    if (!r.ok && r.error === "NO_SCORECARD_GRID") {
+      continue;
+    }
     if (!r.ok) {
       lastError = r.message ?? r.error;
       failedKind = kind;

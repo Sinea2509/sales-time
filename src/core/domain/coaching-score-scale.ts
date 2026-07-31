@@ -1,4 +1,6 @@
-import { tierFromSalesScore, type RankingTier } from "./team-ranking";
+import { libelleTranche, scoreBands, type ScoreBand } from "./score-bands";
+
+export { libelleTranche };
 
 /**
  * Note maximale du `coachingScore` KISS, telle que le schéma l'exige.
@@ -14,13 +16,7 @@ export const COACHING_SCORE_MAX = 10;
 export const POINTS_PAR_COACHING_SCORE = 100 / COACHING_SCORE_MAX;
 
 /** Tranche d'entiers du `coachingScore` qui tombe dans un même palier. */
-export type CoachingScoreBand = {
-  readonly tier: RankingTier;
-  /** Premier entier de la tranche, inclus. */
-  readonly min: number;
-  /** Dernier entier de la tranche, inclus. */
-  readonly max: number;
-};
+export type CoachingScoreBand = ScoreBand;
 
 /**
  * Les tranches de `coachingScore` qui correspondent aux paliers du produit.
@@ -40,32 +36,10 @@ export type CoachingScoreBand = {
  * faute d'un `coachingScore` capable de l'exprimer.
  */
 export function coachingScoreBands(): readonly CoachingScoreBand[] {
-  const bands: CoachingScoreBand[] = [];
-  for (let note = 0; note <= COACHING_SCORE_MAX; note += 1) {
-    const tier = tierFromSalesScore(note * POINTS_PAR_COACHING_SCORE);
-    // Exigé par le typage, jamais franchi : le score passé est toujours un
-    // nombre fini, et la liste des paliers n'est jamais vide.
-    if (!tier) continue;
-    const courante = bands[bands.length - 1];
-    if (courante && courante.tier.id === tier.id) {
-      bands[bands.length - 1] = { ...courante, max: note };
-    } else {
-      bands.push({ tier, min: note, max: note });
-    }
-  }
-  return bands;
-}
-
-/**
- * « 0–3 » ou « 7 » selon que la tranche porte plusieurs entiers ou un seul.
- *
- * Le cas d'un seul entier ne se produit pas avec les paliers actuels, larges de
- * vingt points quand un point de `coachingScore` en vaut dix. Il se produira au
- * premier palier plus étroit que cela, et « 7–7 » se lirait alors comme une
- * faute plutôt que comme une tranche.
- */
-export function libelleTranche(band: CoachingScoreBand): string {
-  return band.min === band.max ? String(band.min) : `${band.min}–${band.max}`;
+  return scoreBands({
+    max: COACHING_SCORE_MAX,
+    pointsParUnite: POINTS_PAR_COACHING_SCORE,
+  });
 }
 
 /**

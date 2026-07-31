@@ -2,6 +2,7 @@ export type AnalysisKindSlug =
   | "SONCAS"
   | "DISC"
   | "KISS"
+  | "SCORECARD"
   | "FOLLOW_UP_EMAIL"
   | "MEETING_BRIEFING"
   | "MEETING_DETAIL_SYNTHESIS"
@@ -14,6 +15,7 @@ export const ANALYSIS_KIND_SLUGS = [
   "SONCAS",
   "DISC",
   "KISS",
+  "SCORECARD",
   "FOLLOW_UP_EMAIL",
   "MEETING_BRIEFING",
   "MEETING_DETAIL_SYNTHESIS",

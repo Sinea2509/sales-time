@@ -2,8 +2,13 @@ import { describe, expect, it } from "@jest/globals";
 import {
   KISS_SELLER_SKILLS_INSTRUCTION,
   withKissSystemPrompt,
+  withScorecardSystemPrompt,
 } from "@/lib/ai-system-prompt";
 import { coachingScoreScaleInstruction } from "@/src/core/domain/coaching-score-scale";
+import {
+  DEFAULT_SCORECARD_GRID,
+  scorecardCriteria,
+} from "@/src/core/domain/scorecard-grid";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
 
 describe("runMeetingAnalysis", () => {
@@ -644,5 +649,303 @@ describe("runMeetingAnalysis : prompt système composé", () => {
     );
     expect(logged.systemPrompt).toContain(KISS_SELLER_SKILLS_INSTRUCTION);
     expect(logged.systemPrompt).toContain(coachingScoreScaleInstruction());
+  });
+});
+
+describe("runMeetingAnalysis : scorecard", () => {
+  /** Tous les critères au niveau 2, ce que le modèle rendrait. */
+  function niveauxUniformes(level: number) {
+    return scorecardCriteria(DEFAULT_SCORECARD_GRID).map((criterion) => ({
+      key: criterion.key,
+      level,
+      evidence: ["extrait"],
+    }));
+  }
+
+  /**
+   * Ce que le modèle rend, et rien de plus : aucun total.
+   *
+   * Le schéma de génération n'en réclame pas, et ces tests se donneraient une
+   * facilité en en fournissant un. Le score attendu se calcule donc à la main
+   * dans chaque test, depuis les poids de la grille.
+   */
+  function resultatSimule(level: number) {
+    return {
+      criteria: niveauxUniformes(level),
+      pointsLost: [],
+      keep: [],
+      improve: [],
+      stop: [],
+      goldenQuestion: "Q",
+      challenge: "C",
+      summary: "S",
+    };
+  }
+
+  function harness(options?: {
+    meetingType?: string | null;
+    result?: unknown;
+    rejette?: boolean;
+  }) {
+    const meetings = {
+      findMeetingByIdForOrg: jest.fn().mockResolvedValue({
+        id: "m1",
+        organizationId: "org_1",
+        transcript: "t",
+        notes: null,
+        meetingType: options?.meetingType ?? "RDV découverte",
+        pipelineStage: null,
+      }),
+      createAnalysis: jest.fn().mockResolvedValue({
+        id: "a1",
+        meetingId: "m1",
+        kind: "SCORECARD",
+        model: "m",
+        result: {},
+        createdAt: new Date(),
+      }),
+      findLatestAnalysisForMeeting: jest.fn().mockResolvedValue(null),
+    };
+    const prompts = {
+      ensureCurrentVersion: jest.fn().mockResolvedValue({
+        id: "pv",
+        markdown: "base",
+        templateId: "t",
+        kind: "SCORECARD" as const,
+        version: 3,
+        authorUserId: "u1",
+        createdAt: new Date(),
+      }),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+    };
+    const analyzeScorecard = options?.rejette
+      ? jest.fn().mockRejectedValue(new Error("boom"))
+      : jest
+          .fn()
+          .mockResolvedValue({ result: options?.result ?? resultatSimule(2) });
+    const analysis = {
+      analyzeSoncas: jest.fn(),
+      analyzeDisc: jest.fn(),
+      analyzeKiss: jest.fn(),
+      analyzeScorecard,
+    };
+    const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
+    return { meetings, prompts, analysis, aiLogs };
+  }
+
+  function lancer(deps: ReturnType<typeof harness>) {
+    return runMeetingAnalysis(deps as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "SCORECARD",
+    });
+  }
+
+  /*
+    Le score est calculé ici, pas rendu par le modèle : 50 est vérifiable à la
+    main. Chaque bloc pèse le double de son nombre de critères, et des critères
+    tous notés à la moitié de l'échelle donnent à chaque bloc la moitié de son
+    poids, donc la moitié des cent points.
+  */
+  it("enregistre les niveaux du modèle et le score que le produit calcule", async () => {
+    const deps = harness();
+    const result = await lancer(deps);
+
+    expect(result).toEqual({ ok: true, analysisId: "a1" });
+    const persiste = deps.meetings.createAnalysis.mock.calls[0][0] as {
+      kind: string;
+      promptVersionId: string;
+      result: {
+        gridId: string;
+        gridName: string;
+        overallScore: number;
+        blocks: { key: string; score: number; max: number }[];
+        criteria: unknown[];
+      };
+    };
+    expect(persiste.kind).toBe("SCORECARD");
+    expect(persiste.promptVersionId).toBe("pv");
+    expect(persiste.result.gridId).toBe(DEFAULT_SCORECARD_GRID.id);
+    expect(persiste.result.gridName).toBe(DEFAULT_SCORECARD_GRID.name);
+    expect(persiste.result.overallScore).toBe(50);
+    expect(persiste.result.blocks.map((b) => [b.key, b.score, b.max])).toEqual(
+      DEFAULT_SCORECARD_GRID.blocks.map((b) => [b.key, b.weight / 2, b.weight]),
+    );
+    expect(persiste.result.criteria).toHaveLength(
+      scorecardCriteria(DEFAULT_SCORECARD_GRID).length,
+    );
+  });
+
+  /*
+    Le schéma de génération n'a pas de champ `overallScore`, et l'adaptateur le
+    ferait tomber avant d'arriver ici. Reste le jour où quelqu'un l'y remet :
+    le total du produit doit gagner, sans quoi le chiffre affiché ne serait plus
+    celui que la grille donne aux niveaux enregistrés juste à côté.
+  */
+  it("ignore un total que le modèle aurait rendu quand même", async () => {
+    const deps = harness({
+      result: { ...resultatSimule(2), overallScore: 999, blocks: [] },
+    });
+    await lancer(deps);
+    const persiste = deps.meetings.createAnalysis.mock.calls[0][0] as {
+      result: { overallScore: number; blocks: unknown[] };
+    };
+    expect(persiste.result.overallScore).toBe(50);
+    expect(persiste.result.blocks).toHaveLength(
+      DEFAULT_SCORECARD_GRID.blocks.length,
+    );
+  });
+
+  /*
+    Un closing n'a pas encore de grille. Le noter sur celle de découverte lui
+    reprocherait de n'avoir pas fait le travail d'un premier rendez-vous ; ce
+    score faux irait ensuite dans des moyennes. L'issue est donc distincte d'un
+    échec, et rien n'est ni demandé au modèle ni enregistré.
+  */
+  it("ne note pas un type de rendez-vous sans grille", async () => {
+    const deps = harness({ meetingType: "Closing" });
+    const result = await lancer(deps);
+
+    expect(result).toEqual({ ok: false, error: "NO_SCORECARD_GRID" });
+    expect(deps.analysis.analyzeScorecard).not.toHaveBeenCalled();
+    expect(deps.meetings.createAnalysis).not.toHaveBeenCalled();
+    expect(deps.aiLogs.createLog).not.toHaveBeenCalled();
+  });
+
+  it("applique la grille par défaut à un rendez-vous sans type ni étape", async () => {
+    const deps = harness({ meetingType: null });
+    const result = await lancer(deps);
+
+    expect(result).toEqual({ ok: true, analysisId: "a1" });
+    const appel = deps.analysis.analyzeScorecard.mock.calls[0][0] as {
+      grid: { id: string };
+    };
+    expect(appel.grid.id).toBe(DEFAULT_SCORECARD_GRID.id);
+  });
+
+  it("colle le playbook de l'organisation à la consigne éditable", async () => {
+    const deps = harness();
+    const playbook =
+      "## Playbook de l'organisation\n\n### Offre\n\nDu conseil.";
+    await runMeetingAnalysis(deps as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "SCORECARD",
+      organizationPlaybookMarkdown: playbook,
+    });
+    const appel = deps.analysis.analyzeScorecard.mock.calls[0][0] as {
+      systemMarkdown: string;
+    };
+    expect(appel.systemMarkdown).toBe(`base\n\n---\n\n${playbook}`);
+  });
+
+  /*
+    Le bloc de consignes KISS de la plateforme parle des six notes du commercial
+    et du coachingScore, deux champs que la scorecard ne produit pas. Il est
+    passé par le même appelant pour toutes les analyses ; qu'il ne parte pas ici
+    est une décision, et non un oubli qui tiendrait à l'ordre des arguments.
+  */
+  it("n'envoie pas les consignes KISS de la plateforme", async () => {
+    const deps = harness();
+    await runMeetingAnalysis(deps as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "SCORECARD",
+      kissSystemMarkdownAppendix: "CONSIGNE KISS PLATEFORME",
+    });
+    const appel = deps.analysis.analyzeScorecard.mock.calls[0][0] as {
+      systemMarkdown: string;
+    };
+    expect(appel.systemMarkdown).toBe("base");
+  });
+
+  /*
+    Même discipline que pour KISS : le journal doit porter le texte que
+    l'adaptateur envoie vraiment, grille comprise. C'est le seul endroit où l'on
+    va chercher pourquoi un critère a été noté comme il l'a été.
+  */
+  it("journalise la consigne complète, grille du rendez-vous comprise", async () => {
+    const deps = harness();
+    await lancer(deps);
+    const logged = deps.aiLogs.createLog.mock.calls[0][0] as {
+      kind: string;
+      status: string;
+      promptVersion: string;
+      systemPrompt: string;
+      rawOutput: { overallScore?: number };
+    };
+    expect(logged.kind).toBe("SCORECARD");
+    expect(logged.status).toBe("SUCCESS");
+    expect(logged.promptVersion).toBe("3");
+    expect(logged.systemPrompt).toBe(
+      withScorecardSystemPrompt("base", DEFAULT_SCORECARD_GRID),
+    );
+    // Le journal garde ce que le modèle a rendu, pas le total du produit.
+    expect(logged.rawOutput.overallScore).toBeUndefined();
+  });
+
+  it("remonte un échec du modèle et le journalise", async () => {
+    const deps = harness({ rejette: true });
+    const result = await lancer(deps);
+
+    expect(result).toEqual({
+      ok: false,
+      error: "ANALYSIS_FAILED",
+      message: "boom",
+    });
+    expect(deps.meetings.createAnalysis).not.toHaveBeenCalled();
+    const logged = deps.aiLogs.createLog.mock.calls[0][0] as {
+      status: string;
+      errorMessage: string;
+    };
+    expect(logged.status).toBe("ERROR");
+    expect(logged.errorMessage).toBe("boom");
+  });
+
+  /*
+    Le typage dit que seul KISS peut arriver jusqu'à la fin de l'aiguillage, et
+    il le dit sur une promesse que personne ne tient : le dépôt Prisma relit
+    `kind` depuis la base et le convertit sans contrôle. Les deux tests qui
+    suivent disent où chaque garde-fou sert.
+
+    Un nom qui n'existe nulle part est arrêté bien avant, faute de consigne par
+    défaut à ce nom : c'est la première ligne de défense, et elle suffit.
+  */
+  it("s'arrête sur une analyse dont aucune consigne ne porte le nom", async () => {
+    const deps = harness();
+    const result = await runMeetingAnalysis(deps as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "CLOSING_SCORECARD" as never,
+    });
+
+    expect(result).toEqual({ ok: false, error: "PROMPT_NOT_CONFIGURED" });
+    expect(deps.analysis.analyzeKiss).not.toHaveBeenCalled();
+    expect(deps.meetings.createAnalysis).not.toHaveBeenCalled();
+  });
+
+  /*
+    Le cas qui justifie le garde-fou, et le seul : une analyse qui a bien une
+    consigne livrée passe la première ligne de défense. C'est exactement la
+    forme qu'aurait l'oubli, le jour où le closing arrive avec sa consigne, sa
+    grille et son onglet, mais sans sa branche d'aiguillage. Sans ce refus, ce
+    rendez-vous partirait analysé en KISS et s'enregistrerait sous son propre
+    nom : une ligne indiscernable d'une vraie, et fausse de bout en bout.
+  */
+  it("refuse une analyse dont la consigne existe mais pas le traitement", async () => {
+    const deps = harness();
+    const result = await runMeetingAnalysis(deps as never, {
+      organizationId: "org_1",
+      meetingId: "m1",
+      kind: "FOLLOW_UP_EMAIL" as never,
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "ANALYSIS_FAILED",
+      message: "Analyse non prise en charge : FOLLOW_UP_EMAIL",
+    });
+    expect(deps.analysis.analyzeKiss).not.toHaveBeenCalled();
+    expect(deps.meetings.createAnalysis).not.toHaveBeenCalled();
   });
 });

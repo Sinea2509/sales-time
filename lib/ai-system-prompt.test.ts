@@ -5,6 +5,7 @@ import {
   KISS_SELLER_SKILLS_INSTRUCTION,
   withDataScopeSystemPrompt,
   withKissSystemPrompt,
+  withScorecardSystemPrompt,
 } from "./ai-system-prompt";
 import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "./default-analysis-prompts";
 import {
@@ -12,6 +13,12 @@ import {
   coachingScoreScaleInstruction,
 } from "@/src/core/domain/coaching-score-scale";
 import { sellerSkillScoresSchema } from "@/src/core/domain/kiss-result-zod";
+import {
+  DEFAULT_SCORECARD_GRID,
+  scorecardCriteria,
+  type ScorecardGrid,
+} from "@/src/core/domain/scorecard-grid";
+import { scorecardGridInstruction } from "@/src/core/domain/scorecard-prompt";
 
 describe("withDataScopeSystemPrompt", () => {
   it("keeps the editable markdown and adds the non-editable rules", () => {
@@ -65,6 +72,7 @@ describe("les consignes livrées", () => {
     expect(KISS_SELLER_SKILLS_INSTRUCTION).not.toContain("—");
     expect(FRENCH_QUALITY_INSTRUCTION).not.toContain("—");
     expect(coachingScoreScaleInstruction()).not.toContain("—");
+    expect(scorecardGridInstruction(DEFAULT_SCORECARD_GRID)).not.toContain("—");
   });
 });
 
@@ -136,5 +144,122 @@ describe("withKissSystemPrompt", () => {
     const prompt = withKissSystemPrompt("Note comme tu le sens.");
     expect(prompt).toContain(KISS_SELLER_SKILLS_INSTRUCTION);
     expect(prompt).toContain(coachingScoreScaleInstruction());
+  });
+});
+
+/*
+  Une grille factice, dont aucune clé n'existe dans celle de découverte. Elle
+  sert à montrer que la grille jointe est bien celle qu'on passe, et non une
+  grille choisie dans ce fichier : c'est toute la raison pour laquelle le
+  rendez-vous de closing ne coûtera qu'une donnée de plus.
+*/
+const GRILLE_FACTICE: ScorecardGrid = {
+  id: "DECOUVERTE",
+  name: "Grille factice",
+  intent: "Ce que ce rendez-vous doit produire, en une phrase.",
+  blocks: [
+    {
+      key: "Z",
+      name: "Bloc factice",
+      weight: 100,
+      criteria: [
+        {
+          key: "Z9",
+          label: "Un seul critère",
+          expected: "Ce qu'il fallait avoir obtenu.",
+        },
+      ],
+    },
+  ],
+};
+
+describe("withScorecardSystemPrompt", () => {
+  it("keeps the editable markdown and appends the grid of this meeting", () => {
+    const prompt = withScorecardSystemPrompt(
+      "CONSIGNE SCORECARD DE L'ORG",
+      DEFAULT_SCORECARD_GRID,
+    );
+    expect(prompt).toContain("CONSIGNE SCORECARD DE L'ORG");
+    expect(prompt).toContain(scorecardGridInstruction(DEFAULT_SCORECARD_GRID));
+  });
+
+  /*
+    Le schéma accepte n'importe quelle clé de 1 à 4 caractères : c'est la
+    consigne, et elle seule, qui dit au modèle lesquelles écrire. Une clé de la
+    grille absente du prompt serait notée nulle part et vaudrait 0 au calcul,
+    sans que rien ne le signale. Ce test lit les clés de la grille plutôt qu'une
+    liste recopiée, pour qu'un critère ajouté demain y passe aussi.
+  */
+  it("carries every criterion key the score is computed on", () => {
+    const prompt = withScorecardSystemPrompt("X", DEFAULT_SCORECARD_GRID);
+    for (const criterion of scorecardCriteria(DEFAULT_SCORECARD_GRID)) {
+      expect([criterion.key, prompt]).toEqual([
+        criterion.key,
+        expect.stringContaining(`**${criterion.key}**`),
+      ]);
+    }
+  });
+
+  it("appends the grid it is given, not a grid chosen here", () => {
+    const prompt = withScorecardSystemPrompt("X", GRILLE_FACTICE);
+    expect(prompt).toContain("**Z9**");
+    expect(prompt).not.toContain("**A1**");
+  });
+
+  /*
+    La scorecard note le commercial, comme KISS, mais elle ne rend ni les six
+    notes ni le `coachingScore`. Lui joindre leurs consignes lui donnerait des
+    champs que son schéma refuse, et l'échelle d'une note qu'elle ne produit pas
+    déplacerait celle qu'elle produit.
+  */
+  it("leaves out what belongs to the KISS output alone", () => {
+    const prompt = withScorecardSystemPrompt("X", DEFAULT_SCORECARD_GRID);
+    expect(prompt).not.toContain("sellerSkills");
+    expect(prompt).not.toContain("coachingScore");
+  });
+
+  it("forbids the em dash like every other analysis", () => {
+    expect(
+      withScorecardSystemPrompt("CONSIGNE", DEFAULT_SCORECARD_GRID),
+    ).toContain(FRENCH_TYPOGRAPHY_INSTRUCTION);
+  });
+
+  /*
+    L'ordre des deux morceaux n'est pas indifférent. La grille ferme la consigne
+    parce qu'elle est la partie que le super-admin ne peut pas réécrire : ce
+    qu'il écrit au-dessus se lit alors comme un préambule, et non comme une
+    correction de ce qui suit. Les deux tests qui suivent tiennent cet ordre et
+    la ligne vide qui les sépare.
+  */
+  it("closes with the grid, after everything the org may write", () => {
+    const bloc = scorecardGridInstruction(DEFAULT_SCORECARD_GRID);
+    const prompt = withScorecardSystemPrompt(
+      "CONSIGNE MAISON",
+      DEFAULT_SCORECARD_GRID,
+    );
+
+    expect(prompt).toContain("CONSIGNE MAISON");
+    expect(prompt.indexOf("CONSIGNE MAISON")).toBeLessThan(
+      prompt.indexOf(bloc),
+    );
+    expect(prompt.endsWith(bloc)).toBe(true);
+  });
+
+  /*
+    Une seule ligne vide entre les deux, ni zéro ni trois. Sans elle, markdown
+    lit la fin de la consigne éditable et le titre qui ouvre le bloc de grille
+    comme un seul paragraphe : le titre cesse d'en être un, et le modèle reçoit
+    la partie non modifiable comme la suite d'une phrase de l'organisation.
+  */
+  it("separates the two blocks by exactly one empty line", () => {
+    const bloc = scorecardGridInstruction(DEFAULT_SCORECARD_GRID);
+    const prompt = withScorecardSystemPrompt(
+      "CONSIGNE MAISON",
+      DEFAULT_SCORECARD_GRID,
+    );
+    const avant = prompt.slice(0, prompt.length - bloc.length);
+
+    expect(avant.endsWith("\n\n")).toBe(true);
+    expect(avant.endsWith("\n\n\n")).toBe(false);
   });
 });
