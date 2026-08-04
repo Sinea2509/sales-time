@@ -1,7 +1,9 @@
 {
   "version": "0.2",
   "language": "en,fr",
-  "import": ["@cspell/dict-fr-fr/cspell-ext.json"],
+  "import": [
+    "@cspell/dict-fr-fr/cspell-ext.json"
+  ],
   "useGitignore": true,
   "ignorePaths": [
     ".next",
@@ -14,7 +16,9 @@
     "prisma/migrations",
     "*.svg"
   ],
-  "ignoreRegExpList": ["/data:image\\\\\\+svg[^\"']+/gi"],
+  "ignoreRegExpList": [
+    "/data:image\\\\\\+svg[^\"']+/gi"
+  ],
   "words": [
     "affichee",
     "arg",
@@ -48,6 +52,7 @@
     "dupont",
     "ecart",
     "ecartes",
+    "echelle",
     "ecoute",
     "equipe",
     "esbuild",
@@ -86,9 +91,9 @@
     "pooler",
     "posthog",
     "prefs",
-    "préc",
     "prisma",
     "proratisé",
+    "préc",
     "qzrmn",
     "rankable",
     "rdv",
@@ -122,6 +127,7 @@
     "utilisees",
     "uuid",
     "vercel",
+    "verifie",
     "visio",
     "vitest",
     "vouv",

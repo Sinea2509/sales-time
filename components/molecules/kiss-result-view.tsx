@@ -1,34 +1,29 @@
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import { DotBulletList } from "@/components/atoms/dot-bullet-list";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const blocks = [
   {
     key: "keep" as const,
-    title: "Keep",
+    title: "À conserver (Keep)",
     className:
       "border-emerald-200/80 bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30",
   },
   {
     key: "improve" as const,
-    title: "Improve",
+    title: "À améliorer (Improve)",
     className:
       "border-amber-200/80 bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/30",
   },
   {
     key: "stop" as const,
-    title: "Stop",
+    title: "À arrêter (Stop)",
     className:
       "border-rose-200/80 bg-rose-50/80 dark:border-rose-900/40 dark:bg-rose-950/30",
   },
   {
     key: "start" as const,
-    title: "Start",
+    title: "À démarrer (Start)",
     className:
       "border-sky-200/80 bg-sky-50/80 dark:border-sky-900/40 dark:bg-sky-950/30",
   },
