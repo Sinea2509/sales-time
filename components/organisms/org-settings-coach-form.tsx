@@ -91,7 +91,7 @@ export function OrgSettingsCoachForm({
               ? "text-green-700 dark:text-green-400"
               : "text-destructive",
           )}
-          role="status"
+          role={message.type === "ok" ? "status" : "alert"}
         >
           {message.text}
         </p>

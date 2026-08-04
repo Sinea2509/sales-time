@@ -63,7 +63,10 @@ export function OrgSettingsTeamList({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{
+    ton: "ok" | "erreur";
+    texte: string;
+  } | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"ADMIN" | "MEMBER">("MEMBER");
 
@@ -115,11 +118,14 @@ export function OrgSettingsTeamList({
     startTransition(async () => {
       const email = inviteEmail.trim().toLowerCase();
       if (!email) {
-        setMsg("Saisissez une adresse e-mail.");
+        setMsg({ ton: "erreur", texte: "Saisissez une adresse e-mail." });
         return;
       }
       if (email === currentUserEmail.trim().toLowerCase()) {
-        setMsg("Vous ne pouvez pas vous inviter vous-même.");
+        setMsg({
+          ton: "erreur",
+          texte: "Vous ne pouvez pas vous inviter vous-même.",
+        });
         return;
       }
 
@@ -128,10 +134,10 @@ export function OrgSettingsTeamList({
         role: canManageTeam ? inviteRole : "MEMBER",
       });
       if (!r.ok) {
-        setMsg(r.message);
+        setMsg({ ton: "erreur", texte: r.message });
         return;
       }
-      setMsg("Invitation envoyée.");
+      setMsg({ ton: "ok", texte: "Invitation envoyée." });
       setInviteEmail("");
       router.refresh();
     });
@@ -140,13 +146,25 @@ export function OrgSettingsTeamList({
   return (
     <div className="space-y-10">
       {msg ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {msg}
+        /*
+          Un refus affiché en gris se lisait comme une confirmation : même
+          encre, même voix. L'erreur parle désormais en destructive et en
+          role="alert", pour l'œil comme pour le lecteur d'écran.
+        */
+        <p
+          className={
+            msg.ton === "erreur"
+              ? "text-destructive text-sm"
+              : "text-muted-foreground text-sm"
+          }
+          role={msg.ton === "erreur" ? "alert" : "status"}
+        >
+          {msg.texte}
         </p>
       ) : null}
 
       <section>
-        <Card className="w-full border-zinc-200 shadow-sm dark:border-zinc-800">
+        <Card className="w-full border-border shadow-sm dark:border-zinc-800">
           <CardHeader className="pb-3">
             <CardTitle className={sectionHeadingClass}>
               Inviter un membre
@@ -274,7 +292,7 @@ export function OrgSettingsTeamList({
                               role,
                             );
                             if (!r.ok) {
-                              setMsg(r.message);
+                              setMsg({ ton: "erreur", texte: r.message });
                               e.target.value = m.role;
                               return;
                             }
@@ -312,7 +330,7 @@ export function OrgSettingsTeamList({
                               choisi,
                             );
                             if (!r.ok) {
-                              setMsg(r.message);
+                              setMsg({ ton: "erreur", texte: r.message });
                               e.target.value = m.managerUserId ?? "";
                               return;
                             }
@@ -354,7 +372,7 @@ export function OrgSettingsTeamList({
                             setMsg(null);
                             const r = await removeMemberAction(m.membershipId);
                             if (!r.ok) {
-                              setMsg(r.message);
+                              setMsg({ ton: "erreur", texte: r.message });
                               return;
                             }
                             router.refresh();
@@ -412,7 +430,7 @@ export function OrgSettingsTeamList({
                               setMsg(null);
                               const r = await revokeInvitationAction(inv.id);
                               if (!r.ok) {
-                                setMsg(r.message);
+                                setMsg({ ton: "erreur", texte: r.message });
                                 return;
                               }
                               router.refresh();

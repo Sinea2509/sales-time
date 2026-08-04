@@ -22,11 +22,7 @@ import type {
   DraggableSyntheticListeners,
 } from "@dnd-kit/core";
 import type { CSSProperties, Dispatch, SetStateAction } from "react";
-import {
-  forwardRef,
-  useImperativeHandle,
-  useState,
-} from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +86,7 @@ export type ProcessStringListSectionHandle = {
 
 const draftToolbarSecondaryClass = cn(
   "px-4 text-sm shadow-none",
-  "border border-neutral-200 bg-[#F5F5F5] text-foreground hover:bg-[#EBEBEB] dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700",
+  "border-border bg-secondary hover:bg-secondary/80 border text-foreground dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700",
 );
 
 function ProcessSortableRow({
@@ -210,7 +206,7 @@ function ProcessSortableRow({
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+                  className="text-muted-foreground hover:bg-muted hover:text-foreground dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                   aria-label="Modifier"
                   onClick={() => {
                     setDraft(value);
@@ -223,7 +219,7 @@ function ProcessSortableRow({
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300"
                   aria-label="Supprimer"
                   onClick={onDelete}
                 >
@@ -321,6 +317,18 @@ function ProcessSortableList({
   }
 
   if (!canEdit) {
+    if (items.length === 0) {
+      /*
+        En lecture seule, une liste vide ne rendait rien du tout : la section
+        gardait son titre et perdait son corps, et rien ne disait si c'était
+        un oubli de saisie ou un écran cassé. Le vide se nomme.
+      */
+      return (
+        <p className="text-muted-foreground text-sm">
+          Aucun élément renseigné.
+        </p>
+      );
+    }
     return (
       <ul className="space-y-2">
         {items.map((item) => (
