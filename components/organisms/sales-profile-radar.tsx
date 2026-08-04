@@ -102,18 +102,29 @@ export function SalesProfileRadar({
       : []),
   ];
 
+  /*
+    Le SVG de MUI n'expose aucun nom accessible : un lecteur d'écran y entre
+    et énumère des tracés muets. Le graphique entier devient une seule image
+    nommée, dont le libellé énonce les six notes ; la liste d'évolution rendue
+    sous le radar reste le détail lisible.
+  */
+  const resumeAccessible = `Profil de vente, six compétences sur 100 : ${SALES_PROFILE_DIMENSION_KEYS.map(
+    (key) => `${SELLER_SKILL_SHORT_FR[key]} ${scores[key]}`,
+  ).join(", ")}.`;
+
   return (
     <div className="w-full space-y-3">
       <ChartTheme>
-        <RadarChart
-          height={chartHeight}
-          series={series}
-          radar={{ metrics: METRICS }}
-          shape="circular"
-          divisions={4}
-          hideLegend
-          margin={margin}
-          /*
+        <div role="img" aria-label={resumeAccessible}>
+          <RadarChart
+            height={chartHeight}
+            series={series}
+            radar={{ metrics: METRICS }}
+            shape="circular"
+            divisions={4}
+            hideLegend
+            margin={margin}
+            /*
             Deux règles vivaient ici, et aucune des deux n'atteignait quoi que
             ce soit. La première fixait la taille des libellés via
             « .MuiChartsAxis-tickLabel » : un radar ne dessine aucun axe
@@ -134,17 +145,18 @@ export function SalesProfileRadar({
             ne se distinguent pas. Si MUI change cet attribut, le trait
             redevient plein, ce qui reste lisible.
           */
-          sx={
-            previousScores
-              ? {
-                  '& .MuiRadarChart-seriesArea[fill="transparent"]': {
-                    strokeDasharray: "6 4",
-                    strokeWidth: 2,
-                  },
-                }
-              : undefined
-          }
-        />
+            sx={
+              previousScores
+                ? {
+                    '& .MuiRadarChart-seriesArea[fill="transparent"]': {
+                      strokeDasharray: "6 4",
+                      strokeWidth: 2,
+                    },
+                  }
+                : undefined
+            }
+          />
+        </div>
       </ChartTheme>
       <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs">
         <span className="inline-flex items-center gap-2">

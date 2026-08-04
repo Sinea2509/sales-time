@@ -158,7 +158,7 @@ export function DashboardHomeShell({
                 "inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300";
               return todo.aAnalyser > 0 || todo.aRelancer > 0 ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  <span className="text-xs font-medium text-muted-foreground dark:text-zinc-400">
                     À faire :
                   </span>
                   {todo.aAnalyser > 0 ? (
@@ -169,14 +169,14 @@ export function DashboardHomeShell({
                   ) : null}
                 </div>
               ) : (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-muted-foreground dark:text-zinc-400">
                   Ces rendez-vous sont à jour : rien à analyser ni à relancer.
                 </p>
               );
             })()
           : null}
 
-        <div className="overflow-hidden rounded-2xl border border-zinc-200/10 bg-white shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="overflow-hidden rounded-2xl border-border border bg-card shadow-md dark:border-zinc-800 dark:bg-zinc-900">
           <div className="overflow-x-auto">
             {/*
               Ces largeurs minimales sont des garde-fous, pas la mise en page :
@@ -186,7 +186,7 @@ export function DashboardHomeShell({
             */}
             <table className="w-full min-w-[300px] text-left text-sm sm:min-w-[500px] md:min-w-[600px] lg:min-w-[720px]">
               <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
+                <tr className="border-b border-border bg-muted/90 dark:border-zinc-800 dark:bg-zinc-950/80">
                   <DataTableHead className="px-4 py-3.5 dark:text-zinc-400">
                     Prospect
                   </DataTableHead>
@@ -196,7 +196,7 @@ export function DashboardHomeShell({
                     fois, et il serait déroutant qu'une colonne apparaisse ici
                     et pas là sur le même écran.
                   */}
-                  <DataTableHead className="hidden px-4 py-3.5 md:table-cell dark:text-zinc-400">
+                  <DataTableHead className="hidden px-4 py-3.5 text-right md:table-cell dark:text-zinc-400">
                     Potentiel
                   </DataTableHead>
                   {/*
@@ -229,7 +229,7 @@ export function DashboardHomeShell({
                   </DataTableHead>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              <tbody className="divide-y divide-border dark:divide-zinc-800">
                 {home.recentMeetings.length === 0 ? (
                   /*
                     Cette ligne disait « Changez la période avec le sélecteur en
@@ -254,7 +254,7 @@ export function DashboardHomeShell({
                   home.recentMeetings.map((m) => (
                     <tr
                       key={m.id}
-                      className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/50"
+                      className="hover:bg-muted/80 dark:hover:bg-zinc-800/50"
                     >
                       {/*
                         `max-w-0` avec `w-full` donne à cette colonne toute la
@@ -296,7 +296,7 @@ export function DashboardHomeShell({
                           />
                         </div>
                       </td>
-                      <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums md:table-cell dark:text-zinc-400">
+                      <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 text-right align-middle tabular-nums md:table-cell dark:text-zinc-400">
                         {formatPotentialEuro(m.potentialAmount)}
                       </td>
                       <td className="text-muted-foreground whitespace-nowrap px-4 py-3.5 align-middle tabular-nums dark:text-zinc-400">

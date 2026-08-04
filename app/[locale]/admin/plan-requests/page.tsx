@@ -11,13 +11,13 @@ export default async function AdminPlanRequestsPage() {
   return (
     <div className="space-y-6">
       <PageHeaderSimple
-        title="Demandes d'upgrade"
-        description="Inbox des demandes de passage au plan payant."
+        title="Demandes de changement de plan"
+        description="Les demandes de passage au plan payant arrivent ici."
       />
       {rows.length === 0 ? (
         <PrdEmptyState
           title="Aucune demande"
-          description="Les demandes d'upgrade soumises par les organisations apparaîtront ici."
+          description="Les demandes envoyées par les organisations apparaîtront ici."
         />
       ) : (
         <AdminPlanRequestsTable rows={rows} />

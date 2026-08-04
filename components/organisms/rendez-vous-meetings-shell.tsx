@@ -316,7 +316,7 @@ export function RendezVousMeetingsShell({
               placeholder="Rechercher un prospect…"
               value={query}
               onChange={(e) => setQueryAndResetPage(e.target.value)}
-              className="h-10 rounded-xl border-neutral-200 bg-white pl-9 shadow-none dark:border-neutral-800 dark:bg-neutral-950"
+              className="h-10 rounded-xl border-border bg-card pl-9 shadow-none dark:border-neutral-800 dark:bg-neutral-950"
             />
           </div>
         </div>
@@ -399,7 +399,7 @@ export function RendezVousMeetingsShell({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
         <div className="overflow-x-auto">
           {/*
             Ces largeurs minimales sont des garde-fous, pas la mise en page :
@@ -409,7 +409,7 @@ export function RendezVousMeetingsShell({
           */}
           <table className="w-full min-w-[300px] text-left text-sm sm:min-w-[560px] md:min-w-[660px] lg:min-w-[780px]">
             <thead>
-              <tr className="border-b border-neutral-200 bg-neutral-50/80 dark:border-neutral-800 dark:bg-neutral-900/50">
+              <tr className="border-b border-border bg-muted/80 dark:border-neutral-800 dark:bg-neutral-900/50">
                 {/*
                   La case à cocher disparaît sous « sm » : sur téléphone une
                   ligne s'ouvre en la touchant, et une colonne de cases coûterait
@@ -424,11 +424,11 @@ export function RendezVousMeetingsShell({
                       if (el) el.indeterminate = somePageSelected;
                     }}
                     onChange={(e) => togglePage(e.target.checked)}
-                    className="size-4 cursor-pointer rounded border border-neutral-300 accent-brand dark:border-neutral-600"
+                    className="size-4 cursor-pointer rounded border border-border accent-brand dark:border-neutral-600"
                   />
                 </th>
                 <DataTableHead className="px-4 py-3.5">Prospect</DataTableHead>
-                <DataTableHead className="hidden px-4 py-3.5 md:table-cell">
+                <DataTableHead className="hidden px-4 py-3.5 text-right md:table-cell">
                   Potentiel
                 </DataTableHead>
                 {/*
@@ -467,7 +467,7 @@ export function RendezVousMeetingsShell({
                 </DataTableHead>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+            <tbody className="divide-y divide-border dark:divide-neutral-800">
               {filtered.length === 0 ? (
                 /*
                   Trois façons d'arriver sur un tableau vide, trois phrases :
@@ -506,7 +506,7 @@ export function RendezVousMeetingsShell({
                       aria-label={`Ouvrir le rendez-vous ${m.prospectName}`}
                       onClick={(event) => handleRowClick(m.id, event)}
                       onKeyDown={(event) => handleRowKeyDown(m.id, event)}
-                      className="cursor-pointer hover:bg-neutral-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-inset data-[state=selected]:bg-brand/5 dark:hover:bg-neutral-900/40"
+                      className="cursor-pointer hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-inset data-[state=selected]:bg-brand/5 dark:hover:bg-neutral-900/40"
                     >
                       <td className="hidden px-4 py-3.5 align-middle sm:table-cell">
                         <input
@@ -514,7 +514,7 @@ export function RendezVousMeetingsShell({
                           aria-label={`Sélectionner ${m.prospectName}`}
                           checked={checked}
                           onChange={(e) => toggleRow(m.id, e.target.checked)}
-                          className="size-4 cursor-pointer rounded border border-neutral-300 accent-brand dark:border-neutral-600"
+                          className="size-4 cursor-pointer rounded border border-border accent-brand dark:border-neutral-600"
                         />
                       </td>
                       {/*
@@ -552,7 +552,7 @@ export function RendezVousMeetingsShell({
                           />
                         </div>
                       </td>
-                      <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 align-middle tabular-nums md:table-cell">
+                      <td className="text-muted-foreground hidden whitespace-nowrap px-4 py-3.5 text-right align-middle tabular-nums md:table-cell">
                         {formatPotentialEuro(m.potentialAmount)}
                       </td>
                       <td className="text-muted-foreground whitespace-nowrap px-4 py-3.5 align-middle tabular-nums">
@@ -610,7 +610,7 @@ export function RendezVousMeetingsShell({
           déjà et dit en plus quoi faire.
         */}
         {filtered.length === 0 ? null : (
-          <div className="flex flex-col gap-3 border-t border-neutral-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-neutral-800">
+          <div className="flex flex-col gap-3 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-neutral-800">
             <p className="text-muted-foreground text-sm">
               Affichage de{" "}
               <span className="text-foreground font-medium">{rangeStart}</span>{" "}
@@ -642,7 +642,7 @@ export function RendezVousMeetingsShell({
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   aria-label="Page précédente"
-                  className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md border border-neutral-200 bg-white transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900 dark:disabled:hover:bg-neutral-950"
+                  className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md border border-border bg-card transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-card dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900 dark:disabled:hover:bg-neutral-950"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
@@ -659,7 +659,7 @@ export function RendezVousMeetingsShell({
                         "inline-flex size-8 items-center justify-center rounded-md border text-sm font-medium tabular-nums transition-colors",
                         isActive
                           ? "border-brand bg-brand text-brand-foreground hover:bg-brand-hover"
-                          : "text-muted-foreground hover:text-foreground border-neutral-200 bg-white hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900",
+                          : "text-muted-foreground hover:text-foreground border-border bg-card hover:bg-muted dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900",
                       )}
                     >
                       {n}
@@ -671,7 +671,7 @@ export function RendezVousMeetingsShell({
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                   aria-label="Page suivante"
-                  className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md border border-neutral-200 bg-white transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900 dark:disabled:hover:bg-neutral-950"
+                  className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md border border-border bg-card transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-card dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900 dark:disabled:hover:bg-neutral-950"
                 >
                   <ChevronRight className="size-4" />
                 </button>

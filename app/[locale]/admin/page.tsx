@@ -81,7 +81,7 @@ export default async function AdminDashboardPage(props: {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Dashboard plateforme"
+        title="Tableau de bord plateforme"
         description="Vue d'ensemble de l'activité et des KPIs SaaS de Sales Time."
         actions={<AdminDateRangePicker />}
       />
