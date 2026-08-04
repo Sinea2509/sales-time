@@ -71,7 +71,7 @@ function ProfilePanel({
       {actionableAdvice ? (
         <ProfileActionableAdviceSection advice={actionableAdvice} />
       ) : bars?.length ? (
-        <p className="text-muted-foreground border-t border-zinc-100 pt-4 text-xs leading-relaxed dark:border-zinc-800">
+        <p className="text-muted-foreground border-t border-border pt-4 text-xs leading-relaxed dark:border-zinc-800">
           {legacyAdviceHint}
         </p>
       ) : null}

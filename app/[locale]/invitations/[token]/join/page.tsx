@@ -32,7 +32,7 @@ export default async function JoinInvitationPage({ params }: Props) {
       redirect(`/invitations/${encodeURIComponent(token)}`);
     }
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
         <div className="w-full max-w-md space-y-4 rounded-xl border border-border p-8 text-center shadow-sm">
           <h1 className={pageTitleClass}>Autre compte connecté</h1>
           <p className="text-muted-foreground text-sm">
@@ -55,7 +55,7 @@ export default async function JoinInvitationPage({ params }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-md space-y-2 rounded-xl border border-border p-8 text-center shadow-sm">
         <h1 className={pageTitleClass}>Créer votre compte</h1>
         <p className="text-muted-foreground text-sm">

@@ -28,7 +28,7 @@ export default async function InvitationPage({ params }: Props) {
   const principal = await deps.auth.getAuthenticatedPrincipal();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-white p-6">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-md space-y-6 rounded-xl border border-border p-8 text-center shadow-sm">
         <h1 className={pageTitleClass}>Invitation · {inv.organizationName}</h1>
         <p className="text-muted-foreground text-sm">

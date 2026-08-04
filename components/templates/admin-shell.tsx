@@ -66,7 +66,7 @@ const adminNavSections: NavSection[] = [
     items: [
       {
         href: "/admin",
-        label: "Dashboard",
+        label: "Tableau de bord",
         icon: LayoutDashboard,
         match: "exact",
       },
@@ -101,7 +101,7 @@ const adminNavSections: NavSection[] = [
       },
       {
         href: "/admin/plan-requests",
-        label: "Demandes upgrade",
+        label: "Demandes de plan",
         icon: CreditCard,
         match: "prefix",
       },
@@ -185,7 +185,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
               `components/atoms/sales-time-logo-mark.tsx`, qui porte la même
               exception pour la même raison.
             */}
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand text-white">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand text-brand-foreground">
               <ShieldCheck className="size-4" />
             </div>
             <div className="min-w-0 flex flex-col">
@@ -223,7 +223,7 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
 
           <div className="flex items-center gap-2 px-2 pb-1">
             <Avatar className="size-6 shrink-0">
-              <AvatarFallback className="bg-zinc-200 text-[10px] font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+              <AvatarFallback className="bg-muted text-[10px] font-semibold text-foreground dark:bg-zinc-800 dark:text-zinc-300">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -243,13 +243,13 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
             type="button"
             onClick={() => setCommandOpen(true)}
             className={cn(
-              "hidden items-center gap-2 rounded-lg border px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:text-zinc-600 sm:inline-flex",
-              "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:text-zinc-300",
+              "hidden items-center gap-2 rounded-lg border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-muted-foreground sm:inline-flex",
+              "border-border bg-muted dark:border-zinc-800 dark:bg-zinc-900 dark:hover:text-zinc-300",
             )}
           >
             <Search className="size-3.5" />
             <span>Rechercher…</span>
-            <kbd className="pointer-events-none ml-2 rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800">
+            <kbd className="pointer-events-none ml-2 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground dark:border-zinc-700 dark:bg-zinc-800">
               ⌘K
             </kbd>
           </button>

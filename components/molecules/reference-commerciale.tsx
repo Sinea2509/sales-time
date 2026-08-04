@@ -55,25 +55,25 @@ export function TermeDeGrille({
         aria-label={`${profil.nom} : ce que c'est et comment s'y adapter`}
       >
         {texte}
-        <Info className="size-3 shrink-0 text-zinc-400" aria-hidden />
+        <Info className="size-3 shrink-0 text-muted-foreground" aria-hidden />
       </PopoverTrigger>
       <PopoverContent>
         <p className="flex items-center gap-2">
-          <span className="grid size-6 shrink-0 place-items-center rounded-md bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+          <span className="grid size-6 shrink-0 place-items-center rounded-md bg-muted text-xs font-semibold text-foreground dark:bg-zinc-800 dark:text-zinc-300">
             {profil.lettre}
           </span>
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <span className="text-sm font-semibold text-foreground dark:text-zinc-100">
             {profil.nom}
           </span>
-          <span className="text-[11px] font-medium tracking-wider text-zinc-400 uppercase">
+          <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
             {grille.nom}
           </span>
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground dark:text-zinc-400">
           {profil.resume}
         </p>
-        <p className="mt-2 border-t border-zinc-100 pt-2 text-sm leading-relaxed text-zinc-700 dark:border-zinc-800 dark:text-zinc-300">
-          <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+        <p className="mt-2 border-t border-border pt-2 text-sm leading-relaxed text-foreground dark:border-zinc-800 dark:text-zinc-300">
+          <span className="font-semibold text-foreground dark:text-zinc-100">
             En rendez-vous
           </span>{" "}
           · {profil.enRendezVous}
@@ -110,23 +110,23 @@ export function GuideDeGrille({
         Comprendre le {grille.nom}
       </PopoverTrigger>
       <PopoverContent className="w-80">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        <p className="text-sm font-semibold text-foreground dark:text-zinc-100">
           {grille.nom}
         </p>
-        <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground dark:text-zinc-400">
           {grille.intro}
         </p>
-        <ul className="mt-3 space-y-2.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+        <ul className="mt-3 space-y-2.5 border-t border-border pt-3 dark:border-zinc-800">
           {grille.profils.map((p) => (
             <li key={p.code} className="flex gap-2.5">
-              <span className="grid size-6 shrink-0 place-items-center rounded-md bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+              <span className="grid size-6 shrink-0 place-items-center rounded-md bg-muted text-xs font-semibold text-foreground dark:bg-zinc-800 dark:text-zinc-300">
                 {p.lettre}
               </span>
               <span className="min-w-0">
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                <span className="text-sm font-semibold text-foreground dark:text-zinc-100">
                   {p.nom}
                 </span>
-                <span className="mt-0.5 block text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground dark:text-zinc-400">
                   {p.enRendezVous}
                 </span>
               </span>
@@ -158,19 +158,19 @@ export function GuideKiss({ className }: { className?: string }) {
         Comment lire ces colonnes
       </PopoverTrigger>
       <PopoverContent className="w-80">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        <p className="text-sm font-semibold text-foreground dark:text-zinc-100">
           La méthode KISS
         </p>
-        <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground dark:text-zinc-400">
           {GRILLE_KISS.intro}
         </p>
-        <ul className="mt-3 space-y-2.5 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+        <ul className="mt-3 space-y-2.5 border-t border-border pt-3 dark:border-zinc-800">
           {GRILLE_KISS.quadrants.map((q) => (
             <li key={q.cle}>
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <span className="text-sm font-semibold text-foreground dark:text-zinc-100">
                 {q.nom}
               </span>
-              <span className="mt-0.5 block text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+              <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground dark:text-zinc-400">
                 {q.resume}
               </span>
             </li>

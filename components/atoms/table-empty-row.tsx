@@ -34,7 +34,7 @@ export function TableEmptyRow({
     <>
       <p>{message}</p>
       {description ? (
-        <p className="mx-auto mt-1 max-w-sm text-xs text-balance text-zinc-500 dark:text-zinc-400">
+        <p className="mx-auto mt-1 max-w-sm text-xs text-balance text-muted-foreground dark:text-zinc-400">
           {description}
         </p>
       ) : null}
@@ -46,13 +46,16 @@ export function TableEmptyRow({
       <td
         colSpan={colSpan}
         className={cn(
-          "px-4 text-center text-sm text-zinc-500 dark:text-zinc-400",
+          "px-4 text-center text-sm text-muted-foreground dark:text-zinc-400",
           sizeClasses[size],
         )}
       >
         {Icon ? (
           <div className="flex flex-col items-center gap-2">
-            <Icon className="size-8 text-zinc-300 dark:text-zinc-600" />
+            <Icon
+              aria-hidden
+              className="size-8 text-muted-foreground/50 dark:text-zinc-600"
+            />
             <div>{corps}</div>
           </div>
         ) : (

@@ -62,7 +62,7 @@ function OpportunityRow({
       <Link
         href={`/company/rendez-vous/${row.id}`}
         aria-label={`${row.prospectName}, potentiel ${amount}, ${scorePhrase}, résultat ${outcome}.`}
-        className="focus-visible:ring-brand/70 flex flex-col gap-1.5 rounded-lg px-2 py-2 transition-colors hover:bg-neutral-100 focus-visible:ring-2 focus-visible:outline-none dark:hover:bg-neutral-800/60"
+        className="focus-visible:ring-brand/70 flex flex-col gap-1.5 rounded-lg px-2 py-2 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:outline-none dark:hover:bg-neutral-800/60"
       >
         <span className="flex items-baseline gap-2">
           <span className="text-muted-foreground w-5 shrink-0 text-right text-xs font-medium tabular-nums">
@@ -90,7 +90,7 @@ function OpportunityRow({
           */}
           {score != null ? (
             <span
-              className="block h-2 min-w-0 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-800"
+              className="block h-2 min-w-0 flex-1 rounded-full bg-muted dark:bg-neutral-800"
               aria-hidden
             >
               {/*

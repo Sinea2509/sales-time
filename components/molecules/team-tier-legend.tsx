@@ -27,7 +27,7 @@ export function TeamTierLegend({
       className={cn("flex flex-wrap items-center gap-x-2 gap-y-1.5", className)}
     >
       {label ? (
-        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <span className="text-xs font-medium text-muted-foreground dark:text-zinc-400">
           {label}
         </span>
       ) : null}

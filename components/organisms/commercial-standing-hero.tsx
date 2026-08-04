@@ -93,7 +93,7 @@ export function CommercialStandingHero({
   return (
     <div
       className={cn(
-        "relative isolate overflow-hidden rounded-2xl border bg-white shadow-sm dark:bg-zinc-900",
+        "relative isolate overflow-hidden rounded-2xl border bg-card shadow-sm dark:bg-zinc-900",
         estExcellence
           ? "border-gold/30 dark:border-gold/30"
           : "border-brand/15 dark:border-zinc-800",
@@ -127,37 +127,37 @@ export function CommercialStandingHero({
 
       <div className="flex flex-col gap-5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-6 sm:py-5">
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-xs font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+          <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase dark:text-zinc-400">
             Ma position
           </span>
           <span
-            className="truncate text-sm text-zinc-500 dark:text-zinc-400"
+            className="truncate text-sm text-muted-foreground dark:text-zinc-400"
             title={sousTitre.title}
           >
             {sousTitre.texte}
           </span>
           <p className="mt-1 flex items-baseline gap-1.5">
-            <span className="text-5xl font-semibold tracking-tight text-zinc-900 tabular-nums dark:text-zinc-50">
+            <span className="text-5xl font-semibold tracking-tight text-foreground tabular-nums dark:text-zinc-50">
               {formatNoteFr(row.noteGlobaleOn5!)}
             </span>
-            <span className="text-lg font-medium text-zinc-400 dark:text-zinc-500">
+            <span className="text-lg font-medium text-muted-foreground dark:text-zinc-500">
               /5
             </span>
           </p>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs text-muted-foreground dark:text-zinc-400">
             moyenne de {rdvNotes(row.scoredMeetings)}
           </span>
         </div>
 
         <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
           <TeamTierBadge tier={row.tier} />
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-foreground dark:bg-zinc-800 dark:text-zinc-100">
             <span className="tabular-nums">{rankLabel(row.rank!)}</span>
-            <span className="font-normal text-zinc-500 dark:text-zinc-400">
+            <span className="font-normal text-muted-foreground dark:text-zinc-400">
               sur {standing.ranking.rankedCount} classés
             </span>
           </span>
-          <span className="text-xs text-zinc-500 tabular-nums dark:text-zinc-400">
+          <span className="text-xs text-muted-foreground tabular-nums dark:text-zinc-400">
             {formatDeltaOn5(row.deltaToTeamAverage!)}{" "}
             {plurielFr(row.deltaToTeamAverage!, "point")} sur la moyenne de{" "}
             {membresClasses(standing.ranking.rankedCount)}
@@ -169,7 +169,7 @@ export function CommercialStandingHero({
         Le focus, en pied du hero : la position dit où j'en suis, le focus dit
         sur quoi progresser. Même signal que la carte « à coacher » du manager.
       */}
-      <div className="flex flex-col gap-3 border-t border-zinc-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 dark:border-zinc-800">
+      <div className="flex flex-col gap-3 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 dark:border-zinc-800">
         {skillSignature ? (
           <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
@@ -180,7 +180,7 @@ export function CommercialStandingHero({
             </span>
           </span>
         ) : (
-          <span className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          <span className="text-sm leading-relaxed text-muted-foreground dark:text-zinc-400">
             Analysez vos rendez-vous pour révéler votre point fort et votre axe
             de progression.
           </span>

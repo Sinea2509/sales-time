@@ -58,14 +58,14 @@ export function CommercialActionPlan({
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
         {actions.length > 0 ? (
           <ol className="space-y-3.5">
             {actions.map((action, index) => {
               const etiquette = ETIQUETTE_PAR_TYPE[action.kind];
               return (
                 <li key={`${action.kind}-${index}`} className="flex gap-3">
-                  <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-muted text-xs font-semibold text-foreground dark:bg-zinc-800 dark:text-zinc-300">
                     {index + 1}
                   </span>
                   <span className="min-w-0">
@@ -74,7 +74,7 @@ export function CommercialActionPlan({
                     >
                       {etiquette.libelle}
                     </span>
-                    <span className="mt-1 block text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                    <span className="mt-1 block text-sm leading-relaxed text-foreground dark:text-zinc-300">
                       {action.text}
                     </span>
                   </span>
@@ -83,7 +83,7 @@ export function CommercialActionPlan({
             })}
           </ol>
         ) : (
-          <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm leading-relaxed text-muted-foreground dark:text-zinc-400">
             Analysez vos rendez-vous pour recevoir votre plan d&apos;action :
             les gestes concrets à travailler cette semaine apparaîtront ici,
             tirés de votre coaching.

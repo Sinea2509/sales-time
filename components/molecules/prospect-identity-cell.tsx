@@ -22,7 +22,7 @@ export function ProspectIdentityCell({
     la hauteur des lignes du tableau.
   */
   const nameClassName =
-    "font-semibold text-zinc-950 sm:truncate dark:text-zinc-50";
+    "font-semibold text-foreground sm:truncate dark:text-zinc-50";
 
   return (
     <div className="flex items-center gap-3">
@@ -35,7 +35,7 @@ export function ProspectIdentityCell({
         acquise et où l'œil parcourt une longue liste.
       */}
       <div
-        className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 lg:flex dark:bg-zinc-800 dark:text-zinc-200"
+        className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground lg:flex dark:bg-zinc-800 dark:text-zinc-200"
         aria-hidden
       >
         {prospectInitials(displayName)}

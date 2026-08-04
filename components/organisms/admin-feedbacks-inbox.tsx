@@ -33,7 +33,7 @@ function priorityBadgeClass(priority: FeedbackRow["priority"]): string {
     case "MEDIUM":
       return "border-amber-300 bg-amber-50 text-amber-800";
     case "LOW":
-      return "border-zinc-300 bg-zinc-50 text-zinc-700";
+      return "border-border bg-muted text-foreground";
     default: {
       const _exhaustive: never = priority;
       return _exhaustive;

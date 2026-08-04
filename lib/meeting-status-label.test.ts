@@ -11,6 +11,8 @@ describe("meetingStatusLabel", () => {
 
   it("falls back for unknown status strings", () => {
     expect(meetingStatusLabel("UNKNOWN")).toBe("UNKNOWN");
-    expect(meetingStatusBadgeClass("UNKNOWN")).toContain("neutral");
+    // Le repli porte la surface discrète de la charte, pas une couleur de
+    // statut : un état inconnu ne doit ni alarmer ni féliciter.
+    expect(meetingStatusBadgeClass("UNKNOWN")).toContain("bg-muted");
   });
 });

@@ -52,7 +52,7 @@ const DISPLAY: Record<MeetingOutcome, MeetingOutcomeDisplay> = {
   OTHER: {
     label: "Autre",
     badgeClass:
-      "border-zinc-200 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+      "border-border bg-muted text-foreground dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
   },
 };
 

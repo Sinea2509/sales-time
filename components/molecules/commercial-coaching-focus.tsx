@@ -37,10 +37,10 @@ export function CommercialCoachingFocus({
 }) {
   return (
     <div
-      className={`flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-6 dark:border-zinc-800 dark:bg-zinc-900 ${className ?? ""}`}
+      className={`flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-6 dark:border-zinc-800 dark:bg-zinc-900 ${className ?? ""}`}
     >
       <div className="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4">
-        <span className="text-xs font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+        <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase dark:text-zinc-400">
           Mon focus de progression
         </span>
         {skillSignature ? (
@@ -53,7 +53,7 @@ export function CommercialCoachingFocus({
             </span>
           </span>
         ) : (
-          <span className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          <span className="text-sm leading-relaxed text-muted-foreground dark:text-zinc-400">
             Analysez vos rendez-vous pour révéler votre point fort et votre axe
             de progression, comparés à votre équipe.
           </span>

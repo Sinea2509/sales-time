@@ -283,7 +283,7 @@ export function TeamMemberPerformanceShell({
       ) : null}
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:gap-4">
-          <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xl font-semibold text-zinc-800 shadow-sm ring-1 ring-zinc-200/80 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-700/80">
+          <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-muted text-xl font-semibold text-foreground shadow-sm ring-1 ring-border/80 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-700/80">
             {initials}
           </span>
           <div className="flex max-w-md flex-col items-center gap-1.5 text-center sm:items-start sm:text-left">
@@ -314,7 +314,7 @@ export function TeamMemberPerformanceShell({
             */}
             {horsEquipeDuManager ? (
               <p className="text-muted-foreground mt-1 max-w-prose text-xs leading-relaxed">
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                <span className="font-medium text-foreground dark:text-zinc-300">
                   Hors de votre équipe.
                 </span>{" "}
                 Sa place, son palier et son profil se lisent par rapport aux
@@ -340,7 +340,7 @@ export function TeamMemberPerformanceShell({
           </div>
         </div>
 
-        <div className="flex flex-1 flex-wrap items-start justify-center gap-8 self-start border-t border-zinc-200 pt-6 sm:justify-end sm:border-t-0 sm:pt-0 lg:min-w-0 dark:border-zinc-800">
+        <div className="flex flex-1 flex-wrap items-start justify-center gap-8 self-start border-t border-border pt-6 sm:justify-end sm:border-t-0 sm:pt-0 lg:min-w-0 dark:border-zinc-800">
           {statColumn({
             value: String(nbRdvs),
             label: "RDV",
@@ -390,7 +390,7 @@ export function TeamMemberPerformanceShell({
       <div className="grid gap-6 lg:grid-cols-2">
         <Card
           size="sm"
-          className="border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
         >
           <CardHeader className="gap-2 pb-3">
             <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
@@ -417,7 +417,7 @@ export function TeamMemberPerformanceShell({
               </p>
             )}
             {discAffinityText?.trim() ? (
-              <p className="text-muted-foreground mt-5 border-t border-zinc-100 pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
+              <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
                 {discAffinityText.trim()}
               </p>
             ) : null}
@@ -425,7 +425,7 @@ export function TeamMemberPerformanceShell({
         </Card>
         <Card
           size="sm"
-          className="border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
         >
           <CardHeader className="gap-2 pb-3">
             <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
@@ -454,7 +454,7 @@ export function TeamMemberPerformanceShell({
               </p>
             )}
             {soncasAffinityText?.trim() ? (
-              <p className="text-muted-foreground mt-5 border-t border-zinc-100 pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
+              <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
                 {soncasAffinityText.trim()}
               </p>
             ) : null}

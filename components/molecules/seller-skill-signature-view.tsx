@@ -46,7 +46,7 @@ export function SkillSignatureCell({
   if (!signature) {
     return (
       <span
-        className="text-zinc-500 dark:text-zinc-400"
+        className="text-muted-foreground dark:text-zinc-400"
         title={titreAbsence(skillMeetings)}
       >
         {VALEUR_NON_CALCULABLE}
@@ -70,13 +70,13 @@ export function SkillSignatureCell({
         l'interdisait auparavant, et ce commentaire décrivait alors un
         enroulement que le rendu ne produisait pas.
       */}
-      <span className="text-zinc-900 dark:text-zinc-100">
+      <span className="text-foreground dark:text-zinc-100">
         {SELLER_SKILL_LABEL_FR[signature.fort]}{" "}
-        <span className="tabular-nums text-zinc-500 dark:text-zinc-400">
+        <span className="tabular-nums text-muted-foreground dark:text-zinc-400">
           {formatEcartCompetence(signature.ecartFort)}
         </span>
       </span>
-      <span className="text-xs leading-snug text-zinc-500 dark:text-zinc-400">
+      <span className="text-xs leading-snug text-muted-foreground dark:text-zinc-400">
         à travailler : {SELLER_SKILL_LABEL_FR[signature.faible]}{" "}
         <span className="tabular-nums">
           {formatEcartCompetence(signature.ecartFaible)}

@@ -90,7 +90,7 @@ export function DashboardStandingCard({
   return (
     <div
       className={cn(
-        "relative isolate flex flex-col gap-3 overflow-hidden rounded-2xl border border-brand/15 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-5 dark:border-zinc-800 dark:bg-zinc-900",
+        "relative isolate flex flex-col gap-3 overflow-hidden rounded-2xl border border-brand/15 bg-card px-4 py-4 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-5 dark:border-zinc-800 dark:bg-zinc-900",
         className,
       )}
       data-feedback-id="dashboard-standing"
@@ -107,13 +107,13 @@ export function DashboardStandingCard({
       />
       <div className="flex min-w-0 flex-col gap-1.5">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-xs font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+          <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase dark:text-zinc-400">
             {comparisonGroup === "team"
               ? "Ma position dans l'équipe"
               : "Ma position dans l'organisation"}
           </span>
           <span
-            className="truncate text-xs leading-snug text-zinc-500 dark:text-zinc-400"
+            className="truncate text-xs leading-snug text-muted-foreground dark:text-zinc-400"
             title={sousTitre.title}
           >
             {sousTitre.texte}

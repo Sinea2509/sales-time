@@ -53,7 +53,7 @@ export function OrgAdminDonutDistributionCard({
     : `Moyenne équipe sur ${rdvCount} RDV analysé${rdvCount > 1 ? "s" : ""}`;
 
   return (
-    <Card className="border-neutral-200 shadow-sm dark:border-neutral-800">
+    <Card className="border-border shadow-sm dark:border-neutral-800">
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
           <CardTitle className={cardTitleClass}>{title}</CardTitle>
@@ -78,7 +78,7 @@ export function OrgAdminDonutDistributionCard({
                 style={{ background: `conic-gradient(${gradient})` }}
                 aria-hidden
               />
-              <div className="absolute inset-[32%] flex items-center justify-center rounded-full bg-white text-center dark:bg-zinc-900">
+              <div className="absolute inset-[32%] flex items-center justify-center rounded-full bg-card text-center dark:bg-zinc-900">
                 <span className="text-muted-foreground text-xs font-medium tabular-nums">
                   {data.isDefaultEqual ? 0 : rdvCount}
                   <span className="block text-[10px] font-normal">RDV</span>
@@ -89,7 +89,7 @@ export function OrgAdminDonutDistributionCard({
               {data.slices.map((s) => (
                 <li
                   key={s.id}
-                  className="flex items-center justify-between gap-3 border-b border-zinc-100 py-1.5 last:border-0 dark:border-zinc-800"
+                  className="flex items-center justify-between gap-3 border-b border-border py-1.5 last:border-0 dark:border-zinc-800"
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <span
@@ -102,15 +102,15 @@ export function OrgAdminDonutDistributionCard({
                         grille={grille}
                         code={s.id}
                         libelle={s.label}
-                        className="min-w-0 text-zinc-800 dark:text-zinc-200"
+                        className="min-w-0 text-foreground dark:text-zinc-200"
                       />
                     ) : (
-                      <span className="truncate text-zinc-800 dark:text-zinc-200">
+                      <span className="truncate text-foreground dark:text-zinc-200">
                         {s.label}
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 tabular-nums text-zinc-600 dark:text-zinc-400">
+                  <span className="shrink-0 tabular-nums text-muted-foreground dark:text-zinc-400">
                     {Math.round((100 * s.value) / total)}%
                   </span>
                 </li>

@@ -53,7 +53,7 @@ function QualificationMatrixTooltipContent() {
   if (!meta) return null;
 
   return (
-    <div className="bg-popover text-popover-foreground max-w-64 space-y-1 rounded-lg border border-neutral-200 px-3 py-2 text-xs shadow-md dark:border-neutral-800">
+    <div className="bg-popover text-popover-foreground max-w-64 space-y-1 rounded-lg border border-border px-3 py-2 text-xs shadow-md dark:border-neutral-800">
       <p className="text-foreground text-sm font-semibold leading-snug">
         {meta.contactName}
       </p>
@@ -87,7 +87,7 @@ function QualificationMatrixTooltipContent() {
         elle repose : une action sans son motif se lit comme un ordre.
       */}
       {meta.quadrantAction ? (
-        <p className="border-t border-neutral-200 pt-1 dark:border-neutral-800">
+        <p className="border-t border-border pt-1 dark:border-neutral-800">
           <span className="text-foreground font-semibold">
             {meta.quadrantAction}
           </span>

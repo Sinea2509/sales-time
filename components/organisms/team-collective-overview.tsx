@@ -164,7 +164,7 @@ const GRADUATIONS = [
   entière hors de l'écran d'un téléphone au lieu de défiler dans son cadre.
 */
 const CADRE =
-  "min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
+  "min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
 /*
   La marge est séparée du cadre parce qu'une des deux cartes porte un bandeau
   qui va d'un bord à l'autre : appliquée au cadre, elle aurait laissé un liseré
@@ -173,8 +173,9 @@ const CADRE =
 const MARGE = "p-4 sm:p-5";
 const CARTE = cn(CADRE, MARGE);
 const TITRE =
-  "text-sm font-semibold tracking-tight text-zinc-950 dark:text-zinc-50";
-const LEGENDE = "text-xs leading-relaxed text-zinc-500 dark:text-zinc-400";
+  "text-sm font-semibold tracking-tight text-foreground dark:text-zinc-50";
+const LEGENDE =
+  "text-xs leading-relaxed text-muted-foreground dark:text-zinc-400";
 
 /** Position d'une note sur l'axe, en pourcentage de la largeur de la piste. */
 function positionSurAxe(note: number): string {
@@ -261,7 +262,7 @@ function PisteDeRepartition({
         {moyenne != null ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 border-l-2 border-dashed border-zinc-400 dark:border-zinc-500"
+            className="pointer-events-none absolute inset-y-0 border-l-2 border-dashed border-muted-foreground/50 dark:border-zinc-500"
             style={{ left: positionSurAxe(moyenne) }}
           />
         ) : null}
@@ -313,7 +314,7 @@ function PisteDeRepartition({
           {GRADUATIONS.map((graduation) => (
             <span
               key={graduation}
-              className="absolute top-0 text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400"
+              className="absolute top-0 text-[11px] text-muted-foreground tabular-nums dark:text-zinc-400"
               style={
                 graduation === 0
                   ? { left: 0 }
@@ -400,10 +401,10 @@ function EncartDeRelief({
       >
         {titre}
       </p>
-      <p className="mt-1 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+      <p className="mt-1 text-sm font-semibold text-foreground dark:text-zinc-50">
         {SELLER_SKILL_LABEL_FR[bar.key]}
       </p>
-      <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">
+      <p className="mt-0.5 text-xs text-muted-foreground dark:text-zinc-400">
         <span className="tabular-nums">{bar.valeur}/100</span> ·{" "}
         <span className="tabular-nums">{formatEcartCompetence(bar.ecart)}</span>{" "}
         d&apos;écart au niveau de l&apos;équipe
@@ -464,7 +465,7 @@ function CarteDesCompetences({
               />
             </div>
           ) : (
-            <p className="mt-1.5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+            <p className="mt-1.5 text-sm leading-relaxed text-foreground dark:text-zinc-300">
               Les six compétences de l&apos;équipe sont au même niveau,{" "}
               <span className="tabular-nums">{vue.niveauMoyen}/100</span> :
               aucune ne se détache, ni vers le haut ni vers le bas.
@@ -479,7 +480,7 @@ function CarteDesCompetences({
               return (
                 <li key={bar.key}>
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm text-zinc-800 dark:text-zinc-200">
+                    <span className="text-sm text-foreground dark:text-zinc-200">
                       {SELLER_SKILL_LABEL_FR[bar.key]}
                     </span>
                     <span className="flex shrink-0 items-baseline gap-2 tabular-nums">
@@ -491,18 +492,18 @@ function CarteDesCompetences({
                         tombe.
                       */}
                       {extreme ? (
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                        <span className="text-xs text-muted-foreground dark:text-zinc-400">
                           {formatEcartCompetence(bar.ecart)}
                         </span>
                       ) : null}
-                      <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+                      <span className="text-sm font-semibold text-foreground dark:text-zinc-50">
                         {bar.valeur}
                       </span>
                     </span>
                   </div>
                   <div className="relative mt-1.5">
                     <span
-                      className="block h-2 rounded-full bg-neutral-200 dark:bg-neutral-800"
+                      className="block h-2 rounded-full bg-muted dark:bg-neutral-800"
                       aria-hidden
                     >
                       {/*
@@ -512,7 +513,7 @@ function CarteDesCompetences({
                         la longueur ; la couleur n'y ajoutait rien.
                       */}
                       <span
-                        className="block h-full rounded-full bg-zinc-700 dark:bg-zinc-300"
+                        className="block h-full rounded-full bg-foreground/80 dark:bg-zinc-300"
                         style={{ width: `${bar.valeur}%` }}
                       />
                     </span>
@@ -524,7 +525,7 @@ function CarteDesCompetences({
                     */}
                     <span
                       aria-hidden
-                      className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-zinc-400 dark:bg-zinc-500"
+                      className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-muted-foreground/60 dark:bg-zinc-500"
                       style={{ left: `${vue.niveauMoyen}%` }}
                     />
                   </div>
@@ -611,7 +612,7 @@ export function TeamCollectiveOverview({
           dots={dots}
         />
         <div className={MARGE}>
-          <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm leading-relaxed text-foreground dark:text-zinc-300">
             {phraseDeRepartition(dots, ranking.minScoredMeetings)}
           </p>
           <PisteDeRepartition dots={dots} moyenne={ranking.averageNoteOn5} />

@@ -70,11 +70,11 @@ function NoteAvecBase({
 }) {
   return (
     <span
-      className="text-xs font-medium text-zinc-700 tabular-nums dark:text-zinc-300"
+      className="text-xs font-medium text-foreground tabular-nums dark:text-zinc-300"
       title={`Moyenne des SalesScores des ${rdvNotes(scored)} de la période.`}
     >
       {formatNoteOn5(note)}
-      <span className="font-normal text-zinc-500 dark:text-zinc-400">
+      <span className="font-normal text-muted-foreground dark:text-zinc-400">
         {" "}
         · moyenne de {rdvNotes(scored)}
       </span>
@@ -144,7 +144,7 @@ export function TeamMemberStanding({
           </div>
         )}
         <p className="text-muted-foreground max-w-prose text-xs leading-relaxed">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">
+          <span className="font-medium text-foreground dark:text-zinc-300">
             Hors classement.
           </span>{" "}
           {unrankedExplanation(
@@ -183,7 +183,7 @@ export function TeamMemberStanding({
     <div className={cn("flex flex-col gap-1.5", className)}>
       <div className="flex flex-wrap items-center gap-2">
         <span
-          className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+          className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-foreground dark:bg-zinc-800 dark:text-zinc-100"
           title={`${rankLabel(row.rank)} parmi les ${membresClasses(
             ranking.rankedCount,
           )} ${GROUPE[comparisonGroup].parmi}${row.tied ? ", ex æquo" : ""}.`}
@@ -205,7 +205,7 @@ export function TeamMemberStanding({
             au-dessus ; l'insigne, lui, tient sur une ligne à côté d'un rang et
             d'un palier, et se contente du mot qui porte le sens.
           */}
-          <span className="font-normal text-zinc-500 dark:text-zinc-400">
+          <span className="font-normal text-muted-foreground dark:text-zinc-400">
             sur {ranking.rankedCount} classés
           </span>
         </span>

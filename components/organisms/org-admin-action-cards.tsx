@@ -62,30 +62,30 @@ function CorpsDeMembre({
     <>
       <span className="mt-3 flex items-start justify-between gap-3">
         <span className="flex min-w-0 items-center gap-2.5">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-xs font-semibold text-foreground dark:bg-zinc-800 dark:text-zinc-300">
             {membre.initiales}
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <span className="block truncate text-sm font-semibold text-foreground dark:text-zinc-100">
               {membre.nom}
             </span>
-            <span className="block text-xs text-zinc-600 dark:text-zinc-400">
+            <span className="block text-xs text-muted-foreground dark:text-zinc-400">
               {membre.rangEtBase}
               {precisionDeRang ? ` · ${precisionDeRang}` : null}
             </span>
           </span>
         </span>
         <span className="flex shrink-0 items-baseline gap-0.5">
-          <span className="text-2xl font-semibold tracking-tight text-zinc-900 tabular-nums dark:text-zinc-100">
+          <span className="text-2xl font-semibold tracking-tight text-foreground tabular-nums dark:text-zinc-100">
             {membre.note}
           </span>
-          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs font-medium text-muted-foreground dark:text-zinc-400">
             /5
           </span>
         </span>
       </span>
       {membre.competence ? (
-        <span className="mt-2.5 block border-t border-zinc-100 pt-2.5 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
+        <span className="mt-2.5 block border-t border-border pt-2.5 text-xs text-muted-foreground dark:border-zinc-800 dark:text-zinc-400">
           {membre.competence}
         </span>
       ) : null}
@@ -94,7 +94,7 @@ function CorpsDeMembre({
 }
 
 const CARTE =
-  "rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900";
+  "rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900";
 
 function CarteDeMembre({
   membre,
@@ -108,7 +108,7 @@ function CarteDeMembre({
   return (
     <Link
       href={membre.href}
-      className={`${CARTE} group block transition-shadow hover:border-zinc-300 hover:shadow-md dark:hover:border-zinc-700`}
+      className={`${CARTE} group block transition-shadow hover:border-border hover:shadow-md dark:hover:border-zinc-700`}
     >
       <span className="flex items-center justify-between gap-2">
         {etiquette}
@@ -117,7 +117,7 @@ function CarteDeMembre({
           deux cartes-liens de leur voisine qui n'en est pas un.
         */}
         <ChevronRight
-          className="size-4 text-zinc-400 transition-transform group-hover:translate-x-0.5 dark:text-zinc-500"
+          className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 dark:text-zinc-500"
           aria-hidden
         />
       </span>
@@ -177,13 +177,13 @@ export function OrgAdminActionCards({
             {aFaireAnalyser.map((ligne) => (
               <li
                 key={ligne}
-                className="text-sm text-zinc-700 dark:text-zinc-300"
+                className="text-sm text-foreground dark:text-zinc-300"
               >
                 {ligne}
               </li>
             ))}
           </ul>
-          <p className="mt-2.5 border-t border-zinc-100 pt-2.5 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+          <p className="mt-2.5 border-t border-border pt-2.5 text-xs text-muted-foreground dark:border-zinc-800 dark:text-zinc-400">
             Les analyses de rendez-vous nourrissent la note, le classement et le
             coaching.
           </p>

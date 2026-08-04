@@ -129,7 +129,7 @@ function CarteBriefing({ affiche }: { affiche: BriefingAffiche }) {
             {profils.map((profil) => (
               <div
                 key={profil.cle}
-                className="flex items-baseline gap-1.5 rounded-lg bg-neutral-100 px-2.5 py-1 dark:bg-neutral-800/60"
+                className="flex items-baseline gap-1.5 rounded-lg bg-muted px-2.5 py-1 dark:bg-neutral-800/60"
               >
                 <dt className="text-muted-foreground text-xs">
                   {profil.terme}

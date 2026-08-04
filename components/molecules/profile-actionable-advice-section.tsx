@@ -19,13 +19,18 @@ export function ProfileActionableAdviceSection({
   className?: string;
 }) {
   return (
-    <div className={cn("space-y-3 border-t border-zinc-100 pt-4 dark:border-zinc-800", className)}>
+    <div
+      className={cn(
+        "space-y-3 border-t border-border pt-4 dark:border-zinc-800",
+        className,
+      )}
+    >
       <p className={cardSubsectionTitleClass}>Conseils actionnables</p>
       <div className="grid gap-3 sm:grid-cols-1">
         {adviceBlocks.map(({ key, title }) => (
           <div
             key={key}
-            className="rounded-lg border border-zinc-200/80 bg-zinc-50/80 p-3 dark:border-zinc-800 dark:bg-zinc-900/50"
+            className="rounded-lg border border-border/80 bg-muted/80 p-3 dark:border-zinc-800 dark:bg-zinc-900/50"
           >
             <p className="text-foreground mb-1.5 text-xs font-semibold tracking-wide uppercase">
               {title}

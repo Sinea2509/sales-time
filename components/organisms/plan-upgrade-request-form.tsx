@@ -58,7 +58,7 @@ export function PlanUpgradeRequestForm() {
         4,27:1, mesuré au navigateur. L'encre passe donc au même gris que la
         ligne secondaire des cartes de forfait, juste au-dessus.
       */}
-      <p className="mt-1 text-sm text-neutral-700 dark:text-neutral-300">
+      <p className="mt-1 text-sm text-foreground dark:text-neutral-300">
         Quota d&apos;essai épuisé ou besoin de la vue manager ? Envoyez une
         demande à notre équipe.
       </p>

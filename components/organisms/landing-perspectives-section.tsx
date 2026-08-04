@@ -22,7 +22,7 @@ export function LandingPerspectivesSection() {
   const Visual = visuals[active.id as keyof typeof visuals];
 
   return (
-    <section id="persp" className="scroll-mt-24 bg-white py-[88px]">
+    <section id="persp" className="scroll-mt-24 bg-card py-[88px]">
       <div className="mx-auto max-w-[1160px] px-6 sm:px-10">
         <div className="mb-11 flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">
           <LandingSectionHeading
@@ -45,7 +45,7 @@ export function LandingPerspectivesSection() {
                   "inline-flex items-center gap-1.75 rounded-[9px] border px-4 py-2.25 font-medium whitespace-nowrap transition-all",
                   index === activeIndex
                     ? "border-brand bg-brand text-brand-foreground shadow-[0_2px_10px_rgba(108,77,255,0.3)] [&_svg]:opacity-100"
-                    : "border-zinc-200 bg-transparent text-zinc-500 hover:border-zinc-300 [&_svg]:opacity-50",
+                    : "border-border bg-transparent text-muted-foreground hover:border-border [&_svg]:opacity-50",
                 )}
               >
                 <tab.icon className="size-3.25" strokeWidth={2.2} />
@@ -58,10 +58,10 @@ export function LandingPerspectivesSection() {
         <div className="grid items-center gap-[60px] lg:grid-cols-2">
           <LandingReveal>
             <div>
-              <h3 className="mb-3.5 text-[26px] font-bold tracking-tight text-zinc-950">
+              <h3 className="mb-3.5 text-[26px] font-bold tracking-tight text-foreground">
                 {active.title}
               </h3>
-              <p className="mb-7 text-[15.5px] leading-[1.75] text-zinc-500">
+              <p className="mb-7 text-[15.5px] leading-[1.75] text-muted-foreground">
                 {active.description}
               </p>
               <div className="flex flex-col gap-2.25">

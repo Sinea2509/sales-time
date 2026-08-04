@@ -116,7 +116,7 @@ export function AnalyseRecommandationsSection({
       className="grid gap-4 lg:grid-cols-2 lg:items-start"
       data-feedback-id="analyse-recommandations"
     >
-      <Card className="flex flex-col border-neutral-200 shadow-sm dark:border-neutral-800">
+      <Card className="flex flex-col border-border shadow-sm dark:border-neutral-800">
         <CardHeader>
           <CardTitle className={cardTitleClass}>{profileTitle}</CardTitle>
           {/*
@@ -161,7 +161,7 @@ export function AnalyseRecommandationsSection({
       </Card>
 
       <div className="flex flex-col gap-4">
-        <Card className="flex flex-col border-neutral-200 shadow-sm dark:border-neutral-800">
+        <Card className="flex flex-col border-border shadow-sm dark:border-neutral-800">
           <IconCardHeader
             icon={LineChart}
             title={progressTitle}
@@ -177,7 +177,7 @@ export function AnalyseRecommandationsSection({
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col border-neutral-200 shadow-sm dark:border-neutral-800">
+        <Card className="flex flex-col border-border shadow-sm dark:border-neutral-800">
           <IconCardHeader
             icon={Play}
             title={improvementTitle}

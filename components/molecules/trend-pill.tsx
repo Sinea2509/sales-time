@@ -23,7 +23,7 @@ const kpiVsPreviousVariants = cva(basePill, {
       good: "border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:border-emerald-500/35 dark:bg-emerald-500/15 dark:text-emerald-100",
       bad: "border-rose-500/40 bg-rose-500/10 text-rose-800 dark:border-rose-500/35 dark:bg-rose-500/15 dark:text-rose-100",
       neutral:
-        "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
+        "border-border bg-muted text-muted-foreground dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
     },
   },
   defaultVariants: { intent: "neutral" },

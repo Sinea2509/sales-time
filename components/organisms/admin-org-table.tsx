@@ -141,7 +141,7 @@ export function AdminOrgTable({ organizations }: Props) {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Rechercher par nom, slug ou ID..."
             value={search}
@@ -175,8 +175,8 @@ export function AdminOrgTable({ organizations }: Props) {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
+          <span className="text-sm font-medium text-foreground dark:text-zinc-300">
             {selectedIds.size} sélectionné(s)
           </span>
           <Button
@@ -192,11 +192,11 @@ export function AdminOrgTable({ organizations }: Props) {
       )}
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
+              <tr className="border-b border-border bg-muted/80 dark:border-zinc-800 dark:bg-zinc-950/60">
                 <th className="w-10 px-4 py-3">
                   <input
                     type="checkbox"
@@ -205,30 +205,30 @@ export function AdminOrgTable({ organizations }: Props) {
                       selectedIds.size === filtered.length
                     }
                     onChange={toggleSelectAll}
-                    className="size-4 rounded border-zinc-300 dark:border-zinc-600"
+                    className="size-4 rounded border-border dark:border-zinc-600"
                   />
                 </th>
-                <th className="px-4 py-3 font-medium text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 font-medium text-muted-foreground dark:text-zinc-400">
                   Organisation
                 </th>
-                <th className="px-4 py-3 font-medium text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 font-medium text-muted-foreground dark:text-zinc-400">
                   Slug
                 </th>
-                <th className="hidden px-4 py-3 font-medium text-zinc-500 sm:table-cell dark:text-zinc-400">
+                <th className="hidden px-4 py-3 font-medium text-muted-foreground sm:table-cell dark:text-zinc-400">
                   Membres
                 </th>
-                <th className="hidden px-4 py-3 font-medium text-zinc-500 md:table-cell dark:text-zinc-400">
+                <th className="hidden px-4 py-3 font-medium text-muted-foreground md:table-cell dark:text-zinc-400">
                   RDV
                 </th>
-                <th className="hidden px-4 py-3 font-medium text-zinc-500 lg:table-cell dark:text-zinc-400">
+                <th className="hidden px-4 py-3 font-medium text-muted-foreground lg:table-cell dark:text-zinc-400">
                   Créée le
                 </th>
-                <th className="px-4 py-3 text-right font-medium text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-right font-medium text-muted-foreground dark:text-zinc-400">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="divide-y divide-border dark:divide-zinc-800">
               {filtered.length === 0 ? (
                 <TableEmptyRow
                   colSpan={7}
@@ -239,14 +239,14 @@ export function AdminOrgTable({ organizations }: Props) {
                 filtered.map((org) => (
                   <tr
                     key={org.id}
-                    className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                    className="hover:bg-muted/60 dark:hover:bg-zinc-800/40"
                   >
                     <td className="w-10 px-4 py-3.5">
                       <input
                         type="checkbox"
                         checked={selectedIds.has(org.id)}
                         onChange={() => toggleSelect(org.id)}
-                        className="size-4 rounded border-zinc-300 dark:border-zinc-600"
+                        className="size-4 rounded border-border dark:border-zinc-600"
                       />
                     </td>
                     <td className="px-4 py-3.5">
@@ -257,12 +257,12 @@ export function AdminOrgTable({ organizations }: Props) {
                         <div className="min-w-0">
                           <Link
                             href={`/admin/organizations/${org.id}`}
-                            className="block truncate font-medium text-zinc-900 hover:underline dark:text-zinc-100"
+                            className="block truncate font-medium text-foreground hover:underline dark:text-zinc-100"
                           >
                             {org.name}
                           </Link>
                           {org.website && (
-                            <p className="flex items-center gap-1 truncate text-xs text-zinc-400">
+                            <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
                               <Globe className="size-3" />
                               {org.website}
                             </p>
@@ -276,18 +276,18 @@ export function AdminOrgTable({ organizations }: Props) {
                       </Badge>
                     </td>
                     <td className="hidden px-4 py-3.5 sm:table-cell">
-                      <span className="inline-flex items-center gap-1 text-zinc-600 dark:text-zinc-300">
-                        <Users className="size-3.5 text-zinc-400" />
+                      <span className="inline-flex items-center gap-1 text-muted-foreground dark:text-zinc-300">
+                        <Users className="size-3.5 text-muted-foreground" />
                         {org.memberCount}
                       </span>
                     </td>
                     <td className="hidden px-4 py-3.5 md:table-cell">
-                      <span className="inline-flex items-center gap-1 text-zinc-600 dark:text-zinc-300">
-                        <CalendarDays className="size-3.5 text-zinc-400" />
+                      <span className="inline-flex items-center gap-1 text-muted-foreground dark:text-zinc-300">
+                        <CalendarDays className="size-3.5 text-muted-foreground" />
                         {org.meetingCount}
                       </span>
                     </td>
-                    <td className="hidden whitespace-nowrap px-4 py-3.5 text-zinc-500 lg:table-cell">
+                    <td className="hidden whitespace-nowrap px-4 py-3.5 text-muted-foreground lg:table-cell">
                       {new Date(org.createdAt).toLocaleDateString("fr-FR")}
                     </td>
                     <td className="px-4 py-3.5 text-right">
@@ -321,8 +321,8 @@ export function AdminOrgTable({ organizations }: Props) {
             </tbody>
           </table>
         </div>
-        <div className="border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          <p className="text-xs text-zinc-400">
+        <div className="border-t border-border px-4 py-3 dark:border-zinc-800">
+          <p className="text-xs text-muted-foreground">
             {filtered.length} organisation(s) sur {organizations.length}
           </p>
         </div>
@@ -356,7 +356,7 @@ export function AdminOrgTable({ organizations }: Props) {
                 placeholder="acme-corp"
                 pattern="[a-z0-9-]+"
               />
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 Minuscules, chiffres et tirets uniquement.
               </p>
             </div>

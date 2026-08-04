@@ -257,7 +257,7 @@ export function MeetingCreateForm({
         </div>
       </div>
 
-      <div className="space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+      <div className="space-y-3 rounded-lg border border-border p-4 dark:border-neutral-800">
         <div className="flex flex-wrap gap-3">
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input

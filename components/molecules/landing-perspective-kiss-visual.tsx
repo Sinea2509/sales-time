@@ -41,10 +41,10 @@ export function LandingPerspectiveKissVisual() {
   ] as const;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-[0_8px_40px_rgba(0,0,0,0.07)]">
-      <div className="bg-zinc-50 p-5">
+    <div className="overflow-hidden rounded-2xl border border-border shadow-[0_8px_40px_rgba(0,0,0,0.07)]">
+      <div className="bg-muted p-5">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-[13px] font-semibold text-zinc-950">
+          <p className="text-[13px] font-semibold text-foreground">
             Analyse RDV · Antoine Lambert
           </p>
           <span className="rounded-[5px] bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand">
@@ -59,29 +59,39 @@ export function LandingPerspectiveKissVisual() {
               className="rounded-[7px] border p-2.5"
               style={{ backgroundColor: item.bg, borderColor: item.border }}
             >
-              <p className="mb-1 text-[9.5px] font-bold" style={{ color: item.color }}>
+              <p
+                className="mb-1 text-[9.5px] font-bold"
+                style={{ color: item.color }}
+              >
                 {item.key}
               </p>
-              <p className="text-[11px] leading-snug text-zinc-600">{item.text}</p>
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                {item.text}
+              </p>
             </div>
           ))}
         </div>
-        <p className="mb-2 text-[10.5px] font-semibold tracking-wide text-zinc-500 uppercase">
+        <p className="mb-2 text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
           Profil DISC
         </p>
         <div className="space-y-1.5">
           {discBars.map((bar) => (
             <div key={bar.label} className="flex items-center gap-2">
-              <span className="w-4 text-[10px] font-bold" style={{ color: bar.color }}>
+              <span
+                className="w-4 text-[10px] font-bold"
+                style={{ color: bar.color }}
+              >
                 {bar.label}
               </span>
-              <div className="h-1.5 flex-1 overflow-hidden rounded-sm bg-zinc-200">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-sm bg-muted">
                 <div
                   className="h-full rounded-sm"
                   style={{ width: `${bar.pct}%`, backgroundColor: bar.color }}
                 />
               </div>
-              <span className="w-7 text-right text-[10px] text-zinc-500">{bar.pct}%</span>
+              <span className="w-7 text-right text-[10px] text-muted-foreground">
+                {bar.pct}%
+              </span>
             </div>
           ))}
         </div>

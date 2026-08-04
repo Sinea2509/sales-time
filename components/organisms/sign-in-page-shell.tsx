@@ -13,7 +13,7 @@ type SignInPageShellProps = {
 export function SignInPageShell({ next, reason }: SignInPageShellProps) {
   const showVersionNotice = reason === "new_version";
   return (
-    <main className="grid h-svh max-h-svh min-h-svh grid-cols-1 overflow-hidden bg-white lg:grid-cols-2">
+    <main className="grid h-svh max-h-svh min-h-svh grid-cols-1 overflow-hidden bg-card lg:grid-cols-2">
       <SignInBrandPanel />
 
       <section className="flex min-h-0 h-full items-center justify-center overflow-y-auto px-6 py-10 sm:px-10">

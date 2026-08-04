@@ -37,13 +37,13 @@ function PopoverContent({
         <PopoverPrimitive.Popup
           data-slot="popover-content"
           className={cn(
-            "z-50 w-72 max-w-[calc(100vw-2rem)] origin-(--transform-origin) rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-700 shadow-lg outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "z-50 w-72 max-w-[calc(100vw-2rem)] origin-(--transform-origin) rounded-xl border border-border bg-card p-4 text-sm text-foreground shadow-lg outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className,
           )}
           {...props}
         >
           {children}
-          <PopoverPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%-1px)] rotate-45 rounded-[2px] border-r border-b border-zinc-200 bg-white data-[side=bottom]:top-1 data-[side=left]:top-1/2! data-[side=left]:-right-1 data-[side=left]:-translate-y-1/2 data-[side=right]:top-1/2! data-[side=right]:-left-1 data-[side=right]:-translate-y-1/2 data-[side=top]:-bottom-2.5 dark:border-zinc-800 dark:bg-zinc-900" />
+          <PopoverPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%-1px)] rotate-45 rounded-[2px] border-r border-b border-border bg-card data-[side=bottom]:top-1 data-[side=left]:top-1/2! data-[side=left]:-right-1 data-[side=left]:-translate-y-1/2 data-[side=right]:top-1/2! data-[side=right]:-left-1 data-[side=right]:-translate-y-1/2 data-[side=top]:-bottom-2.5 dark:border-zinc-800 dark:bg-zinc-900" />
         </PopoverPrimitive.Popup>
       </PopoverPrimitive.Positioner>
     </PopoverPrimitive.Portal>

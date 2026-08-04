@@ -69,7 +69,7 @@ function BlockGauge({ block }: { block: ScorecardBlockView }) {
         si bien que la couleur ne porte jamais seule l'information.
       */}
       <span
-        className="block h-2 w-full rounded-full bg-neutral-200 dark:bg-neutral-800"
+        className="block h-2 w-full rounded-full bg-muted dark:bg-neutral-800"
         aria-hidden
       >
         <span

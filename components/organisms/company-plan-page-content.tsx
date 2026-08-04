@@ -145,7 +145,7 @@ export function CompanyPlanPageContent() {
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-neutral-200 dark:border-neutral-800">
+        <Card className="border-border dark:border-neutral-800">
           <CardHeader className="pb-2">
             <CardTitle className={cardTitleClass}>Starter</CardTitle>
             <CardDescription>Commercial solo</CardDescription>
@@ -157,7 +157,7 @@ export function CompanyPlanPageContent() {
                 par utilisateur / mois
               </p>
             </div>
-            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            <p className="text-sm font-medium text-foreground dark:text-neutral-300">
               Max. 5 utilisateurs
             </p>
             <PlanChoiceLink
@@ -195,7 +195,7 @@ export function CompanyPlanPageContent() {
                 par utilisateur / mois
               </p>
             </div>
-            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            <p className="text-sm font-medium text-foreground dark:text-neutral-300">
               Max. 50 utilisateurs
             </p>
             {/*
@@ -217,7 +217,7 @@ export function CompanyPlanPageContent() {
           </CardContent>
         </Card>
 
-        <Card className="border-neutral-200 dark:border-neutral-800">
+        <Card className="border-border dark:border-neutral-800">
           <CardHeader className="pb-2">
             <CardTitle className={cardTitleClass}>Entreprise</CardTitle>
             <CardDescription>Grands comptes</CardDescription>
@@ -229,7 +229,7 @@ export function CompanyPlanPageContent() {
                 Facturation sur mesure
               </p>
             </div>
-            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            <p className="text-sm font-medium text-foreground dark:text-neutral-300">
               Plus de 50 utilisateurs
             </p>
             <PlanChoiceLink
@@ -249,7 +249,7 @@ export function CompanyPlanPageContent() {
 
       <div className="space-y-3">
         <h2 className={sectionHeadingClass}>Comparatif détaillé</h2>
-        <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
+        <div className="overflow-x-auto rounded-xl border border-border dark:border-neutral-800">
           {/*
             Quatre colonnes ne tiennent pas sur un téléphone : le tableau garde
             donc son défilement horizontal. La largeur minimale baisse sous
@@ -258,28 +258,28 @@ export function CompanyPlanPageContent() {
           */}
           <table className="w-full min-w-[440px] border-collapse text-left text-sm sm:min-w-[640px]">
             <thead>
-              <tr className="border-b border-neutral-200 bg-neutral-50/80 dark:border-neutral-800 dark:bg-neutral-900/50">
-                <th className="px-4 py-3 font-medium text-neutral-500 dark:text-neutral-400">
+              <tr className="border-b border-border bg-muted/80 dark:border-neutral-800 dark:bg-neutral-900/50">
+                <th className="px-4 py-3 font-medium text-muted-foreground dark:text-neutral-400">
                   Fonctionnalité
                 </th>
-                <th className="px-4 py-3 font-semibold text-neutral-900 dark:text-neutral-100">
+                <th className="px-4 py-3 font-semibold text-foreground dark:text-neutral-100">
                   Starter
                 </th>
                 <th className="text-brand px-4 py-3 font-semibold">Team</th>
-                <th className="px-4 py-3 font-semibold text-neutral-900 dark:text-neutral-100">
+                <th className="px-4 py-3 font-semibold text-foreground dark:text-neutral-100">
                   Entreprise
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+            <tbody className="divide-y divide-border dark:divide-neutral-800">
               {comparisonRows.map((row) => (
                 <tr
                   key={row.label}
-                  className="bg-white hover:bg-neutral-50/80 dark:bg-neutral-950 dark:hover:bg-neutral-900/40"
+                  className="bg-card hover:bg-muted/80 dark:bg-neutral-950 dark:hover:bg-neutral-900/40"
                 >
                   <th
                     scope="row"
-                    className="px-4 py-3 font-normal text-neutral-700 dark:text-neutral-300"
+                    className="px-4 py-3 font-normal text-foreground dark:text-neutral-300"
                   >
                     {row.label}
                   </th>

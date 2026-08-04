@@ -217,17 +217,17 @@ export function OrgDashboardShellFrame({
                   footerNav.length > 0 ? "pt-1" : "pt-2",
                 )}
               >
-                <div className="rounded-xl border border-[#404040]/20 bg-[#F5F5F5] p-3">
-                  <p className="text-sm font-semibold text-[#171717]">
+                <div className="rounded-xl border-border border bg-secondary p-3">
+                  <p className="text-sm font-semibold text-foreground">
                     Essai gratuit
                   </p>
-                  <p className="mt-1 text-xs leading-snug text-[#404040]">
+                  <p className="mt-1 text-muted-foreground text-xs leading-snug">
                     {trialAnalysesLeft > 0
                       ? `Plus que ${trialAnalysesLeft} analyse${trialAnalysesLeft > 1 ? "s" : ""}, passez au plan pour continuer`
                       : "Quota épuisé, passez au plan pour continuer"}
                   </p>
                   <div className="mt-3">
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#171717]/20">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/15">
                       <div
                         className="h-full rounded-full bg-brand"
                         style={{ width: `${progressPercent}%` }}
@@ -253,21 +253,21 @@ export function OrgDashboardShellFrame({
 
       {showQuotaPopup ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-5 shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-base font-semibold text-[#171717] dark:text-neutral-100">
+                <h3 className="text-base font-semibold text-foreground dark:text-neutral-100">
                   Quota d&apos;analyses atteint
                 </h3>
-                <p className="mt-1 text-sm text-[#404040] dark:text-neutral-300">
+                <p className="mt-1 text-muted-foreground text-sm dark:text-neutral-300">
                   Vos {trialLimit} analyses gratuites sont utilisées. Demandez
-                  un upgrade pour débloquer la suite.
+                  le passage au plan supérieur pour débloquer la suite.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowQuotaPopup(false)}
-                className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                className="text-muted-foreground hover:text-foreground dark:hover:text-neutral-100"
                 aria-label="Fermer"
               >
                 <X className="size-4" />

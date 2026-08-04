@@ -86,7 +86,7 @@ export function TeamMemberPerformanceProfileCard({
   return (
     <Card
       size="sm"
-      className="overflow-hidden border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="overflow-hidden border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
       <CardHeader className="pb-3">
         <CardTitle

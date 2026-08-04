@@ -11,7 +11,7 @@ const LABELS: Record<MeetingStatus, string> = {
 };
 
 const CLASSES: Record<MeetingStatus, string> = {
-  PENDING: "bg-neutral-100 text-neutral-700",
+  PENDING: "bg-muted text-foreground",
   PROCESSING: "bg-amber-100 text-amber-800",
   READY: "bg-emerald-100 text-emerald-800",
   FAILED: "bg-red-100 text-red-800",
@@ -22,7 +22,9 @@ export function meetingStatusLabel(status: MeetingStatus | string): string {
   return String(status);
 }
 
-export function meetingStatusBadgeClass(status: MeetingStatus | string): string {
+export function meetingStatusBadgeClass(
+  status: MeetingStatus | string,
+): string {
   if (isMeetingStatus(status)) return CLASSES[status];
-  return "bg-neutral-100 text-neutral-700";
+  return "bg-muted text-foreground";
 }

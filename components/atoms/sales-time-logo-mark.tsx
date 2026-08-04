@@ -28,7 +28,7 @@ export function SalesTimeLogoMark({
   return (
     <span
       className={cn(
-        "bg-brand flex shrink-0 items-center justify-center text-white",
+        "bg-brand text-brand-foreground flex shrink-0 items-center justify-center",
         sizeClasses[size],
         className,
       )}

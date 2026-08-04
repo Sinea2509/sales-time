@@ -12,9 +12,9 @@ type BarItem = {
 function QuarterTicks() {
   return (
     <div className="pointer-events-none absolute inset-0 z-[3]" aria-hidden>
-      <div className="absolute inset-y-0 left-[25%] w-px -translate-x-px bg-zinc-500/30 dark:bg-zinc-400/25" />
-      <div className="absolute inset-y-0 left-[50%] w-px -translate-x-px bg-zinc-500/30 dark:bg-zinc-400/25" />
-      <div className="absolute inset-y-0 left-[75%] w-px -translate-x-px bg-zinc-500/30 dark:bg-zinc-400/25" />
+      <div className="absolute inset-y-0 left-[25%] w-px -translate-x-px bg-muted-foreground/30 dark:bg-zinc-400/25" />
+      <div className="absolute inset-y-0 left-[50%] w-px -translate-x-px bg-muted-foreground/30 dark:bg-zinc-400/25" />
+      <div className="absolute inset-y-0 left-[75%] w-px -translate-x-px bg-muted-foreground/30 dark:bg-zinc-400/25" />
     </div>
   );
 }
@@ -56,7 +56,7 @@ export function ProfileAffinityHorizontalBars({
               {row.pct}%
             </span>
           </div>
-          <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+          <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted dark:bg-zinc-700">
             <div
               className={`absolute inset-y-0 left-0 z-[2] rounded-full ${row.barClass}`}
               style={{ width: `${row.pct}%` }}

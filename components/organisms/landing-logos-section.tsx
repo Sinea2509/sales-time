@@ -5,11 +5,11 @@ export function LandingLogosSection() {
   return (
     <section
       id="logos"
-      className="border-y border-zinc-200 bg-zinc-50 py-11"
+      className="border-y border-border bg-muted py-11"
       aria-label="Clients"
     >
       <div className="mx-auto flex max-w-[1160px] flex-col items-center gap-6 px-6 sm:px-10">
-        <p className="text-[11.5px] font-semibold tracking-[0.07em] text-zinc-400 uppercase">
+        <p className="text-[11.5px] font-semibold tracking-[0.07em] text-muted-foreground uppercase">
           Ils utilisent Sales Time
         </p>
         <div className="flex flex-wrap items-center justify-center gap-10">

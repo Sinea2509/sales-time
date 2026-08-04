@@ -27,7 +27,7 @@ export function MeetingCreatePageShell({
       </div>
 
       <ContentCard
-        className="border-neutral-200 shadow-sm dark:border-neutral-800"
+        className="border-border shadow-sm dark:border-neutral-800"
         title="Détails du rendez-vous"
         description="Renseignez les informations puis enregistrez pour lancer l’analyse SONCAS / DISC."
       >

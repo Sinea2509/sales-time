@@ -63,7 +63,7 @@ export function TeamTierBadge({
       <span
         className={cn(
           CHIP_BASE,
-          "bg-zinc-100 text-zinc-700 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700",
+          "bg-muted text-foreground ring-border dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700",
           className,
         )}
         title={

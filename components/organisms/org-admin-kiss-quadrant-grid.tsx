@@ -174,7 +174,7 @@ export function OrgAdminKissQuadrantGrid({
         const Icon = q.icon;
         const bullets = rollup[q.bulletsKey];
         return (
-          <Card key={q.key} className="bg-white shadow-sm dark:bg-zinc-900">
+          <Card key={q.key} className="bg-card shadow-sm dark:bg-zinc-900">
             <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-2">
               <span
                 className={cn(

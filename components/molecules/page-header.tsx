@@ -34,7 +34,9 @@ export function PageHeader({
         className,
       )}
     >
-      <div className={cn("flex gap-4", !hasIconBlock && "min-w-0 flex-col gap-1")}>
+      <div
+        className={cn("flex gap-4", !hasIconBlock && "min-w-0 flex-col gap-1")}
+      >
         {Icon ? <PageIconTile icon={Icon} /> : null}
         <div className="min-w-0 space-y-1">
           {eyebrow ? (
@@ -44,18 +46,21 @@ export function PageHeader({
           ) : null}
           <h1 className={pageTitleClass}>{title}</h1>
           {description ? (
-            <p className="text-muted-foreground text-sm text-pretty">{description}</p>
+            <p className="text-muted-foreground text-sm text-pretty">
+              {description}
+            </p>
           ) : null}
         </div>
       </div>
-      {actions ?? (backHref ? (
-        <Link
-          href={backHref}
-          className="border-input bg-background ring-offset-background hover:bg-accent hover:text-accent-foreground inline-flex h-10 shrink-0 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-        >
-          {backLabel ?? "← Retour"}
-        </Link>
-      ) : null)}
+      {actions ??
+        (backHref ? (
+          <Link
+            href={backHref}
+            className="border-input bg-background ring-offset-background hover:bg-accent hover:text-accent-foreground inline-flex h-10 shrink-0 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+          >
+            {backLabel ?? "← Retour"}
+          </Link>
+        ) : null)}
     </div>
   );
 }
@@ -96,7 +101,7 @@ export function PageDetailHeader({
     <div className={cn("flex items-start gap-3", className)}>
       <Link
         href={backHref}
-        className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
         aria-label="Retour"
       >
         <ArrowLeft className="size-4" />
@@ -107,7 +112,7 @@ export function PageDetailHeader({
           {badges}
         </div>
         {meta ? (
-          <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+          <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             {meta}
           </div>
         ) : null}

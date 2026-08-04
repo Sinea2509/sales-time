@@ -9,7 +9,11 @@ export function LandingFaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="scroll-mt-24 bg-white py-[88px]" aria-labelledby="faq-heading">
+    <section
+      id="faq"
+      className="scroll-mt-24 bg-card py-[88px]"
+      aria-labelledby="faq-heading"
+    >
       <div className="mx-auto max-w-[1160px] px-6 sm:px-10">
         <div className="mb-[52px] text-center">
           <LandingSectionHeading

@@ -56,7 +56,7 @@ export function AnalyseStatistiquesGlobalesSection({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
-      <Card className="flex h-full flex-col border-neutral-200 shadow-sm dark:border-neutral-800">
+      <Card className="flex h-full flex-col border-border shadow-sm dark:border-neutral-800">
         <CardHeader>
           <CardTitle className={cardTitleClass}>
             Matrice des rendez-vous
@@ -84,7 +84,7 @@ export function AnalyseStatistiquesGlobalesSection({
         </CardContent>
       </Card>
 
-      <Card className="flex h-full flex-col border-neutral-200 shadow-sm dark:border-neutral-800">
+      <Card className="flex h-full flex-col border-border shadow-sm dark:border-neutral-800">
         <CardHeader>
           <CardTitle className={cardTitleClass}>
             Opportunités prioritaires

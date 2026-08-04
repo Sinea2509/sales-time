@@ -6,9 +6,17 @@ type LandingCheckBulletProps = {
   className?: string;
 };
 
-export function LandingCheckBullet({ children, className }: LandingCheckBulletProps) {
+export function LandingCheckBullet({
+  children,
+  className,
+}: LandingCheckBulletProps) {
   return (
-    <div className={cn("flex items-center gap-2.5 text-sm text-zinc-600", className)}>
+    <div
+      className={cn(
+        "flex items-center gap-2.5 text-sm text-muted-foreground",
+        className,
+      )}
+    >
       <span
         className="flex size-5 shrink-0 items-center justify-center rounded-full border border-green-600/22 bg-green-600/10"
         aria-hidden

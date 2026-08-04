@@ -22,7 +22,7 @@ export function AdminKpiCard({
   const colors = statAccentStyles[accent];
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-start justify-between">
         <div
           className={cn(
@@ -52,15 +52,15 @@ export function AdminKpiCard({
         )}
       </div>
       <div className="mt-3">
-        <p className="text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-50">
+        <p className="text-2xl font-bold tabular-nums text-foreground dark:text-zinc-50">
           {typeof value === "number" ? value.toLocaleString("fr-FR") : value}
         </p>
-        <p className="mt-0.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <p className="mt-0.5 text-xs font-medium text-muted-foreground dark:text-zinc-400">
           {label}
         </p>
       </div>
       {footer && (
-        <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <p className="mt-2 text-[11px] text-muted-foreground dark:text-zinc-400">
           {footer}
         </p>
       )}

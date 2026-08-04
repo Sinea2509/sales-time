@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 const coachSecondaryGreyClass =
-  "border border-neutral-200 bg-[#F5F5F5] text-foreground shadow-none hover:bg-[#EBEBEB] dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700";
+  "border-border bg-secondary hover:bg-secondary/80 border text-foreground shadow-none dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700";
 
 /** CTA « + Ajouter … » : même style en onboarding et dans les paramètres Coach IA. */
 export const coachListAddSecondaryButtonClass = cn(
