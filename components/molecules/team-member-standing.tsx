@@ -52,18 +52,18 @@ function phraseEcart(
   groupe: TeamScopeGroup,
   echelle: EchelleDeNote,
 ) {
-  const moyenneEcrite =
+  const moyenneAffichee =
     echelle === "sur5"
       ? `${formatNoteFr(moyenne)}/5`
       : formatScoreSur100(moyenne);
-  const reference = `${GROUPE[groupe].moyenne} (${moyenneEcrite}, calculée sur ${membresClasses(
+  const reference = `${GROUPE[groupe].moyenne} (${moyenneAffichee}, calculée sur ${membresClasses(
     rankedCount,
   )}).`;
   if (ecart === 0) return `Exactement à ${reference}`;
   const unite = Math.abs(ecart) >= 2 ? "points" : "point";
-  const ecartEcrit =
+  const ecartAffiche =
     echelle === "sur5" ? formatDeltaOn5(ecart) : formatEcartSur100(ecart);
-  return `${ecartEcrit} ${unite} par rapport à ${reference}`;
+  return `${ecartAffiche} ${unite} par rapport à ${reference}`;
 }
 
 /**

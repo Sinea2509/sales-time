@@ -87,7 +87,7 @@ describe("essentielDuManager", () => {
   it("écrit la compétence dans les mots des pastilles de la fiche", () => {
     const p = essentiel();
     expect(p.meneur?.competence).toBe("Point fort · Écoute active +17");
-    expect(p.aCoacher?.competence).toBe("À travailler · Assertivité −12");
+    expect(p.aCoacher?.competence).toBe("Axe d'amélioration · Assertivité −12");
   });
 
   it("se tait sur la compétence d'un membre absent de la page chargée", () => {
