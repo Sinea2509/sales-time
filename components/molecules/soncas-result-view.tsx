@@ -1,9 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
-import {
-  legendeEchelleProfil,
-  nomDeTranche,
-} from "@/lib/profile-score-bands-fr";
+import { PROFILE_SCORE_UNPROVEN_MAX } from "@/src/core/domain/profile-score-scale";
 import type { SoncasAnalysisResult } from "@/src/core/domain/analysis-result-zod";
 
 const labels: Record<keyof SoncasAnalysisResult["drivers"], string> = {
@@ -32,17 +29,18 @@ export function SoncasResultView({ result }: Props) {
       <CardHeader>
         <CardTitle className={cardTitleClass}>SONCAS (prospect)</CardTitle>
         <p className="text-muted-foreground text-sm">
-          Dominant prospect : <strong>{labels[result.dominant]}</strong>
+          Levier principal détecté : <strong>{labels[result.dominant]}</strong>
         </p>
         {/*
-          L'échelle est celle que la consigne impose au modèle : la dire ici
-          évite de faire lire un 62 sans repère. Un levier sans citation ne
-          peut pas dépasser la première tranche, autant l'annoncer aussi.
+          Seul le score sur 100 reste à côté de chaque levier. Les mots qui
+          nommaient les tranches (absent, ténu, net, marqué, omniprésent)
+          doublaient le chiffre d'un jugement, et la revue les a retirés :
+          « on met rien ». La règle de preuve, elle, reste dite une fois pour
+          toutes : un levier sans citation ne dépasse pas la première tranche.
         */}
         <p className="text-muted-foreground text-xs">
-          Intensité entendue dans l&apos;échange, sur 100 :{" "}
-          {legendeEchelleProfil()}. Au-dessus de 19, chaque levier cite les mots
-          du prospect.
+          Chaque levier est noté sur 100. Au-dessus de{" "}
+          {PROFILE_SCORE_UNPROVEN_MAX}, il cite les mots du prospect.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -59,8 +57,8 @@ export function SoncasResultView({ result }: Props) {
                   <span>{labels[key]}</span>
                   <span className="whitespace-nowrap tabular-nums">
                     {v.score}
-                    <span className="text-muted-foreground ml-1.5 text-xs font-normal">
-                      {nomDeTranche(v.score)}
+                    <span className="text-muted-foreground ml-1 text-xs font-normal">
+                      / 100
                     </span>
                   </span>
                 </div>
