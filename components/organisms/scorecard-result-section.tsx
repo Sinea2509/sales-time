@@ -163,7 +163,7 @@ export function ScorecardResultSection({
           </div>
 
           <div className="space-y-3">
-            <h3 className={cardSubsectionTitleClass}>Points perdus</h3>
+            <h3 className={cardSubsectionTitleClass}>Où gagner des points</h3>
             {view.pointsLost.length > 0 ? (
               <ul className="space-y-3">
                 {view.pointsLost.map((point) => (
@@ -176,7 +176,7 @@ export function ScorecardResultSection({
                       {point.evidence}
                     </p>
                     <p className="text-sm leading-relaxed">
-                      <span className="font-medium">À dire à la place : </span>
+                      <span className="font-medium">Notre suggestion : </span>
                       {point.whatToSayInstead}
                     </p>
                   </li>
@@ -184,7 +184,8 @@ export function ScorecardResultSection({
               </ul>
             ) : (
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Aucun point perdu relevé sur ce rendez-vous.
+                Aucun critère en retrait sur ce rendez-vous : rien à gagner de
+                plus ici.
               </p>
             )}
           </div>

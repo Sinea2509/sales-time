@@ -283,7 +283,7 @@ export function OrgSettingsPlaybookForm({
 
       <details className="border-border rounded-lg border">
         <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
-          Voir le bloc transmis à l&apos;IA
+          Comment est-il utilisé
         </summary>
         <div className="border-border border-t p-4">
           {promptPreview ? (

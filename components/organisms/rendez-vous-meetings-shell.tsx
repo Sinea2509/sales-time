@@ -346,7 +346,7 @@ export function RendezVousMeetingsShell({
             data-feedback-id="rendez-create-new"
           >
             <Plus className="size-4" />
-            Nouveau rendez-vous
+            Analyser un rendez-vous
           </BrandCtaLink>
         </div>
       </div>

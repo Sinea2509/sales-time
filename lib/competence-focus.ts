@@ -27,9 +27,9 @@ export function libellePointFort(signature: SellerSkillSignature): string {
   )}`;
 }
 
-/** « À travailler · Assertivité −12 ». */
+/** « Axe d'amélioration · Assertivité −12 ». */
 export function libelleATravailler(signature: SellerSkillSignature): string {
-  return `À travailler · ${SELLER_SKILL_LABEL_FR[signature.faible]} ${formatEcartCompetence(
+  return `Axe d'amélioration · ${SELLER_SKILL_LABEL_FR[signature.faible]} ${formatEcartCompetence(
     signature.ecartFaible,
   )}`;
 }

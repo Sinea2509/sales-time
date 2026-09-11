@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 import type { ProfileActionableAdvice } from "@/src/core/domain/analysis-result-zod";
 
 const adviceBlocks = [
-  { key: "whatItMeans", title: "Ce que ça veut dire" },
+  { key: "whatItMeans", title: "Ce que cela traduit" },
   { key: "howToTalk", title: "Comment lui parler" },
-  { key: "whatToAvoid", title: "Quoi éviter" },
+  { key: "whatToAvoid", title: "Ce qu'il vaut mieux éviter" },
 ] as const satisfies ReadonlyArray<{
   key: keyof ProfileActionableAdvice;
   title: string;

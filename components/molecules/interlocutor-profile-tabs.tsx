@@ -102,7 +102,7 @@ export function InterlocutorProfileTabs({
         analysisPending={analysisPending}
         pendingLabel="Analyse DISC en cours…"
         unavailableLabel="Profil DISC indisponible pour ce rendez-vous."
-        legacyAdviceHint="Relancez l'analyse pour obtenir des conseils actionnables (ce que ça veut dire, comment lui parler, quoi éviter)."
+        legacyAdviceHint="Relancez l'analyse pour obtenir des conseils actionnables (ce que cela traduit, comment lui parler, quoi éviter)."
       />
       <ProfilePanel
         title="Profil SONCAS"
@@ -111,7 +111,7 @@ export function InterlocutorProfileTabs({
         analysisPending={analysisPending}
         pendingLabel="Analyse SONCAS en cours…"
         unavailableLabel="Profil SONCAS indisponible pour ce rendez-vous."
-        legacyAdviceHint="Relancez l'analyse pour obtenir des conseils actionnables (ce que ça veut dire, comment lui parler, quoi éviter)."
+        legacyAdviceHint="Relancez l'analyse pour obtenir des conseils actionnables (ce que cela traduit, comment lui parler, quoi éviter)."
       />
     </div>
   );

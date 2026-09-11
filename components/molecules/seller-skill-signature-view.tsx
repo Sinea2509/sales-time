@@ -77,7 +77,7 @@ export function SkillSignatureCell({
         </span>
       </span>
       <span className="text-xs leading-snug text-muted-foreground dark:text-zinc-400">
-        à travailler : {SELLER_SKILL_LABEL_FR[signature.faible]}{" "}
+        axe d&apos;amélioration : {SELLER_SKILL_LABEL_FR[signature.faible]}{" "}
         <span className="tabular-nums">
           {formatEcartCompetence(signature.ecartFaible)}
         </span>
@@ -128,7 +128,7 @@ export function SkillSignatureBadges({
         className="text-muted-foreground px-2.5 py-0.5 text-xs font-normal"
         title="Sa compétence la plus au-dessous de la moyenne de son équipe."
       >
-        À travailler · {SELLER_SKILL_LABEL_FR[signature.faible]}{" "}
+        Axe d&apos;amélioration · {SELLER_SKILL_LABEL_FR[signature.faible]}{" "}
         <span className="tabular-nums">
           {formatEcartCompetence(signature.ecartFaible)}
         </span>

@@ -57,7 +57,7 @@ export type MembreMisEnAvant = {
   /** « 1re place sur 5 membres classés ». */
   rangEtBase: string;
   /**
-   * « Point fort · Écoute active +17 » sur la carte de tête, « À travailler ·
+   * « Point fort · Écoute active +17 » sur la carte de tête, « Axe d'amélioration ·
    * Assertivité −12 » sur la carte de coaching : le vocabulaire exact des
    * pastilles de la fiche, pour que la carte et la fiche qu'elle ouvre disent
    * la même chose.

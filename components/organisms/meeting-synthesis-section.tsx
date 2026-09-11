@@ -27,7 +27,7 @@ export function MeetingSynthesisSection({
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className={sectionHeadingClass}>Compte-rendu du rdv</h2>
+        <h2 className={sectionHeadingClass}>Compte rendu de visite</h2>
         <Button
           type="button"
           variant="outline"

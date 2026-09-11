@@ -14,9 +14,10 @@ export function MeetingCreatePageShell({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className={pageTitleClass}>Nouveau rendez-vous</h1>
+          <h1 className={pageTitleClass}>Analyser un rendez-vous</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
-            Transcript manuel, idéal pour alimenter l’IA.
+            Renseignez le prospect et déposez le transcript : l’analyse démarre
+            à l’enregistrement.
           </p>
         </div>
         <NavLinkButton href="/company/rendez-vous" variant="ghost" size="sm">

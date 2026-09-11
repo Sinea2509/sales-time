@@ -67,7 +67,7 @@ export function DashboardAdminShell({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className={sectionHeadingClass}>
             {ouvreSurEssentiel
-              ? "Vos priorités de coaching"
+              ? "À accompagner en priorité"
               : "Activité de la période"}
           </h2>
           <Suspense

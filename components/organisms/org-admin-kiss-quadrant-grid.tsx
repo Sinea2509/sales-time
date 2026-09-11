@@ -31,7 +31,7 @@ type KissQuadrant = {
 const quadrantsTeam: readonly KissQuadrant[] = [
   {
     key: "keep" as const,
-    title: "Keep",
+    title: "À conserver (Keep)",
     subtitle: "Ce que l'équipe réussit déjà, à sécuriser",
     bulletsKey: "keepBullets" as const,
     icon: UserRound,
@@ -40,7 +40,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
   },
   {
     key: "improve" as const,
-    title: "Improve",
+    title: "À améliorer (Improve)",
     subtitle: "Presque là, à affiner ensemble",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
@@ -48,7 +48,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
   },
   {
     key: "start" as const,
-    title: "Start",
+    title: "À démarrer (Start)",
     subtitle: "Le réflexe qui manque, à installer",
     bulletsKey: "startBullets" as const,
     icon: Play,
@@ -56,7 +56,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
   },
   {
     key: "stop" as const,
-    title: "Stop",
+    title: "À arrêter (Stop)",
     subtitle: "Ce qui coûte des rendez-vous, à couper",
     bulletsKey: "stopBullets" as const,
     icon: Ban,
@@ -68,7 +68,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
 const quadrantsManagerMember: readonly KissQuadrant[] = [
   {
     key: "keep" as const,
-    title: "Keep",
+    title: "À conserver (Keep)",
     subtitle: "Ses points forts, à valoriser au prochain point",
     bulletsKey: "keepBullets" as const,
     icon: UserRound,
@@ -77,15 +77,15 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
   },
   {
     key: "improve" as const,
-    title: "Improve",
-    subtitle: "À travailler ensemble, dès le prochain coaching",
+    title: "À améliorer (Improve)",
+    subtitle: "À améliorer ensemble, dès le prochain coaching",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
     iconWrapClass: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
   },
   {
     key: "start" as const,
-    title: "Start",
+    title: "À démarrer (Start)",
     subtitle: "Le réflexe à installer avec ce commercial",
     bulletsKey: "startBullets" as const,
     icon: Play,
@@ -93,7 +93,7 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
   },
   {
     key: "stop" as const,
-    title: "Stop",
+    title: "À arrêter (Stop)",
     subtitle: "À l'aider à couper, ça lui coûte des rendez-vous",
     bulletsKey: "stopBullets" as const,
     icon: Ban,
@@ -112,7 +112,7 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
 const quadrantsSellerSelf: readonly KissQuadrant[] = [
   {
     key: "keep" as const,
-    title: "Keep",
+    title: "À conserver (Keep)",
     subtitle: "Ce que vous réussissez, gardez-le tel quel",
     bulletsKey: "keepBullets" as const,
     icon: UserRound,
@@ -121,7 +121,7 @@ const quadrantsSellerSelf: readonly KissQuadrant[] = [
   },
   {
     key: "improve" as const,
-    title: "Improve",
+    title: "À améliorer (Improve)",
     subtitle: "Presque acquis, à affiner d'un cran",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
@@ -129,7 +129,7 @@ const quadrantsSellerSelf: readonly KissQuadrant[] = [
   },
   {
     key: "start" as const,
-    title: "Start",
+    title: "À démarrer (Start)",
     subtitle: "Le réflexe à installer dès le prochain rendez-vous",
     bulletsKey: "startBullets" as const,
     icon: Play,
@@ -137,7 +137,7 @@ const quadrantsSellerSelf: readonly KissQuadrant[] = [
   },
   {
     key: "stop" as const,
-    title: "Stop",
+    title: "À arrêter (Stop)",
     subtitle: "À couper, ça vous coûte des rendez-vous",
     bulletsKey: "stopBullets" as const,
     icon: Ban,

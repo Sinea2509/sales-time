@@ -459,7 +459,7 @@ function CarteDesCompetences({
                 ton="fort"
               />
               <EncartDeRelief
-                titre="À travailler en priorité"
+                titre="Axe d'amélioration de l'équipe"
                 bar={vue.relief.faible}
                 ton="travail"
               />

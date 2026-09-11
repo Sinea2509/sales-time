@@ -14,10 +14,10 @@ const SIGNATURE: SellerSkillSignature = {
 };
 
 describe("libellés de focus de compétence", () => {
-  it("écrit le point fort et l'axe à travailler avec leur écart signé", () => {
+  it("écrit le point fort et l'axe d'amélioration avec leur écart signé", () => {
     expect(libellePointFort(SIGNATURE)).toBe("Point fort · Écoute active +17");
     expect(libelleATravailler(SIGNATURE)).toBe(
-      "À travailler · Assertivité −12",
+      "Axe d'amélioration · Assertivité −12",
     );
   });
 

@@ -7,7 +7,7 @@ import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signat
  * Le focus de progression du commercial, sur son propre tableau de bord.
  *
  * C'est exactement ce que son manager lit sur lui dans la carte « à coacher en
- * priorité » : son point fort et son axe à travailler, tirés de la même
+ * priorité » : son point fort et son axe d'amélioration, tirés de la même
  * signature de compétences et écrits par les mêmes fonctions. Le commercial
  * cesse d'être le seul à ignorer ce qu'on dit de lui, et les deux écrans ne
  * peuvent pas se contredire.
@@ -17,7 +17,7 @@ import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signat
  * geste concret pour le prochain rendez-vous.
  *
  * Sans signature, la carte ne se cache pas : elle dit ce qu'il faut faire pour
- * qu'elle se remplisse. Un axe de progression n'apparaît qu'une fois des
+ * qu'elle se remplisse. Un axe d'amélioration n'apparaît qu'une fois des
  * rendez-vous analysés, et le commercial doit savoir que c'est à sa portée.
  *
  * Elle se pose en bande sous la position, sur toute la largeur : les deux
@@ -55,7 +55,7 @@ export function CommercialCoachingFocus({
         ) : (
           <span className="text-sm leading-relaxed text-muted-foreground dark:text-zinc-400">
             Analysez vos rendez-vous pour révéler votre point fort et votre axe
-            de progression, comparés à votre équipe.
+            d&apos;amélioration, comparés à votre équipe.
           </span>
         )}
       </div>

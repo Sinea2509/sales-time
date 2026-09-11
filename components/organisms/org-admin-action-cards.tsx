@@ -159,7 +159,7 @@ export function OrgAdminActionCards({
               teinteTexte="text-amber-700 dark:text-amber-400"
               teintePastille="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
             >
-              À coacher en priorité
+              À accompagner en priorité
             </EtiquetteDeCarte>
           }
         />
