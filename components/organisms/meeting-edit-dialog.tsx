@@ -83,7 +83,6 @@ export function MeetingEditDialog({
                 notes: meeting.notes,
               }}
               meetingTypeOptions={formOptions.meetingTypeOptions}
-              pipelineStageOptions={formOptions.pipelineStageOptions}
               onCancel={() => onOpenChange(false)}
               onSuccess={handleSuccess}
             />

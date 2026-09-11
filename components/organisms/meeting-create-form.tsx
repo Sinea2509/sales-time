@@ -48,7 +48,6 @@ export type MeetingFormInitialValues = {
 
 type MeetingCreateFormProps = {
   meetingTypeOptions: string[];
-  pipelineStageOptions: string[];
   variant?: "page" | "dialog";
   mode?: "create" | "edit";
   initialValues?: MeetingFormInitialValues;
@@ -91,7 +90,6 @@ function mapSubmitError(
 
 export function MeetingCreateForm({
   meetingTypeOptions,
-  pipelineStageOptions,
   variant = "page",
   mode = "create",
   initialValues,
@@ -193,22 +191,21 @@ export function MeetingCreateForm({
             ))}
           </select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="pipelineStage">Étape pipeline</Label>
-          <select
-            id="pipelineStage"
+        {/*
+          L'étape du pipeline n'est plus demandée : la revue du 2 septembre l'a
+          retirée du formulaire, le commercial renseigne son interlocuteur et
+          son entreprise, rien de plus. Sales Time analyse des rendez-vous, il
+          ne remplace pas le CRM. La colonne reste en base, et un rendez-vous
+          qui portait déjà une étape la garde à la modification : le champ
+          caché la renvoie telle quelle, sans quoi l'enregistrement l'effacerait.
+        */}
+        {isEdit ? (
+          <input
+            type="hidden"
             name="pipelineStage"
-            className={nativeSelectClassName}
-            defaultValue={initialValues?.pipelineStage ?? ""}
-          >
-            <option value="">Non précisé</option>
-            {pipelineStageOptions.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
+            value={initialValues.pipelineStage ?? ""}
+          />
+        ) : null}
         <div className="space-y-2">
           <Label htmlFor="potentialAmount">Montant potentiel (€)</Label>
           <Input

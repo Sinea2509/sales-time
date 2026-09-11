@@ -5,12 +5,10 @@ import { pageTitleClass } from "@/lib/page-typography";
 
 type MeetingCreatePageShellProps = {
   meetingTypeOptions: string[];
-  pipelineStageOptions: string[];
 };
 
 export function MeetingCreatePageShell({
   meetingTypeOptions,
-  pipelineStageOptions,
 }: MeetingCreatePageShellProps) {
   return (
     <div className="space-y-6">
@@ -31,10 +29,7 @@ export function MeetingCreatePageShell({
         title="Détails du rendez-vous"
         description="Renseignez les informations puis enregistrez pour lancer l’analyse SONCAS / DISC."
       >
-        <MeetingCreateForm
-          meetingTypeOptions={meetingTypeOptions}
-          pipelineStageOptions={pipelineStageOptions}
-        />
+        <MeetingCreateForm meetingTypeOptions={meetingTypeOptions} />
       </ContentCard>
     </div>
   );
