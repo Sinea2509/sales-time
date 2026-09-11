@@ -16,7 +16,10 @@ import {
   dashboardHomeFromMeetings,
   type DashboardHomeFigures,
 } from "@/src/core/domain/dashboard-home-from-meetings";
-import { noteGlobaleOn5FromSalesScores } from "@/src/core/domain/note-globale-on5";
+import {
+  noteGlobaleOn5FromSalesScores,
+  salesScoreAverage,
+} from "@/src/core/domain/note-globale-on5";
 import {
   formatNoteFr,
   rankTeamMembers,
@@ -71,6 +74,14 @@ export type OrgAdminMonEquipeRow = {
   tamMinutesAvg: number | null;
   /** Note globale moyenne sur 5 (SalesScore SONCAS converti). */
   noteGlobaleOn5: number | null;
+  /**
+   * La même moyenne sur 100, arrondie à l'entier.
+   *
+   * La note sur 5 est celle du manager, qui classe avec ; le commercial, lui,
+   * lit son SalesScore sur 100, comme sur chacun de ses rendez-vous. Les deux
+   * viennent des mêmes scores.
+   */
+  salesScoreAvg: number | null;
   /** Nombre de RDV porteurs d'un SalesScore : le dénominateur de la note. */
   scoredMeetings: number;
   /**
@@ -321,6 +332,7 @@ export function buildRankedTeam(input: {
       coachesCount: s.coachesCount,
       tamMinutesAvg: averageTamMinutes(s.connectedDurations),
       noteGlobaleOn5: noteGlobaleOn5FromSalesScores(s.salesScores),
+      salesScoreAvg: salesScoreAverage(s.salesScores),
       scoredMeetings: s.salesScores.length,
       skillScores,
       skillMeetings: s.skillNotes.length,
@@ -436,6 +448,14 @@ export type TeamMemberStanding = {
   ranking: TeamRankingSummary;
   /** Effectif de l'équipe sur laquelle ce rang est calculé. */
   teamSize: number;
+  /**
+   * Moyenne des SalesScores sur 100 des seuls membres classés.
+   *
+   * Le pendant sur 100 de `ranking.averageNoteOn5`, pour l'écran du
+   * commercial, qui se compare à son équipe sans passer par la note sur 5.
+   * `null` quand personne n'est classé.
+   */
+  averageSalesScore: number | null;
 };
 
 export function buildTeamMemberStanding(input: {
@@ -444,10 +464,14 @@ export function buildTeamMemberStanding(input: {
   sellerUserId: string;
 }): TeamMemberStanding {
   const equipe = buildRankedTeam(input);
+  const scoresDesClasses = equipe.rows.flatMap((r) =>
+    r.rank != null && r.salesScoreAvg != null ? [r.salesScoreAvg] : [],
+  );
   return {
     row: equipe.rows.find((r) => r.userId === input.sellerUserId) ?? null,
     ranking: equipe.ranking,
     teamSize: equipe.totalCount,
+    averageSalesScore: salesScoreAverage(scoresDesClasses),
   };
 }
 

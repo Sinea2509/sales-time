@@ -119,9 +119,11 @@ export function DashboardStandingCard({
             {sousTitre.texte}
           </span>
         </div>
+        {/* Le commercial lit son SalesScore sur 100 ; la note sur 5 est au manager. */}
         <TeamMemberStanding
           standing={standing}
           comparisonGroup={comparisonGroup}
+          echelle="sur100"
         />
       </div>
       <TeamTierLegend className="sm:shrink-0 sm:justify-end" />

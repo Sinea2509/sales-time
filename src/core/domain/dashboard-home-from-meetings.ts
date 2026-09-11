@@ -7,7 +7,10 @@ import {
   tucOptimisePercent,
 } from "./dashboard-tam-tuc";
 import { percentChangeVsPrevious } from "./dashboard-trend";
-import { noteGlobaleOn5FromSalesScores } from "./note-globale-on5";
+import {
+  noteGlobaleOn5FromSalesScores,
+  salesScoreAverage,
+} from "./note-globale-on5";
 
 /**
  * Tout ce que ce calcul lit d'un rendez-vous : sa durée et son SalesScore.
@@ -57,6 +60,13 @@ export type DashboardHomeFigures = {
   avgDurationTrendPercent: number | null;
   /** Note globale /5 (moyenne SalesScore /100 ÷ 20, arrondi 0.1), null si aucune analyse. */
   noteGlobaleOn5: number | null;
+  /**
+   * La même moyenne sur 100, arrondie à l'entier, et son écart en points sur
+   * 100 avec la fenêtre précédente. C'est l'échelle du commercial : la note
+   * sur 5 est celle du manager.
+   */
+  salesScoreAvg: number | null;
+  salesScoreTrendPoints: number | null;
   noteGlobaleTrendPoints: number | null;
   /** Variation % de la note globale vs période précédente. */
   noteGlobaleTrendPercent: number | null;
@@ -64,13 +74,16 @@ export type DashboardHomeFigures = {
   noteGlobaleSampleCount: number;
 };
 
+function salesScoresOf(meetings: DashboardHomeMeeting[]): number[] {
+  return meetings
+    .map((m) => m.salesScore)
+    .filter((s): s is number => s != null);
+}
+
 function noteGlobaleOn5ForMeetings(
   meetings: DashboardHomeMeeting[],
 ): number | null {
-  const scores = meetings
-    .map((m) => m.salesScore)
-    .filter((s): s is number => s != null);
-  return noteGlobaleOn5FromSalesScores(scores);
+  return noteGlobaleOn5FromSalesScores(salesScoresOf(meetings));
 }
 
 /**
@@ -123,6 +136,8 @@ export function dashboardHomeFromMeetings(input: {
 
   const noteGlobaleOn5 = noteGlobaleOn5ForMeetings(input.current);
   const noteGlobalePrevOn5 = noteGlobaleOn5ForMeetings(input.previous);
+  const salesScoreAvg = salesScoreAverage(salesScoresOf(input.current));
+  const salesScorePrev = salesScoreAverage(salesScoresOf(input.previous));
   const noteGlobaleSampleCount = input.current.filter(
     (m) => m.salesScore != null,
   ).length;
@@ -170,6 +185,11 @@ export function dashboardHomeFromMeetings(input: {
       ? percentChangeVsPrevious(noteGlobaleOn5, noteGlobalePrevOn5 ?? 0)
       : null;
 
+  const salesScoreTrendPoints =
+    salesScoreAvg != null && salesScorePrev != null
+      ? salesScoreAvg - salesScorePrev
+      : null;
+
   return {
     statsWindowDays: input.statsWindowDays,
     tamMinutesPerRdv: input.tamMinutesPerRdv,
@@ -187,6 +207,8 @@ export function dashboardHomeFromMeetings(input: {
     tucTrendPoints,
     avgDurationTrendPercent: tamTrendPercent,
     noteGlobaleOn5,
+    salesScoreAvg,
+    salesScoreTrendPoints,
     noteGlobaleTrendPoints,
     noteGlobaleTrendPercent,
     noteGlobaleSampleCount,

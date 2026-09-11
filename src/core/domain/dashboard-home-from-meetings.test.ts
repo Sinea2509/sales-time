@@ -100,6 +100,9 @@ describe("dashboardHomeFromMeetings", () => {
     expect(out.tucTrendPoints).toBe(25);
     expect(out.noteGlobaleTrendPoints).toBe(1.5);
     expect(out.noteGlobaleTrendPercent).toBe(75);
+    // Le même mouvement, lu sur 100 par le commercial : 70 contre 40.
+    expect(out.salesScoreAvg).toBe(70);
+    expect(out.salesScoreTrendPoints).toBe(30);
   });
 
   it("n'annonce aucune variation quand la fenêtre précédente est vide", () => {
@@ -115,6 +118,7 @@ describe("dashboardHomeFromMeetings", () => {
     expect(out.tamTrendPercent).toBeNull();
     expect(out.noteGlobaleTrendPoints).toBeNull();
     expect(out.noteGlobaleTrendPercent).toBeNull();
+    expect(out.salesScoreTrendPoints).toBeNull();
   });
 
   it("tient sur deux fenêtres vides sans rien inventer", () => {

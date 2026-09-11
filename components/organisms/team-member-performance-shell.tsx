@@ -332,6 +332,7 @@ export function TeamMemberPerformanceShell({
                   <TeamMemberStanding
                     standing={standing}
                     comparisonGroup={comparisonGroup}
+                    echelle={perspective === "commercial" ? "sur100" : "sur5"}
                     className="mt-1 items-center sm:items-start"
                   />
                 ) : null}
@@ -497,6 +498,7 @@ export function TeamMemberPerformanceShell({
           home={home}
           isOrgAdmin={luParSonManager}
           sellerScoped={luParSonManager}
+          echelle={luParSonManager ? "sur5" : "sur100"}
         />
 
         <div className="space-y-4">

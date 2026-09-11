@@ -5,6 +5,10 @@ import { KPI_TAM_HINT, KPI_TUC_HINT } from "@/lib/kpi-hints";
 import { KpiTile } from "@/components/molecules/kpi-tile";
 import { KpiVsPreviousBadge } from "@/components/molecules/trend-pill";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
+import {
+  formatScoreSur100,
+  type EchelleDeNote,
+} from "@/lib/format-score-sur100";
 import { plurielFr } from "@/lib/pluriel-fr";
 import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
@@ -21,10 +25,16 @@ export function AnalyseKpiCards({
   home,
   isOrgAdmin,
   sellerScoped = false,
+  echelle = "sur5",
 }: {
   home: DashboardHomeFigures;
   isOrgAdmin: boolean;
   sellerScoped?: boolean;
+  /**
+   * Sur 5 pour le manager, sur 100 pour le commercial qui lit sa propre
+   * performance : la note sur 5 lui a été retirée à la revue du 2 septembre.
+   */
+  echelle?: EchelleDeNote;
 }) {
   const tucLabel =
     sellerScoped || !isOrgAdmin ? "TUC optimisé" : "TUC optimisé de l'équipe";
@@ -128,20 +138,30 @@ export function AnalyseKpiCards({
             : "Aucun rendez-vous analysé sur la période."
         }
         trend={
-          // L'écart en points, et non la variation relative : sous une note sur
-          // 5, un « +12 % » ne se retrouve dans aucun des deux nombres affichés,
-          // alors que « +0,2 pt » est exactement leur différence.
+          // L'écart en points, et non la variation relative : sous une note,
+          // un « +12 % » ne se retrouve dans aucun des deux nombres affichés,
+          // alors que « +0,2 pt » ou « +4 pts » est exactement leur différence.
           <KpiVsPreviousBadge
-            delta={home.noteGlobaleTrendPoints}
+            delta={
+              echelle === "sur5"
+                ? home.noteGlobaleTrendPoints
+                : home.salesScoreTrendPoints
+            }
             mode="up-good"
             deltaDisplay="points"
-            pointsScaleLabel="points sur l'échelle de 5"
+            pointsScaleLabel={
+              echelle === "sur5"
+                ? "points sur l'échelle de 5"
+                : "points sur l'échelle de 100"
+            }
             currentSampleCount={rdvNotes}
             {...trendCommon}
           />
         }
       >
-        {formatNoteOn5(home.noteGlobaleOn5)}
+        {echelle === "sur5"
+          ? formatNoteOn5(home.noteGlobaleOn5)
+          : formatScoreSur100(home.salesScoreAvg)}
       </KpiTile>
     </div>
   );

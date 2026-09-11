@@ -31,6 +31,8 @@ function baseHome(over: Partial<OrgDashboardHome> = {}): OrgDashboardHome {
     tucTrendPoints: 2,
     avgDurationTrendPercent: 10,
     noteGlobaleOn5: 4,
+    salesScoreAvg: 80,
+    salesScoreTrendPoints: 4,
     noteGlobaleSampleCount: 2,
     noteGlobaleTrendPoints: 0.2,
     noteGlobaleTrendPercent: 5,
@@ -409,6 +411,32 @@ describe("buildTeamMemberStanding", () => {
     expect(standing.row?.rank).toBeNull();
     expect(standing.row?.tier).toBeNull();
     expect(standing.row?.unrankedReason).toBe("volume-insuffisant");
+  });
+
+  it("porte le même chiffre sur 100 que la note sur 5, pour l'écran du commercial", () => {
+    /*
+      Le commercial lit son SalesScore sur 100, le manager la note sur 5 : les
+      deux viennent des mêmes scores. La moyenne sur 100 ne compte que les
+      membres classés, comme la moyenne sur 5 du classement, sans quoi le
+      commercial se comparerait à des gens que le tableau écarte.
+    */
+    const standing = buildTeamMemberStanding({
+      members: [membre("u1"), membre("u2"), membre("u3")],
+      meetings: [
+        rdv("u1", { salesScore: 60 }),
+        rdv("u1", { salesScore: 70 }),
+        rdv("u1", { salesScore: 74 }),
+        rdv("u2", { salesScore: 80 }),
+        rdv("u2", { salesScore: 90 }),
+        rdv("u2", { salesScore: 82 }),
+        rdv("u3", { salesScore: 10 }),
+      ],
+      sellerUserId: "u1",
+    });
+    expect(standing.row?.salesScoreAvg).toBe(68);
+    expect(standing.row?.noteGlobaleOn5).toBe(3.4);
+    // u3 n'est pas classé (un seul rendez-vous) : il ne pèse pas sur la moyenne.
+    expect(standing.averageSalesScore).toBe(Math.round((68 + 84) / 2));
   });
 });
 

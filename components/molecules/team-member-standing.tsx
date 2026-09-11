@@ -4,6 +4,11 @@ import type { TeamScopeGroup } from "@/lib/team-seller-scope";
 import { cn } from "@/lib/utils";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
 import {
+  formatEcartSur100,
+  formatScoreSur100,
+  type EchelleDeNote,
+} from "@/lib/format-score-sur100";
+import {
   formatDeltaOn5,
   formatNoteFr,
   rankLabel,
@@ -45,13 +50,20 @@ function phraseEcart(
   moyenne: number,
   rankedCount: number,
   groupe: TeamScopeGroup,
+  echelle: EchelleDeNote,
 ) {
-  const reference = `${GROUPE[groupe].moyenne} (${formatNoteFr(
-    moyenne,
-  )}/5, calculée sur ${membresClasses(rankedCount)}).`;
+  const moyenneEcrite =
+    echelle === "sur5"
+      ? `${formatNoteFr(moyenne)}/5`
+      : formatScoreSur100(moyenne);
+  const reference = `${GROUPE[groupe].moyenne} (${moyenneEcrite}, calculée sur ${membresClasses(
+    rankedCount,
+  )}).`;
   if (ecart === 0) return `Exactement à ${reference}`;
   const unite = Math.abs(ecart) >= 2 ? "points" : "point";
-  return `${formatDeltaOn5(ecart)} ${unite} par rapport à ${reference}`;
+  const ecartEcrit =
+    echelle === "sur5" ? formatDeltaOn5(ecart) : formatEcartSur100(ecart);
+  return `${ecartEcrit} ${unite} par rapport à ${reference}`;
 }
 
 /**
@@ -63,17 +75,27 @@ function phraseEcart(
  */
 function NoteAvecBase({
   note,
+  score,
   scored,
+  echelle,
 }: {
+  /** La note sur 5, celle du manager. */
   note: number | null;
+  /** Le même chiffre sur 100, celui du commercial. */
+  score: number | null;
   scored: number;
+  echelle: EchelleDeNote;
 }) {
   return (
     <span
       className="text-xs font-medium text-foreground tabular-nums dark:text-zinc-300"
-      title={`Moyenne des SalesScores des ${rdvNotes(scored)} de la période.`}
+      title={
+        echelle === "sur5"
+          ? `Moyenne des SalesScores des ${rdvNotes(scored)} de la période, ramenée sur 5.`
+          : `Moyenne des SalesScores des ${rdvNotes(scored)} de la période.`
+      }
     >
-      {formatNoteOn5(note)}
+      {echelle === "sur5" ? formatNoteOn5(note) : formatScoreSur100(score)}
       <span className="font-normal text-muted-foreground dark:text-zinc-400">
         {" "}
         · moyenne de {rdvNotes(scored)}
@@ -100,6 +122,7 @@ function NoteAvecBase({
 export function TeamMemberStanding({
   standing,
   comparisonGroup,
+  echelle,
   className,
 }: {
   standing: TeamMemberStandingData;
@@ -112,13 +135,22 @@ export function TeamMemberStanding({
    * sur quel groupe il l'a calculée.
    */
   comparisonGroup: TeamScopeGroup;
+  /**
+   * Sur 5 pour le manager, sur 100 pour le commercial.
+   *
+   * Exigée, sans défaut, pour la même raison que le groupe : chaque écran qui
+   * affiche une note doit dire à qui il parle, faute de quoi la note sur 5
+   * reviendrait sur l'écran du commercial par simple oubli.
+   */
+  echelle: EchelleDeNote;
   className?: string;
 }) {
   const row = standing.row;
   if (!row) return null;
 
   const { ranking } = standing;
-  const moyenne = ranking.averageNoteOn5;
+  const moyenne =
+    echelle === "sur5" ? ranking.averageNoteOn5 : standing.averageSalesScore;
 
   // Les deux branches partagent le même conteneur : l'appelant règle l'alignement
   // une seule fois, et il vaut aussi bien pour le rang que pour son absence.
@@ -139,7 +171,9 @@ export function TeamMemberStanding({
             />
             <NoteAvecBase
               note={row.noteGlobaleOn5}
+              score={row.salesScoreAvg}
               scored={row.scoredMeetings}
+              echelle={echelle}
             />
           </div>
         )}
@@ -157,7 +191,15 @@ export function TeamMemberStanding({
     );
   }
 
-  const ecart = row.deltaToTeamAverage;
+  // Sur 5, l'écart est celui du classement, calculé sur les notes affichées.
+  // Sur 100, il se recalcule sur les mêmes membres classés, à partir des
+  // moyennes entières : les deux disent la même chose à deux échelles.
+  const ecart =
+    echelle === "sur5"
+      ? row.deltaToTeamAverage
+      : row.salesScoreAvg != null && standing.averageSalesScore != null
+        ? row.salesScoreAvg - standing.averageSalesScore
+        : null;
 
   // Seul au classement, le rang ne dit rien : « 1re place sur 1 classé » se lit
   // comme une victoire, alors qu'il n'y avait personne en face. L'écart ne dit
@@ -169,7 +211,12 @@ export function TeamMemberStanding({
       <div className={cn("flex flex-col gap-1.5", className)}>
         <div className="flex flex-wrap items-center gap-2">
           <TeamTierBadge tier={row.tier} />
-          <NoteAvecBase note={row.noteGlobaleOn5} scored={row.scoredMeetings} />
+          <NoteAvecBase
+            note={row.noteGlobaleOn5}
+            score={row.salesScoreAvg}
+            scored={row.scoredMeetings}
+            echelle={echelle}
+          />
         </div>
         <p className="text-muted-foreground max-w-prose text-[11px] leading-tight">
           Seul membre classé sur la période : le palier reste calculé sur
@@ -210,11 +257,22 @@ export function TeamMemberStanding({
           </span>
         </span>
         <TeamTierBadge tier={row.tier} />
-        <NoteAvecBase note={row.noteGlobaleOn5} scored={row.scoredMeetings} />
+        <NoteAvecBase
+          note={row.noteGlobaleOn5}
+          score={row.salesScoreAvg}
+          scored={row.scoredMeetings}
+          echelle={echelle}
+        />
       </div>
       {moyenne != null && ecart != null ? (
         <p className="text-muted-foreground text-[11px] leading-tight">
-          {phraseEcart(ecart, moyenne, ranking.rankedCount, comparisonGroup)}
+          {phraseEcart(
+            ecart,
+            moyenne,
+            ranking.rankedCount,
+            comparisonGroup,
+            echelle,
+          )}
         </p>
       ) : null}
     </div>

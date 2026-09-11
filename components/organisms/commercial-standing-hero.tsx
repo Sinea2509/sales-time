@@ -9,27 +9,29 @@ import {
 import { TeamTierBadge } from "@/components/molecules/team-tier-badge";
 import { membresClasses, rdvNotes } from "@/lib/accord-fr";
 import { libelleATravailler, libellePointFort } from "@/lib/competence-focus";
+import { formatEcartSur100 } from "@/lib/format-score-sur100";
 import { plurielFr } from "@/lib/pluriel-fr";
 import type { TeamScopeGroup } from "@/lib/team-seller-scope";
-import {
-  formatDeltaOn5,
-  formatNoteFr,
-  rankLabel,
-} from "@/src/core/domain/team-ranking";
+import { rankLabel } from "@/src/core/domain/team-ranking";
 import type { TeamMemberStanding } from "@/src/core/application/get-org-admin-dashboard";
 import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signature";
 
 /**
- * L'ouverture du tableau de bord du commercial : sa note en grand, son palier,
- * sa place, et le geste sur lequel progresser.
+ * L'ouverture du tableau de bord du commercial : son SalesScore en grand, son
+ * palier, sa place, et le geste sur lequel progresser.
  *
  * C'est le point d'entrée de l'écran. Jusqu'ici sa note se lisait en petit, à
  * côté d'indicateurs d'activité écrits en gros : l'œil tombait sur le nombre de
  * rendez-vous avant de tomber sur la seule chose qui dit comment il vend. Le
- * hero remet la note au centre, avec le même vocabulaire que la vue manager :
- * même palier, même place, même point fort et même axe à travailler, tirés des
- * mêmes fonctions, si bien que le commercial et son manager ne lisent jamais
- * deux versions de la même personne.
+ * hero remet ce chiffre au centre, avec le même vocabulaire que la vue manager :
+ * même palier, même place, même point fort et même axe d'amélioration, tirés
+ * des mêmes fonctions, si bien que le commercial et son manager ne lisent
+ * jamais deux versions de la même personne.
+ *
+ * Le chiffre s'écrit sur 100, pas sur 5 : la revue du 2 septembre a réservé la
+ * note sur 5 au manager, qui classe avec, et rendu au commercial le SalesScore
+ * qu'il lit déjà sur chacun de ses rendez-vous. Le rang et le palier, eux,
+ * restent ceux du classement.
  *
  * Le hero ne s'affiche qu'une fois la place vraiment établie : classé, et pas
  * seul à l'être. Dans les autres cas (hors classement, unique membre classé),
@@ -52,14 +54,13 @@ export function CommercialStandingHero({
   coachingHref: string;
 }) {
   const row = standing.row;
-  const moyenne = standing.ranking.averageNoteOn5;
+  const moyenne = standing.averageSalesScore;
 
   const heroLisible =
     row != null &&
     row.rank != null &&
     row.tier != null &&
-    row.noteGlobaleOn5 != null &&
-    row.deltaToTeamAverage != null &&
+    row.salesScoreAvg != null &&
     moyenne != null &&
     standing.ranking.rankedCount > 1;
 
@@ -83,6 +84,9 @@ export function CommercialStandingHero({
   }
 
   const sousTitre = sousTitreDuGroupe(comparisonGroup, managerNameLine);
+  // L'écart se lit sur la même échelle que le chiffre : les moyennes entières
+  // des membres classés, et non les notes sur 5 du classement.
+  const ecart = row.salesScoreAvg! - moyenne!;
 
   // L'or ne pare que le sommet du classement : au palier Excellence, le hero
   // reçoit un filet et un halo dorés ; partout ailleurs il garde le halo de
@@ -138,14 +142,14 @@ export function CommercialStandingHero({
           </span>
           <p className="mt-1 flex items-baseline gap-1.5">
             <span className="text-5xl font-semibold tracking-tight text-foreground tabular-nums dark:text-zinc-50">
-              {formatNoteFr(row.noteGlobaleOn5!)}
+              {row.salesScoreAvg}
             </span>
             <span className="text-lg font-medium text-muted-foreground dark:text-zinc-500">
-              /5
+              sur 100
             </span>
           </p>
           <span className="text-xs text-muted-foreground dark:text-zinc-400">
-            moyenne de {rdvNotes(row.scoredMeetings)}
+            SalesScore, moyenne de {rdvNotes(row.scoredMeetings)}
           </span>
         </div>
 
@@ -158,9 +162,8 @@ export function CommercialStandingHero({
             </span>
           </span>
           <span className="text-xs text-muted-foreground tabular-nums dark:text-zinc-400">
-            {formatDeltaOn5(row.deltaToTeamAverage!)}{" "}
-            {plurielFr(row.deltaToTeamAverage!, "point")} sur la moyenne de{" "}
-            {membresClasses(standing.ranking.rankedCount)}
+            {formatEcartSur100(ecart)} {plurielFr(ecart, "point")} sur la
+            moyenne de {membresClasses(standing.ranking.rankedCount)}
           </span>
         </div>
       </div>
@@ -182,7 +185,7 @@ export function CommercialStandingHero({
         ) : (
           <span className="text-sm leading-relaxed text-muted-foreground dark:text-zinc-400">
             Analysez vos rendez-vous pour révéler votre point fort et votre axe
-            de progression.
+            d&apos;amélioration.
           </span>
         )}
         <Link
