@@ -69,7 +69,7 @@ export function MeetingCreateDialog({
         data-feedback-id={dataFeedbackId}
       >
         {showPlusIcon ? <span className="text-lg leading-none">+</span> : null}
-        Analyser un RDV
+        Analyser un rendez-vous
       </BrandCtaButton>
 
       <Dialog
