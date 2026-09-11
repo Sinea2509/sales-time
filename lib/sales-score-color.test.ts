@@ -92,7 +92,7 @@ describe("salesScoreColorClass", () => {
     /*
       Ces valeurs ne sortent pas du modèle de données, où `salesScore` vaut un
       entier ou `null` que les appelants écartent. Rendre une classe vide
-      effacerait pourtant le chiffre sur le fond ivoire de la charte, et rendre
+      effacerait pourtant le chiffre sur le papier de la charte, et rendre
       une couleur rassurante flatterait un nombre que personne ne pourrait
       justifier.
     */

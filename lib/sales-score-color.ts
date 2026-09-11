@@ -64,8 +64,8 @@ const CLASSE_BARRE: Readonly<Record<RankingTierId, string>> = {
  * `tierFromSalesScore` ne rend `null` que pour une valeur non finie, que le
  * modèle de données ne produit pas : `salesScore` vaut un entier ou `null`, et
  * les appelants écartent le `null` avant d'appeler. La branche existe quand
- * même, parce que rendre une classe vide effacerait le chiffre sur le fond
- * ivoire de la charte. Le palier le plus bas est retenu parce qu'il est le seul
+ * même, parce que rendre une classe vide effacerait le chiffre sur le papier
+ * de la charte. Le palier le plus bas est retenu parce qu'il est le seul
  * qui ne flatte pas un nombre que personne ne saurait justifier.
  */
 const PALIER_DE_REPLI: RankingTierId = RANKING_TIERS[0]?.id ?? "demarrage";
