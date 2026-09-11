@@ -67,20 +67,23 @@
 
 :root {
   /*
-    Charte « Ivoire et Encre ». Les neutres du thème clair sont un papier ivoire
-    chaud (teinte 80 à 95) et une encre presque noire chaude : la chaleur vient
-    du papier, pas d'une couleur en plus. Le fond de page se détache des cartes
-    restées blanches pour donner de la profondeur. Tout reste en mode clair. La
-    marque ne bouge pas : #6c4dff. Contrastes mesurés au navigateur : encre 16:1
-    sur la page, muted 5,1:1 sur la surface secondaire, marque 5,07:1 sur blanc.
+    Charte « Encre et papier froid », celle de la maquette validée le 2 et le
+    8 septembre. Elle remplace « Ivoire et Encre » : même construction, un
+    papier légèrement teinté qui se détache des cartes blanches, une encre
+    presque noire, mais la teinte passe du chaud au froid. Les neutres sont
+    tirés vers le violet de la marque, très faiblement, pour que le papier
+    porte la marque au lieu de la contredire. Tout reste en mode clair. La
+    marque ne bouge pas : #6c4dff reste la couleur des actions. Contrastes
+    mesurés : encre 18:1 sur la page, muted 6,7:1 sur la page et 6,4:1 sur le gris, marque 5,07:1
+    sur blanc.
   */
-  --background: oklch(0.9703 0.007 88.6);
-  --foreground: oklch(0.2063 0.0107 80.5);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2063 0.0107 80.5);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2063 0.0107 80.5);
-  --primary: oklch(0.267 0.0176 82.2);
+  --background: #f6f6fb;
+  --foreground: #0c0c14;
+  --card: #ffffff;
+  --card-foreground: #0c0c14;
+  --popover: #ffffff;
+  --popover-foreground: #0c0c14;
+  --primary: #1e1e2e;
   --primary-foreground: oklch(0.985 0 0);
   --brand: #6c4dff;
   /*
@@ -97,23 +100,23 @@
   --brand-soft: color-mix(in srgb, var(--brand) 12%, transparent);
   --brand-ring: color-mix(in srgb, var(--brand) 30%, transparent);
   /*
-    L'or de la direction « Ivoire et Encre ». Réservé au hero du commercial quand
-    il atteint le palier Excellence, en filet fin et en halo décoratif : jamais
-    de texte posé dessus, et le violet reste la couleur des actions. Le palier
+    L'or du podium et du palier Excellence. Réservé au hero du commercial
+    quand il atteint ce palier, en filet fin et en halo décoratif : jamais de
+    texte posé dessus, et le violet reste la couleur des actions. Le palier
     lui-même garde sa rampe violette ordonnée, un or au sommet casserait la
     lecture clair vers foncé.
   */
-  --gold: oklch(0.7115 0.1204 82.3);
-  --secondary: oklch(0.9495 0.0099 87.5);
-  --secondary-foreground: oklch(0.2063 0.0107 80.5);
-  --muted: oklch(0.9495 0.0099 87.5);
-  --muted-foreground: oklch(0.505 0.026 87.2);
-  --accent: oklch(0.9495 0.0099 87.5);
-  --accent-foreground: oklch(0.2063 0.0107 80.5);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9165 0.017 88);
-  --input: oklch(0.9165 0.017 88);
-  --ring: oklch(0.6631 0.031 84.6);
+  --gold: #c08a1e;
+  --secondary: #f1f1f7;
+  --secondary-foreground: #0c0c14;
+  --muted: #f1f1f7;
+  --muted-foreground: #56556c;
+  --accent: #f1f1f7;
+  --accent-foreground: #0c0c14;
+  --destructive: #b3261e;
+  --border: #e8e8f0;
+  --input: #e8e8f0;
+  --ring: #a9a8bd;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -131,24 +134,30 @@
   --chart-axis: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
   --chart-grid: var(--border);
   --radius: 0.625rem;
-  --sidebar: oklch(0.9848 0.0054 95.1);
-  --sidebar-foreground: oklch(0.2063 0.0107 80.5);
-  --sidebar-primary: oklch(0.267 0.0176 82.2);
+  /*
+    La colonne de navigation est blanche, comme les cartes, séparée de la page
+    par un filet. L'entrée active prend un fond de marque très clair et une
+    encre de marque foncée, comme dans la maquette : c'est la seule couleur de
+    la colonne, tout le reste est encre et gris.
+  */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0c0c14;
+  --sidebar-primary: #1e1e2e;
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.9495 0.0099 87.5);
-  --sidebar-accent-foreground: oklch(0.2063 0.0107 80.5);
-  --sidebar-border: oklch(0.9165 0.017 88);
-  --sidebar-ring: oklch(0.6631 0.031 84.6);
-  --app-shell-surface: oklch(0.9703 0.007 88.6);
-  --app-shell-sidebar-bg: oklch(0.9615 0.0098 87.5);
-  --app-shell-sidebar-text: oklch(0.2063 0.0107 80.5);
-  --app-shell-sidebar-muted: oklch(0.513 0.0264 84.6);
-  --app-shell-sidebar-border: oklch(0.9051 0.0174 84.6);
-  --app-shell-sidebar-hover-bg: oklch(0.9352 0.0144 84.6);
-  --app-shell-sidebar-active-bg: oklch(0.94 0.03 292);
-  --app-shell-sidebar-active-text: oklch(0.29 0.07 291);
-  --app-shell-sidebar-accent: oklch(0.58 0.23 292);
-  --app-shell-sidebar-card-bg: oklch(0.9553 0.0111 89.7);
+  --sidebar-accent: #f1f1f7;
+  --sidebar-accent-foreground: #0c0c14;
+  --sidebar-border: #e8e8f0;
+  --sidebar-ring: #a9a8bd;
+  --app-shell-surface: #f6f6fb;
+  --app-shell-sidebar-bg: #ffffff;
+  --app-shell-sidebar-text: #0c0c14;
+  --app-shell-sidebar-muted: #56556c;
+  --app-shell-sidebar-border: #e8e8f0;
+  --app-shell-sidebar-hover-bg: #f4f4f9;
+  --app-shell-sidebar-active-bg: #f1edff;
+  --app-shell-sidebar-active-text: #4a31c4;
+  --app-shell-sidebar-accent: #6c4dff;
+  --app-shell-sidebar-card-bg: #fafafd;
 }
 
 .dark {
