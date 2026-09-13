@@ -15,7 +15,7 @@ export default async function SuperAdminKissConsignesPage() {
         eyebrow="Super admin"
         icon={Sparkles}
         title="Consignes KISS par quadrant"
-        description="Paramètres globaux — distincts des prompts SONCAS / DISC / KISS (modèles d'analyse)."
+        description="Paramètres globaux, distincts des prompts SONCAS / DISC / KISS (modèles d'analyse)."
         backHref="/admin/prompts"
         backLabel="← Prompts d'analyse"
       />

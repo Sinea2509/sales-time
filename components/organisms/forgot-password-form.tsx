@@ -11,7 +11,7 @@ import { pageTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 
 const primaryCtaClass = cn(
-  "h-10 w-full shrink-0 rounded-md border-0 px-6 font-medium text-white shadow-sm",
+  "text-brand-foreground h-10 w-full shrink-0 rounded-md border-0 px-6 font-medium shadow-sm",
   "bg-brand hover:bg-brand-hover dark:bg-brand dark:hover:bg-brand-hover",
 );
 

@@ -46,7 +46,7 @@ export async function forgotPasswordAction(
 
   await sendTransactionalEmail({
     to: user.email,
-    subject: "Réinitialiser votre mot de passe — Sales Time",
+    subject: "Réinitialiser votre mot de passe · Sales Time",
     html: `<p>Bonjour,</p><p><a href="${link}">Cliquez ici pour choisir un nouveau mot de passe</a>.</p><p>Ce lien expire dans une heure.</p>`,
   });
 

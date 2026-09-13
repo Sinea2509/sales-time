@@ -10,20 +10,33 @@ import {
   partitionMeetingsByStatsWindow,
   previousMeetingAtWindowStart,
 } from "@/src/core/domain/dashboard-stats-window";
+import { memberNameLine } from "@/src/core/domain/member-name-line";
 
 const userIdSchema = z.string().cuid();
 
-async function assertManagerCanViewSeller(userId: string) {
+async function assertCanViewSellerPerformance(userId: string) {
   const actor = await requireOrgActor();
   if (!actor.ok) return { ok: false as const, error: actor.error };
-
-  if (actor.workspaceRoleMode !== "admin") {
-    return { ok: false as const, error: "FORBIDDEN" as const };
-  }
 
   const parsedUserId = userIdSchema.safeParse(userId);
   if (!parsedUserId.success) {
     return { ok: false as const, error: "VALIDATION" as const };
+  }
+
+  /*
+    Deux lecteurs recevables, et un seul chemin : le manager qui ouvre la fiche
+    d'un de ses commerciaux, et le commercial qui lit la sienne. La fiche est
+    devenue le même écran pour les deux, et la carte de profil qui l'habite
+    appelle ces deux actions pour se rafraîchir ; réservée au rôle
+    administrateur, elle laissait le commercial devant un profil qui ne se
+    recalculait jamais.
+
+    L'identifiant se valide avant le rôle, puisque c'est lui qu'on compare
+    désormais à celui du lecteur.
+  */
+  const litSaPropreFiche = actor.internalUserId === parsedUserId.data;
+  if (actor.workspaceRoleMode !== "admin" && !litSaPropreFiche) {
+    return { ok: false as const, error: "FORBIDDEN" as const };
   }
 
   const member = await actor.deps.organizationTeam.findMembershipForManagerView(
@@ -34,11 +47,7 @@ async function assertManagerCanViewSeller(userId: string) {
     return { ok: false as const, error: "NOT_FOUND" as const };
   }
 
-  const nameLine =
-    [member.user.firstName?.trim() ?? "", member.user.lastName?.trim() ?? ""]
-      .filter(Boolean)
-      .join(" ")
-      .trim() || member.user.email;
+  const nameLine = memberNameLine(member.user);
 
   return {
     ok: true as const,
@@ -53,7 +62,7 @@ export async function getTeamMemberPerformanceFingerprintAction(
   userId: string,
   statsWindowDays: number,
 ) {
-  const access = await assertManagerCanViewSeller(userId);
+  const access = await assertCanViewSellerPerformance(userId);
   if (!access.ok) return access;
 
   const windowDays = parseStatsWindowDays(String(statsWindowDays));
@@ -84,7 +93,7 @@ export async function refreshTeamMemberPerformanceAction(
   userId: string,
   statsWindowDays: number,
 ) {
-  const access = await assertManagerCanViewSeller(userId);
+  const access = await assertCanViewSellerPerformance(userId);
   if (!access.ok) return access;
 
   const profile = await getTeamMemberPerformanceProfile(access.deps, {

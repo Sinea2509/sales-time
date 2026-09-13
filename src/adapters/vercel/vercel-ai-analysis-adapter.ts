@@ -4,7 +4,9 @@ import {
   discAnalysisOutputSchema,
   soncasAnalysisOutputSchema,
 } from "@/src/core/domain/analysis-result-zod";
-import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
+import { kissGeneratedResultSchema } from "@/src/core/domain/kiss-result-zod";
+import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
+import { scorecardGeneratedResultSchema } from "@/src/core/domain/scorecard-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import { meetingDetailSynthesisSchema } from "@/src/core/domain/meeting-detail-synthesis-zod";
@@ -16,7 +18,13 @@ import type {
   SellerCommercialPerformanceSummary,
   SellerRelationalAffinitySummary,
 } from "@/src/core/ports/analysis-port";
-import { withDataScopeSystemPrompt } from "@/lib/ai-system-prompt";
+import {
+  withDataScopeSystemPrompt,
+  withDiscSystemPrompt,
+  withKissSystemPrompt,
+  withScorecardSystemPrompt,
+  withSoncasSystemPrompt,
+} from "@/lib/ai-system-prompt";
 import {
   buildDelimitedMeetingUserContent,
   buildKissUserPrompt,
@@ -44,7 +52,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       transcript: input.transcript,
       notes: input.notes,
     });
-    const systemPrompt = withDataScopeSystemPrompt(input.systemMarkdown);
+    const systemPrompt = withSoncasSystemPrompt(input.systemMarkdown);
 
     const { object, usage } = await generateObject({
       model: input.model,
@@ -74,7 +82,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       transcript: input.transcript,
       notes: input.notes,
     });
-    const systemPrompt = withDataScopeSystemPrompt(input.systemMarkdown);
+    const systemPrompt = withDiscSystemPrompt(input.systemMarkdown);
 
     const { object, usage } = await generateObject({
       model: input.model,
@@ -108,11 +116,53 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       priorSoncasResult: input.priorSoncasResult,
       priorDiscResult: input.priorDiscResult,
     });
-    const systemPrompt = withDataScopeSystemPrompt(input.systemMarkdown);
+    const systemPrompt = withKissSystemPrompt(input.systemMarkdown);
 
+    // Le schéma de génération, pas celui de lecture : le modèle doit fournir
+    // les six notes du commercial. Le schéma de lecture les accepte absentes,
+    // pour ne pas invalider l'historique, et cette tolérance n'a rien à faire
+    // ici où l'analyse est produite.
     const { object, usage } = await generateObject({
       model: input.model,
-      schema: kissResultSchema,
+      schema: kissGeneratedResultSchema,
+      system: systemPrompt,
+      prompt: userPrompt,
+    });
+
+    return {
+      result: object,
+      systemPrompt,
+      userPrompt,
+      usage: {
+        inputTokens: usage?.inputTokens,
+        outputTokens: usage?.outputTokens,
+      },
+    };
+  }
+
+  async analyzeScorecard(input: {
+    systemMarkdown: string;
+    grid: ScorecardGrid;
+    transcript: string;
+    notes: string | null;
+    model: string;
+  }) {
+    const userPrompt = buildDelimitedMeetingUserContent({
+      transcript: input.transcript,
+      notes: input.notes,
+    });
+    const systemPrompt = withScorecardSystemPrompt(
+      input.systemMarkdown,
+      input.grid,
+    );
+
+    // Le schéma de génération : des niveaux et des preuves, aucun total. Le
+    // schéma de lecture porte en plus le score et les sous-totaux, que le
+    // produit calcule après cet appel ; les réclamer ici reviendrait à demander
+    // au modèle l'addition qu'on lui retire justement des mains.
+    const { object, usage } = await generateObject({
+      model: input.model,
+      schema: scorecardGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
     });

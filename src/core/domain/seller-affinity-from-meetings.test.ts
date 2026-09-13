@@ -4,9 +4,13 @@ import {
   aggregateDiscAffinityBarsFromMeetings,
   aggregateSoncasAffinityBarsFromMeetings,
   DISC_BAR_CLASS,
+  DISC_HEX,
+  DISC_PILL_CLASS,
   emptyDiscAffinityPlaceholder,
   emptySoncasAffinityPlaceholder,
   SONCAS_BAR_CLASS,
+  SONCAS_HEX,
+  SONCAS_PILL_CLASS,
 } from "./seller-affinity-from-meetings";
 
 const driver = (score: number) => ({ score, evidence: [] as string[] });
@@ -24,12 +28,7 @@ const soncas = {
   summary: "",
 };
 
-const disc = (scores: {
-  D: number;
-  I: number;
-  S: number;
-  C: number;
-}) => ({
+const disc = (scores: { D: number; I: number; S: number; C: number }) => ({
   scores,
   dominant: "D" as const,
   evidence: [] as string[],
@@ -47,6 +46,46 @@ describe("seller-affinity-from-meetings", () => {
   it("exposes bar class maps", () => {
     expect(DISC_BAR_CLASS.D).toContain("bg-");
     expect(SONCAS_BAR_CLASS.securite).toContain("bg-");
+  });
+
+  /*
+    Les hex des camemberts et les classes des barres doivent nommer le même
+    cran Tailwind : c'est toute la promesse « une couleur par profil, sur
+    toutes les pages ». La table hex-vers-cran reprend la palette Tailwind v4,
+    qui est un fait extérieur au produit, pas un choix à retester.
+  */
+  it("peint chaque profil du même cran en barre et en camembert", () => {
+    const cranParHex: Record<string, string> = {
+      "#dc2626": "red-600",
+      "#f59e0b": "amber-500",
+      "#059669": "emerald-600",
+      "#2563eb": "blue-600",
+      "#1d4ed8": "blue-700",
+      "#d946ef": "fuchsia-500",
+      "#047857": "emerald-700",
+      "#06b6d4": "cyan-500",
+      "#e11d48": "rose-600",
+    };
+    for (const key of Object.keys(DISC_HEX) as Array<keyof typeof DISC_HEX>) {
+      expect(DISC_BAR_CLASS[key]).toBe(`bg-${cranParHex[DISC_HEX[key]]}`);
+    }
+    for (const key of Object.keys(SONCAS_HEX) as Array<
+      keyof typeof SONCAS_HEX
+    >) {
+      expect(SONCAS_BAR_CLASS[key]).toBe(`bg-${cranParHex[SONCAS_HEX[key]]}`);
+    }
+  });
+
+  it("ne peint aucun profil au violet de la marque", () => {
+    const tout = [
+      ...Object.values(DISC_BAR_CLASS),
+      ...Object.values(SONCAS_BAR_CLASS),
+      ...Object.values(DISC_PILL_CLASS),
+      ...Object.values(SONCAS_PILL_CLASS),
+      ...Object.values(DISC_HEX),
+      ...Object.values(SONCAS_HEX),
+    ].join(" ");
+    expect(tout).not.toMatch(/violet|purple|indigo/);
   });
 
   it("returns empty aggregates when no valid analyses", () => {
@@ -77,13 +116,19 @@ describe("seller-affinity-from-meetings", () => {
   });
 
   it("normalizes dominant DISC style to 100%", () => {
-    const meetings = [row({ latestDiscResult: disc({ D: 100, I: 0, S: 0, C: 0 }) })];
-    const d = aggregateDiscAffinityBarsFromMeetings(meetings).find((b) => b.key === "D");
+    const meetings = [
+      row({ latestDiscResult: disc({ D: 100, I: 0, S: 0, C: 0 }) }),
+    ];
+    const d = aggregateDiscAffinityBarsFromMeetings(meetings).find(
+      (b) => b.key === "D",
+    );
     expect(d!.pct).toBe(100);
   });
 
   it("ignores invalid out-of-range DISC scores", () => {
-    const meetings = [row({ latestDiscResult: disc({ D: -80, I: 0, S: 0, C: 0 }) })];
+    const meetings = [
+      row({ latestDiscResult: disc({ D: -80, I: 0, S: 0, C: 0 }) }),
+    ];
     expect(aggregateDiscAffinityBarsFromMeetings(meetings)).toEqual([]);
   });
 

@@ -1,6 +1,6 @@
 import type { OrganizationSettingsRow } from "@/src/core/ports/organization-settings-repository-port";
 
-/** Temps utile récupéré (minutes) par RDV entièrement traité avec l’outil — d’après paramètres org. */
+/** Temps utile récupéré (minutes) par RDV entièrement traité avec l’outil, d’après les paramètres de l’organisation. */
 export function tamMinutesSavedPerMeetingFromSettings(
   settings: Pick<
     OrganizationSettingsRow,

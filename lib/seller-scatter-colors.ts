@@ -37,7 +37,7 @@ export type SellerScatterStyle = {
   pillClass: string;
 };
 
-/** Couleur stable par commercial — tri alphabétique sur le libellé affiché. */
+/** Couleur stable par commercial : tri alphabétique sur le libellé affiché. */
 export function sellerScatterStylesByUserId(
   entries: ReadonlyArray<{ sellerUserId: string; sellerDisplayName: string }>,
 ): Map<string, SellerScatterStyle & { label: string }> {

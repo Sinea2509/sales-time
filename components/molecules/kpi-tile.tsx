@@ -5,10 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  statAccentStyles,
-  type StatAccent,
-} from "@/lib/stat-accent-styles";
+import { statAccentStyles, type StatAccent } from "@/lib/stat-accent-styles";
 import { cn } from "@/lib/utils";
 
 export type KpiTileProps = {
@@ -37,7 +34,7 @@ export function KpiTile({
   const accentColors = accent ? statAccentStyles[accent] : null;
 
   const shellClass = cn(
-    "rounded-2xl border border-zinc-200/10 bg-white p-5 text-zinc-900 shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50",
+    "rounded-2xl border border-border/10 bg-card p-5 text-foreground shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50",
     className,
   );
 
@@ -70,7 +67,7 @@ export function KpiTile({
               <TooltipTrigger
                 type="button"
                 className="text-muted-foreground hover:text-foreground inline-flex shrink-0 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-ring"
-                aria-label={`${label} — définition`}
+                aria-label={`Définition : ${label}`}
               >
                 <Info className="size-3.5" aria-hidden />
               </TooltipTrigger>

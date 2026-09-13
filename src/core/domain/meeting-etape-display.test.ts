@@ -1,5 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
-import { meetingEtapeDisplayLabel } from "./meeting-etape-display";
+import {
+  ETAPE_NON_RENSEIGNEE,
+  meetingEtapeDisplayLabel,
+} from "./meeting-etape-display";
 
 describe("meetingEtapeDisplayLabel", () => {
   it("prefers meetingType over pipelineStage", () => {
@@ -20,12 +23,13 @@ describe("meetingEtapeDisplayLabel", () => {
     ).toBe("Qualifié");
   });
 
-  it("returns em dash when unset", () => {
+  it("says the field is empty instead of drawing a dash", () => {
     expect(
       meetingEtapeDisplayLabel({
         meetingType: null,
         pipelineStage: null,
       }),
-    ).toBe("—");
+    ).toBe(ETAPE_NON_RENSEIGNEE);
+    expect(ETAPE_NON_RENSEIGNEE).toBe("Non renseignée");
   });
 });

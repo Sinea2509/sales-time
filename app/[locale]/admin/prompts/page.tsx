@@ -15,10 +15,7 @@ type SuperAdminPromptsPageProps = {
 };
 
 function parsePromptKind(raw: string | undefined): AnalysisKindSlug {
-  if (
-    raw != null &&
-    (ANALYSIS_KIND_SLUGS as readonly string[]).includes(raw)
-  ) {
+  if (raw != null && (ANALYSIS_KIND_SLUGS as readonly string[]).includes(raw)) {
     return raw as AnalysisKindSlug;
   }
   return "SONCAS";
@@ -42,7 +39,7 @@ async function loadPromptPanel(kind: AnalysisKindSlug) {
   );
 
   const initialMarkdown =
-    current?.markdown ?? "(Aucun prompt — exécutez `npx prisma db seed`.)";
+    current?.markdown ?? "(Aucun prompt : exécutez `npx prisma db seed`.)";
 
   return {
     kind,

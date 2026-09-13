@@ -154,7 +154,7 @@ export function ContactPicker({
       </div>
       {personId ? (
         <p className="text-muted-foreground text-xs">
-          Contact existant sélectionné — le rendez-vous sera lié à cette fiche.
+          Contact existant sélectionné : le rendez-vous sera lié à cette fiche.
         </p>
       ) : (
         <p className="text-muted-foreground text-xs">

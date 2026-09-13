@@ -18,7 +18,7 @@ type Props = {
 };
 
 /**
- * Liste e-mail + rôle et bouton « + Ajouter une invitation » — même structure
+ * Liste e-mail + rôle et bouton « + Ajouter une invitation », même structure
  * que l’étape 4 de l’onboarding (réutilisable dans Paramètres équipe).
  */
 export function TeamInviteRowsField({ rows, onRowsChange, label }: Props) {

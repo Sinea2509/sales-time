@@ -67,7 +67,7 @@ export async function inviteSuperAdminAction(
 
   await sendTransactionalEmail({
     to: email,
-    subject: "Invitation super administrateur — Sales Time",
+    subject: "Invitation super administrateur · Sales Time",
     html: `<p>Vous êtes invité à devenir <strong>super administrateur</strong> de la plateforme Sales Time (accès système : organisations, prompts, analytics).</p><p><a href="${link}">Accepter l’invitation</a></p><p>Ce lien expire dans 14 jours. Vous devez vous connecter avec l’adresse <strong>${email}</strong>.</p>`,
   });
 

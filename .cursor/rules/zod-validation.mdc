@@ -1,5 +1,5 @@
 ---
-description: Zod at trust boundaries — parse unknown input before core
+description: Zod at trust boundaries · parse unknown input before core
 globs: **/*.{ts,tsx}
 alwaysApply: false
 ---

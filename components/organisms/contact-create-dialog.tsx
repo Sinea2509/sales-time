@@ -35,7 +35,7 @@ export function ContactCreateDialog({
       <Button
         type="button"
         onClick={() => setOpen(true)}
-        className="bg-brand text-primary-foreground hover:bg-brand-hover inline-flex h-9 w-fit shrink-0 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium"
+        className="bg-brand text-brand-foreground hover:bg-brand-hover inline-flex h-9 w-fit shrink-0 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium"
       >
         <Plus className="size-4 shrink-0" aria-hidden />
         Nouveau contact

@@ -40,7 +40,7 @@ export function MeetingInterlocutorSection({
       <Card>
         <CardContent className="space-y-6 pt-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-white text-lg font-semibold text-zinc-900 shadow-sm ring-1 ring-zinc-200/80 dark:bg-zinc-100 dark:ring-zinc-700/80">
+            <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-card text-lg font-semibold text-foreground shadow-sm ring-1 ring-border/80 dark:bg-zinc-100 dark:ring-zinc-700/80">
               {prospectInitials(prospectName)}
             </span>
             <div className="min-w-0 flex-1 space-y-2">

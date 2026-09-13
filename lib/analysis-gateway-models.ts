@@ -3,7 +3,7 @@ import { z } from "zod";
 /** Default when a prompt template has no model configured in DB. */
 export const DEFAULT_ANALYSIS_GATEWAY_MODEL = "openai/gpt-4o-mini" as const;
 
-/** @deprecated Use DEFAULT_ANALYSIS_GATEWAY_MODEL — kept for existing imports. */
+/** @deprecated Use DEFAULT_ANALYSIS_GATEWAY_MODEL; kept for existing imports. */
 export const ANALYSIS_GATEWAY_MODEL = DEFAULT_ANALYSIS_GATEWAY_MODEL;
 
 export type AnalysisGatewayModelOption = {

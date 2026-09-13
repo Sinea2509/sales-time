@@ -4,6 +4,7 @@ import type { AiRequestLogRepositoryPort } from "@/src/core/ports/ai-request-log
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
+import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { GlobalKissCoachingPromptsRepositoryPort } from "@/src/core/ports/global-kiss-coaching-prompts-repository-port";
 
@@ -27,6 +28,7 @@ export async function processAnalysisJobs(
     analysis: AnalysisPort;
     aiLogs: AiRequestLogRepositoryPort;
     globalKissCoachingPrompts: GlobalKissCoachingPromptsRepositoryPort;
+    organizationSettings: OrganizationSettingsRepositoryPort;
     notifications: NotificationRepositoryPort;
     users: import("@/src/core/ports/user-repository-port").UserRepositoryPort;
   },
@@ -73,6 +75,7 @@ export async function processAnalysisJobs(
         analysis: deps.analysis,
         aiLogs: deps.aiLogs,
         globalKissCoachingPrompts: deps.globalKissCoachingPrompts,
+        organizationSettings: deps.organizationSettings,
         notifications: deps.notifications,
         users: deps.users,
       },

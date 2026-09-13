@@ -8,9 +8,9 @@ alwaysApply: false
 
 ## Allowed
 
-- **`domain/`**: Pure logic — no imports from `app/`, `src/adapters/`, `next/*`, `react`, `@prisma/client`, or HTTP/SDK clients.
+- **`domain/`**: Pure logic, no imports from `app/`, `src/adapters/`, `next/*`, `react`, `@prisma/client`, or HTTP/SDK clients.
 - **`ports/`**: Interfaces only (types + `interface`/function signatures). No implementations, no Prisma.
-- **`application/`**: Use cases orchestrating ports + domain. Inject deps via parameters or small factories — **no direct Prisma or framework globals**.
+- **`application/`**: Use cases orchestrating ports + domain. Inject deps via parameters or small factories; **no direct Prisma or framework globals**.
 
 ## Forbidden
 

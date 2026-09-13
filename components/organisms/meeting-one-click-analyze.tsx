@@ -15,7 +15,7 @@ export function MeetingOneClickAnalyze({ meetingId }: { meetingId: string }) {
     <div className="space-y-2">
       <Button
         type="button"
-        className="bg-brand text-white hover:bg-brand-hover"
+        className="bg-brand text-brand-foreground hover:bg-brand-hover"
         disabled={pending}
         onClick={() => {
           setMsg(null);

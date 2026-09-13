@@ -45,7 +45,7 @@ export function LandingTestimonialSlider({
         key={active}
         className="animate-in fade-in-0 zoom-in-95 grid gap-8 p-6 duration-500 sm:p-8 lg:grid-cols-12 lg:items-stretch lg:gap-10"
       >
-        {/* Portrait placeholder — gauche */}
+        {/* Portrait indicatif, à gauche */}
         <div className="flex justify-center lg:col-span-3 lg:justify-start">
           <div
             className={cn(
@@ -66,7 +66,7 @@ export function LandingTestimonialSlider({
           </div>
         </div>
 
-        {/* Témoignage — centre */}
+        {/* Témoignage, au centre */}
         <div
           className="flex flex-col justify-center lg:col-span-6"
           aria-live="polite"
@@ -86,7 +86,7 @@ export function LandingTestimonialSlider({
           </div>
         </div>
 
-        {/* KPIs — droite */}
+        {/* Indicateurs, à droite */}
         <div className="flex flex-col gap-3 lg:col-span-3">
           {current.kpis.map((k) => (
             <div

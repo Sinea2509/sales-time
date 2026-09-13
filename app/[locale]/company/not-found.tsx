@@ -11,7 +11,7 @@ export default function CompanyNotFound() {
       </p>
       <Link
         href="/company"
-        className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+        className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
       >
         Retour au tableau de bord
       </Link>

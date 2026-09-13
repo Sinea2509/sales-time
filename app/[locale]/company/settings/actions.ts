@@ -6,6 +6,10 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { loadOrgSettingsActor } from "@/lib/load-org-settings-access";
 import { uploadOrgLogoToBlob } from "@/lib/org-logo-upload";
 import { personalFollowUpEmailOverridesFromForm } from "@/src/core/domain/follow-up-email-preferences";
+import {
+  organizationPlaybookFullFormSchema,
+  organizationPlaybookToJson,
+} from "@/src/core/domain/organization-playbook";
 
 async function requireOrgSettingsManagerOrganizationId(): Promise<string | null> {
   const actor = await loadOrgSettingsActor();
@@ -112,6 +116,38 @@ export async function updateOrganizationProcess(
   revalidatePath("/company");
   revalidatePath("/company/rendez-vous/nouveau");
   revalidatePath("/company/preparer");
+  return { ok: true };
+}
+
+/**
+ * Enregistre le playbook de l'organisation.
+ *
+ * Le formulaire arrive complet : tous les champs sont envoyés, y compris les
+ * vides. C'est ce qui permet à un manager de retirer une ligne rouge sans que
+ * l'action ait besoin de distinguer « champ absent » de « champ effacé ». La
+ * sérialisation renvoie `null` quand plus rien n'est rempli, et la colonne
+ * redevient alors vide plutôt que de garder un objet de champs vides.
+ */
+export async function updateOrganizationPlaybook(
+  raw: z.input<typeof organizationPlaybookFullFormSchema>,
+): Promise<OrgSettingsActionResult> {
+  const organizationId = await requireOrgSettingsManagerOrganizationId();
+  if (!organizationId) {
+    return { ok: false, message: "Accès refusé." };
+  }
+  const parsed = organizationPlaybookFullFormSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Playbook trop long : raccourcissez les champs signalés.",
+    };
+  }
+  const deps = getApplicationDeps();
+  await deps.organizationSettings.upsertPlaybook(
+    organizationId,
+    organizationPlaybookToJson(parsed.data),
+  );
+  revalidatePath("/company/settings", "layout");
   return { ok: true };
 }
 

@@ -1,0 +1,636 @@
+import { TeamRankingSummary } from "@/components/molecules/team-ranking-summary";
+import { TEAM_TIER_CLASS } from "@/components/molecules/team-tier-badge";
+import type { CardHeadingTag } from "@/lib/page-typography";
+import { plurielFr } from "@/lib/pluriel-fr";
+import { prospectInitials } from "@/lib/prospect-initials";
+import { teamMemberDisplayName } from "@/lib/team-member-display-name";
+import { cn } from "@/lib/utils";
+import type { OrgAdminTeamCollective } from "@/src/core/application/get-org-admin-dashboard";
+import {
+  formatEcartCompetence,
+  SELLER_SKILL_LABEL_FR,
+} from "@/src/core/domain/seller-skill-signature";
+import {
+  amplitudeDesNotes,
+  ecartMinimalSurPiste,
+  nombreDeStratesParLargeur,
+  teamDispersionDots,
+  teamSkillOverview,
+  type TeamDispersionDot,
+  type TeamDispersionEntry,
+  type TeamSkillBar,
+} from "@/src/core/domain/team-collective-view";
+import {
+  formatNoteFr,
+  NOTE_ON5_MAX,
+  RANKING_TIERS,
+  rankLabel,
+  tierFromNoteOn5,
+  type TeamRankingSummary as TeamRankingSummaryData,
+} from "@/src/core/domain/team-ranking";
+import type { CSSProperties } from "react";
+
+/**
+ * Ce que le manager voit de son équipe avant de lire une seule ligne.
+ *
+ * Le tableau qui suit répond ligne à ligne : qui est où, avec quelle note. Deux
+ * questions lui échappent, et ce sont celles qu'un manager pose en premier.
+ * D'abord « mon équipe est-elle groupée ou coupée en deux ? », que la moyenne
+ * ne peut pas dire : 3,7 de moyenne, ce sont cinq personnes à 3,7, ou deux à
+ * 4,6 et trois à 3,1, et ces deux équipes n'appellent pas le même coaching.
+ * Ensuite « sur quoi former tout le monde ? », que le tableau ne dit pas non
+ * plus, puisqu'il ne donne le point faible que d'une personne à la fois.
+ *
+ * Les deux cartes lisent exactement les mêmes nombres que le tableau : la piste
+ * place les membres classés à la note écrite dans leur ligne, et les barres
+ * partent de la référence d'équipe à laquelle la colonne « Profil » compare
+ * chacun. Un « +17 » lu sur une ligne se rapporte donc bien à la barre affichée
+ * au-dessus.
+ */
+
+const PASTILLE_PX = 28;
+/** Filet de fond qui détache une pastille de celle qu'elle recouvre à moitié. */
+const ANNEAU_PX = 2;
+/** Ce qu'une pastille occupe vraiment à l'écran, anneau compris. */
+const EMPRISE_PX = PASTILLE_PX + 2 * ANNEAU_PX;
+/** Hauteur d'une strate : l'emprise d'une pastille, plus l'air au-dessus. */
+const STRATE_PX = EMPRISE_PX + 6;
+
+/**
+ * Les largeurs de piste pour lesquelles un empilement est calculé.
+ *
+ * Un empilement calculé pour une piste étroite ne devient jamais faux quand la
+ * piste s'élargit, mais il devient bête : il monte en escalier là où il avait
+ * toute la place de rester à plat, et l'œil lit cet escalier comme une tendance
+ * alors qu'il n'encode rien. Un seul empilement, celui du téléphone, ne suffit
+ * donc pas.
+ *
+ * Les crans sont posés là où le dessin change vraiment. Avec une emprise de 32
+ * pixels et 2 pixels de respiration, deux notes séparées de 0,5 point cessent
+ * de se chevaucher à partir de 340 pixels de piste, 0,3 point à partir de 567,
+ * 0,2 point à partir de 850 : les trois largeurs hautes encadrent ces seuils,
+ * arrondies au multiple de 8 supérieur. Les seuils intermédiaires sont sautés
+ * volontairement, parce qu'un cran coûte deux propriétés personnalisées sur
+ * chaque pastille alors qu'un cran sauté ne coûte qu'une strate de hauteur en
+ * trop, jamais un chevauchement.
+ *
+ * La première largeur, elle, n'est pas un seuil mais un plancher : c'est la
+ * place qui reste à l'intérieur de la carte sur le plus petit téléphone visé,
+ * marges et bordure déduites. La régler plus haut paraît plus confortable et ne
+ * l'est pas : la piste se met alors à défiler horizontalement sur téléphone, et
+ * le manager voit une bande de paliers sans savoir que ses commerciaux sont à
+ * droite, hors de l'écran.
+ *
+ * Chaque largeur est écrite deux fois, une fois en nombre pour le calcul et une
+ * fois dans une classe utilitaire pour le dessin, parce qu'une classe
+ * construite à l'exécution ne serait pas vue par le compilateur de feuilles de
+ * style. `tests/piste-bascule.test.ts` garde les deux écritures d'accord.
+ */
+const REGIMES_DE_PISTE = [
+  {
+    largeurPx: 232,
+    variableHauteur: "--piste-hauteur-0",
+    variableBas: "--pastille-bas-0",
+    classeHauteur: "h-[var(--piste-hauteur-0)]",
+    classeBas: "bottom-[var(--pastille-bas-0)]",
+  },
+  {
+    largeurPx: 344,
+    variableHauteur: "--piste-hauteur-1",
+    variableBas: "--pastille-bas-1",
+    classeHauteur: "@min-[344px]:h-[var(--piste-hauteur-1)]",
+    classeBas: "@min-[344px]:bottom-[var(--pastille-bas-1)]",
+  },
+  {
+    largeurPx: 568,
+    variableHauteur: "--piste-hauteur-2",
+    variableBas: "--pastille-bas-2",
+    classeHauteur: "@min-[568px]:h-[var(--piste-hauteur-2)]",
+    classeBas: "@min-[568px]:bottom-[var(--pastille-bas-2)]",
+  },
+  {
+    largeurPx: 856,
+    variableHauteur: "--piste-hauteur-3",
+    variableBas: "--pastille-bas-3",
+    classeHauteur: "@min-[856px]:h-[var(--piste-hauteur-3)]",
+    classeBas: "@min-[856px]:bottom-[var(--pastille-bas-3)]",
+  },
+] as const;
+
+/** La piste ne descend jamais sous son premier régime : c'est son plancher. */
+const PISTE_LARGEUR_PLANCHER_PX = REGIMES_DE_PISTE[0].largeurPx;
+
+const ECART_MINIMAL_PAR_REGIME = REGIMES_DE_PISTE.map((regime) =>
+  ecartMinimalSurPiste(regime.largeurPx, EMPRISE_PX),
+);
+const CLASSES_HAUTEUR = REGIMES_DE_PISTE.map((regime) => regime.classeHauteur);
+const CLASSES_BAS = REGIMES_DE_PISTE.map((regime) => regime.classeBas);
+
+/**
+ * Un empilement écrit en propriétés personnalisées, une par régime.
+ *
+ * Les strates voyagent toutes jusqu'à la feuille de style, qui garde celle du
+ * régime correspondant à la largeur réellement obtenue par la piste.
+ */
+function variablesDeStrates(
+  cle: "variableHauteur" | "variableBas",
+  strates: readonly number[],
+  minimum: number,
+): CSSProperties {
+  const style: Record<string, string> = {};
+  for (const [index, regime] of REGIMES_DE_PISTE.entries()) {
+    style[regime[cle]] =
+      `${Math.max(minimum, strates[index] ?? 0) * STRATE_PX}px`;
+  }
+  /*
+    React ne type que les propriétés du CSS qu'il connaît : un dictionnaire de
+    propriétés personnalisées ne lui ressemble pas assez pour être converti
+    d'un seul trait.
+  */
+  return style as unknown as CSSProperties;
+}
+
+/** Les notes écrites sous la piste : les bornes, et chaque changement de palier. */
+const GRADUATIONS = [
+  0,
+  ...RANKING_TIERS.slice(1).map((tier) => tier.minNoteOn5),
+  NOTE_ON5_MAX,
+];
+
+/*
+  « min-w-0 » n'est pas décoratif : ces cartes sont les cases d'une grille, et
+  une case de grille refuse par défaut de descendre sous la largeur minimale de
+  son contenu. La piste, qui réclame sa largeur plancher, poussait donc la carte
+  entière hors de l'écran d'un téléphone au lieu de défiler dans son cadre.
+*/
+const CADRE =
+  "min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
+/*
+  La marge est séparée du cadre parce qu'une des deux cartes porte un bandeau
+  qui va d'un bord à l'autre : appliquée au cadre, elle aurait laissé un liseré
+  blanc de quatre pixels tout autour du fond sombre.
+*/
+const MARGE = "p-4 sm:p-5";
+const CARTE = cn(CADRE, MARGE);
+const TITRE =
+  "text-sm font-semibold tracking-tight text-foreground dark:text-zinc-50";
+const LEGENDE =
+  "text-xs leading-relaxed text-muted-foreground dark:text-zinc-400";
+
+/** Position d'une note sur l'axe, en pourcentage de la largeur de la piste. */
+function positionSurAxe(note: number): string {
+  return `${(note / NOTE_ON5_MAX) * 100}%`;
+}
+
+/**
+ * « 1,2 point » · « 2,4 points ».
+ *
+ * L'accord passe par `plurielFr` plutôt que par un test écrit ici : c'est la
+ * même règle que celle des écarts et des tendances ailleurs dans l'app, et une
+ * règle recopiée est une règle qui finit par diverger d'un écran à l'autre.
+ */
+function points(valeur: number): string {
+  return `${formatNoteFr(valeur)} ${plurielFr(valeur, "point")}`;
+}
+
+function commerciaux(n: number): string {
+  return n <= 1 ? `${n} commercial coaché` : `${n} commerciaux coachés`;
+}
+
+/**
+ * Les quatre paliers dessinés à leur vraie place sur l'axe.
+ *
+ * Ils tiennent lieu de légende : un palier lu sur cette bande dit du même coup
+ * son nom, sa couleur et la tranche de notes qu'il couvre, là où une rangée de
+ * pastilles posée à côté du titre cache la tranche dans une infobulle que le
+ * doigt n'atteint pas.
+ */
+function BandeDesPaliers() {
+  return (
+    <div className="flex overflow-hidden rounded-md">
+      {RANKING_TIERS.map((tier, index) => {
+        const haut = tier.maxNoteOn5 ?? NOTE_ON5_MAX;
+        return (
+          <span
+            key={tier.id}
+            className={cn(
+              "truncate px-1 py-1 text-center text-[11px] leading-4 font-semibold",
+              TEAM_TIER_CLASS[tier.id],
+              /*
+                Le filet de séparation est de la couleur de la carte, et il est
+                pris sur la largeur du palier plutôt qu'ajouté entre eux : les
+                quatre bandes continuent de couvrir exactement l'axe, et 3
+                reste à 60 % de la piste comme sous la pastille qui s'y pose.
+              */
+              index < RANKING_TIERS.length - 1 &&
+                "border-r-2 border-white dark:border-zinc-900",
+            )}
+            style={{
+              width: `${((haut - tier.minNoteOn5) / NOTE_ON5_MAX) * 100}%`,
+            }}
+          >
+            {tier.nom}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+/** La piste : les pastilles empilées, la bande des paliers, les graduations. */
+function PisteDeRepartition({
+  dots,
+  moyenne,
+}: {
+  dots: readonly TeamDispersionDot[];
+  moyenne: number | null;
+}) {
+  const strates = nombreDeStratesParLargeur(dots);
+
+  return (
+    /*
+      Le conteneur de requête est la case qui défile, pas la fenêtre : la piste
+      vit à côté d'une barre latérale qui s'ouvre et se ferme, et une largeur de
+      fenêtre ne dit donc rien de la place réellement laissée à l'échelle.
+    */
+    <div className="@container overflow-x-auto pt-1 pb-0.5">
+      <div className="relative" style={{ minWidth: PISTE_LARGEUR_PLANCHER_PX }}>
+        {/*
+          Le trait de moyenne passe sous les pastilles : posé au-dessus, il
+          barrerait les initiales de ceux qui sont justement au milieu.
+        */}
+        {moyenne != null ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 border-l-2 border-dashed border-muted-foreground/50 dark:border-zinc-500"
+            style={{ left: positionSurAxe(moyenne) }}
+          />
+        ) : null}
+        {/*
+          Une strate au minimum, même sans personne à poser : sans elle la bande
+          des paliers viendrait se coller sous le titre, et la carte changerait
+          de hauteur le jour où le premier membre est classé.
+        */}
+        <div
+          className={cn("relative", ...CLASSES_HAUTEUR)}
+          style={variablesDeStrates("variableHauteur", strates, 1)}
+        >
+          {dots.map((dot) => {
+            /*
+              `tierFromNoteOn5` ne rend `null` que pour une note absente ou non
+              finie ; celle-ci vient d'un membre classé, donc d'un nombre.
+            */
+            const tier = tierFromNoteOn5(dot.valeur)!;
+            return (
+              <span
+                key={dot.cle}
+                className={cn(
+                  "absolute flex items-center justify-center rounded-full text-[11px] leading-none font-semibold",
+                  TEAM_TIER_CLASS[tier.id],
+                  // Après la classe de palier, qui porte sa propre couleur
+                  // d'anneau : ici c'est la carte qu'on veut voir entre deux
+                  // pastilles qui se chevauchent, pas un second violet.
+                  "ring-2 ring-white dark:ring-zinc-900",
+                  ...CLASSES_BAS,
+                )}
+                style={{
+                  ...variablesDeStrates("variableBas", dot.strates, 0),
+                  left: positionSurAxe(dot.valeur),
+                  width: PASTILLE_PX,
+                  height: PASTILLE_PX,
+                  transform: "translateX(-50%)",
+                }}
+                title={`${dot.libelle} · ${formatNoteFr(dot.valeur)}/5 · ${
+                  tier.nom
+                } · ${rankLabel(dot.rang)}`}
+              >
+                {prospectInitials(dot.libelle)}
+              </span>
+            );
+          })}
+        </div>
+        <BandeDesPaliers />
+        <div className="relative mt-1 h-4">
+          {GRADUATIONS.map((graduation) => (
+            <span
+              key={graduation}
+              className="absolute top-0 text-[11px] text-muted-foreground tabular-nums dark:text-zinc-400"
+              style={
+                graduation === 0
+                  ? { left: 0 }
+                  : graduation === NOTE_ON5_MAX
+                    ? { right: 0 }
+                    : {
+                        left: positionSurAxe(graduation),
+                        transform: "translateX(-50%)",
+                      }
+              }
+            >
+              {formatNoteFr(graduation)}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** La phrase qui dit, en une ligne, ce que la piste montre. */
+function phraseDeRepartition(
+  dots: readonly TeamDispersionDot[],
+  minScoredMeetings: number,
+): string {
+  const bornes = amplitudeDesNotes(dots);
+  if (bornes == null) {
+    return `Personne n'est encore au classement : la piste se remplit dès qu'un membre atteint ${minScoredMeetings} rendez-vous notés.`;
+  }
+  if (dots.length === 1) {
+    return `Un seul membre est classé, à ${formatNoteFr(
+      bornes.haute,
+    )}/5 : une répartition demande au moins deux notes à comparer.`;
+  }
+  if (bornes.amplitude === 0) {
+    return `L'équipe est parfaitement groupée : les ${dots.length} membres classés affichent tous ${formatNoteFr(
+      bornes.haute,
+    )}/5.`;
+  }
+  return `L'équipe s'étale de ${formatNoteFr(bornes.basse)}/5 à ${formatNoteFr(
+    bornes.haute,
+  )}/5, soit ${points(bornes.amplitude)} entre le premier et le dernier.`;
+}
+
+/**
+ * Un des deux gestes que le manager retient de la carte : son nom, son niveau,
+ * et de combien il s'écarte du niveau général de l'équipe.
+ *
+ * Les trois nombres sont ceux des barres du dessous, pas un autre calcul : le
+ * lecteur retrouve l'encart dans la liste, à la même valeur et au même écart.
+ */
+function EncartDeRelief({
+  titre,
+  bar,
+  ton,
+}: {
+  titre: string;
+  bar: TeamSkillBar;
+  /**
+   * « fort » se lit en vert, « travail » en ambre : les tons des cartes de
+   * priorités du tableau de bord, qui disent déjà « ce qui va » en vert et
+   * « où agir » en ambre. La couleur double l'intitulé, jamais à sa place, et
+   * la marque n'y figure pas : elle est réservée aux actions et à la
+   * navigation.
+   */
+  ton: "fort" | "travail";
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border p-3",
+        ton === "fort"
+          ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/40"
+          : "border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/40",
+      )}
+    >
+      <p
+        className={cn(
+          "text-[11px] font-semibold tracking-wider uppercase",
+          ton === "fort"
+            ? "text-emerald-700 dark:text-emerald-400"
+            : "text-amber-700 dark:text-amber-400",
+        )}
+      >
+        {titre}
+      </p>
+      <p className="mt-1 text-sm font-semibold text-foreground dark:text-zinc-50">
+        {SELLER_SKILL_LABEL_FR[bar.key]}
+      </p>
+      <p className="mt-0.5 text-xs text-muted-foreground dark:text-zinc-400">
+        <span className="tabular-nums">{bar.valeur}/100</span> ·{" "}
+        <span className="tabular-nums">{formatEcartCompetence(bar.ecart)}</span>{" "}
+        d&apos;écart au niveau de l&apos;équipe
+      </p>
+    </div>
+  );
+}
+
+/** Les six compétences de l'équipe, de la plus haute à la plus basse. */
+function CarteDesCompetences({
+  collectif,
+  niveauDeTitre: Titre,
+}: {
+  collectif: OrgAdminTeamCollective;
+  niveauDeTitre: CardHeadingTag;
+}) {
+  const vue = teamSkillOverview(collectif.skillReference);
+
+  return (
+    /*
+      Le titre nomme la carte en `aria-label` plutôt que par un `id` cité en
+      `aria-labelledby` : la section vit dans un composant qu'une page pourrait
+      afficher deux fois, et deux `id` identiques dans un document renvoient le
+      lecteur d'écran au premier des deux titres.
+    */
+    <section className={CARTE} aria-label="Compétences de l'équipe">
+      <Titre className={TITRE}>Compétences de l&apos;équipe</Titre>
+      {vue == null ? (
+        <p className={cn(LEGENDE, "mt-1.5")}>
+          Aucun rendez-vous coaché sur la période : les six compétences du
+          commercial se notent pendant l&apos;analyse d&apos;un rendez-vous.
+        </p>
+      ) : (
+        <>
+          {vue.relief ? (
+            /*
+              Les deux gestes qui portent la formation de l'équipe sortent de la
+              phrase et deviennent deux encarts : c'est ce que le manager vient
+              chercher, et une phrase le fait lire trois lignes pour trouver
+              deux noms.
+
+              Les deux encarts parlent la langue des cartes de priorités du
+              tableau de bord : vert pour ce qui va, ambre pour où agir. Le
+              point fort portait la couleur de marque ; elle est depuis
+              réservée aux actions et à la navigation, et un geste d'équipe
+              n'est ni l'un ni l'autre.
+            */
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <EncartDeRelief
+                titre="Point fort de l'équipe"
+                bar={vue.relief.fort}
+                ton="fort"
+              />
+              <EncartDeRelief
+                titre="Axe d'amélioration de l'équipe"
+                bar={vue.relief.faible}
+                ton="travail"
+              />
+            </div>
+          ) : (
+            <p className="mt-1.5 text-sm leading-relaxed text-foreground dark:text-zinc-300">
+              Les six compétences de l&apos;équipe sont au même niveau,{" "}
+              <span className="tabular-nums">{vue.niveauMoyen}/100</span> :
+              aucune ne se détache, ni vers le haut ni vers le bas.
+            </p>
+          )}
+          <ul className="mt-4 space-y-2.5">
+            {vue.bars.map((bar) => {
+              const extreme =
+                vue.relief != null &&
+                (bar.key === vue.relief.fort.key ||
+                  bar.key === vue.relief.faible.key);
+              return (
+                <li key={bar.key}>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-sm text-foreground dark:text-zinc-200">
+                      {SELLER_SKILL_LABEL_FR[bar.key]}
+                    </span>
+                    <span className="flex shrink-0 items-baseline gap-2 tabular-nums">
+                      {/*
+                        L'écart n'est écrit que sur les deux compétences que la
+                        phrase du haut vient de nommer. Six écarts alignés sous
+                        six valeurs feraient un tableau de douze nombres, là où
+                        le repère vertical dit déjà de quel côté chaque barre
+                        tombe.
+                      */}
+                      {extreme ? (
+                        <span className="text-xs text-muted-foreground dark:text-zinc-400">
+                          {formatEcartCompetence(bar.ecart)}
+                        </span>
+                      ) : null}
+                      <span className="text-sm font-semibold text-foreground dark:text-zinc-50">
+                        {bar.valeur}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="relative mt-1.5">
+                    <span
+                      className="block h-2 rounded-full bg-muted dark:bg-neutral-800"
+                      aria-hidden
+                    >
+                      {/*
+                        La barre est de l'encre, pas de la marque : six barres
+                        violettes faisaient du violet la couleur du fond de
+                        page, alors qu'il signe les actions. Le niveau se lit à
+                        la longueur ; la couleur n'y ajoutait rien.
+                      */}
+                      <span
+                        className="block h-full rounded-full bg-foreground/80 dark:bg-zinc-300"
+                        style={{ width: `${bar.valeur}%` }}
+                      />
+                    </span>
+                    {/*
+                      Le repère déborde la barre en haut et en bas plutôt que de
+                      la traverser : à l'intérieur, il faudrait une couleur qui
+                      tienne à la fois sur l'encre du rempli et sur le gris du
+                      vide, et aucune ne tient sur les deux.
+                    */}
+                    <span
+                      aria-hidden
+                      className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-muted-foreground/60 dark:bg-zinc-500"
+                      style={{ left: `${vue.niveauMoyen}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {/*
+            « Niveaux » et non « notes » : la note, sur cet écran, est celle
+            sur 5 qui classe les membres juste au-dessus. Deux échelles portant
+            le même mot sur une même page se confondent, et 62 se lirait comme
+            une note.
+
+            La deuxième phrase dit ce que le calcul fait vraiment : la
+            référence d'équipe moyenne une valeur par commercial, pas une par
+            rendez-vous. Ce qui était écrit ici, « un vote par personne »,
+            promettait un vote qui n'existe nulle part dans le produit.
+          */}
+          <p className={cn(LEGENDE, "mt-3")}>
+            Niveaux sur 100, moyenne de {commerciaux(collectif.skillSellers)}{" "}
+            sur la période : chaque commercial y compte pour un, quel que soit
+            son nombre de rendez-vous. Le repère vertical marque le niveau moyen
+            de l&apos;équipe, {vue.niveauMoyen}/100.
+          </p>
+        </>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Les deux lectures collectives, posées entre le titre et le tableau : la
+ * répartition des membres autour de la moyenne, puis le relief des six
+ * compétences de l'équipe.
+ */
+export function TeamCollectiveOverview({
+  collectif,
+  ranking,
+  totalCount,
+  niveauDeTitre = "h3",
+}: {
+  collectif: OrgAdminTeamCollective;
+  ranking: TeamRankingSummaryData;
+  /** Effectif de l'équipe entière, classés et non classés confondus. */
+  totalCount: number;
+  /**
+   * Rang des titres de cartes dans le plan du document.
+   *
+   * « h3 » par défaut : les cartes vivent alors sous le titre de section que
+   * `MonEquipeSection` écrit elle-même. La page dédiée à l'équipe porte ce
+   * titre en « h1 » et fait taire la section ; les cartes montent d'un rang
+   * pour qu'aucun niveau ne manque entre le titre de la page et le leur.
+   */
+  niveauDeTitre?: CardHeadingTag;
+}) {
+  const entries: TeamDispersionEntry[] = collectif.dispersion.map((membre) => ({
+    cle: membre.userId,
+    libelle: teamMemberDisplayName(membre).primary,
+    noteOn5: membre.noteOn5,
+    rang: membre.rang,
+  }));
+  /*
+    Les empilements sont calculés une fois pour toutes ici, et non dans chacune
+    des deux lectures qui en ont besoin : la phrase et la piste décrivent alors
+    forcément la même chose, y compris le jour où l'échelle des régimes bouge.
+  */
+  const dots = teamDispersionDots(entries, ECART_MINIMAL_PAR_REGIME);
+
+  return (
+    <div className="grid gap-3">
+      <section className={CADRE} aria-label="Répartition de l'équipe">
+        {/*
+          La moyenne ouvre la carte que la piste illustre : le grand chiffre et
+          le trait vertical qui le marque se lisent d'un seul coup d'œil, ce que
+          deux cartes empilées empêchaient.
+
+          Le bandeau touche les bords de la carte au lieu d'être posé dedans :
+          un fond sombre entouré d'un liseré blanc se lirait comme une vignette
+          collée sur la carte, alors qu'il en est l'en-tête.
+        */}
+        <TeamRankingSummary
+          ranking={ranking}
+          totalCount={totalCount}
+          dots={dots}
+        />
+        <div className={MARGE}>
+          <p className="text-sm leading-relaxed text-foreground dark:text-zinc-300">
+            {phraseDeRepartition(dots, ranking.minScoredMeetings)}
+          </p>
+          <PisteDeRepartition dots={dots} moyenne={ranking.averageNoteOn5} />
+          <p className={cn(LEGENDE, "mt-2")}>
+            Une pastille par membre classé, à sa note. Deux pastilles l&apos;une
+            sur l&apos;autre sont trop proches pour tenir côte à côte.
+            {ranking.averageNoteOn5 != null
+              ? ` Le trait vertical marque la moyenne d'équipe, ${formatNoteFr(
+                  ranking.averageNoteOn5,
+                )}/5.`
+              : null}
+          </p>
+        </div>
+      </section>
+      <CarteDesCompetences
+        collectif={collectif}
+        niveauDeTitre={niveauDeTitre}
+      />
+    </div>
+  );
+}

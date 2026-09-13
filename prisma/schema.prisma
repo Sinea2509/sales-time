@@ -49,6 +49,7 @@ enum AnalysisKind {
   SONCAS
   DISC
   KISS
+  SCORECARD
   FOLLOW_UP_EMAIL
   MEETING_BRIEFING
   MEETING_DETAIL_SYNTHESIS
@@ -94,6 +95,7 @@ enum AiCallKind {
   DISC
   SONCAS
   COACHING
+  SCORECARD
   PREPARE
   EMAIL
 }
@@ -210,7 +212,7 @@ model Organization {
   memberships  OrganizationMembership[]
   invitations  OrganizationInvitation[]
   trialAnalysesLeft Int @default(5)
-  /** Set when a plan upgrade request is converted — unlimited analyses, no trial UI. */
+  /** Set when a plan upgrade request is converted: unlimited analyses, no trial UI. */
   planUnlockedAt DateTime?
 
   people       Person[]
@@ -320,6 +322,8 @@ model OrganizationSettings {
   industryVocabulary String? @db.Text
   /** Consignes optionnelles par quadrant KISS (global / manager / commercial), Coach IA. */
   kissCoachingPrompts Json?
+  /** Playbook de l'organisation : offre, cible, methode, criteres, limites. Lu par les analyses. */
+  playbook            Json?
 
   meetingTypes   Json?
   pipelineStages Json?

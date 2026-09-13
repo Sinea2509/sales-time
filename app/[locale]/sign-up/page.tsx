@@ -5,12 +5,12 @@ import { SignupFlowIllustration } from "@/components/molecules/signup-flow-illus
 
 export default function SignUpPage() {
   return (
-    <main className="grid min-h-screen grid-cols-1 bg-white lg:grid-cols-2">
+    <main className="grid min-h-screen grid-cols-1 bg-background lg:grid-cols-2">
       <section className="hidden bg-brand/10 lg:flex lg:items-center lg:justify-center">
         <SignupFlowIllustration />
       </section>
 
-      <section className="flex items-center justify-center bg-white px-6 py-10 sm:px-10">
+      <section className="flex items-center justify-center bg-background px-6 py-10 sm:px-10">
         <div className="w-full max-w-md space-y-6">
           <header className="space-y-1">
             <h1 className={pageTitleClass}>Créer un compte</h1>

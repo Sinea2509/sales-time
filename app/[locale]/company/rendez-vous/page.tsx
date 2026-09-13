@@ -54,6 +54,16 @@ export default async function RendezVousPage() {
       pipelineStage: m.pipelineStage,
       salesScore: m.salesScore,
       potentialAmount: m.potentialAmount,
+      /*
+        De quoi calculer la colonne « État » et le compte « à faire ». Ces
+        quatre champs voyageaient déjà dans la requête, la page les jetait
+        simplement en chemin : l'état d'un rendez-vous n'est donc pas une
+        donnée de plus à charger, seulement une donnée de moins à perdre.
+      */
+      status: m.status,
+      outcome: m.outcome,
+      hasKiss: m.hasKiss,
+      followUpEmailDraft: m.followUpEmailDraft,
     };
   });
 

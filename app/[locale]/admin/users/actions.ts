@@ -193,7 +193,7 @@ export async function inviteUserToOrgAction(
 
   await sendTransactionalEmail({
     to: parsed.data.email,
-    subject: `Invitation à rejoindre ${org.name} — Sales Time`,
+    subject: `Invitation à rejoindre ${org.name} · Sales Time`,
     html: `<p>Vous êtes invité à rejoindre <strong>${org.name}</strong> sur Sales Time.</p><p><a href="${link}">Accepter l'invitation</a></p><p>Ce lien expire dans 14 jours.</p>`,
   });
 

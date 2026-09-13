@@ -15,9 +15,17 @@ type ContactsListTableProps = {
   rows: ContactSummaryRow[];
 };
 
-function formatContactField(value: string | null | undefined): string {
+/**
+ * Un champ facultatif que personne n'a rempli.
+ *
+ * Le texte le dit, plutôt qu'un tiret qui laisse hésiter entre « vide »,
+ * « inconnu » et « bogue d'affichage », et le gris le fait passer derrière
+ * les vraies valeurs de la colonne.
+ */
+function formatContactField(value: string | null | undefined) {
   const trimmed = value?.trim();
-  return trimmed ? trimmed : "—";
+  if (trimmed) return trimmed;
+  return <span className="text-muted-foreground">Non renseigné</span>;
 }
 
 export function ContactsListTable({ rows }: ContactsListTableProps) {

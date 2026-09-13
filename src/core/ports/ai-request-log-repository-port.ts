@@ -2,6 +2,7 @@ export type AiCallKind =
   | "DISC"
   | "SONCAS"
   | "COACHING"
+  | "SCORECARD"
   | "PREPARE"
   | "EMAIL";
 

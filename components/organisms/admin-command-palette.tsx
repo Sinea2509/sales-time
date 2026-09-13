@@ -276,67 +276,72 @@ export function AdminCommandPalette({ open, onOpenChange }: Props) {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg gap-0 p-0 overflow-hidden">
-        <DialogHeader className="sr-only">
-          <DialogTitle>Recherche admin</DialogTitle>
-        </DialogHeader>
-        <div className="flex items-center border-b px-3">
-          <Search className="size-4 shrink-0 text-zinc-400" />
-          <Input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={pending}
-            placeholder="Rechercher des pages, organisations, utilisateurs..."
-            className="h-12 border-0 shadow-none focus-visible:ring-0"
-          />
-        </div>
-        <div ref={listRef} className="max-h-[320px] overflow-y-auto p-2">
-          {allResults.length === 0 ? (
-            <p className="px-3 py-8 text-center text-sm text-zinc-400">
-              {query.trim() ? "Aucun résultat." : "Tapez pour rechercher..."}
-            </p>
-          ) : (
-            sections.map(([section, items]) => (
-              <div key={section} className="mb-1">
-                <p className="px-3 py-1.5 text-xs font-medium text-zinc-400">
-                  {section}
-                </p>
-                {items.map((item) => {
-                  const idx = allResults.indexOf(item);
-                  const Icon = item.icon;
-                  const isActive = idx === activeIndex;
-                  return (
-                    <button
-                      key={item.id}
-                      data-active={isActive}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors",
-                        isActive
-                          ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-                          : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50",
-                      )}
-                      disabled={pending}
-                      onClick={() => selectItem(item)}
-                      onMouseEnter={() => setActiveIndex(idx)}
-                    >
-                      <Icon className="size-4 shrink-0" />
-                      <span className="flex-1 truncate">{item.label}</span>
-                      {item.subtitle && (
-                        <span className="truncate text-xs text-zinc-400">
-                          {item.subtitle}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            ))
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+        <DialogContent className="max-w-lg gap-0 p-0 overflow-hidden">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Recherche admin</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center border-b px-3">
+            <Search className="size-4 shrink-0 text-muted-foreground" />
+            <Input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={pending}
+              placeholder="Rechercher des pages, organisations, utilisateurs..."
+              // Le champ touche le bord haut de la boite de dialogue, et cette
+              // boite rogne ce qui dépasse : le halo posé à l'extérieur par
+              // « Input » est coupé sur toute la largeur du champ. L'anneau va
+              // donc à l'intérieur, comme pour les commandes soudées de la page
+              // équipe.
+              className="h-12 border-0 shadow-none focus-visible:ring-0 focus-visible:inset-ring-2 focus-visible:inset-ring-brand"
+            />
+          </div>
+          <div ref={listRef} className="max-h-[320px] overflow-y-auto p-2">
+            {allResults.length === 0 ? (
+              <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+                {query.trim() ? "Aucun résultat." : "Tapez pour rechercher..."}
+              </p>
+            ) : (
+              sections.map(([section, items]) => (
+                <div key={section} className="mb-1">
+                  <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                    {section}
+                  </p>
+                  {items.map((item) => {
+                    const idx = allResults.indexOf(item);
+                    const Icon = item.icon;
+                    const isActive = idx === activeIndex;
+                    return (
+                      <button
+                        key={item.id}
+                        data-active={isActive}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                          isActive
+                            ? "bg-muted text-foreground dark:bg-zinc-800 dark:text-zinc-100"
+                            : "text-muted-foreground hover:bg-muted dark:text-zinc-400 dark:hover:bg-zinc-800/50",
+                        )}
+                        disabled={pending}
+                        onClick={() => selectItem(item)}
+                        onMouseEnter={() => setActiveIndex(idx)}
+                      >
+                        <Icon className="size-4 shrink-0" />
+                        <span className="flex-1 truncate">{item.label}</span>
+                        {item.subtitle && (
+                          <span className="truncate text-xs text-muted-foreground">
+                            {item.subtitle}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
       {pendingOrgEnter ? (
         <SuperAdminEnterOrgRoleDialog
           open

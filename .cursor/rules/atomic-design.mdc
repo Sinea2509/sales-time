@@ -8,19 +8,19 @@ alwaysApply: false
 
 | Layer | Path | May import | Must not |
 |-------|------|------------|----------|
-| Primitives | `components/ui/` | — | Used in `app/` routes |
+| Primitives | `components/ui/` | nothing | Used in `app/` routes |
 | Atoms | `components/atoms/` | ui | server actions, business state |
 | Molecules | `components/molecules/` | atoms, ui | **server actions**, `"use client"` fetch to APIs |
 | Organisms | `components/organisms/` | atoms, molecules, ui, other organisms (sparingly) | Direct Prisma / raw `getApplicationDeps` |
 | Templates | `components/templates/` | atoms, molecules, organisms | Feature-specific server actions |
 
-`app/` routes: fetch on server, pass props to organisms/templates — **no** `components/ui/` imports (root layout providers excepted).
+`app/` routes: fetch on server, pass props to organisms/templates, with **no** `components/ui/` imports (root layout providers excepted).
 
 ## Composition rules
 
-1. **Reuse before invent** — search atoms/molecules before new markup.
-2. **Extract on second copy** — not before the first (KISS).
-3. **One feature block per organism** — e.g. `MeetingAnalysisRecoverySection` groups retry + manual analyze; `MeetingDetailShell` composes sections, not every button inline.
+1. **Reuse before invent**: search atoms/molecules before new markup.
+2. **Extract on second copy**, not before the first (KISS).
+3. **One feature block per organism**: e.g. `MeetingAnalysisRecoverySection` groups retry + manual analyze; `MeetingDetailShell` composes sections, not every button inline.
 4. **Client + server actions live in organisms** (or route), never molecules.
 5. Pure formatting → `lib/`; no JSX.
 

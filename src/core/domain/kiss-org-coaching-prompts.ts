@@ -131,7 +131,7 @@ export function buildKissOrgMarkdownAppendix(
     const c = q.commercial.trim();
     const audienceLine = audience === "manager" ? m : c;
     if (!g && !audienceLine) continue;
-    const lines: string[] = [`### KISS — ${QUADRANT_LABEL_FR[k]}`];
+    const lines: string[] = [`### KISS · ${QUADRANT_LABEL_FR[k]}`];
     if (g) lines.push("", g);
     if (audienceLine) {
       lines.push(

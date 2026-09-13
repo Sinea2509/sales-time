@@ -4,6 +4,7 @@ export const MEETING_ANALYSIS_PROMPT_KINDS = [
   "SONCAS",
   "DISC",
   "KISS",
+  "SCORECARD",
 ] as const satisfies readonly AnalysisKindSlug[];
 
 export const SYNTHESIS_PROMPT_KINDS = [
@@ -46,6 +47,11 @@ export const ANALYSIS_PROMPT_TAB_META: Record<
   KISS: {
     label: "KISS",
     description: "Coaching Keep / Improve / Stop / Start sur chaque RDV.",
+  },
+  SCORECARD: {
+    label: "Scorecard RDV",
+    description:
+      "Notation critère par critère du RDV sur la grille de son type.",
   },
   ORG_KISS_ROLLUP: {
     label: "Synthèse KISS équipe",

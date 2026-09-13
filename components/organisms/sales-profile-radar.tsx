@@ -2,38 +2,59 @@
 
 import { useEffect, useState } from "react";
 import { RadarChart } from "@mui/x-charts/RadarChart";
-import { cn } from "@/lib/utils";
+import { ChartTheme } from "@/components/atoms/chart-theme";
+import {
+  SALES_PROFILE_DIMENSION_KEYS,
+  type SalesProfileScores,
+} from "@/src/core/domain/sales-profile-from-meetings";
+import { SELLER_SKILL_SHORT_FR } from "@/src/core/domain/seller-skill-signature";
 
-export type SalesProfileScores = {
-  assertivite: number;
-  ecouteActive: number;
-  capitalSympathie: number;
-  argumentation: number;
-  objections: number;
-  nextSteps: number;
-};
+export type { SalesProfileScores };
 
-const METRIC_LABELS = [
-  "Assertivité",
-  "Écoute",
-  "Sympathie",
-  "Argument.",
-  "Objections",
-  "Next steps",
-] as const;
+/*
+  Les six sommets et les six valeurs sortent de la même liste de clés, dans le
+  même ordre, et c'est la raison d'être de cette page-ci.
+
+  Ce fichier portait deux listes parallèles : six libellés écrits à la main
+  d'un côté, six accès `scores.xxx` de l'autre. Rien ne les tenait ensemble.
+  Ajouter une septième compétence, ou seulement en réordonner deux dans le
+  domaine, aurait affiché des notes justes sous des noms faux, et le radar
+  n'aurait pas eu l'air cassé pour autant. Deux de ces libellés étaient
+  d'ailleurs faux avant même cela : « Sympathie » est un levier SONCAS, qui
+  décrit le prospect, et « Next steps » n'était pas français.
+*/
+const METRICS = SALES_PROFILE_DIMENSION_KEYS.map((key) => ({
+  name: SELLER_SKILL_SHORT_FR[key],
+  min: 0,
+  max: 100,
+}));
 
 const CURRENT_SERIES_ID = "current-profile";
 const PREVIOUS_SERIES_ID = "previous-profile";
 
+/*
+  Les deux couleurs sont déclarées ici et nulle part ailleurs : le graphique
+  et la légende lisent la même constante, donc la légende ne peut plus
+  décrire un trait que le radar ne dessine pas.
+
+  Le profil précédent n'est pas une catégorie de plus, c'est le repère contre
+  lequel se lit le profil actuel : il porte donc l'encre de chrome du thème,
+  comme les axes. Elle était écrite en dur (« #94a3b8 ») ; sur une carte
+  claire ce gris ne tenait que 2,56:1, là où un trait porteur de sens demande
+  3:1. Le jeton tient 4,74:1 en clair et 6,94:1 en sombre, et suivra une
+  organisation qui personnalisera ses couleurs.
+
+  Le profil actuel porte le jeton de marque plutôt qu'un violet voisin écrit
+  en dur : le radar est la seule série de la fiche à parler violet, et deux
+  violets presque identiques sur le même écran se lisaient comme deux
+  catégories. Sur blanc, le jeton tient 5,07:1, au-dessus du seuil de 3:1
+  exigé d'une marque de donnée.
+*/
+const CURRENT_SERIES_COLOR = "var(--brand)";
+const PREVIOUS_SERIES_COLOR = "var(--chart-ink)";
+
 function scoresToData(scores: SalesProfileScores): number[] {
-  return [
-    scores.assertivite,
-    scores.ecouteActive,
-    scores.capitalSympathie,
-    scores.argumentation,
-    scores.objections,
-    scores.nextSteps,
-  ];
+  return SALES_PROFILE_DIMENSION_KEYS.map((key) => scores[key]);
 }
 
 export function SalesProfileRadar({
@@ -65,7 +86,7 @@ export function SalesProfileRadar({
       label: "Profil actuel",
       data: scoresToData(scores),
       fillArea: true,
-      color: "#8b5cf6",
+      color: CURRENT_SERIES_COLOR,
     },
     ...(previousScores
       ? [
@@ -75,42 +96,73 @@ export function SalesProfileRadar({
             data: scoresToData(previousScores),
             fillArea: false,
             hideMark: true,
-            color: "#94a3b8",
+            color: PREVIOUS_SERIES_COLOR,
           },
         ]
       : []),
   ];
 
+  /*
+    Le SVG de MUI n'expose aucun nom accessible : un lecteur d'écran y entre
+    et énumère des tracés muets. Le graphique entier devient une seule image
+    nommée, dont le libellé énonce les six notes ; la liste d'évolution rendue
+    sous le radar reste le détail lisible.
+  */
+  const resumeAccessible = `Profil de vente, six compétences sur 100 : ${SALES_PROFILE_DIMENSION_KEYS.map(
+    (key) => `${SELLER_SKILL_SHORT_FR[key]} ${scores[key]}`,
+  ).join(", ")}.`;
+
   return (
     <div className="w-full space-y-3">
-      <RadarChart
-        height={chartHeight}
-        series={series}
-        radar={{
-          metrics: METRIC_LABELS.map((name) => ({ name, min: 0, max: 100 })),
-        }}
-        shape="circular"
-        divisions={4}
-        hideLegend
-        margin={margin}
-        sx={{
-          "& .MuiChartsAxis-tickLabel": {
-            fontSize: isCompact ? 10 : 11,
-          },
-          ...(previousScores
-            ? {
-                [`& [data-series='${PREVIOUS_SERIES_ID}'] path`]: {
-                  strokeDasharray: "6 4",
-                  strokeWidth: 2,
-                },
-              }
-            : {}),
-        }}
-      />
-      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-neutral-600 dark:text-neutral-400">
+      <ChartTheme>
+        <div role="img" aria-label={resumeAccessible}>
+          <RadarChart
+            height={chartHeight}
+            series={series}
+            radar={{ metrics: METRICS }}
+            shape="circular"
+            divisions={4}
+            hideLegend
+            margin={margin}
+            /*
+            Deux règles vivaient ici, et aucune des deux n'atteignait quoi que
+            ce soit. La première fixait la taille des libellés via
+            « .MuiChartsAxis-tickLabel » : un radar ne dessine aucun axe
+            cartésien, et cette classe n'existe nulle part dans son SVG. Elle
+            est supprimée, les six libellés sont ceux de MUI.
+
+            La seconde traçait en tirets le profil précédent via
+            « [data-series='previous-profile'] », un sélecteur copié d'un nuage
+            de points. Vérifié au navigateur : seuls ScatterChart et BarChart
+            posent « data-series » ; le radar ne le pose sur rien et ne
+            distingue pas ses deux séries par une classe. Le trait était donc
+            plein alors que la légende le montrait tireté.
+
+            MUI remplit l'aire d'une série non remplie avec « transparent »
+            (RadarSeriesArea.js, getPathProps) : c'est le seul attribut qui
+            sépare les deux tracés. Le tireté compte, car il se lit aussi en
+            noir et blanc et en vision des couleurs déficiente, là où deux gris
+            ne se distinguent pas. Si MUI change cet attribut, le trait
+            redevient plein, ce qui reste lisible.
+          */
+            sx={
+              previousScores
+                ? {
+                    '& .MuiRadarChart-seriesArea[fill="transparent"]': {
+                      strokeDasharray: "6 4",
+                      strokeWidth: 2,
+                    },
+                  }
+                : undefined
+            }
+          />
+        </div>
+      </ChartTheme>
+      <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs">
         <span className="inline-flex items-center gap-2">
           <span
-            className="inline-block h-0.5 w-8 rounded-full bg-violet-500"
+            className="inline-block h-0.5 w-8 rounded-full"
+            style={{ backgroundColor: CURRENT_SERIES_COLOR }}
             aria-hidden
           />
           Profil actuel
@@ -118,9 +170,8 @@ export function SalesProfileRadar({
         {previousScores ? (
           <span className="inline-flex items-center gap-2">
             <span
-              className={cn(
-                "inline-block h-0 w-8 border-t-2 border-dashed border-neutral-400",
-              )}
+              className="inline-block h-0 w-8 border-t-2 border-dashed"
+              style={{ borderColor: PREVIOUS_SERIES_COLOR }}
               aria-hidden
             />
             Profil précédent

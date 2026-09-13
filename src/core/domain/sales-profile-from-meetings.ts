@@ -1,6 +1,4 @@
-import { discResultSchema, soncasResultSchema } from "./analysis-result-zod";
 import { kissResultSchema } from "./kiss-result-zod";
-import type { SoncasDriverKey } from "./org-soncas-team-aggregate";
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
 
 export type SalesProfileDimensionKey =
@@ -13,137 +11,67 @@ export type SalesProfileDimensionKey =
 
 export type SalesProfileScores = Record<SalesProfileDimensionKey, number>;
 
-export type TeamSalesProfileAggregate = {
-  scores: SalesProfileScores | null;
-  /** RDV pris en compte (au moins une dimension calculée). */
-  rdvCount: number;
-};
-
-function averageDefined(values: Array<number | null | undefined>): number | null {
-  const nums = values.filter((v): v is number => v != null && !Number.isNaN(v));
-  if (nums.length === 0) return null;
-  return Math.round(nums.reduce((acc, v) => acc + v, 0) / nums.length);
-}
-
-function kissCoachingPercent(raw: unknown): number | null {
-  const parsed = kissResultSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  return parsed.data.coachingScore * 10;
-}
-
-function soncasDriverScore(raw: unknown, key: SoncasDriverKey): number | null {
-  const parsed = soncasResultSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  return parsed.data.drivers[key].score;
-}
-
-function discLetterScore(
-  raw: unknown,
-  letter: "D" | "I" | "S" | "C",
-): number | null {
-  const parsed = discResultSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  return parsed.data.scores[letter];
-}
-
-function kissNextStepsScore(raw: unknown): number | null {
-  const parsed = kissResultSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  const count = Math.min(6, parsed.data.start.length);
-  return Math.round((count / 6) * 100);
-}
-
-/** Scores 0–100 par RDV, dérivés des analyses SONCAS / DISC / KISS. */
-export function salesProfileScoresFromMeeting(
-  meeting: Pick<
-    RecentMeetingListRow,
-    "latestSoncasResult" | "latestDiscResult" | "latestKissResult"
-  >,
-): Partial<SalesProfileScores> | null {
-  const { latestSoncasResult, latestDiscResult, latestKissResult } = meeting;
-  const coaching = kissCoachingPercent(latestKissResult);
-
-  const assertivite = averageDefined([
-    discLetterScore(latestDiscResult, "D"),
-    soncasDriverScore(latestSoncasResult, "orgueil"),
-    coaching,
-  ]);
-  const ecouteActive = averageDefined([
-    discLetterScore(latestDiscResult, "S"),
-    soncasDriverScore(latestSoncasResult, "confort"),
-    coaching,
-  ]);
-  const capitalSympathie = averageDefined([
-    soncasDriverScore(latestSoncasResult, "sympathie"),
-    discLetterScore(latestDiscResult, "I"),
-    coaching,
-  ]);
-  const argumentation = averageDefined([
-    soncasDriverScore(latestSoncasResult, "argent"),
-    discLetterScore(latestDiscResult, "C"),
-    soncasDriverScore(latestSoncasResult, "orgueil"),
-  ]);
-  const objections = averageDefined([
-    soncasDriverScore(latestSoncasResult, "securite"),
-    coaching,
-    soncasDriverScore(latestSoncasResult, "confort"),
-  ]);
-  const nextSteps = averageDefined([
-    kissNextStepsScore(latestKissResult),
-    soncasDriverScore(latestSoncasResult, "nouveaute"),
-    coaching,
-  ]);
-
-  const partial: Partial<SalesProfileScores> = {};
-  if (assertivite != null) partial.assertivite = assertivite;
-  if (ecouteActive != null) partial.ecouteActive = ecouteActive;
-  if (capitalSympathie != null) partial.capitalSympathie = capitalSympathie;
-  if (argumentation != null) partial.argumentation = argumentation;
-  if (objections != null) partial.objections = objections;
-  if (nextSteps != null) partial.nextSteps = nextSteps;
-
-  return Object.keys(partial).length > 0 ? partial : null;
-}
-
-/** Moyenne équipe (ou commercial) : chaque dimension = moyenne sur les RDV analysés. */
-export function aggregateTeamSalesProfileFromMeetings(
-  meetings: RecentMeetingListRow[],
-): TeamSalesProfileAggregate {
-  const perMeeting = meetings
-    .map((m) => salesProfileScoresFromMeeting(m))
-    .filter((p): p is Partial<SalesProfileScores> => p != null);
-
-  if (perMeeting.length === 0) {
-    return { scores: null, rdvCount: 0 };
-  }
-
-  const keys: SalesProfileDimensionKey[] = [
+export const SALES_PROFILE_DIMENSION_KEYS: readonly SalesProfileDimensionKey[] =
+  [
     "assertivite",
     "ecouteActive",
     "capitalSympathie",
     "argumentation",
     "objections",
     "nextSteps",
-  ];
+  ] as const;
 
-  const scores = {} as SalesProfileScores;
-  let hasAny = false;
-  for (const key of keys) {
-    const values = perMeeting
-      .map((p) => p[key])
-      .filter((v): v is number => v != null);
-    if (values.length > 0) {
-      scores[key] = Math.round(
-        values.reduce((acc, v) => acc + v, 0) / values.length,
-      );
-      hasAny = true;
-    } else {
-      scores[key] = 0;
-    }
+export type TeamSalesProfileAggregate = {
+  scores: SalesProfileScores | null;
+  /** RDV pris en compte, c'est-à-dire ceux dont l'analyse KISS note le vendeur. */
+  rdvCount: number;
+};
+
+/**
+ * Les six notes du commercial sur un RDV, ou null si personne ne l'a noté.
+ *
+ * Ce fichier ne lit plus ni SONCAS ni DISC, et il ne doit pas y revenir : ces
+ * deux analyses décrivent le prospect, pas le commercial. Les moyenner ici
+ * revenait à afficher les traits de l'acheteur sur un radar intitulé « Mon
+ * profil de vente ». Un troisième calcul, disparu avec elles, comptait les
+ * puces « start » de l'analyse KISS pour noter la dimension « Prochaines
+ * étapes » : ces puces énumèrent ce que le commercial ne fait pas encore, si
+ * bien que la note montait à mesure que le coach relevait des manques.
+ *
+ * `null` est une réponse. Un RDV analysé avant cette version porte une analyse
+ * KISS valide sans les six notes ; il ne contribue à rien plutôt que de
+ * contribuer des zéros, qui se liraient comme une évaluation nulle.
+ */
+export function salesProfileScoresFromMeeting(
+  meeting: Pick<RecentMeetingListRow, "latestKissResult">,
+): SalesProfileScores | null {
+  const parsed = kissResultSchema.safeParse(meeting.latestKissResult);
+  if (!parsed.success) return null;
+  return parsed.data.sellerSkills ?? null;
+}
+
+/** Moyenne équipe (ou commercial) : chaque dimension moyennée sur les RDV notés. */
+export function aggregateTeamSalesProfileFromMeetings(
+  meetings: RecentMeetingListRow[],
+): TeamSalesProfileAggregate {
+  const perMeeting = meetings
+    .map((m) => salesProfileScoresFromMeeting(m))
+    .filter((s): s is SalesProfileScores => s != null);
+
+  if (perMeeting.length === 0) {
+    return { scores: null, rdvCount: 0 };
   }
 
-  return {
-    scores: hasAny ? scores : null,
-    rdvCount: perMeeting.length,
-  };
+  // Chaque RDV retenu porte les six dimensions, donc aucune moyenne ne se fait
+  // sur un ensemble vide et aucune dimension ne retombe sur un zéro de
+  // remplissage. Le seul « pas de données » possible est global, et il est déjà
+  // sorti au-dessus sous la forme `scores: null`.
+  const scores = {} as SalesProfileScores;
+  for (const key of SALES_PROFILE_DIMENSION_KEYS) {
+    scores[key] = Math.round(
+      perMeeting.reduce((acc, s) => acc + s[key], 0) / perMeeting.length,
+    );
+  }
+
+  return { scores, rdvCount: perMeeting.length };
 }

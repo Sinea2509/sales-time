@@ -13,7 +13,12 @@ type LandingKissLegendProps = {
 
 export function LandingKissLegend({ className }: LandingKissLegendProps) {
   return (
-    <p className={cn("text-[9.5px] leading-relaxed text-zinc-500", className)}>
+    <p
+      className={cn(
+        "text-[9.5px] leading-relaxed text-muted-foreground",
+        className,
+      )}
+    >
       {kissLegendItems.map((item, index) => (
         <span key={item.key}>
           {index > 0 ? " · " : null}
@@ -24,7 +29,8 @@ export function LandingKissLegend({ className }: LandingKissLegendProps) {
         </span>
       ))}
       {" · "}
-      <span className="font-semibold text-zinc-600">%</span> = niveau de maîtrise sur la thématique
+      <span className="font-semibold text-muted-foreground">%</span> = niveau de
+      maîtrise sur la thématique
     </p>
   );
 }

@@ -3,7 +3,7 @@ import { SalesTimeLogoMark } from "@/components/atoms/sales-time-logo-mark";
 import { LandingGridOverlay } from "@/components/atoms/landing-grid-overlay";
 import { LandingHeroAppMockup } from "@/components/organisms/landing-hero-app-mockup";
 
-/** Homepage-branded art column for sign-in split layout — app preview only, no scroll. */
+/** Homepage-branded art column for sign-in split layout: app preview only, no scroll. */
 export function SignInBrandPanel() {
   return (
     <section className="relative hidden h-full min-h-0 overflow-hidden bg-[#06060A] lg:flex lg:flex-col">

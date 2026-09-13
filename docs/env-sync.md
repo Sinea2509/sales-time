@@ -5,7 +5,7 @@ Production secrets are pushed to Vercel in two ways:
 1. **Local (recommended for first sync):** copy [`.env.production.example`](../.env.production.example) to `.env.production`, fill values, run `npm run sync:vercel-env`.
 2. **CI:** GitHub repository secrets → [Sync Vercel env](../.github/workflows/sync-vercel-env.yml) workflow (same keys as `.env.production`).
 
-Secret values are never committed — only `.env.production.example` is tracked.
+Secret values are never committed: only `.env.production.example` is tracked.
 
 ## Local sync (`.env.production`)
 
@@ -13,8 +13,8 @@ Secret values are never committed — only `.env.production.example` is tracked.
 cp .env.production.example .env.production
 # Edit .env.production with production values
 
-vercel link   # once — supplies VERCEL_ORG_ID / VERCEL_PROJECT_ID
-vercel login  # once — CLI token used when VERCEL_TOKEN is unset
+vercel link   # once: supplies VERCEL_ORG_ID / VERCEL_PROJECT_ID
+vercel login  # once: CLI token used when VERCEL_TOKEN is unset
 
 npm run sync:vercel-env
 ```
@@ -60,7 +60,7 @@ Sync credentials (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) are read
    cat .vercel/repo.json   # orgId + project id
    ```
 
-2. **GitHub → Settings → Secrets and variables → Actions** — add the same keys as `.env.production`, plus:
+2. **GitHub → Settings → Secrets and variables → Actions**: add the same keys as `.env.production`, plus:
 
    | Secret | How to obtain |
    |--------|----------------|

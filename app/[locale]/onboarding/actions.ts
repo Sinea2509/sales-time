@@ -227,7 +227,7 @@ export async function submitOnboardingStep4(
   for (const m of result.mailPayloads) {
     await sendTransactionalEmail({
       to: m.to,
-      subject: `Invitation — ${orgName}`,
+      subject: `Invitation · ${orgName}`,
       html: buildInvitationEmailHtml({
         organizationName: orgName,
         inviteLink: m.link,

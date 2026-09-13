@@ -1,6 +1,10 @@
-import { discResultSchema, soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
+import {
+  discResultSchema,
+  soncasResultSchema,
+} from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
+import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { AiRequestLogRepositoryPort } from "@/src/core/ports/ai-request-log-repository-port";
@@ -10,6 +14,7 @@ import type {
   MeetingRepositoryPort,
 } from "@/src/core/ports/meeting-repository-port";
 import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
+import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 import { generateAndPersistMeetingVisitReport } from "./summarize-meeting-detail";
@@ -31,6 +36,8 @@ export async function runAllMeetingAnalysesForOrg(
     analysis: AnalysisPort;
     aiLogs?: AiRequestLogRepositoryPort;
     globalKissCoachingPrompts?: GlobalKissCoachingPromptsRepositoryPort;
+    /** Absent : les analyses tournent sans le playbook de l'organisation. */
+    organizationSettings?: OrganizationSettingsRepositoryPort;
     notifications?: NotificationRepositoryPort;
     users?: UserRepositoryPort;
   },
@@ -69,10 +76,33 @@ export async function runAllMeetingAnalysesForOrg(
     "commercial",
   );
 
+  /*
+    Le playbook est lu une fois pour toute la séquence. Le lire à chaque analyse
+    exposerait celle-ci à une modification faite en cours de route : SONCAS
+    verrait un playbook, KISS un autre, et la fiche RDV mélangerait deux
+    versions du contexte sans que personne puisse le voir.
+  */
+  const settingsRow = deps.organizationSettings
+    ? await deps.organizationSettings.findByOrganizationId(input.organizationId)
+    : null;
+  const playbookMarkdown = organizationPlaybookMarkdownForAnalysis(settingsRow);
+
   let lastError = "";
   let failedKind: MeetingAnalysisKind | undefined;
 
-  for (const kind of ["SONCAS", "DISC", "KISS"] as const) {
+  /*
+    La scorecard passe en dernier, et cet ordre porte une décision.
+
+    Elle est la seule des quatre à pouvoir ne pas s'appliquer : tant qu'un type
+    de rendez-vous n'a pas de grille, il n'y a rien à noter. La placer après les
+    trois autres garantit qu'un rendez-vous dont la grille manque garde malgré
+    tout son analyse SONCAS, DISC et KISS, et arrive en READY comme avant.
+
+    C'est aussi la seule qui ne nourrit personne : KISS relit SONCAS et DISC, le
+    compte rendu de visite relit les trois. Un échec de la scorecard n'invalide
+    donc rien de ce qui précède, à la différence d'un échec de SONCAS.
+  */
+  for (const kind of ["SONCAS", "DISC", "KISS", "SCORECARD"] as const) {
     const r = await runMeetingAnalysis(
       {
         meetings: deps.meetings,
@@ -85,10 +115,19 @@ export async function runAllMeetingAnalysesForOrg(
         meetingId: input.meetingId,
         kind,
         jobId: input.jobId ?? null,
-        kissSystemMarkdownAppendix:
-          kind === "KISS" ? kissAppendix : undefined,
+        kissSystemMarkdownAppendix: kind === "KISS" ? kissAppendix : undefined,
+        organizationPlaybookMarkdown: playbookMarkdown,
       },
     );
+    /*
+      Absence de grille : ce n'est pas un incident, c'est un type de rendez-vous
+      qu'on ne sait pas encore noter. Le compter comme un échec marquerait le
+      rendez-vous en FAILED et priverait le commercial de trois analyses réussies
+      pour une fonctionnalité qui ne le concerne pas encore.
+    */
+    if (!r.ok && r.error === "NO_SCORECARD_GRID") {
+      continue;
+    }
     if (!r.ok) {
       lastError = r.message ?? r.error;
       failedKind = kind;
@@ -127,7 +166,9 @@ export async function runAllMeetingAnalysesForOrg(
     kind: "KISS",
   });
   const discParsed = disc ? discResultSchema.safeParse(disc.result) : null;
-  const soncasParsed = soncas ? soncasResultSchema.safeParse(soncas.result) : null;
+  const soncasParsed = soncas
+    ? soncasResultSchema.safeParse(soncas.result)
+    : null;
   const kissParsed = kiss ? kissResultSchema.safeParse(kiss.result) : null;
   if (discParsed?.success || soncasParsed?.success) {
     await deps.meetings.updatePersonProfileCache({
@@ -182,7 +223,7 @@ export async function runAllMeetingAnalysesForOrg(
       if (sellerEmail) {
         await sendTransactionalEmail({
           to: sellerEmail,
-          subject: "Sales Time — votre analyse de RDV est prête",
+          subject: "Sales Time · Votre analyse de RDV est prête",
           html: `<p>Bonjour,</p><p>L'analyse de votre rendez-vous avec <strong>${meeting.prospectName}</strong> est disponible.</p><p><a href="${process.env.APP_BASE_URL ?? ""}/company/rendez-vous/${meeting.id}">Voir la fiche RDV</a></p>`,
         }).catch(() => undefined);
       }

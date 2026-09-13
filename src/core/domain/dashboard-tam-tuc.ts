@@ -7,7 +7,7 @@ export function isConnectedMeetingDuration(
   return durationMin != null && durationMin > 0;
 }
 
-/** TAM — temps d'appel moyen (minutes) sur les RDV connectés uniquement. */
+/** TAM : temps d'appel moyen (minutes) sur les RDV connectés uniquement. */
 export function averageTamMinutes(
   durationsMin: Array<number | null | undefined>,
 ): number | null {

@@ -20,7 +20,7 @@ export function KpiTileHintShell({
     <Tooltip>
       <TooltipTrigger
         className="block w-full cursor-help rounded-2xl text-left"
-        aria-label={`${label} — afficher l'explication`}
+        aria-label={`${label}, afficher l'explication`}
       >
         {children}
       </TooltipTrigger>

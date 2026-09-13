@@ -1,4 +1,4 @@
-/** Durée d’affichage d’un slide (ms) — garder aligné avec le libellé sur la landing. */
+/** Durée d’affichage d’un slide (ms), à garder alignée avec le libellé sur la landing. */
 export const LANDING_TESTIMONIAL_INTERVAL_MS = 6000;
 
 export type LandingTestimonialKpi = {

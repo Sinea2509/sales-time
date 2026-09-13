@@ -5,7 +5,7 @@ import type {
 } from "@/src/core/domain/meeting-status";
 
 /** Analysis kinds persisted on \`MeetingAnalysis\`. */
-export type MeetingAnalysisKind = "SONCAS" | "DISC" | "KISS";
+export type MeetingAnalysisKind = "SONCAS" | "DISC" | "KISS" | "SCORECARD";
 
 export type MeetingRow = {
   id: string;
@@ -53,6 +53,20 @@ export type RecentMeetingListRow = MeetingRow & {
   hasSoncas: boolean;
   hasDisc: boolean;
   hasKiss: boolean;
+  /*
+    Pas de `hasScorecard`, et c'est une décision, pas un oubli.
+
+    Ces trois drapeaux existent parce que quelque chose les lit : le tableau
+    de bord compte les rendez-vous coachés sur `hasKiss`, et la prochaine
+    action à mener tient un rendez-vous pour analysé s'il a un KISS ou un
+    SalesScore. Une scorecard rejoindrait bien ces deux comptes, mais elle en
+    changerait la définition sans que personne l'ait demandé : un chiffre
+    affiché depuis des mois se mettrait à monter du jour au lendemain.
+
+    Le jour où la scorecard entrera dans ces mesures, ce sera parce qu'on
+    aura tranché ce que « coaché » veut dire, pas parce qu'un drapeau était
+    disponible.
+  */
   /** Moyenne des scores SONCAS (6 leviers), si analyse présente. */
   salesScore: number | null;
   /** Dernier résultat SONCAS brut (agrégations admin / radar équipe). */
@@ -155,39 +169,21 @@ export interface MeetingRepositoryPort {
   countMeetingsWithMeetingAtSince(input: {
     organizationId: string;
     since: Date;
-    sellerUserId?: string;
+    /**
+     * Périmètre de comptage : ces commerciaux, ou toute l'organisation.
+     *
+     * Une liste absente ou vide veut dire « pas de cadrage », donc « tout »,
+     * jamais « rien » : c'est la convention de `lib/team-seller-scope.ts`, et
+     * les appelants la partagent avec les écrans qu'ils alimentent.
+     *
+     * Une liste plutôt qu'un seul identifiant parce que le sélecteur de période
+     * annonce la disponibilité d'un écran : sur un écran d'équipe, il doit donc
+     * compter l'équipe, et non son manager seul ni l'organisation entière.
+     */
+    sellerUserIds?: string[];
   }): Promise<number>;
-
-  countMeetingsWithMeetingAtSinceAndOutcome(input: {
-    organizationId: string;
-    since: Date;
-    outcome: MeetingOutcome;
-    sellerUserId?: string;
-  }): Promise<number>;
-
-  listAnalysesForOrgMeetingsSince(input: {
-    organizationId: string;
-    meetingAtSince: Date;
-    kinds: MeetingAnalysisKind[];
-    sellerUserId?: string;
-  }): Promise<MeetingAnalysisRow[]>;
 
   countMeetingsForOrg(input: { organizationId: string }): Promise<number>;
-
-  countMeetingsWithMeetingAtBetween(input: {
-    organizationId: string;
-    meetingAtGte: Date;
-    meetingAtLt: Date;
-    sellerUserId?: string;
-  }): Promise<number>;
-
-  /** Moyenne de `durationMin` (> 0) sur [gte, lt), [gte, +∞) ou l'ensemble si aucune borne date. */
-  averageDurationMinForMeetingsInWindow(input: {
-    organizationId: string;
-    meetingAtGte?: Date;
-    meetingAtLt?: Date;
-    sellerUserId?: string;
-  }): Promise<number | null>;
 
   listRecentMeetingsForDashboard(input: {
     organizationId: string;

@@ -25,7 +25,8 @@ export type SoncasBarDatum = {
 
 const DISC_KEYS = ["D", "I", "S", "C"] as const;
 
-const DISC_LABEL_FR: Record<(typeof DISC_KEYS)[number], string> = {
+/** Vocabulaire DISC affiché. Exporté : le reste du produit doit éviter ces mots. */
+export const DISC_LABEL_FR: Record<(typeof DISC_KEYS)[number], string> = {
   D: "Dominant",
   I: "Influent",
   S: "Stable",
@@ -41,7 +42,8 @@ const SONCAS_KEYS = [
   "sympathie",
 ] as const;
 
-const SONCAS_LABEL_FR: Record<(typeof SONCAS_KEYS)[number], string> = {
+/** Vocabulaire SONCAS affiché. Exporté : le reste du produit doit éviter ces mots. */
+export const SONCAS_LABEL_FR: Record<(typeof SONCAS_KEYS)[number], string> = {
   securite: "Sécurité",
   orgueil: "Orgueil",
   nouveaute: "Nouveauté",
@@ -50,42 +52,83 @@ const SONCAS_LABEL_FR: Record<(typeof SONCAS_KEYS)[number], string> = {
   sympathie: "Sympathie",
 };
 
-/** Remplissage barre — DISC : dominant rouge, influent jaune, stable vert, conforme bleu. */
+/*
+  Une seule couleur par profil, écrite ici et nulle part ailleurs : les barres
+  des fiches, leurs pastilles et les camemberts du tableau de bord manager
+  lisent ces tables. Avant, « Influent » était ambre sur la fiche et bleu sur
+  le camembert, « Sécurité » cyan ici et indigo là-bas : le même profil
+  changeait de couleur en changeant de page.
+
+  Les deux jeux sont passés au validateur de palettes du kit de visualisation
+  (OKLab, vision normale et les trois daltonismes, toutes paires) sur fond
+  clair, seul thème optimisé. DISC passe tout. SONCAS passe avec deux réserves
+  que l'écran honore déjà : la paire rose et émeraude tombe dans la bande 6 à
+  8 de séparation daltonienne, licite seulement avec un étiquetage direct, et
+  l'ambre comme le cyan tiennent moins de 3:1 sur blanc. Chaque barre et
+  chaque part de camembert porte donc son libellé et son pourcentage en
+  toutes lettres, jamais la couleur seule.
+
+  Le violet n'y figure pas : il signe la marque, les actions et la
+  navigation. « Orgueil », qui portait violet-600, passe en fuchsia.
+*/
+
+/** Couleur hex par profil DISC, pour les tracés qui ne lisent pas de classe. */
+export const DISC_HEX: Record<(typeof DISC_KEYS)[number], string> = {
+  D: "#dc2626",
+  I: "#f59e0b",
+  S: "#059669",
+  C: "#2563eb",
+};
+
+/** Remplissage barre DISC : dominant rouge, influent ambre, stable vert, conforme bleu. */
 export const DISC_BAR_CLASS: Record<(typeof DISC_KEYS)[number], string> = {
   D: "bg-red-600",
-  I: "bg-amber-400",
+  I: "bg-amber-500",
   S: "bg-emerald-600",
   C: "bg-blue-600",
 };
 
-/** Remplissage barre SONCAS — couleurs distinctes par levier. */
+/** Couleur hex par levier SONCAS, la même que la barre du levier. */
+export const SONCAS_HEX: Record<(typeof SONCAS_KEYS)[number], string> = {
+  securite: "#1d4ed8",
+  orgueil: "#d946ef",
+  nouveaute: "#047857",
+  confort: "#06b6d4",
+  argent: "#f59e0b",
+  sympathie: "#e11d48",
+};
+
+/** Remplissage barre SONCAS : couleurs distinctes par levier. */
 export const SONCAS_BAR_CLASS: Record<(typeof SONCAS_KEYS)[number], string> = {
-  securite: "bg-cyan-600",
-  orgueil: "bg-violet-600",
-  nouveaute: "bg-amber-500",
-  confort: "bg-teal-600",
-  argent: "bg-orange-600",
+  securite: "bg-blue-700",
+  orgueil: "bg-fuchsia-500",
+  nouveaute: "bg-emerald-700",
+  confort: "bg-cyan-500",
+  argent: "bg-amber-500",
   sympathie: "bg-rose-600",
 };
 
-/** Pastille tag — même palette que les barres DISC. */
+/** Pastille tag : même palette que les barres DISC. */
 export const DISC_PILL_CLASS: Record<(typeof DISC_KEYS)[number], string> = {
   D: "border-red-600/30 bg-red-600/10 text-red-800 dark:text-red-200",
-  I: "border-amber-500/35 bg-amber-400/15 text-amber-900 dark:text-amber-100",
+  I: "border-amber-500/35 bg-amber-500/15 text-amber-900 dark:text-amber-100",
   S: "border-emerald-600/30 bg-emerald-600/10 text-emerald-800 dark:text-emerald-200",
   C: "border-blue-600/30 bg-blue-600/10 text-blue-800 dark:text-blue-200",
 };
 
-/** Pastille tag — même palette que les barres SONCAS. */
+/** Pastille tag : même palette que les barres SONCAS. */
 export const SONCAS_PILL_CLASS: Record<(typeof SONCAS_KEYS)[number], string> = {
-  securite: "border-cyan-600/30 bg-cyan-600/10 text-cyan-800 dark:text-cyan-200",
-  orgueil: "border-violet-600/30 bg-violet-600/10 text-violet-800 dark:text-violet-200",
+  securite:
+    "border-blue-700/30 bg-blue-700/10 text-blue-800 dark:text-blue-200",
+  orgueil:
+    "border-fuchsia-500/35 bg-fuchsia-500/10 text-fuchsia-800 dark:text-fuchsia-200",
   nouveaute:
-    "border-amber-500/35 bg-amber-500/10 text-amber-900 dark:text-amber-100",
-  confort: "border-teal-600/30 bg-teal-600/10 text-teal-800 dark:text-teal-200",
+    "border-emerald-700/30 bg-emerald-700/10 text-emerald-800 dark:text-emerald-200",
+  confort: "border-cyan-500/35 bg-cyan-500/10 text-cyan-800 dark:text-cyan-200",
   argent:
-    "border-orange-600/30 bg-orange-600/10 text-orange-800 dark:text-orange-200",
-  sympathie: "border-rose-600/30 bg-rose-600/10 text-rose-800 dark:text-rose-200",
+    "border-amber-500/35 bg-amber-500/10 text-amber-900 dark:text-amber-100",
+  sympathie:
+    "border-rose-600/30 bg-rose-600/10 text-rose-800 dark:text-rose-200",
 };
 
 function clampPct(n: number): number {

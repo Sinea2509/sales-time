@@ -36,9 +36,9 @@ export function MeetingFollowUpEmailDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[min(90vh,52rem)] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Mail de suivi — {prospectName}</DialogTitle>
+            <DialogTitle>Mail de suivi · {prospectName}</DialogTitle>
             <DialogDescription>
-              Généré à partir du transcript et des analyses — à relire avant
+              Généré à partir du transcript et des analyses, à relire avant
               envoi.
             </DialogDescription>
           </DialogHeader>

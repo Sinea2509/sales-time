@@ -6,7 +6,9 @@ import {
   ContactRound,
   LayoutDashboard,
   LineChart,
+  Search,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import {
   OrgDashboardShellFrame,
@@ -51,6 +53,16 @@ export function OrgCommercialDashboardShell(props: Props) {
           href: "/company/contacts",
           label: tNav("contacts"),
           icon: ContactRound,
+        },
+        {
+          href: "/company/preparer",
+          label: tNav("prepareMeeting"),
+          icon: Sparkles,
+        },
+        {
+          href: "/company/recherche",
+          label: tNav("globalSearch"),
+          icon: Search,
         },
       ],
     },

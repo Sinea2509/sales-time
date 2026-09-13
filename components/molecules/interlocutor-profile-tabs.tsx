@@ -71,7 +71,7 @@ function ProfilePanel({
       {actionableAdvice ? (
         <ProfileActionableAdviceSection advice={actionableAdvice} />
       ) : bars?.length ? (
-        <p className="text-muted-foreground border-t border-zinc-100 pt-4 text-xs leading-relaxed dark:border-zinc-800">
+        <p className="text-muted-foreground border-t border-border pt-4 text-xs leading-relaxed dark:border-zinc-800">
           {legacyAdviceHint}
         </p>
       ) : null}
@@ -79,7 +79,7 @@ function ProfilePanel({
   );
 }
 
-/** DISC and SONCAS profiles shown together — both must be visible without tab switching. */
+/** DISC and SONCAS profiles shown together: both must be visible without tab switching. */
 export function InterlocutorProfileTabs({
   discBars,
   soncasBars,
@@ -102,7 +102,7 @@ export function InterlocutorProfileTabs({
         analysisPending={analysisPending}
         pendingLabel="Analyse DISC en cours…"
         unavailableLabel="Profil DISC indisponible pour ce rendez-vous."
-        legacyAdviceHint="Relancez l'analyse pour obtenir des conseils actionnables (ce que ça veut dire, comment lui parler, quoi éviter)."
+        legacyAdviceHint="Relancez l'analyse pour obtenir des conseils actionnables (ce que cela traduit, comment lui parler, quoi éviter)."
       />
       <ProfilePanel
         title="Profil SONCAS"
@@ -111,7 +111,7 @@ export function InterlocutorProfileTabs({
         analysisPending={analysisPending}
         pendingLabel="Analyse SONCAS en cours…"
         unavailableLabel="Profil SONCAS indisponible pour ce rendez-vous."
-        legacyAdviceHint="Relancez l'analyse pour obtenir des conseils actionnables (ce que ça veut dire, comment lui parler, quoi éviter)."
+        legacyAdviceHint="Relancez l'analyse pour obtenir des conseils actionnables (ce que cela traduit, comment lui parler, quoi éviter)."
       />
     </div>
   );

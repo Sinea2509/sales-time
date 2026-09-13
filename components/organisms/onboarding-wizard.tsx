@@ -74,13 +74,13 @@ function OnboardingStepRail({ step }: { step: number }) {
               <div className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1.5 sm:w-20">
                 <span
                   aria-current={isCurrent ? "step" : undefined}
-                  aria-label={`Étape ${s.id} — ${s.label}`}
+                  aria-label={`Étape ${s.id} : ${s.label}`}
                   className={cn(
                     "flex size-10 items-center justify-center rounded-lg text-sm font-semibold tabular-nums transition-colors",
                     isDoneOrCurrent &&
-                      "bg-brand text-white shadow-sm shadow-brand/30",
+                      "bg-brand text-brand-foreground shadow-sm shadow-brand/30",
                     !isDoneOrCurrent &&
-                      "bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400",
+                      "bg-muted text-muted-foreground dark:bg-neutral-700 dark:text-neutral-400",
                   )}
                 >
                   {s.id}
@@ -99,9 +99,7 @@ function OnboardingStepRail({ step }: { step: number }) {
                 <div
                   className={cn(
                     "mx-0.5 mt-[1.125rem] h-0.5 min-w-[0.5rem] flex-1 rounded-full sm:mx-1",
-                    step > s.id
-                      ? "bg-brand"
-                      : "bg-neutral-200 dark:bg-neutral-700",
+                    step > s.id ? "bg-brand" : "bg-muted dark:bg-neutral-700",
                   )}
                   aria-hidden
                 />
@@ -278,12 +276,12 @@ export function OnboardingWizard({ initial }: Props) {
   }
 
   return (
-    <div className="grid min-h-svh grid-cols-1 bg-white lg:grid-cols-2">
+    <div className="grid min-h-svh grid-cols-1 bg-card lg:grid-cols-2">
       <section className="hidden bg-brand/10 lg:flex lg:items-center lg:justify-center">
         <SignupFlowIllustration />
       </section>
 
-      <main className="flex min-h-svh flex-col overflow-hidden bg-white">
+      <main className="flex min-h-svh flex-col overflow-hidden bg-card">
         <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-y-auto px-6 py-10 sm:px-10 xl:max-w-3xl">
           <header className="mb-8 flex shrink-0 flex-col items-center">
             <div className="mx-auto w-full max-w-lg text-center">
@@ -594,7 +592,7 @@ export function OnboardingWizard({ initial }: Props) {
               disabled={pending}
               data-feedback-id="onboarding-next"
               className={cn(
-                "h-10 shrink-0 rounded-md border-0 px-6 font-medium text-white shadow-sm",
+                "text-brand-foreground h-10 shrink-0 rounded-md border-0 px-6 font-medium shadow-sm",
                 "bg-brand hover:bg-brand-hover dark:bg-brand dark:hover:bg-brand-hover",
               )}
             >
@@ -606,7 +604,7 @@ export function OnboardingWizard({ initial }: Props) {
             kind="OBJECTION"
             open={objectionPickerOpen}
             onOpenChange={setObjectionPickerOpen}
-            title="Objections — collection partagée"
+            title="Objections · collection partagée"
             description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
             alreadyChosen={objections}
             onAddToList={(texts) =>
@@ -617,7 +615,7 @@ export function OnboardingWizard({ initial }: Props) {
             kind="ARGUMENT"
             open={argumentPickerOpen}
             onOpenChange={setArgumentPickerOpen}
-            title="Arguments — collection partagée"
+            title="Arguments · collection partagée"
             description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
             alreadyChosen={keyArguments}
             onAddToList={(texts) =>

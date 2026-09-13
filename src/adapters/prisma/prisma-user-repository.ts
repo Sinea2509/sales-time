@@ -206,4 +206,22 @@ export class PrismaUserRepository implements UserRepositoryPort {
     });
     return rows.map((r) => r.id);
   }
+
+  async findManagerUserId(userId: string): Promise<string | null> {
+    const row = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { managerId: true },
+    });
+    return row?.managerId ?? null;
+  }
+
+  async setManagerUserId(input: {
+    userId: string;
+    managerUserId: string | null;
+  }): Promise<void> {
+    await this.db.user.update({
+      where: { id: input.userId },
+      data: { managerId: input.managerUserId },
+    });
+  }
 }

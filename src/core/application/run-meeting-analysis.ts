@@ -1,4 +1,9 @@
-import { withDataScopeSystemPrompt } from "@/lib/ai-system-prompt";
+import {
+  withDiscSystemPrompt,
+  withKissSystemPrompt,
+  withScorecardSystemPrompt,
+  withSoncasSystemPrompt,
+} from "@/lib/ai-system-prompt";
 import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "@/lib/default-analysis-prompts";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import {
@@ -10,6 +15,14 @@ import {
   recordAiRequestError,
   recordAiRequestSuccess,
 } from "@/lib/record-ai-request-log";
+import {
+  analysisSystemBlock,
+  composeAnalysisSystemMarkdown,
+  KISS_PLATFORM_BLOCK_HEADING,
+} from "@/src/core/domain/analysis-system-markdown";
+import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
+import { computeScorecardScore } from "@/src/core/domain/scorecard-score";
+import { applySoncasEvidenceRule } from "@/src/core/domain/soncas-evidence-rule";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type {
   AiCallKind,
@@ -32,6 +45,16 @@ export type RunMeetingAnalysisResult =
         | "NO_ACTIVE_ORG"
         | "MEETING_NOT_FOUND"
         | "PROMPT_NOT_CONFIGURED"
+        /**
+         * Aucune grille ne correspond au type de ce rendez-vous.
+         *
+         * Une issue à part, et non un `ANALYSIS_FAILED` : rien n'a échoué, ce
+         * rendez-vous ne se note simplement pas encore. L'appelant a besoin de
+         * la distinction. Lancé sur une organisation entière, il doit passer au
+         * suivant sans marquer le lot en erreur, et l'écran doit le dire au
+         * commercial au lieu de lui montrer un incident technique.
+         */
+        | "NO_SCORECARD_GRID"
         | "ANALYSIS_FAILED";
       message?: string;
     };
@@ -67,6 +90,14 @@ export async function runMeetingAnalysis(
     jobId?: string | null;
     /** Suffixe markdown (paramètres org.) concaténé au prompt KISS global. */
     kissSystemMarkdownAppendix?: string | null;
+    /**
+     * Bloc playbook de l'organisation, ajouté aux trois analyses.
+     *
+     * SONCAS et DISC ne recevaient jusqu'ici aucun contexte d'entreprise : le
+     * modèle jugeait la découverte d'un prospect sans savoir ce qui se vend,
+     * à qui, ni ce que la maison interdit de promettre.
+     */
+    organizationPlaybookMarkdown?: string | null;
   },
 ): Promise<RunMeetingAnalysisResult> {
   if (!input.organizationId) {
@@ -139,7 +170,22 @@ export async function runMeetingAnalysis(
 
   try {
     if (input.kind === "SONCAS" || input.kind === "DISC") {
-      const systemPrompt = withDataScopeSystemPrompt(promptVersion.markdown);
+      const profileSystemMarkdown = composeAnalysisSystemMarkdown(
+        promptVersion.markdown,
+        [input.organizationPlaybookMarkdown],
+      );
+      /*
+        Le même choix qu'à la ligne de l'appel, plus bas, et il faut qu'il le
+        reste : ce `systemPrompt` ne part pas au modèle, il part au journal.
+        L'adaptateur refabrique le sien depuis `profileSystemMarkdown`. Deux
+        enrobages différents ici et là-bas donneraient un journal qui décrit une
+        consigne qui n'a jamais été envoyée, c'est-à-dire pire qu'un journal
+        absent, puisqu'on le relit justement pour comprendre une note surprenante.
+      */
+      const systemPrompt =
+        input.kind === "SONCAS"
+          ? withSoncasSystemPrompt(profileSystemMarkdown)
+          : withDiscSystemPrompt(profileSystemMarkdown);
       const userPrompt = buildDelimitedMeetingUserContent({
         transcript: transcriptForAnalysis,
         notes: meeting.notes,
@@ -162,23 +208,33 @@ export async function runMeetingAnalysis(
           : deps.analysis.analyzeDisc;
       try {
         const out = await analyze({
-          systemMarkdown: promptVersion.markdown,
+          systemMarkdown: profileSystemMarkdown,
           transcript: transcriptForAnalysis,
           notes: meeting.notes,
           model,
         });
+        /*
+          Le journal garde ce que le modèle a rendu, pas ce que le produit en a
+          fait, comme pour la scorecard plus bas. C'est la seule trace où l'on
+          puisse constater qu'un levier avait été annoncé à 80 sans une citation
+          pour le tenir : la fiche, elle, ne montrera plus que le 19.
+        */
         await recordAiRequestSuccess(deps.aiLogs, logBase, {
           rawOutput: out.result,
           inputTokens: out.usage?.inputTokens ?? null,
           outputTokens: out.usage?.outputTokens ?? null,
           latencyMs: Date.now() - started,
         });
+        const result =
+          input.kind === "SONCAS"
+            ? applySoncasEvidenceRule(out.result)
+            : out.result;
         const row = await deps.meetings.createAnalysis({
           meetingId: meeting.id,
           kind: input.kind,
           promptVersionId: promptVersion.id,
           model,
-          result: out.result,
+          result,
         });
         return { ok: true, analysisId: row.id };
       } catch (e) {
@@ -189,6 +245,115 @@ export async function runMeetingAnalysis(
         });
         return { ok: false, error: "ANALYSIS_FAILED", message };
       }
+    }
+
+    if (input.kind === "SCORECARD") {
+      /*
+        La grille se choisit ici, et non dans l'adaptateur : c'est le rendez-vous
+        qui la détermine, et c'est aussi ici que le score se calcule ensuite. Les
+        deux doivent employer la même, sans quoi des niveaux notés sur une grille
+        seraient additionnés sur les poids d'une autre.
+      */
+      const grid = scorecardGridForMeeting({
+        meetingType: meeting.meetingType,
+        pipelineStage: meeting.pipelineStage,
+      });
+      if (!grid) {
+        return { ok: false, error: "NO_SCORECARD_GRID" };
+      }
+
+      const scorecardSystemMarkdown = composeAnalysisSystemMarkdown(
+        promptVersion.markdown,
+        [input.organizationPlaybookMarkdown],
+      );
+      const systemPrompt = withScorecardSystemPrompt(
+        scorecardSystemMarkdown,
+        grid,
+      );
+      const userPrompt = buildDelimitedMeetingUserContent({
+        transcript: transcriptForAnalysis,
+        notes: meeting.notes,
+      });
+      const logBase = {
+        organizationId: input.organizationId,
+        meetingId: meeting.id,
+        jobId: input.jobId ?? null,
+        kind: aiLogKind(input.kind),
+        modelName: model,
+        promptVersion: String(promptVersion.version),
+        systemPrompt,
+        userPrompt,
+      };
+      const started = Date.now();
+
+      try {
+        const out = await deps.analysis.analyzeScorecard({
+          systemMarkdown: scorecardSystemMarkdown,
+          grid,
+          transcript: transcriptForAnalysis,
+          notes: meeting.notes,
+          model,
+        });
+        /*
+          Le journal garde ce que le modèle a rendu, pas ce que le produit en a
+          fait. Y écrire le score calculé donnerait à relire un chiffre que le
+          modèle n'a jamais produit, à l'endroit même où l'on vient vérifier ce
+          qu'il a produit.
+        */
+        await recordAiRequestSuccess(deps.aiLogs, logBase, {
+          rawOutput: out.result,
+          inputTokens: out.usage?.inputTokens ?? null,
+          outputTokens: out.usage?.outputTokens ?? null,
+          latencyMs: Date.now() - started,
+        });
+        const { blocks, overallScore } = computeScorecardScore(
+          grid,
+          out.result.criteria,
+        );
+        const row = await deps.meetings.createAnalysis({
+          meetingId: meeting.id,
+          kind: input.kind,
+          promptVersionId: promptVersion.id,
+          model,
+          /*
+            La grille employée est enregistrée avec les niveaux. Une analyse
+            relue dans six mois doit rendre le score qu'elle annonçait le jour
+            où elle a été produite, même si la grille a gagné un critère depuis.
+          */
+          result: {
+            ...out.result,
+            gridId: grid.id,
+            gridName: grid.name,
+            overallScore,
+            blocks,
+          },
+        });
+        return { ok: true, analysisId: row.id };
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        await recordAiRequestError(deps.aiLogs, logBase, {
+          errorMessage: message,
+          latencyMs: Date.now() - started,
+        });
+        return { ok: false, error: "ANALYSIS_FAILED", message };
+      }
+    }
+
+    /*
+      Ce qui reste est forcément KISS, et le typage le sait. Le garde-fou existe
+      quand même parce que le typage repose ici sur une promesse que personne ne
+      vérifie : le dépôt Prisma relit `kind` depuis la base et le convertit sans
+      contrôle. Une valeur ajoutée à l'énumération et pas ici arriverait donc
+      jusqu'à ce point et repartirait analysée en KISS, enregistrée sous le nom
+      qu'elle porte, avec un résultat qui n'a rien à voir avec ce qu'on attend
+      d'elle.
+    */
+    if (input.kind !== "KISS") {
+      return {
+        ok: false,
+        error: "ANALYSIS_FAILED",
+        message: `Analyse non prise en charge : ${String(input.kind)}`,
+      };
     }
 
     const [priorSoncas, priorDisc] = await Promise.all([
@@ -204,12 +369,24 @@ export async function runMeetingAnalysis(
       }),
     ]);
 
-    const appendix = input.kissSystemMarkdownAppendix?.trim();
-    const kissSystemMarkdown =
-      appendix && appendix.length > 0
-        ? `${promptVersion.markdown}\n\n---\n\n## Consignes KISS (plateforme)\n\n${appendix}`
-        : promptVersion.markdown;
-    const systemPrompt = withDataScopeSystemPrompt(kissSystemMarkdown);
+    const kissSystemMarkdown = composeAnalysisSystemMarkdown(
+      promptVersion.markdown,
+      [
+        analysisSystemBlock(
+          KISS_PLATFORM_BLOCK_HEADING,
+          input.kissSystemMarkdownAppendix,
+        ),
+        input.organizationPlaybookMarkdown,
+      ],
+    );
+    /*
+      Le même enrobage que celui appliqué par l'adaptateur, et non l'enrobage
+      générique. Le modèle recevait déjà le bon texte ; c'est la ligne
+      d'`AiRequestLog` relue après coup qui en omettait la définition des six
+      notes et l'échelle du coachingScore, soit précisément les consignes qu'on
+      vient chercher dans un journal quand une note surprend.
+    */
+    const systemPrompt = withKissSystemPrompt(kissSystemMarkdown);
     const userPrompt = buildKissUserPrompt({
       transcript: transcriptForAnalysis,
       notes: meeting.notes,
@@ -245,7 +422,7 @@ export async function runMeetingAnalysis(
       });
       const row = await deps.meetings.createAnalysis({
         meetingId: meeting.id,
-        kind: "KISS",
+        kind: input.kind,
         promptVersionId: promptVersion.id,
         model,
         result: out.result,

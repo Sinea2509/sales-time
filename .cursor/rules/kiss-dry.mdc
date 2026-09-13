@@ -1,5 +1,5 @@
 ---
-description: KISS and DRY — simple designs, extract only real duplication
+description: KISS and DRY · simple designs, extract only real duplication
 alwaysApply: true
 ---
 
@@ -8,15 +8,15 @@ alwaysApply: true
 ## KISS (Keep It Simple)
 
 - Prefer **one obvious path** over configurable frameworks (e.g. in-process job run vs HTTP wake + cron + retry UI).
-- Do not abstract until the **second** justified use — inline first copy; extract on repeat.
+- Do not abstract until the **second** justified use: inline first copy, then extract on repeat.
 - Avoid extra layers (wrapper services, generic handlers) that only pass data through.
-- Server actions: validate → call one application use case → revalidate — no orchestration soup in UI files.
+- Server actions: validate → call one application use case → revalidate. No orchestration soup in UI files.
 
 ## DRY (Don't Repeat Yourself)
 
 - Duplicate **behavior** (auth checks, org scoping, error mapping) → extract to `lib/` helper or application use case.
 - Duplicate **markup** (second copy in UI) → extract atom/molecule per [`atomic-design.mdc`](atomic-design.mdc).
-- Do **not** DRY unrelated code that merely looks similar — coupling unrelated features hurts more than duplication.
+- Do **not** DRY unrelated code that merely looks similar: coupling unrelated features hurts more than duplication.
 
 ## Where helpers live
 
@@ -29,6 +29,6 @@ alwaysApply: true
 
 ## Anti-patterns
 
-- Copy-pasting `findMeetingByIdForOrg` + seller check in every action — use shared access helper.
-- Mega-components doing fetch + auth + layout + feature logic — split template vs organism.
+- Copy-pasting `findMeetingByIdForOrg` + seller check in every action: use shared access helper.
+- Mega-components doing fetch + auth + layout + feature logic: split template vs organism.
 - "Utility" modules importing React and Prisma together.

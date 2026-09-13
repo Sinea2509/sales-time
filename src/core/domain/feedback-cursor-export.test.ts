@@ -58,8 +58,12 @@ describe("buildFeedbackCursorMarkdown", () => {
       }),
     );
 
-    expect(md).toContain("# 🐛 BUG report — SalesTime (#fb_abcde");
+    expect(md).toContain("# 🐛 BUG report · SalesTime (#fb_abcde");
     expect(md).toContain("**Priority:** high");
+    // Une ligne par information : le rapport se lit et se cite ligne a ligne.
+    expect(md).toContain("- Navigateur: Chrome");
+    expect(md).toContain("- OS: Linux");
+    expect(md).toContain("- Locale: fr-FR");
     expect(md).toContain("user@example.com (org: Acme) (rôle: Manager)");
     expect(md).toContain("Le bouton ne répond pas sur mobile");
     expect(md).toContain("- TypeError: x is null");

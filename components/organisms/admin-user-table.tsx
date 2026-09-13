@@ -182,7 +182,7 @@ export function AdminUserTable({ users, organizations }: Props) {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Rechercher par nom, e-mail ou ID..."
             value={search}
@@ -233,8 +233,8 @@ export function AdminUserTable({ users, organizations }: Props) {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
+          <span className="text-sm font-medium text-foreground dark:text-zinc-300">
             {selectedIds.size} sélectionné(s)
           </span>
           <Button
@@ -259,11 +259,11 @@ export function AdminUserTable({ users, organizations }: Props) {
       )}
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
+              <tr className="border-b border-border bg-muted/80 dark:border-zinc-800 dark:bg-zinc-950/60">
                 <th className="w-10 px-4 py-3">
                   <input
                     type="checkbox"
@@ -272,30 +272,30 @@ export function AdminUserTable({ users, organizations }: Props) {
                       selectedIds.size === filtered.length
                     }
                     onChange={toggleSelectAll}
-                    className="size-4 rounded border-zinc-300 dark:border-zinc-600"
+                    className="size-4 rounded border-border dark:border-zinc-600"
                   />
                 </th>
-                <th className="px-4 py-3 font-medium text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 font-medium text-muted-foreground dark:text-zinc-400">
                   Utilisateur
                 </th>
-                <th className="hidden px-4 py-3 font-medium text-zinc-500 sm:table-cell dark:text-zinc-400">
+                <th className="hidden px-4 py-3 font-medium text-muted-foreground sm:table-cell dark:text-zinc-400">
                   Rôle
                 </th>
-                <th className="hidden px-4 py-3 font-medium text-zinc-500 md:table-cell dark:text-zinc-400">
+                <th className="hidden px-4 py-3 font-medium text-muted-foreground md:table-cell dark:text-zinc-400">
                   Organisations
                 </th>
-                <th className="px-4 py-3 font-medium text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 font-medium text-muted-foreground dark:text-zinc-400">
                   Statut
                 </th>
-                <th className="hidden px-4 py-3 font-medium text-zinc-500 lg:table-cell dark:text-zinc-400">
+                <th className="hidden px-4 py-3 font-medium text-muted-foreground lg:table-cell dark:text-zinc-400">
                   Inscrit le
                 </th>
-                <th className="px-4 py-3 text-right font-medium text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-right font-medium text-muted-foreground dark:text-zinc-400">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="divide-y divide-border dark:divide-zinc-800">
               {filtered.length === 0 ? (
                 <TableEmptyRow
                   colSpan={7}
@@ -306,31 +306,31 @@ export function AdminUserTable({ users, organizations }: Props) {
                 filtered.map((user) => (
                   <tr
                     key={user.id}
-                    className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                    className="hover:bg-muted/60 dark:hover:bg-zinc-800/40"
                   >
                     <td className="w-10 px-4 py-3.5">
                       <input
                         type="checkbox"
                         checked={selectedIds.has(user.id)}
                         onChange={() => toggleSelect(user.id)}
-                        className="size-4 rounded border-zinc-300 dark:border-zinc-600"
+                        className="size-4 rounded border-border dark:border-zinc-600"
                       />
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground dark:bg-zinc-800 dark:text-zinc-300">
                           {(user.firstName?.[0] ?? user.email[0]).toUpperCase()}
                         </div>
                         <div className="min-w-0">
                           <Link
                             href={`/admin/users/${user.id}`}
-                            className="block truncate font-medium text-zinc-900 hover:underline dark:text-zinc-100"
+                            className="block truncate font-medium text-foreground hover:underline dark:text-zinc-100"
                           >
                             {user.firstName && user.lastName
                               ? `${user.firstName} ${user.lastName}`
                               : user.email}
                           </Link>
-                          <p className="flex items-center gap-1 truncate text-xs text-zinc-400">
+                          <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
                             <Mail className="size-3" />
                             {user.email}
                           </p>
@@ -354,7 +354,9 @@ export function AdminUserTable({ users, organizations }: Props) {
                     <td className="hidden px-4 py-3.5 md:table-cell">
                       <div className="flex flex-wrap gap-1">
                         {user.memberships.length === 0 ? (
-                          <span className="text-xs text-zinc-400">Aucune</span>
+                          <span className="text-xs text-muted-foreground">
+                            Aucune
+                          </span>
                         ) : (
                           user.memberships.slice(0, 2).map((m) => (
                             <Badge
@@ -385,7 +387,7 @@ export function AdminUserTable({ users, organizations }: Props) {
                         {user.status === "ACTIVE" ? "Actif" : "Bloqué"}
                       </span>
                     </td>
-                    <td className="hidden whitespace-nowrap px-4 py-3.5 text-zinc-500 lg:table-cell">
+                    <td className="hidden whitespace-nowrap px-4 py-3.5 text-muted-foreground lg:table-cell">
                       {new Date(user.createdAt).toLocaleDateString("fr-FR")}
                     </td>
                     <td className="px-4 py-3.5 text-right">
@@ -436,8 +438,8 @@ export function AdminUserTable({ users, organizations }: Props) {
             </tbody>
           </table>
         </div>
-        <div className="border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          <p className="text-xs text-zinc-400">
+        <div className="border-t border-border px-4 py-3 dark:border-zinc-800">
+          <p className="text-xs text-muted-foreground">
             {filtered.length} utilisateur(s) sur {users.length}
           </p>
         </div>

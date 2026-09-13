@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import { signUpAction } from "@/app/[locale]/sign-up/actions";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
@@ -16,7 +16,7 @@ function SubmitButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="h-10 w-full bg-brand text-white hover:bg-brand-hover sm:w-auto"
+      className="h-10 w-full bg-brand text-brand-foreground hover:bg-brand-hover sm:w-auto"
     >
       {pending ? "Création…" : "Créer mon compte"}
     </Button>
@@ -25,6 +25,22 @@ function SubmitButton() {
 
 export function SignUpForm() {
   const [state, formAction, pending] = useActionState(signUpAction, null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmRef = useRef<HTMLInputElement>(null);
+
+  /*
+    Même contrôle natif que sur la réinitialisation : la non-correspondance
+    se signale au champ et en français, avant l'aller-retour serveur.
+  */
+  function verifieCorrespondance() {
+    const confirm = confirmRef.current;
+    if (!confirm) return;
+    confirm.setCustomValidity(
+      confirm.value && confirm.value !== passwordRef.current?.value
+        ? "Les deux mots de passe ne correspondent pas."
+        : "",
+    );
+  }
 
   return (
     <form action={formAction} className="space-y-5">
@@ -127,6 +143,8 @@ export function SignUpForm() {
           minLength={8}
           disabled={pending}
           className="h-10"
+          ref={passwordRef}
+          onChange={verifieCorrespondance}
         />
         <p className="text-muted-foreground text-xs">Au moins 8 caractères.</p>
       </div>
@@ -140,6 +158,8 @@ export function SignUpForm() {
           required
           disabled={pending}
           className="h-10"
+          ref={confirmRef}
+          onChange={verifieCorrespondance}
         />
       </div>
 

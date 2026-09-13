@@ -42,7 +42,7 @@ export default function MeetingDetailError({
         </button>
         <Link
           href="/company/rendez-vous"
-          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand-hover"
         >
           Retour aux rendez-vous
         </Link>

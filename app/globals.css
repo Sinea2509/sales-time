@@ -46,10 +46,12 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-brand-hover: var(--brand-hover);
   --color-brand-muted: var(--brand-muted);
   --color-brand-soft: var(--brand-soft);
   --color-brand-ring: var(--brand-ring);
+  --color-gold: var(--gold);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -64,53 +66,98 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  /*
+    Charte « Encre et papier froid », celle de la maquette validée le 2 et le
+    8 septembre. Elle remplace « Ivoire et Encre » : même construction, un
+    papier légèrement teinté qui se détache des cartes blanches, une encre
+    presque noire, mais la teinte passe du chaud au froid. Les neutres sont
+    tirés vers le violet de la marque, très faiblement, pour que le papier
+    porte la marque au lieu de la contredire. Tout reste en mode clair. La
+    marque ne bouge pas : #6c4dff reste la couleur des actions. Contrastes
+    mesurés : encre 18:1 sur la page, muted 6,7:1 sur la page et 6,4:1 sur le gris, marque 5,07:1
+    sur blanc.
+  */
+  --background: #f6f6fb;
+  --foreground: #0c0c14;
+  --card: #ffffff;
+  --card-foreground: #0c0c14;
+  --popover: #ffffff;
+  --popover-foreground: #0c0c14;
+  --primary: #1e1e2e;
   --primary-foreground: oklch(0.985 0 0);
   --brand: #6c4dff;
+  /*
+    Encre posée sur un aplat de marque, exactement comme --primary-foreground
+    se pose sur --primary. Elle manquait, et les trente-deux endroits qui
+    remplissent en marque écrivaient donc « text-white » en dur. En thème clair
+    cela tombait juste ; en thème sombre --brand s'éclaircit pour rester lisible
+    en texte, et du blanc dessus ne tenait plus que 3,27:1 (mesuré au navigateur
+    sur le bouton « Choisir ce plan »), là où 4,5:1 est le minimum.
+  */
+  --brand-foreground: oklch(0.985 0 0);
   --brand-hover: #5a3fd9;
   --brand-muted: #c4b5fd;
   --brand-soft: color-mix(in srgb, var(--brand) 12%, transparent);
   --brand-ring: color-mix(in srgb, var(--brand) 30%, transparent);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /*
+    L'or du podium et du palier Excellence. Réservé au hero du commercial
+    quand il atteint ce palier, en filet fin et en halo décoratif : jamais de
+    texte posé dessus, et le violet reste la couleur des actions. Le palier
+    lui-même garde sa rampe violette ordonnée, un or au sommet casserait la
+    lecture clair vers foncé.
+  */
+  --gold: #c08a1e;
+  --secondary: #f1f1f7;
+  --secondary-foreground: #0c0c14;
+  --muted: #f1f1f7;
+  --muted-foreground: #56556c;
+  --accent: #f1f1f7;
+  --accent-foreground: #0c0c14;
+  --destructive: #b3261e;
+  --border: #e8e8f0;
+  --input: #e8e8f0;
+  --ring: #a9a8bd;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+  /*
+    Le chrome des graphiques, c'est-à-dire tout ce qui n'y est pas une donnée.
+    Ces trois jetons ne portent pas de valeur propre : ils pointent vers
+    l'encre et la bordure du thème. Une organisation qui personnalisera ses
+    couleurs verra donc ses graphiques suivre, et il n'y a rien à redéclarer
+    dans .dark : un var() se résout sur l'élément qui l'utilise, pas à
+    l'endroit où il est écrit.
+  */
+  --chart-ink: var(--muted-foreground);
+  --chart-axis: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
+  --chart-grid: var(--border);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  /*
+    La colonne de navigation est blanche, comme les cartes, séparée de la page
+    par un filet. L'entrée active prend un fond de marque très clair et une
+    encre de marque foncée, comme dans la maquette : c'est la seule couleur de
+    la colonne, tout le reste est encre et gris.
+  */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0c0c14;
+  --sidebar-primary: #1e1e2e;
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --app-shell-surface: oklch(0.99 0 0);
-  --app-shell-sidebar-bg: oklch(0.98 0 0);
-  --app-shell-sidebar-text: oklch(0.205 0 0);
-  --app-shell-sidebar-muted: oklch(0.46 0 0);
-  --app-shell-sidebar-border: oklch(0.91 0 0);
-  --app-shell-sidebar-hover-bg: oklch(0.94 0 0);
-  --app-shell-sidebar-active-bg: oklch(0.94 0.03 292);
-  --app-shell-sidebar-active-text: oklch(0.29 0.07 291);
-  --app-shell-sidebar-accent: oklch(0.58 0.23 292);
-  --app-shell-sidebar-card-bg: oklch(0.965 0 0);
+  --sidebar-accent: #f1f1f7;
+  --sidebar-accent-foreground: #0c0c14;
+  --sidebar-border: #e8e8f0;
+  --sidebar-ring: #a9a8bd;
+  --app-shell-surface: #f6f6fb;
+  --app-shell-sidebar-bg: #ffffff;
+  --app-shell-sidebar-text: #0c0c14;
+  --app-shell-sidebar-muted: #56556c;
+  --app-shell-sidebar-border: #e8e8f0;
+  --app-shell-sidebar-hover-bg: #f4f4f9;
+  --app-shell-sidebar-active-bg: #f1edff;
+  --app-shell-sidebar-active-text: #4a31c4;
+  --app-shell-sidebar-accent: #6c4dff;
+  --app-shell-sidebar-card-bg: #fafafd;
 }
 
 .dark {
@@ -123,6 +170,9 @@
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --brand: #8b7cff;
+  /* L'aplat s'éclaircit ici, donc l'encre s'assombrit : même bascule que
+     --primary-foreground juste au-dessus. Sur #8b7cff, elle tient 5,49:1. */
+  --brand-foreground: oklch(0.205 0 0);
   --brand-hover: #a294ff;
   --brand-muted: #c4b5fd;
   --brand-soft: color-mix(in srgb, var(--brand) 18%, transparent);

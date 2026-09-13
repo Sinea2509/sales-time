@@ -136,9 +136,12 @@ export function AdminHealthDashboard({
               <div>
                 <p className="text-2xl font-bold tabular-nums">
                   {dbHealth.ms}
-                  <span className="text-sm font-medium text-zinc-500"> ms</span>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {" "}
+                    ms
+                  </span>
                 </p>
-                <p className="text-xs text-zinc-500">Latence</p>
+                <p className="text-xs text-muted-foreground">Latence</p>
               </div>
             </div>
             <span
@@ -213,14 +216,14 @@ export function AdminHealthDashboard({
           icon={AlertTriangle}
           label="Jobs analyse (morts)"
           value={pipeline.jobsDead}
-          footer="AnalysisJob DEAD — relancer manuellement"
+          footer="AnalysisJob DEAD : relancer manuellement"
           accent="violet"
         />
         <AdminKpiCard
           icon={AlertTriangle}
           label="RDV bloqués (PROCESSING)"
           value={pipeline.meetingsProcessingStuck}
-          footer=">15 min sans analyse — vérifier cron / AI key"
+          footer=">15 min sans analyse : vérifier cron / AI key"
           accent="emerald"
         />
       </div>
@@ -264,15 +267,21 @@ export function AdminHealthDashboard({
         <CardContent>
           <dl className="grid gap-4 sm:grid-cols-3">
             <div>
-              <dt className="text-xs font-medium text-zinc-500">NODE_ENV</dt>
+              <dt className="text-xs font-medium text-muted-foreground">
+                NODE_ENV
+              </dt>
               <dd className="mt-0.5 text-sm font-semibold">{nodeEnv}</dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-zinc-500">Région</dt>
+              <dt className="text-xs font-medium text-muted-foreground">
+                Région
+              </dt>
               <dd className="mt-0.5 text-sm font-semibold">{region}</dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-zinc-500">Next.js</dt>
+              <dt className="text-xs font-medium text-muted-foreground">
+                Next.js
+              </dt>
               <dd className="mt-0.5 text-sm font-semibold">v{nextVersion}</dd>
             </div>
           </dl>
@@ -280,7 +289,7 @@ export function AdminHealthDashboard({
       </Card>
 
       {/* Timestamp */}
-      <p className="text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="text-xs text-muted-foreground dark:text-zinc-400">
         <Clock className="mr-1 inline size-3" />
         Dernière vérification :{" "}
         {now.toLocaleString("fr-FR", {

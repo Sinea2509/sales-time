@@ -4,10 +4,14 @@ import { InfoCard } from "@/components/molecules/info-card";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { MonEquipeSection } from "@/components/organisms/mon-equipe-section";
+import { TeamMemberInviteDialog } from "@/components/organisms/team-member-invite-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
+import {
+  resolveManagerTeamUserIds,
+  teamScopeGroup,
+} from "@/lib/team-seller-scope";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
 import {
@@ -51,20 +55,27 @@ export default async function MonEquipePage({ searchParams }: Props) {
   const monEquipePage = parseEquipePage(sp.equipePage);
   const deps = getApplicationDeps();
 
-  const windowCounts = await getStatsWindowRdvsCounts(deps, {
-    organizationId: actor.activeOrganizationId,
-  });
-  const statsWindowDays = ensureEligibleStatsWindowDays({
-    joursParam: sp.jours,
-    counts: windowCounts,
-    redirectPath: "/company/equipe",
-  });
-  const disabledStatsDays = disabledStatsWindowDays(windowCounts);
-
+  // L'équipe se résout avant les comptes, parce que les comptes doivent porter
+  // sur elle : le sélecteur de période annonce la disponibilité de cet écran,
+  // et cet écran ne montre que l'équipe du manager.
   const teamUserIds = await resolveManagerTeamUserIds(deps, {
     canManageOrganization: actor.canManageOrganization,
     internalUserId: actor.internalUserId,
   });
+
+  const windowCounts = await getStatsWindowRdvsCounts(deps, {
+    organizationId: actor.activeOrganizationId,
+    sellerUserIds: teamUserIds,
+  });
+  // La requête entière, et pas seulement `jours` : si cette période n'a pas
+  // assez de RDV, la redirection qui suit doit ramener le lecteur sur la page
+  // de liste où il était, et non sur la première.
+  const statsWindowDays = ensureEligibleStatsWindowDays({
+    searchParams: sp,
+    counts: windowCounts,
+    redirectPath: "/company/equipe",
+  });
+  const disabledStatsDays = disabledStatsWindowDays(windowCounts);
 
   const admin = await getOrgAdminDashboard(deps, {
     organizationId: actor.activeOrganizationId,
@@ -88,22 +99,45 @@ export default async function MonEquipePage({ searchParams }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <PageHeaderSimple title="Mon équipe" />
-        <Suspense
-          fallback={
-            <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
-          }
-        >
-          <DashboardStatsPeriodSelect
-            value={statsWindowDays}
-            disabledDays={disabledStatsDays}
-          />
-        </Suspense>
+        {/*
+          Le sous-titre dit à quoi sert la page, que « Mon équipe » ne dit pas :
+          c'est un classement, il porte sur une période, et il se lit membre par
+          membre. La période est nommée par le sélecteur juste à côté, donc elle
+          n'est pas répétée ici.
+        */}
+        <PageHeaderSimple
+          title="Mon équipe"
+          description="Où en est chacun, et où en est le collectif, sur la période choisie."
+        />
+        {/*
+          Les deux commandes de la page tiennent sur une seule ligne. Le bouton
+          d'invitation vivait dans la section, sans rien pour l'accompagner : il
+          occupait une deuxième ligne pleine largeur pour lui seul, juste
+          au-dessous de celle du sélecteur.
+        */}
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
+          <Suspense
+            fallback={<Skeleton className="h-9 w-36 shrink-0 rounded-md" />}
+          >
+            <DashboardStatsPeriodSelect
+              value={statsWindowDays}
+              disabledDays={disabledStatsDays}
+            />
+          </Suspense>
+          <TeamMemberInviteDialog currentUserEmail={actor.email} />
+        </div>
       </div>
+      {/*
+        La page porte déjà le titre et le bouton d'invitation : la section ne
+        redit ni l'un ni l'autre.
+      */}
       <MonEquipeSection
         monEquipe={admin.monEquipe}
         statsWindowDays={statsWindowDays}
         currentUserEmail={actor.email}
+        showHeading={false}
+        showInvite={false}
+        comparisonGroup={teamScopeGroup(teamUserIds)}
       />
     </div>
   );

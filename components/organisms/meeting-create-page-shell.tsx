@@ -5,20 +5,19 @@ import { pageTitleClass } from "@/lib/page-typography";
 
 type MeetingCreatePageShellProps = {
   meetingTypeOptions: string[];
-  pipelineStageOptions: string[];
 };
 
 export function MeetingCreatePageShell({
   meetingTypeOptions,
-  pipelineStageOptions,
 }: MeetingCreatePageShellProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className={pageTitleClass}>Nouveau rendez-vous</h1>
+          <h1 className={pageTitleClass}>Analyser un rendez-vous</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
-            Transcript manuel — idéal pour alimenter l’IA.
+            Renseignez le prospect et déposez le transcript : l’analyse démarre
+            à l’enregistrement.
           </p>
         </div>
         <NavLinkButton href="/company/rendez-vous" variant="ghost" size="sm">
@@ -27,14 +26,11 @@ export function MeetingCreatePageShell({
       </div>
 
       <ContentCard
-        className="border-neutral-200 shadow-sm dark:border-neutral-800"
+        className="border-border shadow-sm dark:border-neutral-800"
         title="Détails du rendez-vous"
         description="Renseignez les informations puis enregistrez pour lancer l’analyse SONCAS / DISC."
       >
-        <MeetingCreateForm
-          meetingTypeOptions={meetingTypeOptions}
-          pipelineStageOptions={pipelineStageOptions}
-        />
+        <MeetingCreateForm meetingTypeOptions={meetingTypeOptions} />
       </ContentCard>
     </div>
   );

@@ -79,4 +79,29 @@ export interface UserRepositoryPort {
   updatePasswordHash(userId: string, passwordHash: string): Promise<void>;
 
   listDirectReportUserIds(managerUserId: string): Promise<string[]>;
+
+  /**
+   * Manager of a seller, or null when none is set.
+   *
+   * Lets a seller's dashboard rank them on the exact team their manager sees,
+   * so the two screens cannot announce two different places for one person.
+   */
+  findManagerUserId(userId: string): Promise<string | null>;
+
+  /**
+   * Declares who a person reports to, or clears it with null.
+   *
+   * This is the only writer of the reporting line, and the whole team scoping
+   * hangs on it: with nothing written, `listDirectReportUserIds` answers an
+   * empty list, every scoped screen falls back to the whole organization, and
+   * "Mon équipe" means "everyone".
+   *
+   * The link belongs to the user rather than to a membership, so this method
+   * cannot check that both people share an organization. The caller does, by
+   * resolving the assignment against a list it has already scoped to one.
+   */
+  setManagerUserId(input: {
+    userId: string;
+    managerUserId: string | null;
+  }): Promise<void>;
 }

@@ -438,7 +438,7 @@ jest.mock("@/lib/application-deps", () => {
   };
 });
 
-/** Shape of `prisma` under `@/lib/prisma` jest mock — delegates are `jest.fn`. */
+/** Shape of `prisma` under `@/lib/prisma` jest mock: delegates are `jest.fn`. */
 type AuthActionsPrismaMock = {
   user: {
     findUnique: jest.Mock;

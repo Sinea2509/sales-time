@@ -20,11 +20,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Sales Time — Coach commercial IA",
+    default: "Sales Time · Coach commercial IA",
     template: "%s · Sales Time",
   },
   description:
-    "Sales Time transforme vos transcripts de RDV en compte rendu structuré, coaching KISS, profil prospect DISC/SONCAS et mail de suivi — pour gagner du TUC et piloter la qualité commerciale.",
+    "Sales Time transforme vos transcripts de RDV en compte rendu structuré, coaching KISS, profil prospect DISC/SONCAS et mail de suivi, pour gagner du TUC et piloter la qualité commerciale.",
 };
 
 export default async function RootLayout({

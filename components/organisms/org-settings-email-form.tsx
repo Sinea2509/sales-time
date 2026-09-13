@@ -95,7 +95,7 @@ export function OrgSettingsEmailForm({
           onChange={(e) => setSig(e.target.value)}
           readOnly={!canEdit}
           disabled={!canEdit}
-          placeholder="Ex. Cordialement,\nJean Dupont\nAccount Executive — …"
+          placeholder="Ex. Cordialement,\nJean Dupont\nAccount Executive"
         />
       </div>
       {msg ? (
@@ -113,7 +113,7 @@ export function OrgSettingsEmailForm({
         <Button
           type="submit"
           disabled={pending}
-          className="bg-brand text-white hover:bg-brand-hover"
+          className="bg-brand text-brand-foreground hover:bg-brand-hover"
         >
           Enregistrer
         </Button>

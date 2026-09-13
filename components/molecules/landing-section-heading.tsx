@@ -29,7 +29,7 @@ export function LandingSectionHeading({
       ) : null}
       <h2
         className={cn(
-          "text-[clamp(28px,3.2vw,46px)] leading-[1.13] font-bold tracking-tight text-zinc-950 [&_em]:font-normal [&_em]:text-brand [&_em]:not-italic",
+          "text-[clamp(28px,3.2vw,46px)] leading-[1.13] font-bold tracking-tight text-foreground [&_em]:font-normal [&_em]:text-brand [&_em]:not-italic",
           centered && "dark:text-white",
         )}
       >
@@ -38,7 +38,7 @@ export function LandingSectionHeading({
       {description ? (
         <p
           className={cn(
-            "mt-4 max-w-[520px] text-[17px] leading-[1.7] text-zinc-500",
+            "mt-4 max-w-[520px] text-[17px] leading-[1.7] text-muted-foreground",
             centered && "mx-auto",
           )}
         >

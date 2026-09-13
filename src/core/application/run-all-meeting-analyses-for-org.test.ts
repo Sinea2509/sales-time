@@ -44,7 +44,13 @@ describe("runAllMeetingAnalysesForOrg", () => {
     runMeetingAnalysisMock.mockReset();
   });
 
-  it("runs SONCAS, DISC, then KISS and marks meeting READY", async () => {
+  /*
+    L'ordre est vérifié, pas seulement le nombre. KISS relit les résultats SONCAS
+    et DISC déjà enregistrés : les lancer dans le désordre lui ferait analyser un
+    rendez-vous dont le profil d'interlocuteur n'existe pas encore. La scorecard
+    ferme la marche, elle ne nourrit aucune des autres.
+  */
+  it("runs SONCAS, DISC, KISS then SCORECARD and marks meeting READY", async () => {
     runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
     const deps = makeDeps();
 
@@ -55,10 +61,131 @@ describe("runAllMeetingAnalysesForOrg", () => {
     });
 
     expect(result).toEqual({ ok: true });
-    expect(runMeetingAnalysisMock).toHaveBeenCalledTimes(3);
+    expect(runMeetingAnalysisMock.mock.calls.map((c) => c[1].kind)).toEqual([
+      "SONCAS",
+      "DISC",
+      "KISS",
+      "SCORECARD",
+    ]);
     expect(deps.meetings.updateMeetingStatus).toHaveBeenLastCalledWith(
       expect.objectContaining({ status: "READY" }),
     );
+  });
+
+  /*
+    Le cas qui justifie la sortie séparée de `NO_SCORECARD_GRID`. Aujourd'hui
+    seule la découverte a une grille : tous les autres rendez-vous passent par
+    là. Si l'absence de grille comptait comme un échec, brancher la scorecard
+    ferait basculer en FAILED la majorité des rendez-vous du produit, alors que
+    leurs trois analyses viennent de réussir.
+  */
+  it("termine en READY quand le RDV n'a pas de grille de scorecard", async () => {
+    runMeetingAnalysisMock
+      .mockResolvedValueOnce({ ok: true, analysisId: "a1" })
+      .mockResolvedValueOnce({ ok: true, analysisId: "a2" })
+      .mockResolvedValueOnce({ ok: true, analysisId: "a3" })
+      .mockResolvedValueOnce({ ok: false, error: "NO_SCORECARD_GRID" });
+    const deps = makeDeps();
+
+    const result = await runAllMeetingAnalysesForOrg(deps as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    expect(result).toEqual({ ok: true });
+    expect(deps.meetings.updateMeetingStatus).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "READY" }),
+    );
+  });
+
+  /*
+    Sauter une étape, et non arrêter la séquence.
+
+    La scorecard ferme la marche aujourd'hui : « passer à la suivante » et
+    « sortir de la boucle » y produisent le même résultat, et le test précédent
+    ne les distingue pas. Le cas est donc forcé depuis la première étape, seul
+    endroit d'où la différence se voit. Ce n'est pas un état que la production
+    produit, c'est le contrat de la boucle : il devra tenir le jour où une
+    deuxième grille, celle du closing, s'insérera avant la fin de la liste.
+  */
+  it("saute l'étape sans grille sans arrêter les suivantes", async () => {
+    runMeetingAnalysisMock
+      .mockResolvedValueOnce({ ok: false, error: "NO_SCORECARD_GRID" })
+      .mockResolvedValue({ ok: true, analysisId: "a1" });
+    const deps = makeDeps();
+
+    const result = await runAllMeetingAnalysesForOrg(deps as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    expect(result).toEqual({ ok: true });
+    expect(runMeetingAnalysisMock.mock.calls.map((c) => c[1].kind)).toEqual([
+      "SONCAS",
+      "DISC",
+      "KISS",
+      "SCORECARD",
+    ]);
+  });
+
+  /*
+    L'indulgence s'arrête là : une grille existe, le modèle a échoué. C'est un
+    incident, et il se dit comme les autres.
+  */
+  it("marque FAILED quand la scorecard échoue vraiment", async () => {
+    runMeetingAnalysisMock
+      .mockResolvedValueOnce({ ok: true, analysisId: "a1" })
+      .mockResolvedValueOnce({ ok: true, analysisId: "a2" })
+      .mockResolvedValueOnce({ ok: true, analysisId: "a3" })
+      .mockResolvedValueOnce({
+        ok: false,
+        error: "ANALYSIS_FAILED",
+        message: "grille notée à moitié",
+      });
+    const deps = makeDeps();
+
+    const result = await runAllMeetingAnalysesForOrg(deps as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "ANALYSIS_FAILED",
+      message: "grille notée à moitié",
+      failedKind: "SCORECARD",
+    });
+    expect(deps.meetings.updateMeetingStatus).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "FAILED" }),
+    );
+  });
+
+  /*
+    Les consignes KISS de la plateforme définissent les six notes du commercial
+    et le `coachingScore`, deux champs absents du schéma de la scorecard. Elles
+    partent pour KISS et pour KISS seule ; l'orchestrateur le vérifie de son
+    côté, ce test tient l'aiguillage fait ici.
+  */
+  it("ne donne l'annexe KISS qu'à l'analyse KISS", async () => {
+    runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
+    const deps = makeDeps();
+
+    await runAllMeetingAnalysesForOrg(deps as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    for (const call of runMeetingAnalysisMock.mock.calls) {
+      if (call[1].kind === "KISS") continue;
+      expect([call[1].kind, call[1].kissSystemMarkdownAppendix]).toEqual([
+        call[1].kind,
+        undefined,
+      ]);
+    }
   });
 
   it("marks meeting FAILED when an analysis step fails", async () => {
@@ -81,5 +208,52 @@ describe("runAllMeetingAnalysesForOrg", () => {
     expect(deps.meetings.updateMeetingStatus).toHaveBeenLastCalledWith(
       expect.objectContaining({ status: "FAILED", errorMessage: "boom" }),
     );
+  });
+
+  it("lit le playbook une seule fois et le donne a toute la sequence", async () => {
+    runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
+    const findByOrganizationId = jest.fn().mockResolvedValue({
+      companyName: "Acme",
+      playbook: { offer: "Formation commerciale" },
+    });
+    const deps = {
+      ...makeDeps(),
+      organizationSettings: { findByOrganizationId },
+    };
+
+    await runAllMeetingAnalysesForOrg(deps as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    /*
+      Une seule lecture pour toute la séquence : une modification du playbook
+      en cours de séquence ne doit pas faire juger le même RDV sur deux
+      contextes différents.
+    */
+    expect(findByOrganizationId).toHaveBeenCalledTimes(1);
+    expect(findByOrganizationId).toHaveBeenCalledWith("org1");
+    for (const call of runMeetingAnalysisMock.mock.calls) {
+      const markdown = call[1].organizationPlaybookMarkdown ?? "";
+      expect(markdown).toContain("## Playbook de l'organisation");
+      expect(markdown).toContain("Formation commerciale");
+      expect(markdown).toContain("Acme");
+    }
+  });
+
+  it("tourne sans playbook quand le port des réglages est absent", async () => {
+    runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
+
+    const result = await runAllMeetingAnalysesForOrg(makeDeps() as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    expect(result).toEqual({ ok: true });
+    for (const call of runMeetingAnalysisMock.mock.calls) {
+      expect(call[1].organizationPlaybookMarkdown).toBeNull();
+    }
   });
 });

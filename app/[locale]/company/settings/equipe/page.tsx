@@ -30,6 +30,7 @@ export default async function OrganizationSettingsEquipePage() {
     lastName: m.lastName,
     role: m.role,
     joinedAt: m.joinedAt,
+    managerUserId: m.managerUserId,
   }));
 
   const invRows: TeamInvitationRow[] = invitations.map((i) => ({

@@ -28,9 +28,21 @@ export function AdminPlanRequestsTable({ rows }: { rows: PlanRequestRow[] }) {
                 {row.createdAt.toLocaleString("fr-FR")}
               </td>
               <td className="px-3 py-2">{row.organizationName}</td>
-              <td className="px-3 py-2">{row.requesterEmail ?? "—"}</td>
-              <td className="px-3 py-2">{row.desiredPlan ?? "—"}</td>
-              <td className="px-3 py-2 max-w-xs truncate">{row.message ?? "—"}</td>
+              <td className="px-3 py-2">
+                {row.requesterEmail ?? (
+                  <span className="text-muted-foreground">Non renseigné</span>
+                )}
+              </td>
+              <td className="px-3 py-2">
+                {row.desiredPlan ?? (
+                  <span className="text-muted-foreground">Non précisé</span>
+                )}
+              </td>
+              <td className="px-3 py-2 max-w-xs truncate">
+                {row.message ?? (
+                  <span className="text-muted-foreground">Aucun message</span>
+                )}
+              </td>
               <td className="px-3 py-2">
                 <select
                   className={nativeSelectClassName}

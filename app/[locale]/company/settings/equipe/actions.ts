@@ -8,6 +8,10 @@ import { buildInvitationEmailHtml } from "@/lib/invite-email-html";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getAppBaseUrl } from "@/lib/app-base-url";
 import { loadOrgSettingsActor } from "@/lib/load-org-settings-access";
+import {
+  managerAssignmentRefusalMessage,
+  resolveManagerAssignment,
+} from "@/src/core/domain/manager-assignment";
 import { resolveOrganizationInviteRole } from "@/src/core/domain/organization-invite-policy";
 import type { OrganizationMembershipRole } from "@/src/core/domain/organization-membership-role";
 
@@ -123,7 +127,7 @@ export async function inviteMemberAction(
 
   await sendTransactionalEmail({
     to: email,
-    subject: `Invitation — ${orgName}`,
+    subject: `Invitation · ${orgName}`,
     html: buildInvitationEmailHtml({
       organizationName: orgName,
       inviteLink: link,
@@ -164,8 +168,7 @@ export async function changeRoleAction(
     if (adminCount <= 1) {
       return {
         ok: false,
-        message:
-          "Impossible de retirer le dernier manager de l’organisation.",
+        message: "Impossible de retirer le dernier manager de l’organisation.",
       };
     }
   }
@@ -173,6 +176,65 @@ export async function changeRoleAction(
   await deps.organizationTeam.updateMembershipRole(membership.id, role);
 
   revalidatePath("/company/settings/equipe");
+  return { ok: true };
+}
+
+/**
+ * Déclare à qui un membre est rattaché, ou efface son rattachement.
+ *
+ * Seule écriture de la ligne hiérarchique, et c'est elle qui fait exister le
+ * cadrage d'équipe : sans rattachement écrit, `listDirectReportUserIds` rend
+ * une liste vide, chaque écran cadré retombe sur l'organisation entière, et
+ * « Mon équipe » veut dire « tout le monde ».
+ *
+ * Le membre est désigné par son `userId` et non par son `membershipId`, parce
+ * que le lien s'écrit sur l'utilisateur. Le cadrage sur l'organisation ne s'en
+ * trouve pas affaibli : les deux personnes sont cherchées dans la liste des
+ * membres de cette organisation, et une seule absence suffit à refuser.
+ */
+export async function changeManagerAction(
+  memberUserId: string,
+  managerUserId: string | null,
+): Promise<TeamActionResult> {
+  const gate = await requireOrgAdmin();
+  if (!gate.ok) return { ok: false, message: "Accès refusé." };
+
+  const membreParsed = z.string().cuid().safeParse(memberUserId);
+  if (!membreParsed.success) {
+    return { ok: false, message: "Identifiant invalide." };
+  }
+  if (
+    managerUserId !== null &&
+    !z.string().cuid().safeParse(managerUserId).success
+  ) {
+    return { ok: false, message: "Identifiant invalide." };
+  }
+
+  const deps = getApplicationDeps();
+  const { members } =
+    await deps.organizationTeam.listMembersAndPendingInvitations(
+      gate.organizationId,
+    );
+
+  const decision = resolveManagerAssignment({
+    members,
+    memberUserId: membreParsed.data,
+    managerUserId,
+  });
+  if (!decision.ok) {
+    return {
+      ok: false,
+      message: managerAssignmentRefusalMessage(decision.raison),
+    };
+  }
+
+  await deps.users.setManagerUserId({
+    userId: membreParsed.data,
+    managerUserId: decision.managerUserId,
+  });
+
+  revalidatePath("/company/settings/equipe");
+  revalidatePath("/company");
   return { ok: true };
 }
 

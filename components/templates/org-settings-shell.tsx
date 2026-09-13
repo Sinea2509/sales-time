@@ -2,7 +2,14 @@
 
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, Mail, Sparkles, UsersRound, Workflow } from "lucide-react";
+import {
+  BookOpen,
+  Building2,
+  Mail,
+  Sparkles,
+  UsersRound,
+  Workflow,
+} from "lucide-react";
 import { SectionSubnav } from "@/components/molecules/section-subnav";
 
 const SETTINGS_NAV = [
@@ -11,6 +18,13 @@ const SETTINGS_NAV = [
     href: "/company/settings/contexte",
     label: "Contexte",
     icon: Building2,
+    match: "prefix" as const,
+  },
+  {
+    id: "playbook",
+    href: "/company/settings/playbook",
+    label: "Playbook",
+    icon: BookOpen,
     match: "prefix" as const,
   },
   {

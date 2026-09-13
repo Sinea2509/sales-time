@@ -33,7 +33,7 @@ function priorityBadgeClass(priority: FeedbackRow["priority"]): string {
     case "MEDIUM":
       return "border-amber-300 bg-amber-50 text-amber-800";
     case "LOW":
-      return "border-zinc-300 bg-zinc-50 text-zinc-700";
+      return "border-border bg-muted text-foreground";
     default: {
       const _exhaustive: never = priority;
       return _exhaustive;
@@ -59,9 +59,13 @@ function CollapsibleSection({
         onClick={() => setOpen((value) => !value)}
       >
         {title}
-        <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
+        <ChevronDown
+          className={cn("size-4 transition-transform", open && "rotate-180")}
+        />
       </button>
-      {open ? <div className="border-t px-3 py-2 text-xs">{children}</div> : null}
+      {open ? (
+        <div className="border-t px-3 py-2 text-xs">{children}</div>
+      ) : null}
     </div>
   );
 }
@@ -81,7 +85,7 @@ function ScreenshotLightbox({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Capture — {row.type}</DialogTitle>
+          <DialogTitle>Capture · {row.type}</DialogTitle>
         </DialogHeader>
         {row.screenshotUrl ? (
           <div className="space-y-2">
@@ -179,16 +183,22 @@ export function AdminFeedbacksInbox({ rows }: { rows: FeedbackRow[] }) {
                   {target.dataFeedbackId ? ` · ${target.dataFeedbackId}` : ""}
                 </p>
                 {target.textSnippet ? (
-                  <p className="mt-1 truncate">&quot;{target.textSnippet}&quot;</p>
+                  <p className="mt-1 truncate">
+                    &quot;{target.textSnippet}&quot;
+                  </p>
                 ) : null}
                 <div className="mt-2 flex items-center gap-2">
-                  <code className="truncate font-mono">{target.cssSelector}</code>
+                  <code className="truncate font-mono">
+                    {target.cssSelector}
+                  </code>
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
                     className="h-7 shrink-0 px-2"
-                    onClick={() => void navigator.clipboard.writeText(target.cssSelector)}
+                    onClick={() =>
+                      void navigator.clipboard.writeText(target.cssSelector)
+                    }
                   >
                     Copier
                   </Button>
@@ -297,7 +307,9 @@ export function AdminFeedbacksInbox({ rows }: { rows: FeedbackRow[] }) {
                 size="sm"
                 variant="outline"
                 onClick={() =>
-                  void navigator.clipboard.writeText(buildFeedbackCursorMarkdown(row))
+                  void navigator.clipboard.writeText(
+                    buildFeedbackCursorMarkdown(row),
+                  )
                 }
               >
                 <Copy className="mr-1 size-3.5" />

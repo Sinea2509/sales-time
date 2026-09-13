@@ -89,6 +89,18 @@ function sellerWhere(sellerUserId?: string) {
   return sellerUserId != null ? { sellerUserId } : {};
 }
 
+/**
+ * Le même filtre, pour plusieurs commerciaux : l'équipe d'un manager.
+ *
+ * Une liste absente ou vide ne pose aucune condition, c'est-à-dire compte
+ * l'organisation entière. Écrire `{ in: [] }` dirait l'inverse et ne rendrait
+ * jamais rien ; c'est la convention de `lib/team-seller-scope.ts`, tenue ici
+ * jusque dans la requête.
+ */
+function sellersWhere(sellerUserIds?: string[]) {
+  return sellerUserIds?.length ? { sellerUserId: { in: sellerUserIds } } : {};
+}
+
 export class PrismaMeetingRepository implements MeetingRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
@@ -247,59 +259,15 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   async countMeetingsWithMeetingAtSince(input: {
     organizationId: string;
     since: Date;
-    sellerUserId?: string;
+    sellerUserIds?: string[];
   }): Promise<number> {
     return this.db.meeting.count({
       where: {
         organizationId: input.organizationId,
         meetingAt: { gte: input.since },
-        ...sellerWhere(input.sellerUserId),
+        ...sellersWhere(input.sellerUserIds),
       },
     });
-  }
-
-  async countMeetingsWithMeetingAtSinceAndOutcome(input: {
-    organizationId: string;
-    since: Date;
-    outcome: MeetingOutcome;
-    sellerUserId?: string;
-  }): Promise<number> {
-    return this.db.meeting.count({
-      where: {
-        organizationId: input.organizationId,
-        meetingAt: { gte: input.since },
-        outcome: input.outcome,
-        ...sellerWhere(input.sellerUserId),
-      },
-    });
-  }
-
-  async listAnalysesForOrgMeetingsSince(input: {
-    organizationId: string;
-    meetingAtSince: Date;
-    kinds: MeetingAnalysisKind[];
-    sellerUserId?: string;
-  }): Promise<MeetingAnalysisRow[]> {
-    const rows = await this.db.meetingAnalysis.findMany({
-      where: {
-        kind: { in: input.kinds },
-        meeting: {
-          organizationId: input.organizationId,
-          meetingAt: { gte: input.meetingAtSince },
-          ...sellerWhere(input.sellerUserId),
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        meetingId: true,
-        kind: true,
-        model: true,
-        result: true,
-        createdAt: true,
-      },
-    });
-    return rows.map(mapAnalysis);
   }
 
   async countMeetingsForOrg(input: {
@@ -308,49 +276,6 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     return this.db.meeting.count({
       where: { organizationId: input.organizationId },
     });
-  }
-
-  async countMeetingsWithMeetingAtBetween(input: {
-    organizationId: string;
-    meetingAtGte: Date;
-    meetingAtLt: Date;
-    sellerUserId?: string;
-  }): Promise<number> {
-    return this.db.meeting.count({
-      where: {
-        organizationId: input.organizationId,
-        meetingAt: { gte: input.meetingAtGte, lt: input.meetingAtLt },
-        ...sellerWhere(input.sellerUserId),
-      },
-    });
-  }
-
-  async averageDurationMinForMeetingsInWindow(input: {
-    organizationId: string;
-    meetingAtGte?: Date;
-    meetingAtLt?: Date;
-    sellerUserId?: string;
-  }): Promise<number | null> {
-    const meetingAtFilter =
-      input.meetingAtGte != null || input.meetingAtLt != null
-        ? {
-            meetingAt: {
-              ...(input.meetingAtGte != null ? { gte: input.meetingAtGte } : {}),
-              ...(input.meetingAtLt != null ? { lt: input.meetingAtLt } : {}),
-            },
-          }
-        : {};
-    const row = await this.db.meeting.aggregate({
-      where: {
-        organizationId: input.organizationId,
-        ...meetingAtFilter,
-        durationMin: { gt: 0 },
-        ...sellerWhere(input.sellerUserId),
-      },
-      _avg: { durationMin: true },
-    });
-    if (row._avg.durationMin == null) return null;
-    return Math.round(Number(row._avg.durationMin));
   }
 
   async listRecentMeetingsForDashboard(input: {
@@ -479,7 +404,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       const avgDurationMin = avgRaw == null ? null : Math.round(Number(avgRaw));
       return {
         personId: g.personId,
-        displayName: nameById.get(g.personId) ?? "—",
+        displayName: nameById.get(g.personId) ?? "Contact sans nom",
         meetingCount,
         lastMeetingAt: latest.meetingAt,
         lastOutcome: latest.outcome,

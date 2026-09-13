@@ -7,7 +7,7 @@ export function LandingFeaturesSection() {
   return (
     <section
       id="features"
-      className="scroll-mt-24 bg-white py-[88px]"
+      className="scroll-mt-24 bg-card py-[88px]"
       aria-labelledby="features-heading"
     >
       <div className="mx-auto max-w-[1160px] px-6 sm:px-10">
@@ -16,15 +16,17 @@ export function LandingFeaturesSection() {
           title={
             <>
               Tout ce dont votre équipe
-              <br />
-              a besoin, <em>dès le départ</em>
+              <br />a besoin, <em>dès le départ</em>
             </>
           }
         />
 
-        <div className="mt-[52px] grid gap-4 rounded-2xl border border-zinc-200 p-4 shadow-sm md:grid-cols-2 md:gap-5 md:p-5">
+        <div className="mt-[52px] grid gap-4 rounded-2xl border border-border p-4 shadow-sm md:grid-cols-2 md:gap-5 md:p-5">
           {landingFeatureCards.map((feature, index) => (
-            <LandingReveal key={feature.title} delay={(index % 4) as 0 | 1 | 2 | 3}>
+            <LandingReveal
+              key={feature.title}
+              delay={(index % 4) as 0 | 1 | 2 | 3}
+            >
               <LandingFeatureCard
                 title={feature.title}
                 description={feature.description}

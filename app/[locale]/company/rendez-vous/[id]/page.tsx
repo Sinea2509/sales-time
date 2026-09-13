@@ -7,6 +7,7 @@ import {
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
+import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
 import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
 import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
 import { summarizeMeetingDetail } from "@/src/core/application/summarize-meeting-detail";
@@ -91,11 +92,21 @@ export default async function RendezVousDetailPage({
   const soncas = meeting.analyses.find((a) => a.kind === "SONCAS");
   const disc = meeting.analyses.find((a) => a.kind === "DISC");
   const kiss = meeting.analyses.find((a) => a.kind === "KISS");
+  const scorecard = meeting.analyses.find((a) => a.kind === "SCORECARD");
   const soncasParsed = soncas
     ? soncasResultSchema.safeParse(soncas.result)
     : null;
   const discParsed = disc ? discResultSchema.safeParse(disc.result) : null;
   const kissParsed = kiss ? kissResultSchema.safeParse(kiss.result) : null;
+  /*
+    Une ligne illisible se comporte comme une ligne absente : la section
+    disparaît, le reste de la fiche s'affiche. Le rendez-vous garde ses trois
+    autres analyses, et le commercial n'a pas une page en erreur pour une
+    scorecard écrite par une version du schéma qui n'est plus la nôtre.
+  */
+  const scorecardParsed = scorecard
+    ? scorecardResultSchema.safeParse(scorecard.result)
+    : null;
 
   const salesScore = soncas
     ? salesScoreFromSoncasResult(soncas.result)
@@ -136,8 +147,7 @@ export default async function RendezVousDetailPage({
     organizationId,
   });
 
-  const canViewKissCoaching =
-    isSeller || actor.canManageOrganization;
+  const canViewSellerCoaching = isSeller || actor.canManageOrganization;
 
   return (
     <MeetingDetailShell
@@ -166,7 +176,8 @@ export default async function RendezVousDetailPage({
       soncasResult={soncasParsed?.success ? soncasParsed.data : null}
       discResult={discParsed?.success ? discParsed.data : null}
       kissResult={kissParsed?.success ? kissParsed.data : null}
-      showKissCoaching={canViewKissCoaching}
+      scorecardResult={scorecardParsed?.success ? scorecardParsed.data : null}
+      showSellerCoaching={canViewSellerCoaching}
       canEdit={canEdit}
       processingLooksSlow={processingLooksSlow}
       processingLooksStuck={processingLooksStuck}

@@ -1,10 +1,8 @@
+import { BarChart3, CheckSquare, ChevronRight, Crown } from "lucide-react";
 import {
-  BarChart3,
-  CheckSquare,
-  ChevronRight,
-  Crown,
-} from "lucide-react";
-import { KISS_COACHING_SCORE_LABEL, SALES_SCORE_LABEL } from "@/lib/sales-score-color";
+  KISS_COACHING_SCORE_LABEL,
+  SALES_SCORE_LABEL,
+} from "@/lib/sales-score-color";
 
 type MockRow = {
   initials: string;
@@ -120,14 +118,17 @@ export function LandingHeroAppMockup() {
           <span className="size-2.5 rounded-full bg-[#FEBC2E]" />
           <span className="size-2.5 rounded-full bg-[#28C840]" />
         </div>
-        <div className="mx-auto flex h-[22px] max-w-[260px] flex-1 items-center justify-center rounded-[5px] bg-white/5 text-[10.5px] text-white/22">
+        <div className="mx-auto flex h-[22px] max-w-[260px] flex-1 items-center justify-center rounded-[5px] bg-card/5 text-[10.5px] text-white/22">
           app.sales-time.io / tableau de bord
         </div>
       </div>
       <div className="relative flex h-[400px]">
         <aside className="flex w-[188px] shrink-0 flex-col gap-0.5 border-r border-white/5 bg-[#0A0A12] px-2.5 py-3.5">
           <div className="mb-2.5 flex items-center gap-1.5 px-2 py-1.5">
-            <span className="size-[22px] shrink-0 rounded-md bg-brand" aria-hidden />
+            <span
+              className="size-[22px] shrink-0 rounded-md bg-brand"
+              aria-hidden
+            />
             <span className="text-xs font-bold text-white/75">Sales Time</span>
           </div>
           {sidebarItems.map((item) => (
@@ -135,7 +136,7 @@ export function LandingHeroAppMockup() {
               key={item.label}
               className={
                 item.active
-                  ? "flex items-center gap-1.5 rounded-md bg-white/7 px-2 py-1.5 text-[11.5px] text-white/80"
+                  ? "flex items-center gap-1.5 rounded-md bg-card/7 px-2 py-1.5 text-[11.5px] text-white/80"
                   : "flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[11.5px] text-white/32"
               }
             >
@@ -145,11 +146,15 @@ export function LandingHeroAppMockup() {
           ))}
           <div className="flex-1" />
           <div className="mt-2 rounded-lg border border-brand/20 bg-brand/10 p-2.5">
-            <p className="mb-1 text-[9px] text-white/28">Essai gratuit · 5 restantes</p>
-            <div className="mb-1 h-[3px] overflow-hidden rounded-sm bg-white/10">
+            <p className="mb-1 text-[9px] text-white/28">
+              Essai gratuit · 5 restantes
+            </p>
+            <div className="mb-1 h-[3px] overflow-hidden rounded-sm bg-card/10">
               <div className="h-full w-1/2 rounded-sm bg-brand" />
             </div>
-            <p className="text-[9px] font-semibold text-brand/80">Voir les plans →</p>
+            <p className="text-[9px] font-semibold text-brand/80">
+              Voir les plans →
+            </p>
           </div>
         </aside>
         <div className="flex flex-1 flex-col gap-3.5 overflow-hidden bg-[#0E0E18] p-4.5">
@@ -157,27 +162,37 @@ export function LandingHeroAppMockup() {
             <span className="text-[13px] font-semibold text-white/75">
               Thomas Vidal · Tableau de bord
             </span>
-            <span className="rounded-[5px] border border-white/8 bg-white/5 px-2 py-0.5 text-[11px] text-white/30">
+            <span className="rounded-[5px] border border-white/8 bg-card/5 px-2 py-0.5 text-[11px] text-white/30">
               30 jours
             </span>
           </div>
           <div className="flex gap-2.5">
             {[
-              { label: "TAM CUMULÉ", value: "3h40", trend: "+12 min" },
+              {
+                label: "TAM CUMULÉ",
+                value: "3\u00a0h\u00a040",
+                trend: "+12 min",
+              },
               { label: "RENDEZ-VOUS ANALYSÉS", value: "24", trend: "+2" },
               { label: "TUC OPTIMISÉ", value: "70%", trend: "+5%" },
             ].map((stat) => (
               <div
                 key={stat.label}
-                className="flex-1 rounded-[9px] border border-white/7 bg-white/4 px-3.5 py-3"
+                className="flex-1 rounded-[9px] border border-white/7 bg-card/4 px-3.5 py-3"
               >
-                <p className="text-[9.5px] font-medium text-white/28">{stat.label}</p>
-                <p className="text-[22px] font-bold tracking-tight text-white/88">{stat.value}</p>
-                <p className="mt-0.5 text-[9.5px] text-[#4ADE80]">{stat.trend}</p>
+                <p className="text-[9.5px] font-medium text-white/28">
+                  {stat.label}
+                </p>
+                <p className="text-[22px] font-bold tracking-tight text-white/88">
+                  {stat.value}
+                </p>
+                <p className="mt-0.5 text-[9.5px] text-[#4ADE80]">
+                  {stat.trend}
+                </p>
               </div>
             ))}
           </div>
-          <div className="flex flex-1 flex-col overflow-hidden rounded-[9px] border border-white/6 bg-white/3">
+          <div className="flex flex-1 flex-col overflow-hidden rounded-[9px] border border-white/6 bg-card/3">
             <div className="grid grid-cols-[1.8fr_1fr_70px_50px] border-b border-white/5 px-3 py-2">
               {["Prospect", "Étape", SALES_SCORE_LABEL, ""].map((col) => (
                 <span
@@ -201,24 +216,35 @@ export function LandingHeroAppMockup() {
                     {row.initials}
                   </span>
                   <div>
-                    <p className="text-[11px] font-medium text-white/72">{row.name}</p>
+                    <p className="text-[11px] font-medium text-white/72">
+                      {row.name}
+                    </p>
                     <p className="text-[9.5px] text-white/24">{row.company}</p>
                   </div>
                 </div>
                 <span
                   className="w-fit rounded px-1.5 py-0.5 text-[9px] font-semibold"
-                  style={{ backgroundColor: row.stageBg, color: row.stageColor }}
+                  style={{
+                    backgroundColor: row.stageBg,
+                    color: row.stageColor,
+                  }}
                 >
                   {row.stage}
                 </span>
                 <span
                   className="flex size-[34px] items-center justify-center rounded-[5px] text-[10px] font-bold"
-                  style={{ backgroundColor: row.scoreBg, color: row.scoreColor }}
+                  style={{
+                    backgroundColor: row.scoreBg,
+                    color: row.scoreColor,
+                  }}
                 >
                   {row.score}
                 </span>
                 <span className="flex size-7 items-center justify-center rounded bg-brand/18">
-                  <ChevronRight className="size-2.5 text-brand/80" strokeWidth={2.5} />
+                  <ChevronRight
+                    className="size-2.5 text-brand/80"
+                    strokeWidth={2.5}
+                  />
                 </span>
               </div>
             ))}
@@ -226,12 +252,12 @@ export function LandingHeroAppMockup() {
         </div>
 
         <div
-          className="pointer-events-none absolute right-4 bottom-4 z-10 w-[min(100%,320px)] overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 shadow-[0_12px_48px_rgba(0,0,0,0.35)]"
+          className="pointer-events-none absolute right-4 bottom-4 z-10 w-[min(100%,320px)] overflow-hidden rounded-2xl border border-border bg-muted shadow-[0_12px_48px_rgba(0,0,0,0.35)]"
           aria-hidden
         >
           <div className="p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="text-[12px] font-semibold text-zinc-950">
+              <p className="text-[12px] font-semibold text-foreground">
                 Analyse RDV · Antoine Lambert
               </p>
               <span className="shrink-0 rounded-[5px] bg-brand/10 px-2 py-0.5 text-[10.5px] font-semibold text-brand">
@@ -245,10 +271,15 @@ export function LandingHeroAppMockup() {
                   className="rounded-[7px] border p-2"
                   style={{ backgroundColor: item.bg, borderColor: item.border }}
                 >
-                  <p className="mb-0.5 text-[9px] font-bold" style={{ color: item.color }}>
+                  <p
+                    className="mb-0.5 text-[9px] font-bold"
+                    style={{ color: item.color }}
+                  >
                     {item.key}
                   </p>
-                  <p className="text-[10px] leading-snug text-zinc-600">{item.text}</p>
+                  <p className="text-[10px] leading-snug text-muted-foreground">
+                    {item.text}
+                  </p>
                 </div>
               ))}
             </div>

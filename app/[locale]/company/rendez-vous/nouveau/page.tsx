@@ -16,13 +16,7 @@ export default async function NouveauRendezVousPage() {
   const settings = await deps.organizationSettings.findByOrganizationId(
     actor.activeOrganizationId,
   );
-  const { meetingTypeOptions, pipelineStageOptions } =
-    orgMeetingFormOptionsFromSettings(settings);
+  const { meetingTypeOptions } = orgMeetingFormOptionsFromSettings(settings);
 
-  return (
-    <MeetingCreatePageShell
-      meetingTypeOptions={meetingTypeOptions}
-      pipelineStageOptions={pipelineStageOptions}
-    />
-  );
+  return <MeetingCreatePageShell meetingTypeOptions={meetingTypeOptions} />;
 }

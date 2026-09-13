@@ -12,7 +12,7 @@ export function buildFeedbackCursorMarkdown(feedback: FeedbackRow): string {
   const routePath = extra.technicalContext?.routePath ?? feedback.pageUrl ?? null;
 
   const userLine = [
-    feedback.userEmail ?? "—",
+    feedback.userEmail ?? "(e-mail inconnu)",
     feedback.companyName ? `(org: ${feedback.companyName})` : null,
     roleLabel ? `(rôle: ${roleLabel})` : null,
   ]
@@ -20,7 +20,7 @@ export function buildFeedbackCursorMarkdown(feedback: FeedbackRow): string {
     .join(" ");
 
   const lines = [
-    `# 🐛 ${feedback.type} report — SalesTime (#${feedback.id.slice(0, 8)})`,
+    `# 🐛 ${feedback.type} report · SalesTime (#${feedback.id.slice(0, 8)})`,
     `**Type:** ${feedback.type.toLowerCase()}`,
     `**Priority:** ${feedback.priority.toLowerCase()}`,
     `**User:** ${userLine}`,
@@ -30,11 +30,14 @@ export function buildFeedbackCursorMarkdown(feedback: FeedbackRow): string {
     `« ${feedback.message.replace(/\n/g, " ")} »`,
     "",
     "## Contexte technique",
-    `- URL: ${feedback.pageUrl ?? "—"}`,
-    `- Route: ${routePath ?? "—"}`,
-    `- Navigateur: ${feedback.browser ?? "—"} — ${feedback.os ?? "—"}`,
-    `- Device: ${feedback.deviceType ?? "—"} — viewport ${feedback.viewport ?? "—"} (écran ${feedback.screenSize ?? "—"}) — locale ${feedback.locale ?? "—"}`,
-    `- Scroll: ${extra.technicalContext?.scrollPosition ?? "—"}`,
+    `- URL: ${feedback.pageUrl ?? "(inconnue)"}`,
+    `- Route: ${routePath ?? "(inconnue)"}`,
+    `- Navigateur: ${feedback.browser ?? "(inconnu)"}`,
+    `- OS: ${feedback.os ?? "(inconnu)"}`,
+    `- Device: ${feedback.deviceType ?? "(inconnu)"}`,
+    `- Viewport: ${feedback.viewport ?? "(inconnu)"} (écran ${feedback.screenSize ?? "(inconnu)"})`,
+    `- Locale: ${feedback.locale ?? "(inconnue)"}`,
+    `- Scroll: ${extra.technicalContext?.scrollPosition ?? "(inconnu)"}`,
     "",
   ];
 

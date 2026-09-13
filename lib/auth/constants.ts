@@ -1,4 +1,4 @@
-/** HttpOnly session cookie — value is opaque token (hashed in DB). */
+/** HttpOnly session cookie: value is an opaque token (hashed in DB). */
 export const SESSION_COOKIE_NAME = "__stime_session";
 
 /** Plain org id (cuid) when user has membership OR super-admin elevation. */

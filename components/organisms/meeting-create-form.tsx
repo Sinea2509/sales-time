@@ -14,21 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { dispatchMeetingMutation } from "@/lib/meeting-mutation-event";
+import { MEETING_OUTCOME_OPTIONS } from "@/lib/meeting-outcome-display";
+import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import { toDatetimeLocalValue } from "@/lib/datetime-local-value";
 import { cn } from "@/lib/utils";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
 
-const TRANSCRIPT_ACCEPT =
-  ".txt,.csv,.md,.vtt,.srt,.doc,.docx,.pdf,text/plain";
+const TRANSCRIPT_ACCEPT = ".txt,.csv,.md,.vtt,.srt,.doc,.docx,.pdf,text/plain";
 const TRANSCRIPT_MAX_BYTES = 4 * 1024 * 1024;
-
-const outcomes = [
-  { value: "WON", label: "Gagné" },
-  { value: "LOST", label: "Perdu" },
-  { value: "FOLLOW_UP", label: "Suivi" },
-  { value: "NO_SHOW", label: "Absent" },
-  { value: "OTHER", label: "Autre" },
-] as const;
 
 const feelingLabels = [
   "Très insatisfait",
@@ -47,7 +40,7 @@ export type MeetingFormInitialValues = {
   meetingType: string | null;
   pipelineStage: string | null;
   potentialAmount: number | null;
-  outcome: (typeof outcomes)[number]["value"];
+  outcome: MeetingOutcome;
   feeling: number;
   transcript: string;
   notes: string | null;
@@ -55,7 +48,6 @@ export type MeetingFormInitialValues = {
 
 type MeetingCreateFormProps = {
   meetingTypeOptions: string[];
-  pipelineStageOptions: string[];
   variant?: "page" | "dialog";
   mode?: "create" | "edit";
   initialValues?: MeetingFormInitialValues;
@@ -74,7 +66,7 @@ function mapSubmitError(
     return "Contact introuvable. Rechargez la page ou choisissez un autre contact.";
   }
   if (res.error === "QUOTA_EXHAUSTED") {
-    return "Quota d'analyses épuisé — passez au plan pour continuer.";
+    return "Quota d'analyses épuisé. Passez au plan pour continuer.";
   }
   if (res.error === "UNSUPPORTED_FORMAT") {
     return "Format non pris en charge (.txt, .csv, .md, .vtt, .srt, .doc, .docx, .pdf).";
@@ -98,7 +90,6 @@ function mapSubmitError(
 
 export function MeetingCreateForm({
   meetingTypeOptions,
-  pipelineStageOptions,
   variant = "page",
   mode = "create",
   initialValues,
@@ -192,7 +183,7 @@ export function MeetingCreateForm({
             className={nativeSelectClassName}
             defaultValue={initialValues?.meetingType ?? ""}
           >
-            <option value="">—</option>
+            <option value="">Non précisé</option>
             {meetingTypeOptions.map((t) => (
               <option key={t} value={t}>
                 {t}
@@ -200,22 +191,21 @@ export function MeetingCreateForm({
             ))}
           </select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="pipelineStage">Étape pipeline</Label>
-          <select
-            id="pipelineStage"
+        {/*
+          L'étape du pipeline n'est plus demandée : la revue du 2 septembre l'a
+          retirée du formulaire, le commercial renseigne son interlocuteur et
+          son entreprise, rien de plus. Sales Time analyse des rendez-vous, il
+          ne remplace pas le CRM. La colonne reste en base, et un rendez-vous
+          qui portait déjà une étape la garde à la modification : le champ
+          caché la renvoie telle quelle, sans quoi l'enregistrement l'effacerait.
+        */}
+        {isEdit ? (
+          <input
+            type="hidden"
             name="pipelineStage"
-            className={nativeSelectClassName}
-            defaultValue={initialValues?.pipelineStage ?? ""}
-          >
-            <option value="">—</option>
-            {pipelineStageOptions.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
+            value={initialValues.pipelineStage ?? ""}
+          />
+        ) : null}
         <div className="space-y-2">
           <Label htmlFor="potentialAmount">Montant potentiel (€)</Label>
           <Input
@@ -237,7 +227,7 @@ export function MeetingCreateForm({
             defaultValue={initialValues?.outcome ?? "FOLLOW_UP"}
             required
           >
-            {outcomes.map((o) => (
+            {MEETING_OUTCOME_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -246,7 +236,10 @@ export function MeetingCreateForm({
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="feeling">
-            Ressenti après le RDV — {feeling}/5 ({feelingLabels[feeling - 1]})
+            {/* L'espace avant le deux-points est insécable : la typographie
+                française l'exige, et sans elle le « : » passe seul à la ligne
+                quand le libellé se replie sur un écran étroit. */}
+            {`Ressenti après le RDV : ${feeling}/5 (${feelingLabels[feeling - 1]})`}
           </Label>
           <input
             id="feeling"
@@ -261,7 +254,7 @@ export function MeetingCreateForm({
         </div>
       </div>
 
-      <div className="space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+      <div className="space-y-3 rounded-lg border border-border p-4 dark:border-neutral-800">
         <div className="flex flex-wrap gap-3">
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input
@@ -292,7 +285,7 @@ export function MeetingCreateForm({
               file={file}
               onFileChange={setFile}
               disabled={pending}
-              hint="Formats : .txt, .csv, .md, .vtt, .srt, .doc, .docx, .pdf — 4 Mo max."
+              hint="Formats acceptés : .txt, .csv, .md, .vtt, .srt, .doc, .docx, .pdf. Taille maximale : 4 Mo."
             />
             <Textarea
               id="transcript"
@@ -344,7 +337,7 @@ export function MeetingCreateForm({
           <Button
             type="submit"
             disabled={pending}
-            className="bg-brand text-white hover:bg-brand-hover"
+            className="bg-brand text-brand-foreground hover:bg-brand-hover"
             data-feedback-id="meeting-create-submit"
           >
             {pending
@@ -358,7 +351,7 @@ export function MeetingCreateForm({
         <Button
           type="submit"
           disabled={pending}
-          className={cn("bg-brand text-white hover:bg-brand-hover")}
+          className={cn("bg-brand text-brand-foreground hover:bg-brand-hover")}
           data-feedback-id="meeting-create-submit"
         >
           {pending

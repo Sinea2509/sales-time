@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 export type CoachPhrasePickerKind = "OBJECTION" | "ARGUMENT";
 
 const secondaryGreyClass =
-  "border border-neutral-200 bg-[#F5F5F5] text-foreground shadow-none hover:bg-[#EBEBEB] dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700";
+  "border-border bg-secondary hover:bg-secondary/80 border text-foreground shadow-none dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700";
 
 type Props = {
   kind: CoachPhrasePickerKind;
@@ -197,7 +197,7 @@ export function CoachSharedPhrasePickerSheet({
                 />
                 <PhraseBlock
                   heading="Collection partagée"
-                  sub="Enrichie depuis l’onboarding et les réglages Coach IA — vous pouvez proposer de nouvelles formulations ci-dessous."
+                  sub="Enrichie depuis l’onboarding et les réglages Coach IA. Vous pouvez proposer de nouvelles formulations ci-dessous."
                   items={community}
                   selectedIds={selectedIds}
                   onToggle={toggle}
@@ -250,7 +250,7 @@ export function CoachSharedPhrasePickerSheet({
             disabled={selectedIds.size === 0}
             onClick={handleConfirm}
             className={cn(
-              "rounded-md border-0 text-white shadow-sm",
+              "text-brand-foreground rounded-md border-0 shadow-sm",
               "bg-brand hover:bg-brand-hover dark:bg-brand dark:hover:bg-brand-hover",
             )}
           >

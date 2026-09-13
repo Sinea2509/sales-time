@@ -8,7 +8,7 @@ import {
   Shield,
   Clock,
 } from "lucide-react";
-import { meetingOutcomeConfig } from "@/lib/meeting-outcome-config";
+import { MeetingOutcomeBadge } from "@/components/atoms/meeting-outcome-badge";
 import { cardTitleClass } from "@/lib/page-typography";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
@@ -97,7 +97,7 @@ export function AdminOrganizationDetailShell({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="size-4 text-zinc-500" />
+            <Users className="size-4 text-muted-foreground" />
             Membres
           </CardTitle>
           <CardDescription>
@@ -105,35 +105,35 @@ export function AdminOrganizationDetailShell({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <div className="overflow-hidden rounded-lg border border-border dark:border-zinc-800">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                  <tr className="border-b border-border bg-muted/80 dark:border-zinc-800 dark:bg-zinc-950/60">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Utilisateur
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       E-mail
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Rôle
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Rejoint le
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-border dark:divide-zinc-800">
                   {org.memberships.length === 0 ? (
                     <TableEmptyRow colSpan={4} message="Aucun membre." />
                   ) : (
                     org.memberships.map((m) => (
                       <tr
                         key={m.id}
-                        className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                        className="hover:bg-muted/60 dark:hover:bg-zinc-800/40"
                       >
-                        <td className="px-4 py-2.5 font-medium text-zinc-900 dark:text-zinc-100">
+                        <td className="px-4 py-2.5 font-medium text-foreground dark:text-zinc-100">
                           <Link
                             href={`/admin/users/${m.userId}`}
                             className="hover:underline"
@@ -143,7 +143,7 @@ export function AdminOrganizationDetailShell({
                               : m.user.email}
                           </Link>
                         </td>
-                        <td className="px-4 py-2.5 text-zinc-500">
+                        <td className="px-4 py-2.5 text-muted-foreground">
                           {m.user.email}
                         </td>
                         <td className="px-4 py-2.5">
@@ -156,7 +156,7 @@ export function AdminOrganizationDetailShell({
                             {organizationMembershipRoleLabel(m.role)}
                           </Badge>
                         </td>
-                        <td className="whitespace-nowrap px-4 py-2.5 text-zinc-500">
+                        <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
                           {m.createdAt.toLocaleDateString("fr-FR")}
                         </td>
                       </tr>
@@ -173,7 +173,7 @@ export function AdminOrganizationDetailShell({
       <Card>
         <CardHeader>
           <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
-            <CalendarDays className="size-4 text-zinc-500" />
+            <CalendarDays className="size-4 text-muted-foreground" />
             Derniers rendez-vous
           </CardTitle>
           <CardDescription>
@@ -181,50 +181,45 @@ export function AdminOrganizationDetailShell({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <div className="overflow-hidden rounded-lg border border-border dark:border-zinc-800">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                  <tr className="border-b border-border bg-muted/80 dark:border-zinc-800 dark:bg-zinc-950/60">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Prospect
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Date
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Résultat
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Vendeur
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-border dark:divide-zinc-800">
                   {org.meetings.length === 0 ? (
                     <TableEmptyRow colSpan={4} message="Aucun rendez-vous." />
                   ) : (
                     org.meetings.map((m) => {
-                      const oc =
-                        meetingOutcomeConfig[m.outcome] ??
-                        meetingOutcomeConfig.OTHER;
                       return (
                         <tr
                           key={m.id}
-                          className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                          className="hover:bg-muted/60 dark:hover:bg-zinc-800/40"
                         >
-                          <td className="px-4 py-2.5 font-medium text-zinc-900 dark:text-zinc-100">
+                          <td className="px-4 py-2.5 font-medium text-foreground dark:text-zinc-100">
                             {m.prospectName}
                           </td>
-                          <td className="whitespace-nowrap px-4 py-2.5 text-zinc-500">
+                          <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
                             {m.meetingAt.toLocaleDateString("fr-FR")}
                           </td>
                           <td className="px-4 py-2.5">
-                            <Badge variant="outline" className={oc.className}>
-                              {oc.label}
-                            </Badge>
+                            <MeetingOutcomeBadge outcome={m.outcome} />
                           </td>
-                          <td className="px-4 py-2.5 text-zinc-500">
+                          <td className="px-4 py-2.5 text-muted-foreground">
                             {m.seller.firstName && m.seller.lastName
                               ? `${m.seller.firstName} ${m.seller.lastName}`
                               : m.seller.email}
@@ -244,7 +239,7 @@ export function AdminOrganizationDetailShell({
       <Card>
         <CardHeader>
           <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
-            <Shield className="size-4 text-zinc-500" />
+            <Shield className="size-4 text-muted-foreground" />
             Journal d&apos;audit
           </CardTitle>
           <CardDescription>
@@ -252,26 +247,26 @@ export function AdminOrganizationDetailShell({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <div className="overflow-hidden rounded-lg border border-border dark:border-zinc-800">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                  <tr className="border-b border-border bg-muted/80 dark:border-zinc-800 dark:bg-zinc-950/60">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Date
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Acteur
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Action
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Raison
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-border dark:divide-zinc-800">
                   {auditLogs.length === 0 ? (
                     <TableEmptyRow
                       colSpan={4}
@@ -281,16 +276,16 @@ export function AdminOrganizationDetailShell({
                     auditLogs.map((log) => (
                       <tr
                         key={log.id}
-                        className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                        className="hover:bg-muted/60 dark:hover:bg-zinc-800/40"
                       >
-                        <td className="whitespace-nowrap px-4 py-2.5 text-zinc-500">
+                        <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
                           {log.createdAt.toLocaleDateString("fr-FR")}{" "}
                           {log.createdAt.toLocaleTimeString("fr-FR", {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
                         </td>
-                        <td className="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">
+                        <td className="px-4 py-2.5 text-foreground dark:text-zinc-300">
                           {log.actor.email}
                         </td>
                         <td className="px-4 py-2.5">
@@ -298,8 +293,17 @@ export function AdminOrganizationDetailShell({
                             {log.action}
                           </Badge>
                         </td>
-                        <td className="max-w-xs truncate px-4 py-2.5 text-zinc-500">
-                          {log.reason ?? "—"}
+                        <td className="max-w-xs truncate px-4 py-2.5 text-muted-foreground">
+                          {/* La raison est facultative à la saisie : le dire
+                              vaut mieux que laisser une case muette. */}
+                          {log.reason ?? (
+                            <span
+                              className="italic"
+                              title="L'auteur de l'action n'a pas indiqué de raison."
+                            >
+                              Non renseignée
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))

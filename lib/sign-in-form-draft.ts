@@ -49,7 +49,7 @@ function draftsEqual(a: SignInFormDraft, b: SignInFormDraft): boolean {
   return a.email === b.email && a.password === b.password;
 }
 
-/** useSyncExternalStore subscription — same-tab writes and cross-tab storage events. */
+/** useSyncExternalStore subscription: same-tab writes and cross-tab storage events. */
 export function subscribeToSignInFormDraft(onStoreChange: () => void): () => void {
   listeners.add(onStoreChange);
   window.addEventListener("storage", onStoreChange);
@@ -59,7 +59,7 @@ export function subscribeToSignInFormDraft(onStoreChange: () => void): () => voi
   };
 }
 
-/** Stable snapshot for useSyncExternalStore — same reference until stored values change. */
+/** Stable snapshot for useSyncExternalStore: same reference until stored values change. */
 export function getSignInFormDraftSnapshot(): SignInFormDraft {
   if (!canUseStorage()) {
     return EMPTY_SIGN_IN_FORM_DRAFT;
@@ -98,7 +98,7 @@ export function writeSignInFormDraft(draft: SignInFormDraft): void {
     invalidateCache();
     notifyListeners();
   } catch {
-    // Quota or private browsing — ignore.
+    // Quota or private browsing: ignore.
   }
 }
 

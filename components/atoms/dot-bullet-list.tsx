@@ -16,14 +16,16 @@ export function DotBulletList({
   if (items.length === 0) {
     if (!emptyMessage) return null;
     return (
-      <p className="text-muted-foreground text-sm leading-relaxed">{emptyMessage}</p>
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        {emptyMessage}
+      </p>
     );
   }
 
   return (
     <ul
       className={cn(
-        "text-sm leading-relaxed text-neutral-700 dark:text-neutral-300",
+        "text-sm leading-relaxed text-foreground dark:text-neutral-300",
         density === "compact" ? "space-y-2.5" : "space-y-3",
         className,
       )}
@@ -31,7 +33,7 @@ export function DotBulletList({
       {items.map((line) => (
         <li key={line} className="flex items-start gap-2.5">
           <span
-            className="mt-2 inline-block size-1.5 shrink-0 rounded-full bg-neutral-400 dark:bg-neutral-500"
+            className="mt-2 inline-block size-1.5 shrink-0 rounded-full bg-muted-foreground/60 dark:bg-neutral-500"
             aria-hidden
           />
           <span className="min-w-0 break-words">{line}</span>

@@ -27,7 +27,7 @@ export function MeetingSynthesisSection({
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className={sectionHeadingClass}>Compte-rendu du rdv</h2>
+        <h2 className={sectionHeadingClass}>Compte rendu de visite</h2>
         <Button
           type="button"
           variant="outline"
@@ -48,14 +48,16 @@ export function MeetingSynthesisSection({
       </div>
       <Card>
         <CardContent className={cn("pt-6", cardProseBodyClass)}>
-          <p className="leading-relaxed whitespace-pre-wrap">{meetingSynthesis}</p>
+          <p className="leading-relaxed whitespace-pre-wrap">
+            {meetingSynthesis}
+          </p>
           {!fromAi ? (
             <p className="text-muted-foreground mt-3 text-xs">
               {meetingSynthesis.includes("en cours de génération")
                 ? "Le compte-rendu complet apparaîtra une fois l'analyse automatique terminée."
                 : meetingSynthesis.includes("analyse automatique")
                   ? "Le compte-rendu complet apparaîtra une fois l'analyse automatique terminée."
-                  : "Compte-rendu indicatif — une version enrichie est générée après analyse."}
+                  : "Compte-rendu indicatif : une version enrichie est générée après analyse."}
             </p>
           ) : null}
         </CardContent>

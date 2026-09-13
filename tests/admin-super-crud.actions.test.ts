@@ -166,7 +166,7 @@ beforeEach(() => {
   mockAuthenticatedSuperAdminPrincipal();
 });
 
-describe("admin super-admin CRUD — organizations", () => {
+describe("admin super-admin CRUD: organizations", () => {
   it("rejects create when not authenticated", async () => {
     findByIdMock.mockReset();
     getAuthenticatedPrincipalMock.mockResolvedValue(null);
@@ -318,7 +318,7 @@ describe("admin super-admin CRUD — organizations", () => {
   });
 });
 
-describe("admin super-admin CRUD — users", () => {
+describe("admin super-admin CRUD: users", () => {
   it("rejects bulk toggle when no users found", async () => {
     mockAuthenticatedSuperAdminPrincipal();
     backofficeMock.findUsersByIdsForBulk.mockResolvedValue([]);
@@ -517,7 +517,7 @@ describe("admin super-admin CRUD — users", () => {
   });
 });
 
-describe("admin super-admin — super-admins & prompts", () => {
+describe("admin super-admin: super-admins & prompts", () => {
   it("rejects invite with invalid email", async () => {
     mockAuthenticatedSuperAdminPrincipal();
     const r = await inviteSuperAdminAction({ email: "not-an-email" });

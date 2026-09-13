@@ -26,7 +26,9 @@ export function LandingSiteHeader() {
       <div className="mx-auto flex w-full max-w-[1160px] items-center gap-0 px-6 sm:px-10">
         <Link href="/" className="flex shrink-0 items-center gap-2.25">
           <SalesTimeLogoMark />
-          <span className="text-[15px] font-bold tracking-tight text-white">Sales Time</span>
+          <span className="text-[15px] font-bold tracking-tight text-white">
+            Sales Time
+          </span>
         </Link>
 
         <nav
@@ -56,7 +58,7 @@ export function LandingSiteHeader() {
           </Link>
           <Link
             href="/sign-up"
-            className="rounded-lg bg-brand px-4 py-1.75 text-[13.5px] font-semibold whitespace-nowrap text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(108,77,255,0.35)] transition-[filter] hover:brightness-110"
+            className="rounded-lg bg-brand px-4 py-1.75 text-[13.5px] font-semibold whitespace-nowrap text-brand-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(108,77,255,0.35)] transition-[filter] hover:brightness-110"
           >
             Essayer Gratuitement
           </Link>

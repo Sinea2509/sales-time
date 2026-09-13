@@ -7,7 +7,7 @@ import {
   Clock,
   Mail,
 } from "lucide-react";
-import { meetingOutcomeConfig } from "@/lib/meeting-outcome-config";
+import { MeetingOutcomeBadge } from "@/components/atoms/meeting-outcome-badge";
 import { cardTitleClass } from "@/lib/page-typography";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
@@ -110,7 +110,7 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
       <Card>
         <CardHeader>
           <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
-            <Building2 className="size-4 text-zinc-500" />
+            <Building2 className="size-4 text-muted-foreground" />
             Organisations
           </CardTitle>
           <CardDescription>
@@ -118,39 +118,39 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <div className="overflow-hidden rounded-lg border border-border dark:border-zinc-800">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                  <tr className="border-b border-border bg-muted/80 dark:border-zinc-800 dark:bg-zinc-950/60">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Organisation
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Rôle
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Rejoint le
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-border dark:divide-zinc-800">
                   {user.organizationMemberships.length === 0 ? (
                     <TableEmptyRow colSpan={3} message="Aucune organisation." />
                   ) : (
                     user.organizationMemberships.map((m) => (
                       <tr
                         key={m.id}
-                        className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                        className="hover:bg-muted/60 dark:hover:bg-zinc-800/40"
                       >
                         <td className="px-4 py-2.5">
                           <Link
                             href={`/admin/organizations/${m.organization.id}`}
-                            className="font-medium text-zinc-900 hover:underline dark:text-zinc-100"
+                            className="font-medium text-foreground hover:underline dark:text-zinc-100"
                           >
                             {m.organization.name}
                           </Link>
-                          <p className="text-xs text-zinc-400">
+                          <p className="text-xs text-muted-foreground">
                             {m.organization.slug}
                           </p>
                         </td>
@@ -164,7 +164,7 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
                             {organizationMembershipRoleLabel(m.role)}
                           </Badge>
                         </td>
-                        <td className="whitespace-nowrap px-4 py-2.5 text-zinc-500">
+                        <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
                           {m.createdAt.toLocaleDateString("fr-FR")}
                         </td>
                       </tr>
@@ -181,7 +181,7 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
       <Card>
         <CardHeader>
           <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
-            <Monitor className="size-4 text-zinc-500" />
+            <Monitor className="size-4 text-muted-foreground" />
             Sessions actives
           </CardTitle>
           <CardDescription>
@@ -189,32 +189,35 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <div className="overflow-hidden rounded-lg border border-border dark:border-zinc-800">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                  <tr className="border-b border-border bg-muted/80 dark:border-zinc-800 dark:bg-zinc-950/60">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Dernière activité
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       User-Agent
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Créée le
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-border dark:divide-zinc-800">
                   {user.sessions.length === 0 ? (
-                    <TableEmptyRow colSpan={3} message="Aucune session active." />
+                    <TableEmptyRow
+                      colSpan={3}
+                      message="Aucune session active."
+                    />
                   ) : (
                     user.sessions.map((s) => (
                       <tr
                         key={s.id}
-                        className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                        className="hover:bg-muted/60 dark:hover:bg-zinc-800/40"
                       >
-                        <td className="whitespace-nowrap px-4 py-2.5 text-zinc-700 dark:text-zinc-300">
+                        <td className="whitespace-nowrap px-4 py-2.5 text-foreground dark:text-zinc-300">
                           {s.lastSeenAt.toLocaleDateString("fr-FR")}{" "}
                           {s.lastSeenAt.toLocaleTimeString("fr-FR", {
                             hour: "2-digit",
@@ -222,16 +225,27 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
                           })}
                         </td>
                         <td
-                          className="max-w-xs truncate px-4 py-2.5 text-zinc-500"
+                          className="max-w-xs truncate px-4 py-2.5 text-muted-foreground"
                           title={s.userAgent ?? undefined}
                         >
-                          {s.userAgent
-                            ? s.userAgent.length > 80
-                              ? `${s.userAgent.slice(0, 80)}…`
-                              : s.userAgent
-                            : "—"}
+                          {/* Un tiret ne dit pas si le navigateur n'a rien
+                              envoyé ou si la donnée s'est perdue. */}
+                          {s.userAgent ? (
+                            s.userAgent.length > 80 ? (
+                              `${s.userAgent.slice(0, 80)}…`
+                            ) : (
+                              s.userAgent
+                            )
+                          ) : (
+                            <span
+                              className="italic"
+                              title="Le navigateur n'a pas transmis son identification lors de cette session."
+                            >
+                              Non transmis
+                            </span>
+                          )}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-2.5 text-zinc-500">
+                        <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
                           {s.createdAt.toLocaleDateString("fr-FR")}
                         </td>
                       </tr>
@@ -248,7 +262,7 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
       <Card>
         <CardHeader>
           <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
-            <CalendarDays className="size-4 text-zinc-500" />
+            <CalendarDays className="size-4 text-muted-foreground" />
             Derniers rendez-vous
           </CardTitle>
           <CardDescription>
@@ -256,53 +270,48 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <div className="overflow-hidden rounded-lg border border-border dark:border-zinc-800">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                  <tr className="border-b border-border bg-muted/80 dark:border-zinc-800 dark:bg-zinc-950/60">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Prospect
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Date
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Résultat
                     </th>
-                    <th className="px-4 py-2.5 font-medium text-zinc-500 dark:text-zinc-400">
+                    <th className="px-4 py-2.5 font-medium text-muted-foreground dark:text-zinc-400">
                       Organisation
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-border dark:divide-zinc-800">
                   {user.meetingsAsSeller.length === 0 ? (
                     <TableEmptyRow colSpan={4} message="Aucun rendez-vous." />
                   ) : (
                     user.meetingsAsSeller.map((m) => {
-                      const oc =
-                        meetingOutcomeConfig[m.outcome] ??
-                        meetingOutcomeConfig.OTHER;
                       return (
                         <tr
                           key={m.id}
-                          className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                          className="hover:bg-muted/60 dark:hover:bg-zinc-800/40"
                         >
-                          <td className="px-4 py-2.5 font-medium text-zinc-900 dark:text-zinc-100">
+                          <td className="px-4 py-2.5 font-medium text-foreground dark:text-zinc-100">
                             {m.prospectName}
                           </td>
-                          <td className="whitespace-nowrap px-4 py-2.5 text-zinc-500">
+                          <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
                             {m.meetingAt.toLocaleDateString("fr-FR")}
                           </td>
                           <td className="px-4 py-2.5">
-                            <Badge variant="outline" className={oc.className}>
-                              {oc.label}
-                            </Badge>
+                            <MeetingOutcomeBadge outcome={m.outcome} />
                           </td>
                           <td className="px-4 py-2.5">
                             <Link
                               href={`/admin/organizations/${m.organization.id}`}
-                              className="text-zinc-700 hover:underline dark:text-zinc-300"
+                              className="text-foreground hover:underline dark:text-zinc-300"
                             >
                               {m.organization.name}
                             </Link>

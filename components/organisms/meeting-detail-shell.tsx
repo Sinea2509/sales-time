@@ -10,6 +10,7 @@ import { MeetingEditButton } from "@/components/organisms/meeting-edit-trigger";
 import { MeetingInterlocutorSection } from "@/components/organisms/meeting-interlocutor-section";
 import { MeetingSynthesisSection } from "@/components/organisms/meeting-synthesis-section";
 import { MeetingTranscriptPreview } from "@/components/molecules/meeting-transcript-preview";
+import { ScorecardResultSection } from "@/components/organisms/scorecard-result-section";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import type { MeetingStatus } from "@/src/core/domain/meeting-status";
 import type {
@@ -17,6 +18,7 @@ import type {
   SoncasAnalysisResult,
 } from "@/src/core/domain/analysis-result-zod";
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
+import type { ScorecardAnalysisResult } from "@/src/core/domain/scorecard-result-zod";
 
 export type MeetingDetailShellProps = {
   meeting: {
@@ -44,7 +46,16 @@ export type MeetingDetailShellProps = {
   soncasResult: SoncasAnalysisResult | null;
   discResult: DiscAnalysisResult | null;
   kissResult: KissAnalysisResult | null;
-  showKissCoaching: boolean;
+  /** Absente tant que le type de rendez-vous n'a pas de grille. */
+  scorecardResult: ScorecardAnalysisResult | null;
+  /**
+   * Une seule autorisation pour les deux blocs qui notent le commercial.
+   *
+   * La scorecard dit ce que KISS dit, en plus détaillé. Deux réglages
+   * séparés finiraient par diverger, et le jour où l'un serait ouvert sans
+   * l'autre, la note serait cachée pendant que son détail resterait lisible.
+   */
+  showSellerCoaching: boolean;
   canEdit?: boolean;
   processingLooksSlow?: boolean;
   processingLooksStuck?: boolean;
@@ -61,7 +72,8 @@ export function MeetingDetailShell({
   soncasResult,
   discResult,
   kissResult,
-  showKissCoaching,
+  scorecardResult,
+  showSellerCoaching,
   canEdit = false,
   processingLooksSlow = false,
   processingLooksStuck = false,
@@ -133,8 +145,24 @@ export function MeetingDetailShell({
         analysisPending={meeting.status === "PROCESSING"}
       />
 
+      {/*
+        La scorecard passe avant le coaching KISS : elle note ce qui s'est
+        passé, KISS dit quoi en faire. Lire le conseil avant la note obligerait
+        à remonter pour savoir de quoi il parle.
+      */}
+      {scorecardResult ? (
+        showSellerCoaching ? (
+          <ScorecardResultSection result={scorecardResult} />
+        ) : (
+          <InfoCard
+            title="Scorecard du rendez-vous"
+            description="La scorecard note la conduite du rendez-vous. Elle est visible par le commercial assigné et les managers de l'organisation."
+          />
+        )
+      ) : null}
+
       {kissResult ? (
-        showKissCoaching ? (
+        showSellerCoaching ? (
           <section className="space-y-3">
             <h2 className={sectionHeadingClass}>Coaching KISS</h2>
             <KissResultView result={kissResult} />

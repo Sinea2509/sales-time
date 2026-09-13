@@ -79,7 +79,7 @@ export function extractOrgIdFromBlobPath(pathname: string): string | null {
   return null;
 }
 
-/** Pre-org-prefix uploads (e.g. `feedbacks/123.png`) — super-admin only via proxy. */
+/** Pre-org-prefix uploads (e.g. `feedbacks/123.png`), super-admin only via proxy. */
 export function isLegacyUnscopedBlobPath(pathname: string): boolean {
   return pathname.startsWith("feedbacks/") && extractOrgIdFromBlobPath(pathname) === null;
 }

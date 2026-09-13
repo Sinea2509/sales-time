@@ -11,7 +11,7 @@ import { LandingTestimonialSection } from "@/components/organisms/landing-testim
 
 export function SalesTimeLanding() {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-white text-zinc-950">
+    <div className="bg-background text-foreground relative flex min-h-screen flex-col overflow-x-hidden">
       <LandingSiteHeader />
       <main className="flex-1">
         <LandingHeroSection />

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** CTA « + Ajouter une invitation » — onboarding & réglages équipe. */
+/** CTA « + Ajouter une invitation » : onboarding et réglages équipe. */
 export const teamInviteAddRowVioletButtonClass = cn(
   "inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent",
   "my-3 bg-brand/10 px-5 py-4 text-sm font-medium text-brand shadow-none",

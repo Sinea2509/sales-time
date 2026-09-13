@@ -15,7 +15,7 @@ export type ProfilePieValues<T extends string> = Record<T, number>;
 
 export type TeamProfilePieComputation<T extends string> = {
   analyzedMeetings: number;
-  /** `true` when aucune analyse — parts égales indicatives. */
+  /** `true` quand aucune analyse n'existe : les parts égales sont indicatives. */
   isDefaultEqual: boolean;
   values: ProfilePieValues<T>;
 };

@@ -48,7 +48,7 @@ export default async function AdminFeedbacksPage({
     <div className="space-y-6">
       <PageHeaderSimple
         title="Feedbacks"
-        description="Retours utilisateurs avec élément ciblé, captures et export Cursor."
+        description="Retours utilisateurs avec élément ciblé, captures, et export prêt à coller dans un outil de développement."
       />
       <AdminFeedbacksStatusTabs
         activeStatus={statusFilter}

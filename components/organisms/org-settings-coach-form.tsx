@@ -91,7 +91,7 @@ export function OrgSettingsCoachForm({
               ? "text-green-700 dark:text-green-400"
               : "text-destructive",
           )}
-          role="status"
+          role={message.type === "ok" ? "status" : "alert"}
         >
           {message.text}
         </p>
@@ -219,7 +219,7 @@ export function OrgSettingsCoachForm({
         <Button
           type="submit"
           disabled={pending}
-          className="bg-brand text-white hover:bg-brand-hover"
+          className="bg-brand text-brand-foreground hover:bg-brand-hover"
         >
           Enregistrer
         </Button>
@@ -228,27 +228,27 @@ export function OrgSettingsCoachForm({
       {canEdit ? (
         <>
           <CoachSharedPhrasePickerSheet
-        kind="OBJECTION"
-        open={objectionPickerOpen}
-        onOpenChange={setObjectionPickerOpen}
-        title="Objections — collection partagée"
-        description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
-        alreadyChosen={objections}
-        onAddToList={(texts) =>
-          setObjections((xs) => mergeUniqueCoachPhrases(xs, texts))
-        }
-      />
-      <CoachSharedPhrasePickerSheet
-        kind="ARGUMENT"
-        open={argumentPickerOpen}
-        onOpenChange={setArgumentPickerOpen}
-        title="Arguments — collection partagée"
-        description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
-        alreadyChosen={keyArguments}
-        onAddToList={(texts) =>
-          setKeyArguments((xs) => mergeUniqueCoachPhrases(xs, texts))
-        }
-      />
+            kind="OBJECTION"
+            open={objectionPickerOpen}
+            onOpenChange={setObjectionPickerOpen}
+            title="Objections · collection partagée"
+            description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
+            alreadyChosen={objections}
+            onAddToList={(texts) =>
+              setObjections((xs) => mergeUniqueCoachPhrases(xs, texts))
+            }
+          />
+          <CoachSharedPhrasePickerSheet
+            kind="ARGUMENT"
+            open={argumentPickerOpen}
+            onOpenChange={setArgumentPickerOpen}
+            title="Arguments · collection partagée"
+            description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
+            alreadyChosen={keyArguments}
+            onAddToList={(texts) =>
+              setKeyArguments((xs) => mergeUniqueCoachPhrases(xs, texts))
+            }
+          />
         </>
       ) : null}
     </form>

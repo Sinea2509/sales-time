@@ -1,5 +1,5 @@
 ---
-description: Adapter implementations — outer hexagon wiring to Prisma, Vercel, session, etc.
+description: Adapter implementations · outer hexagon wiring to Prisma, Vercel, session, etc.
 globs: src/adapters/**/*.ts
 alwaysApply: false
 ---
@@ -7,8 +7,8 @@ alwaysApply: false
 # Adapters (`src/adapters`)
 
 - Implement **one port** (or cohesive slice of a port) per module; name `PrismaFooRepository`, `VercelAIAnalysisAdapter`, etc.
-- May import `@prisma/client`, SDKs, Next APIs — this is the **only** layer that should.
+- May import `@prisma/client`, SDKs, Next APIs: this is the **only** layer that should.
 - Map persistence/API shapes → **domain or port DTOs** before returning to application code.
 - Do **not** put business rules here that belong in `domain/` or `application/` (no scoring, policy, or validation logic beyond mapping).
 
-Composition roots (`composition.ts`, factories): assemble implementations only — avoid new use-case logic.
+Composition roots (`composition.ts`, factories): assemble implementations only; avoid new use-case logic.

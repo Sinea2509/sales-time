@@ -1,4 +1,4 @@
-/** Options des listes — étape 1 « Contexte » (onboarding). */
+/** Options des listes de l'étape 1 « Contexte » (onboarding). */
 
 export const ONBOARDING_INDUSTRY_OPTIONS = [
   { value: "saas_tech", label: "SaaS & Tech" },

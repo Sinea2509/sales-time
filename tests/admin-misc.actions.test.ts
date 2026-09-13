@@ -151,7 +151,7 @@ beforeEach(() => {
   mockAuthenticatedSuperAdminPrincipal();
 });
 
-describe("admin misc — searchAdminAction", () => {
+describe("admin misc: searchAdminAction", () => {
   it("returns empty results when not super admin", async () => {
     getAuthenticatedPrincipalMock.mockResolvedValue(null);
 
@@ -197,7 +197,7 @@ describe("admin misc — searchAdminAction", () => {
   });
 });
 
-describe("admin misc — replayAiLogAction", () => {
+describe("admin misc: replayAiLogAction", () => {
   it("rejects unauthenticated replay", async () => {
     getAuthenticatedPrincipalMock.mockResolvedValue(null);
 
@@ -352,7 +352,7 @@ describe("admin misc — replayAiLogAction", () => {
   });
 });
 
-describe("admin misc — updateFeedbackStatusAction", () => {
+describe("admin misc: updateFeedbackStatusAction", () => {
   it("rejects invalid input", async () => {
     mockAuthenticatedSuperAdminPrincipal();
 
@@ -415,7 +415,7 @@ describe("admin misc — updateFeedbackStatusAction", () => {
   });
 });
 
-describe("admin misc — saveGlobalKissConsignesAction", () => {
+describe("admin misc: saveGlobalKissConsignesAction", () => {
   it("rejects invalid form payload", async () => {
     mockAuthenticatedSuperAdminPrincipal();
 

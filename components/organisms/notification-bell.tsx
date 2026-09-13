@@ -48,7 +48,7 @@ export function NotificationBell({
           <Button variant="outline" size="icon-sm" className="relative">
             <Bell className="size-4" />
             {localCount > 0 ? (
-              <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
+              <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-brand-foreground">
                 {localCount > 9 ? "9+" : localCount}
               </span>
             ) : null}

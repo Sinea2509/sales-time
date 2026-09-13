@@ -2,7 +2,7 @@
 export const INVITE_LINK_PLACEHOLDER = "{{INVITATION_LINK}}";
 
 /** Message d’invitation par défaut (HTML). Réexporté depuis `onboarding-defaults` sous le nom historique. */
-export const DEFAULT_INVITE_MESSAGE_HTML = `<p>Salut, on lance SalesTime dans l'équipe. C'est un coach commercial IA qui va t'aider à gagner du temps sur tes CR, tes mails de suivi, et te donner des feedbacks concrets.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscris-toi pour démarrer</a></p>`;
+export const DEFAULT_INVITE_MESSAGE_HTML = `<p>Salut, on lance Sales Time dans l'équipe. C'est un coach commercial IA qui va t'aider à gagner du temps sur tes CR, tes mails de suivi, et te donner des feedbacks concrets.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscris-toi pour démarrer</a></p>`;
 
 function escapeHtml(s: string): string {
   return s

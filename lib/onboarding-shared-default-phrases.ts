@@ -1,4 +1,4 @@
-/** Suggestions intégrées (hors base) — fusionnées avec les phrases partagées en base. */
+/** Suggestions intégrées (hors base), fusionnées avec les phrases partagées en base. */
 
 export const DEFAULT_OBJECTION_PHRASES = [
   "C’est trop cher",

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAnalysisActor } from "@/lib/analysis-server-context";
 import { loadCommercialKissAppendix } from "@/lib/kiss-commercial-appendix";
+import { loadOrganizationPlaybookMarkdown } from "@/lib/load-organization-playbook";
 import { requireMeetingMutationAccess } from "@/lib/meeting-mutation-access";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import {
@@ -41,12 +42,17 @@ export async function runMeetingAnalysisAction(
     kind === "KISS"
       ? await loadCommercialKissAppendix(actor.deps)
       : undefined;
+  const organizationPlaybookMarkdown = await loadOrganizationPlaybookMarkdown(
+    actor.deps,
+    actor.organizationId,
+  );
 
   const result = await runMeetingAnalysis(actor.deps, {
     organizationId: actor.organizationId,
     meetingId: parsedId.data,
     kind,
     kissSystemMarkdownAppendix,
+    organizationPlaybookMarkdown,
   });
 
   if (!result.ok) {

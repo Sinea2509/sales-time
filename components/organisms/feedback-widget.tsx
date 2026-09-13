@@ -33,7 +33,10 @@ import {
 } from "@/lib/feedback-screenshot-capture";
 import { buildClientTechnicalContextSnapshot } from "@/src/core/domain/feedback-technical-context";
 import type { FeedbackTargetElement } from "@/src/core/domain/feedback-target-element";
-import type { FeedbackPriority, FeedbackType } from "@/src/core/ports/feedback-repository-port";
+import type {
+  FeedbackPriority,
+  FeedbackType,
+} from "@/src/core/ports/feedback-repository-port";
 
 type WidgetPhase = "idle" | "choose" | "picking" | "form";
 
@@ -43,20 +46,26 @@ export function FeedbackWidget() {
   const [message, setMessage] = useState("");
   const [type, setType] = useState<FeedbackType>("BUG");
   const [priority, setPriority] = useState<FeedbackPriority>("HIGH");
-  const [targetElement, setTargetElement] = useState<FeedbackTargetElement | null>(
+  const [targetElement, setTargetElement] =
+    useState<FeedbackTargetElement | null>(null);
+  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(
     null,
   );
-  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const runScreenshotCapture = useCallback(async (target: FeedbackTargetElement | null) => {
-    setCapturing(true);
-    const { dataUrl } = await captureFeedbackScreenshot({ targetElement: target });
-    setScreenshotDataUrl(dataUrl);
-    setCapturing(false);
-  }, []);
+  const runScreenshotCapture = useCallback(
+    async (target: FeedbackTargetElement | null) => {
+      setCapturing(true);
+      const { dataUrl } = await captureFeedbackScreenshot({
+        targetElement: target,
+      });
+      setScreenshotDataUrl(dataUrl);
+      setCapturing(false);
+    },
+    [],
+  );
 
   function resetWidget() {
     setPhase("idle");
@@ -101,7 +110,10 @@ export function FeedbackWidget() {
       if (targetElement) {
         const cropBlob = await captureElementCropBlob(targetElement);
         if (cropBlob) {
-          elementCropUrl = await uploadFeedbackScreenshotBlob(cropBlob, "feedback-crop");
+          elementCropUrl = await uploadFeedbackScreenshotBlob(
+            cropBlob,
+            "feedback-crop",
+          );
         }
       }
 
@@ -186,7 +198,8 @@ export function FeedbackWidget() {
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="font-medium">Sélectionner un élément</span>
                     <span className="text-muted-foreground text-xs font-normal break-words">
-                      Survolez la page avec le curseur et cliquez sur la zone concernée.
+                      Survolez la page avec le curseur et cliquez sur la zone
+                      concernée.
                     </span>
                   </span>
                 </Button>
@@ -214,120 +227,126 @@ export function FeedbackWidget() {
               </DialogHeader>
               {done ? (
                 <p className="text-sm text-emerald-700">
-                  Merci — votre retour a été enregistré.
+                  Merci, votre retour a été enregistré.
                 </p>
               ) : (
                 <div className="max-h-[calc(100vh-8rem)] min-w-0 space-y-4 overflow-x-hidden overflow-y-auto">
-              {targetElement ? (
-                <div className="bg-muted/40 min-w-0 overflow-hidden rounded-lg border p-3 text-xs">
-                  <p className="font-medium">Élément ciblé</p>
-                  <p className="text-muted-foreground mt-1 break-words">
-                    {targetElement.tagName}
-                    {targetElement.dataFeedbackId
-                      ? ` · ${targetElement.dataFeedbackId}`
-                      : ""}
-                  </p>
-                  {targetElement.textSnippet ? (
-                    <p className="mt-1 break-words">&quot;{targetElement.textSnippet}&quot;</p>
+                  {targetElement ? (
+                    <div className="bg-muted/40 min-w-0 overflow-hidden rounded-lg border p-3 text-xs">
+                      <p className="font-medium">Élément ciblé</p>
+                      <p className="text-muted-foreground mt-1 break-words">
+                        {targetElement.tagName}
+                        {targetElement.dataFeedbackId
+                          ? ` · ${targetElement.dataFeedbackId}`
+                          : ""}
+                      </p>
+                      {targetElement.textSnippet ? (
+                        <p className="mt-1 break-words">
+                          &quot;{targetElement.textSnippet}&quot;
+                        </p>
+                      ) : null}
+                      <p className="text-muted-foreground mt-1 break-all font-mono text-[11px] leading-relaxed">
+                        {targetElement.cssSelector}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-xs">
+                      Aucun élément ciblé : capture pleine page.
+                    </p>
+                  )}
+
+                  <div className="min-w-0 space-y-2">
+                    <Label htmlFor="feedback-type">Type</Label>
+                    <Select
+                      value={type}
+                      onValueChange={(value) => {
+                        if (
+                          value !== "BUG" &&
+                          value !== "IDEA" &&
+                          value !== "QUESTION" &&
+                          value !== "OTHER"
+                        ) {
+                          return;
+                        }
+                        setType(value);
+                        if (value === "BUG") setPriority("HIGH");
+                        else if (priority === "HIGH") setPriority("MEDIUM");
+                      }}
+                    >
+                      <SelectTrigger id="feedback-type" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent sideOffset={4}>
+                        <SelectItem value="BUG">Bug</SelectItem>
+                        <SelectItem value="IDEA">Idée</SelectItem>
+                        <SelectItem value="QUESTION">Question</SelectItem>
+                        <SelectItem value="OTHER">Autre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="min-w-0 space-y-2">
+                    <Label htmlFor="feedback-priority">Priorité</Label>
+                    <Select
+                      value={priority}
+                      onValueChange={(value) => {
+                        if (
+                          value !== "LOW" &&
+                          value !== "MEDIUM" &&
+                          value !== "HIGH" &&
+                          value !== "CRITICAL"
+                        ) {
+                          return;
+                        }
+                        setPriority(value);
+                      }}
+                    >
+                      <SelectTrigger id="feedback-priority" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent sideOffset={4}>
+                        <SelectItem value="LOW">Basse</SelectItem>
+                        <SelectItem value="MEDIUM">Moyenne</SelectItem>
+                        <SelectItem value="HIGH">Haute</SelectItem>
+                        <SelectItem value="CRITICAL">Critique</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="feedback-message">Message</Label>
+                    <Textarea
+                      id="feedback-message"
+                      rows={4}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Décrivez le problème ou votre suggestion…"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Aperçu capture</Label>
+                    <FeedbackScreenshotPreview
+                      dataUrl={screenshotDataUrl}
+                      loading={capturing}
+                      onRecapture={() =>
+                        void runScreenshotCapture(targetElement)
+                      }
+                    />
+                  </div>
+
+                  {error ? (
+                    <p className="text-destructive text-sm">{error}</p>
                   ) : null}
-                  <p className="text-muted-foreground mt-1 break-all font-mono text-[11px] leading-relaxed">
-                    {targetElement.cssSelector}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-xs">
-                  Aucun élément ciblé — capture pleine page.
-                </p>
-              )}
-
-              <div className="min-w-0 space-y-2">
-                <Label htmlFor="feedback-type">Type</Label>
-                <Select
-                  value={type}
-                  onValueChange={(value) => {
-                    if (
-                      value !== "BUG" &&
-                      value !== "IDEA" &&
-                      value !== "QUESTION" &&
-                      value !== "OTHER"
-                    ) {
-                      return;
-                    }
-                    setType(value);
-                    if (value === "BUG") setPriority("HIGH");
-                    else if (priority === "HIGH") setPriority("MEDIUM");
-                  }}
-                >
-                  <SelectTrigger id="feedback-type" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent sideOffset={4}>
-                    <SelectItem value="BUG">Bug</SelectItem>
-                    <SelectItem value="IDEA">Idée</SelectItem>
-                    <SelectItem value="QUESTION">Question</SelectItem>
-                    <SelectItem value="OTHER">Autre</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="min-w-0 space-y-2">
-                <Label htmlFor="feedback-priority">Priorité</Label>
-                <Select
-                  value={priority}
-                  onValueChange={(value) => {
-                    if (
-                      value !== "LOW" &&
-                      value !== "MEDIUM" &&
-                      value !== "HIGH" &&
-                      value !== "CRITICAL"
-                    ) {
-                      return;
-                    }
-                    setPriority(value);
-                  }}
-                >
-                  <SelectTrigger id="feedback-priority" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent sideOffset={4}>
-                    <SelectItem value="LOW">Basse</SelectItem>
-                    <SelectItem value="MEDIUM">Moyenne</SelectItem>
-                    <SelectItem value="HIGH">Haute</SelectItem>
-                    <SelectItem value="CRITICAL">Critique</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="feedback-message">Message</Label>
-                <Textarea
-                  id="feedback-message"
-                  rows={4}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Décrivez le problème ou votre suggestion…"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Aperçu capture</Label>
-                <FeedbackScreenshotPreview
-                  dataUrl={screenshotDataUrl}
-                  loading={capturing}
-                  onRecapture={() => void runScreenshotCapture(targetElement)}
-                />
-              </div>
-
-              {error ? <p className="text-destructive text-sm">{error}</p> : null}
-              <Button
-                type="button"
-                disabled={pending || message.trim().length < 5}
-                onClick={handleSubmit}
-                data-feedback-id="feedback-submit"
-              >
-                {pending ? "Envoi…" : "Envoyer"}
-              </Button>
+                  <Button
+                    type="button"
+                    disabled={pending || message.trim().length < 5}
+                    onClick={handleSubmit}
+                    data-feedback-id="feedback-submit"
+                  >
+                    {pending ? "Envoi…" : "Envoyer"}
+                  </Button>
                 </div>
               )}
             </>

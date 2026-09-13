@@ -68,10 +68,8 @@ export function MeetingCreateDialog({
         className={cn("gap-1", className)}
         data-feedback-id={dataFeedbackId}
       >
-        {showPlusIcon ? (
-          <span className="text-lg leading-none">+</span>
-        ) : null}
-        Analyser un RDV
+        {showPlusIcon ? <span className="text-lg leading-none">+</span> : null}
+        Analyser un rendez-vous
       </BrandCtaButton>
 
       <Dialog
@@ -91,10 +89,9 @@ export function MeetingCreateDialog({
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
             <MeetingCreateForm
-              key={`${formOptions.meetingTypeOptions.join("|")}:${formOptions.pipelineStageOptions.join("|")}`}
+              key={formOptions.meetingTypeOptions.join("|")}
               variant="dialog"
               meetingTypeOptions={formOptions.meetingTypeOptions}
-              pipelineStageOptions={formOptions.pipelineStageOptions}
               onCancel={closeDialog}
               onSuccess={(meetingId) => {
                 closeDialog();
