@@ -1,9 +1,7 @@
 {
   "version": "0.2",
   "language": "en,fr",
-  "import": [
-    "@cspell/dict-fr-fr/cspell-ext.json"
-  ],
+  "import": ["@cspell/dict-fr-fr/cspell-ext.json"],
   "useGitignore": true,
   "ignorePaths": [
     ".next",
@@ -16,9 +14,7 @@
     "prisma/migrations",
     "*.svg"
   ],
-  "ignoreRegExpList": [
-    "/data:image\\\\\\+svg[^\"']+/gi"
-  ],
+  "ignoreRegExpList": ["/data:image\\\\\\+svg[^\"']+/gi"],
   "words": [
     "affichee",
     "arg",
@@ -54,10 +50,12 @@
     "ecartes",
     "echelle",
     "ecoute",
+    "empruntee",
     "equipe",
     "esbuild",
     "esnext",
     "etapes",
+    "fiabilite",
     "fluidcompute",
     "fonctionnalites",
     "frontmatter",
@@ -71,6 +69,7 @@
     "kermor",
     "kiss",
     "kpis",
+    "Laigneau",
     "legende",
     "lucide",
     "maitrise",
@@ -86,6 +85,7 @@
     "novalis",
     "onboarding",
     "openai",
+    "openssl",
     "orgs",
     "periode",
     "pooler",
@@ -98,10 +98,12 @@
     "rankable",
     "rdv",
     "rdvs",
+    "REGULARITE",
     "relancer",
     "renseignee",
     "resend",
     "resultat",
+    "RGPD",
     "rétrocompat",
     "saas",
     "salescore",
@@ -109,6 +111,7 @@
     "securite",
     "shadcn",
     "soncas",
+    "sparkline",
     "stime",
     "superadmin",
     "synthese",
@@ -116,6 +119,7 @@
     "tailwindcss",
     "tam",
     "temoignages",
+    "Terminees",
     "timeframe",
     "timeseries",
     "tradeshow",
@@ -128,6 +132,7 @@
     "uuid",
     "vercel",
     "verifie",
+    "violeté",
     "visio",
     "vitest",
     "vouv",
