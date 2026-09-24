@@ -6,18 +6,19 @@ import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { MeetingDetailWithAnalyses } from "@/src/core/ports/meeting-repository-port";
 import type { ResolvedFollowUpEmailPreferences } from "@/src/core/domain/follow-up-email-preferences";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 function xml(tag: string, body: string) {
   return `<${tag}>\n${body}\n</${tag}>`;
 }
 
 /*
-  Pas de fuseau imposé, comme l'en-tête de la fiche : le formulaire envoie
-  l'heure saisie sans fuseau et le serveur la lit dans le sien. L'écrire dans
-  un autre fuseau donnerait le lendemain, et un mauvais jour de la semaine,
-  aux rendez-vous saisis tard le soir.
+  En heure de Paris, comme toute l'application : l'heure saisie dans le
+  formulaire est lue dans ce fuseau, et un rendez-vous tard le soir garde son
+  jour, et le bon jour de la semaine.
 */
 const meetingDate = new Intl.DateTimeFormat("fr-FR", {
+  timeZone: APP_TIME_ZONE,
   weekday: "long",
   day: "numeric",
   month: "long",

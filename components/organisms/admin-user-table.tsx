@@ -41,6 +41,7 @@ import {
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { AdminExportButton } from "@/components/molecules/admin-export-button";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type UserRow = {
   id: string;
@@ -388,7 +389,9 @@ export function AdminUserTable({ users, organizations }: Props) {
                       </span>
                     </td>
                     <td className="hidden whitespace-nowrap px-4 py-3.5 text-muted-foreground lg:table-cell">
-                      {new Date(user.createdAt).toLocaleDateString("fr-FR")}
+                      {new Date(user.createdAt).toLocaleDateString("fr-FR", {
+                        timeZone: APP_TIME_ZONE,
+                      })}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">

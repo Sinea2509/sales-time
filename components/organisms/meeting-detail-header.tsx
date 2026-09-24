@@ -14,8 +14,10 @@ import { prospectInitials } from "@/lib/prospect-initials";
 import { salesScoreColorClass } from "@/lib/sales-score-color";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
+  timeZone: APP_TIME_ZONE,
   day: "2-digit",
   month: "2-digit",
   year: "2-digit",

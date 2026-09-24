@@ -52,6 +52,7 @@ import { Separator } from "@/components/ui/separator";
 import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import { MarkdownPreview } from "@/components/atoms/markdown-preview";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type VersionRow = {
   id: string;
@@ -719,6 +720,7 @@ export function SuperAdminPromptsEditor({
                         dateTime={v.createdAt}
                       >
                         {new Date(v.createdAt).toLocaleString("fr-FR", {
+                          timeZone: APP_TIME_ZONE,
                           dateStyle: "short",
                           timeStyle: "short",
                         })}

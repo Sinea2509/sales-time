@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { AdminUserDetail } from "@/src/core/ports/backoffice-repository-port";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type AdminUserDetailShellProps = { user: AdminUserDetail };
 
@@ -72,7 +73,10 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
             </span>
             <span className="inline-flex items-center gap-1">
               <Clock className="size-3.5" />
-              Inscrit le {user.createdAt.toLocaleDateString("fr-FR")}
+              Inscrit le{" "}
+              {user.createdAt.toLocaleDateString("fr-FR", {
+                timeZone: APP_TIME_ZONE,
+              })}
             </span>
           </>
         }
@@ -165,7 +169,9 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
                           </Badge>
                         </td>
                         <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
-                          {m.createdAt.toLocaleDateString("fr-FR")}
+                          {m.createdAt.toLocaleDateString("fr-FR", {
+                            timeZone: APP_TIME_ZONE,
+                          })}
                         </td>
                       </tr>
                     ))
@@ -218,8 +224,11 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
                         className="hover:bg-muted/60 dark:hover:bg-zinc-800/40"
                       >
                         <td className="whitespace-nowrap px-4 py-2.5 text-foreground dark:text-zinc-300">
-                          {s.lastSeenAt.toLocaleDateString("fr-FR")}{" "}
+                          {s.lastSeenAt.toLocaleDateString("fr-FR", {
+                            timeZone: APP_TIME_ZONE,
+                          })}{" "}
                           {s.lastSeenAt.toLocaleTimeString("fr-FR", {
+                            timeZone: APP_TIME_ZONE,
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
@@ -246,7 +255,9 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
                           )}
                         </td>
                         <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
-                          {s.createdAt.toLocaleDateString("fr-FR")}
+                          {s.createdAt.toLocaleDateString("fr-FR", {
+                            timeZone: APP_TIME_ZONE,
+                          })}
                         </td>
                       </tr>
                     ))
@@ -303,7 +314,9 @@ export function AdminUserDetailShell({ user }: AdminUserDetailShellProps) {
                             {m.prospectName}
                           </td>
                           <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
-                            {m.meetingAt.toLocaleDateString("fr-FR")}
+                            {m.meetingAt.toLocaleDateString("fr-FR", {
+                              timeZone: APP_TIME_ZONE,
+                            })}
                           </td>
                           <td className="px-4 py-2.5">
                             <MeetingOutcomeBadge outcome={m.outcome} />

@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 export type SuperAdminRow = {
   userId: string;
@@ -181,6 +182,7 @@ export function SuperAdminInvitesPanel({
                       <span className="text-muted-foreground text-xs whitespace-nowrap">
                         Depuis le{" "}
                         {new Date(admin.grantedAt).toLocaleDateString("fr-FR", {
+                          timeZone: APP_TIME_ZONE,
                           day: "numeric",
                           month: "short",
                           year: "numeric",
@@ -288,6 +290,7 @@ export function SuperAdminInvitesPanel({
                     <p className="text-muted-foreground text-xs">
                       Expire le{" "}
                       {new Date(inv.expiresAt).toLocaleString("fr-FR", {
+                        timeZone: APP_TIME_ZONE,
                         dateStyle: "short",
                         timeStyle: "short",
                       })}

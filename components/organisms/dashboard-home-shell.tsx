@@ -22,8 +22,10 @@ import type { TeamMemberStanding } from "@/src/core/application/get-org-admin-da
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { CoachingAction } from "@/src/core/domain/seller-action-plan";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
+  timeZone: APP_TIME_ZONE,
   day: "2-digit",
   month: "2-digit",
   year: "numeric",

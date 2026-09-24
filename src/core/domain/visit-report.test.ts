@@ -635,7 +635,8 @@ describe("les retours de la relecture du 24 septembre", () => {
       input({
         meeting: {
           ...input().meeting,
-          meetingAt: new Date(2026, 8, 24, 23, 30),
+          // 23 h 30 à Paris, 21 h 30 en temps universel.
+          meetingAt: new Date("2026-09-24T21:30:00Z"),
         },
       }),
     ).split("\n");

@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
 import { cn } from "@/lib/utils";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 function priorityBadgeClass(priority: FeedbackRow["priority"]): string {
   switch (priority) {
@@ -148,7 +149,9 @@ export function AdminFeedbacksInbox({ rows }: { rows: FeedbackRow[] }) {
                   <p className="font-semibold">{row.userEmail ?? "Anonyme"}</p>
                 </div>
                 <p className="text-muted-foreground text-xs">
-                  {row.createdAt.toLocaleString("fr-FR")}
+                  {row.createdAt.toLocaleString("fr-FR", {
+                    timeZone: APP_TIME_ZONE,
+                  })}
                   {row.companyName ? ` · ${row.companyName}` : ""}
                   {roleLabel ? ` · ${roleLabel}` : ""}
                 </p>

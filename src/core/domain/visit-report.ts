@@ -2,6 +2,7 @@ import type {
   DiscAnalysisResult,
   SoncasAnalysisResult,
 } from "./analysis-result-zod";
+import { APP_TIME_ZONE } from "./app-time-zone";
 import { scorecardGridById, scorecardCriteria } from "./scorecard-grid";
 import type { ScorecardAnalysisResult } from "./scorecard-result-zod";
 import { scorecardResultView } from "./scorecard-result-view";
@@ -119,12 +120,12 @@ export const VISIT_REPORT_METHOD_NOTE =
 const NOT_COVERED = "Non abordé pendant le rendez-vous.";
 
 /*
-  Pas de fuseau imposé : la date s'écrit dans le fuseau du serveur, comme
-  l'en-tête de la fiche. Le formulaire envoie l'heure saisie sans fuseau et le
-  serveur la lit dans le sien ; l'écrire dans un autre fuseau décalerait d'un
-  jour les rendez-vous saisis tard le soir.
+  En heure de Paris, comme toute l'application : l'heure saisie dans le
+  formulaire est lue dans ce fuseau, et un rendez-vous tard le soir garde son
+  jour.
 */
 const longDate = new Intl.DateTimeFormat("fr-FR", {
+  timeZone: APP_TIME_ZONE,
   day: "numeric",
   month: "long",
   year: "numeric",

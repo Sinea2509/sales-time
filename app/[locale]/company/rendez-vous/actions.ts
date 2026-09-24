@@ -14,6 +14,7 @@ import { createMeetingForOrg } from "@/src/core/application/create-meeting";
 import { updateMeetingForOrg } from "@/src/core/application/update-meeting-for-org";
 import { invalidateAiSummaryCacheForOrg } from "@/src/core/application/invalidate-ai-summary-cache-for-org";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
+import { parseWallClockInAppTimeZone } from "@/src/core/domain/app-time-zone";
 
 const meetingOutcomeSchema = z.enum([
   "WON",
@@ -32,7 +33,16 @@ const createMeetingSchema = z.object({
     z.union([z.null(), z.string().cuid()]),
   ),
   prospectName: z.string().trim().min(1).max(200),
-  meetingAt: z.coerce.date(),
+  /*
+    Le champ datetime-local envoie l'heure sans fuseau. Elle se lit en heure de
+    Paris, et non dans le fuseau du serveur (le temps universel sur Vercel) :
+    sinon chaque enregistrement décalait le rendez-vous de deux heures.
+  */
+  meetingAt: z.preprocess(
+    (v) =>
+      typeof v === "string" ? (parseWallClockInAppTimeZone(v) ?? v) : v,
+    z.coerce.date(),
+  ),
   durationMin: z
     .union([
       z.literal(""),

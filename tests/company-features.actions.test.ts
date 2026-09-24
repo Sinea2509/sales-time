@@ -1026,6 +1026,20 @@ describe("rendez-vous actions", () => {
     );
   });
 
+  it("createMeetingAction lit l'heure du formulaire en heure de Paris", async () => {
+    // Le champ datetime-local envoie l'heure sans fuseau : 16 h 30 à Paris.
+    const result = await createMeetingAction(
+      meetingFormData({ meetingAt: "2026-09-24T16:30" }),
+    );
+    expect(result.ok).toBe(true);
+    expect(createMeetingForOrgMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        meetingAt: new Date("2026-09-24T14:30:00.000Z"),
+      }),
+    );
+  });
+
   it("createMeetingAction rejects missing org", async () => {
     mockNoOrgPrincipal();
     const result = await createMeetingAction(meetingFormData());
