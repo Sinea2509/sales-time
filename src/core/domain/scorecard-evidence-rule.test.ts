@@ -65,11 +65,13 @@ describe("applyScorecardEvidenceRule", () => {
   });
 
   it("ne touche ni un niveau bas sans preuve, ni un résultat entièrement appuyé", () => {
-    const appuye = result([
+    const sansCorrection = result([
       { key: "A1", level: 1, evidence: [] },
       { key: "B3", level: 3, evidence: ["de 34 % de marge brute à 29 %"] },
     ]);
-    expect(applyScorecardEvidenceRule(appuye, TRANSCRIPT)).toBe(appuye);
+    expect(applyScorecardEvidenceRule(sansCorrection, TRANSCRIPT)).toBe(
+      sansCorrection,
+    );
   });
 
   it("lit les preuves dans les notes aussi, quand elles font partie de la source", () => {

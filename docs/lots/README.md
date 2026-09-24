@@ -111,6 +111,15 @@ deploy && next build`). Aucune migration destructive sans décision écrite.
   grille ne se lit que par le commercial assigné et les managers.
 - Une page n'attend jamais le modèle pendant son affichage : ce qui manque
   s'écrit en arrière-plan (`after`), et la page montre un texte d'attente.
+- Sales Time a un fuseau, Europe/Paris, déclaré dans
+  `src/core/domain/app-time-zone.ts` : l'heure saisie se lit dans ce fuseau,
+  et toute date s'affiche et part à l'IA dans ce fuseau (lot 80c).
+- Une preuve citée par le modèle ne compte que si elle se retrouve dans le
+  transcript ou les notes (`src/core/domain/transcript-evidence.ts`) ; un
+  critère de grille sans preuve retrouvée ne dépasse pas le niveau 1.
+- Rien de ce qu'une organisation saisit n'est montré à une autre
+  organisation.
+- Une page d'erreur parle à l'utilisateur, jamais au développeur.
 - Les exemples d'une consigne montrent une forme, et la consigne le dit.
   Aucune consigne ne donne de date précise en exemple : au premier essai en
   production, un modèle a recopié celle d'un exemple dans un mail de suivi.

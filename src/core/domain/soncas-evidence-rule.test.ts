@@ -318,7 +318,9 @@ describe("keepSoncasEvidenceFoundIn", () => {
   });
 
   it("garde les extraits retrouvés, et rend l'entrée telle quelle quand tout est retrouvé", () => {
-    const appuye = soncas(["Je veux voir la remise moyenne baisser."]);
-    expect(keepSoncasEvidenceFoundIn(appuye, transcript)).toBe(appuye);
+    const sansCorrection = soncas(["Je veux voir la remise moyenne baisser."]);
+    expect(keepSoncasEvidenceFoundIn(sansCorrection, transcript)).toBe(
+      sansCorrection,
+    );
   });
 });
