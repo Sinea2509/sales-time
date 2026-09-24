@@ -13,7 +13,9 @@ import type {
 } from "@/src/core/domain/analysis-result-zod";
 import {
   discBarItemsForUi,
+  discPrincipalForUi,
   soncasBarItemsForUi,
+  soncasPrincipalForUi,
 } from "@/src/core/domain/prospect-profile-bars";
 
 export function MeetingInterlocutorSection({
@@ -59,6 +61,10 @@ export function MeetingInterlocutorSection({
           <InterlocutorProfileTabs
             discBars={discBars}
             soncasBars={soncasBars}
+            discPrincipal={discResult ? discPrincipalForUi(discResult) : null}
+            soncasPrincipal={
+              soncasResult ? soncasPrincipalForUi(soncasResult) : null
+            }
             discActionableAdvice={discResult?.actionableAdvice ?? null}
             soncasActionableAdvice={soncasResult?.actionableAdvice ?? null}
             analysisPending={analysisPending}

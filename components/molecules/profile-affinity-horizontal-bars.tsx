@@ -30,9 +30,15 @@ function QuarterTicks() {
 export function ProfileAffinityHorizontalBars({
   items,
   grilleCle,
+  unite = "pourcentage",
 }: {
   items: BarItem[];
   grilleCle?: "disc" | "soncas";
+  /**
+   * « sur100 » pour un score noté sur 100 (la fiche d'un rendez-vous),
+   * « pourcentage » pour une part d'un total (les répartitions agrégées).
+   */
+  unite?: "pourcentage" | "sur100";
 }) {
   const grille = grilleCle ? GRILLES[grilleCle] : null;
   return (
@@ -53,7 +59,7 @@ export function ProfileAffinityHorizontalBars({
               </span>
             )}
             <span className="text-muted-foreground text-xs tabular-nums">
-              {row.pct}%
+              {unite === "sur100" ? `${row.pct} / 100` : `${row.pct}%`}
             </span>
           </div>
           <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted dark:bg-zinc-700">

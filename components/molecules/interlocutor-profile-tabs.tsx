@@ -31,8 +31,12 @@ function DominantProfileTag({
   );
 }
 
+type ProfilePrincipal = { label: string; pillClass: string };
+
 function ProfilePanel({
   title,
+  principalCaption,
+  principal,
   bars,
   actionableAdvice,
   analysisPending,
@@ -41,6 +45,10 @@ function ProfilePanel({
   legacyAdviceHint,
 }: {
   title: string;
+  /** « Levier principal détecté » ou « Style principal détecté ». */
+  principalCaption: string;
+  /** Le levier ou le style annoncé par l'analyse, celui dont parlent ses textes. */
+  principal: ProfilePrincipal | null;
   bars: ProfileBarItem[] | null;
   actionableAdvice?: ProfileActionableAdvice | null;
   analysisPending: boolean;
@@ -48,21 +56,22 @@ function ProfilePanel({
   unavailableLabel: string;
   legacyAdviceHint: string;
 }) {
-  const dominant = bars?.[0] ?? null;
-
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="space-y-1.5">
         <h3 className={cardSubsectionTitleClass}>{title}</h3>
-        {dominant ? (
-          <DominantProfileTag
-            label={dominant.label}
-            pillClass={dominant.pillClass}
-          />
+        {principal && bars?.length ? (
+          <p className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
+            {principalCaption} :
+            <DominantProfileTag
+              label={principal.label}
+              pillClass={principal.pillClass}
+            />
+          </p>
         ) : null}
       </div>
       {bars?.length ? (
-        <ProfileAffinityHorizontalBars items={bars} />
+        <ProfileAffinityHorizontalBars items={bars} unite="sur100" />
       ) : (
         <p className="text-muted-foreground text-sm">
           {analysisPending ? pendingLabel : unavailableLabel}
@@ -83,12 +92,16 @@ function ProfilePanel({
 export function InterlocutorProfileTabs({
   discBars,
   soncasBars,
+  discPrincipal = null,
+  soncasPrincipal = null,
   discActionableAdvice = null,
   soncasActionableAdvice = null,
   analysisPending = false,
 }: {
   discBars: ProfileBarItem[] | null;
   soncasBars: ProfileBarItem[] | null;
+  discPrincipal?: ProfilePrincipal | null;
+  soncasPrincipal?: ProfilePrincipal | null;
   discActionableAdvice?: ProfileActionableAdvice | null;
   soncasActionableAdvice?: ProfileActionableAdvice | null;
   analysisPending?: boolean;
@@ -97,6 +110,8 @@ export function InterlocutorProfileTabs({
     <div className="grid gap-6 lg:grid-cols-2">
       <ProfilePanel
         title="Profil DISC"
+        principalCaption="Style principal détecté"
+        principal={discPrincipal}
         bars={discBars}
         actionableAdvice={discActionableAdvice}
         analysisPending={analysisPending}
@@ -106,6 +121,8 @@ export function InterlocutorProfileTabs({
       />
       <ProfilePanel
         title="Profil SONCAS"
+        principalCaption="Levier principal détecté"
+        principal={soncasPrincipal}
         bars={soncasBars}
         actionableAdvice={soncasActionableAdvice}
         analysisPending={analysisPending}
