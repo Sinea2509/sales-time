@@ -7,7 +7,7 @@ export const MEETING_PROCESSING_SLOW_MS = 3 * 60 * 1000;
 export const MEETING_PROCESSING_STUCK_MS = 15 * 60 * 1000;
 
 // Related worker threshold (see process-analysis-jobs RECONCILE_MINUTES = 2):
-// reconcile re-enqueues PROCESSING meetings when a job run happens (after() or daily cron).
+// reconcile re-enqueues PROCESSING meetings when a job run happens (after() or the cron, every 15 minutes).
 
 export function isMeetingAnalysisSlow(input: {
   status: MeetingStatus;
