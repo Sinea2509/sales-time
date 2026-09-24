@@ -1,4 +1,4 @@
-# Recette du lot 80a, quinze minutes
+# Recette du lot 80a, vingt minutes
 
 À faire sur votre ordinateur, avec l'application lancée par l'onglet Code
 sur la base de développement (branche Neon `dev`), la maquette du 11
@@ -96,6 +96,15 @@ Connecté avec votre compte, ouvrez Super admin, Configuration, Prompts IA.
 - [ ] « Copier le compte rendu » devient « Compte rendu copié » deux
       secondes. Collé dans le Bloc-notes, le texte est identique à l'écran,
       sans mise en forme, titres en capitales.
+- [ ] Modifiez le rendez-vous (par exemple la durée, 45 au lieu de 40) et
+      enregistrez : la fiche montre un texte indicatif avec « la version
+      complète s'écrit en ce moment ». Une minute plus tard, en rechargeant,
+      le compte rendu est revenu, avec « 45 min » dans l'en-tête. La page ne
+      reste jamais bloquée pendant l'écriture.
+- [ ] Si vous avez un second compte, simple commercial de la même
+      organisation : sur ce rendez-vous, qui n'est pas le sien, le compte
+      rendu n'a ni MATURITÉ DE L'AFFAIRE, ni CE QUI N'A PAS ÉTÉ COUVERT, ni
+      QUALITÉ DU RENDEZ-VOUS, et aucun score de grille dans l'historique.
 
 ## 4. L'e-mail de suivi (deux minutes)
 
@@ -108,15 +117,22 @@ Sur la même fiche, « Générer le mail de suivi ».
       moyenne à six mois, des nouveaux commerciaux qui signent seuls en trois
       mois.
 - [ ] Les prochaines étapes y sont toutes : la proposition d'ici vendredi,
-      la présentation à Marc Vermont le 7 octobre en fin de matinée, écrite
-      comme acquise et non au conditionnel, et la mise en relation avec
-      Thierry et Sofiane.
+      l'échange de vingt minutes avec deux commerciaux avant la
+      présentation, et la présentation à Marc Vermont « le 7 octobre en fin
+      de matinée », date entière, écrite comme acquise et non au
+      conditionnel.
+- [ ] La mise en relation avec Thierry et Sofiane est demandée à Claire,
+      puisque c'est elle qui a proposé de faire le lien ; Julien ne la prend
+      pas à son compte.
+- [ ] Le mail ne promet rien que Julien n'ait dit : ni garantie, ni
+      résultat.
 - [ ] Aucune date inventée : « d'ici vendredi » reste « d'ici vendredi », sans
       quantième ni mois. La date du rendez-vous peut apparaître (« suite à
       notre rendez-vous du … »), elle est juste.
-- [ ] Ni anglicisme (« adresser un défi »), ni phrase sans verbe.
+- [ ] Ni anglicisme ni jargon (« adresser un défi », « impacter »,
+      « réalités terrain »), ni phrase sans verbe.
 - [ ] La fin : votre signature si elle est remplie dans Paramètres, E-mail
-      de suivi ; sinon la formule de politesse seule.
+      de suivi ; sinon la formule de politesse seule, sans aucun nom.
 
 ## 5. Ce qui ne change pas, et ne doit pas avoir changé
 

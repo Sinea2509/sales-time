@@ -107,7 +107,10 @@ deploy && next build`). Aucune migration destructive sans décision écrite.
   transcript.
 - Le compte rendu de visite est assemblé par le produit à partir d'une
   extraction faite par le modèle ; une rubrique sans matière dit qu'elle n'a
-  pas été abordée (lot 80).
+  pas été abordée (lot 80). Il suit la règle du coaching : ce qui vient de la
+  grille ne se lit que par le commercial assigné et les managers.
+- Une page n'attend jamais le modèle pendant son affichage : ce qui manque
+  s'écrit en arrière-plan (`after`), et la page montre un texte d'attente.
 - Les exemples d'une consigne montrent une forme, et la consigne le dit.
   Aucune consigne ne donne de date précise en exemple : au premier essai en
   production, un modèle a recopié celle d'un exemple dans un mail de suivi.

@@ -14,7 +14,7 @@ deux lots sont indépendants.
    rubrique par rubrique, et se copie d'un clic dans le CRM.
 2. **Les consignes d'origine** du code passent en français, identiques au
    caractère près à celles que le super admin a publiées en production le 24
-   septembre (messages D4 et D5 du document des prompts).
+   septembre (messages D4, D5 et D6 du document des prompts).
 3. **L'e-mail de suivi** reçoit la date du rendez-vous, et sa consigne
    n'invente plus de date.
 4. **Le super admin** retrouve la consigne d'origine d'un bouton, et
@@ -67,8 +67,20 @@ décident la suite et les engagements, n'y figurait jamais.
 
 **Quand il s'écrit.** En arrière-plan, à la fin des quatre analyses, et il
 est enregistré dans `Meeting.visitReportDraft`. Relancer les analyses
-l'efface et le réécrit. Les rendez-vous analysés avant le lot gardent leur
-ancien texte tant qu'ils ne sont pas réanalysés.
+l'efface et le réécrit ; modifier le rendez-vous aussi, puisque le texte
+reprend la fiche. La fiche n'appelle jamais le modèle pendant son affichage :
+s'il manque le compte rendu d'un rendez-vous analysé, elle montre le texte
+indicatif et le fait écrire après la réponse (`after`,
+`meetingVisitReportForPage`). Les rendez-vous analysés avant le lot gardent
+leur ancien texte tant qu'ils ne sont ni modifiés ni réanalysés.
+
+**Ce que chacun peut lire.** La grille et le coaching d'un rendez-vous ne se
+lisent que par le commercial assigné et les managers. Pour les autres
+membres, la page retire du compte rendu, côté serveur, la maturité de
+l'affaire, ce qui n'a pas été couvert, la qualité du rendez-vous et les
+scores de l'historique (`visitReportWithoutSellerCoaching`). Dans
+l'historique, le score d'un rendez-vous mené par un collègue n'est jamais
+repris, même pour le commercial assigné.
 
 **La consigne.** `DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN` (« Compte-rendu
 fiche RDV » dans le super admin) décrit chaque champ du schéma, et un test
@@ -95,7 +107,7 @@ l'autre et une rubrique sans matière dit « non abordé ». La recette note les
 
 `lib/default-analysis-prompts.ts` porte en français les consignes SONCAS,
 DISC, KISS, grille et e-mail de suivi, identiques aux versions publiées en
-production. Les quatre consignes d'analyse finissent sur les règles
+production (analyses en version 4 depuis D5, mail en version 4 avec D6). Les quatre consignes d'analyse finissent sur les règles
 d'écriture de Sales Time (`STYLE_SALES_TIME_MARKDOWN`) : un verbe conjugué
 dans chaque phrase, des suggestions plutôt que des ordres, des questions
 écrites comme on les dit, aucune rubrique remplie sans matière, et des
@@ -115,9 +127,16 @@ de l'exemple de la consigne. Trois parades, gardées par des tests dans
   `meetingContextBlock` dans `src/core/application/generate-follow-up-email.ts`),
   et la consigne interdit d'en déduire d'autres dates.
 
-La consigne du mail demande aussi toutes les étapes convenues, mises en
-relation comprises, écrites comme acquises et non au conditionnel, les
-objectifs chiffrés du prospect, et la formule d'appel seule sur sa ligne.
+Le deuxième essai (D5) n'inventait plus de date, mais faisait prendre au
+commercial une mise en relation que la prospect avait proposé de faire,
+citait ses objectifs sans leurs chiffres et coupait « en fin de matinée »
+d'une date. La consigne du mail (D6) demande donc toutes les étapes
+convenues, chacune avec la personne qui s'y est engagée, une démarche
+proposée par le prospect qui lui est demandée, ses objectifs avec leurs
+chiffres et leurs échéances, des dates entières, rien de promis au-delà de
+ce que le commercial a dit, la formule d'appel seule sur sa ligne, et pas de
+nom quand aucune signature n'est réglée. Les espaces laissées en fin de
+ligne par le modèle sont retirées à l'assemblage du mail.
 
 **La règle pour la suite.** Une consigne changée en production par le super
 admin se recopie dans le code au lot suivant. Sinon, le bouton « Consigne
@@ -286,4 +305,4 @@ change pas : il règle la consigne d'origine de toutes les organisations.
 - [ ] Un commercial sans droit voit la page en lecture seule.
 - [ ] Le journal d'audit du super admin montre les deux actions.
 - [ ] La migration passe sur la branche Neon dev avec `npx prisma migrate
-  deploy`, jamais ailleurs, et `npm run build` passe.
+deploy`, jamais ailleurs, et `npm run build` passe.
