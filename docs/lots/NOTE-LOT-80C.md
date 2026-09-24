@@ -1,7 +1,7 @@
 # Note du lot 80c : les correctifs de l'audit du 24 septembre
 
-Branche `lot-80c`, créée depuis `lot-80` (le lot 80a) : 9 commits de code et
-un de documentation, 73 fichiers, 1 345 lignes ajoutées, 511 retirées.
+Branche `lot-80c`, créée depuis `lot-80` (le lot 80a) : 11 commits, dont un
+de documentation, 73 fichiers de code, 1 349 lignes ajoutées, 511 retirées.
 Aucune migration, aucune dépendance nouvelle, aucune variable
 d'environnement. Un changement de configuration : la tâche planifiée de
 reprise des analyses passe toutes les 15 minutes (`vercel.json`).
@@ -17,7 +17,7 @@ organisation) attend derrière lui.
 2. **L'heure d'un rendez-vous** ne bouge plus à chaque enregistrement.
    Sales Time a un fuseau, Europe/Paris, déclaré à un seul endroit
    (`src/core/domain/app-time-zone.ts`) : le serveur lit l'heure saisie
-   dans ce fuseau, le formulaire la réaffiche dans ce fuseau, et toutes les
+   dans ce fuseau, le formulaire l'affiche de nouveau dans ce fuseau, et toutes les
    dates affichées, le compte rendu, le mail et les données envoyées à l'IA
    s'écrivent dans ce fuseau.
 3. **La grille ne note plus sur des preuves inventées.** Avant le calcul du
