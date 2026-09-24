@@ -1,6 +1,8 @@
+import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
 import {
   generateAndPersistMeetingVisitReport,
   summarizeMeetingDetail,
+  VISIT_REPORT_TRANSCRIPT_MAX_CHARS,
 } from "./summarize-meeting-detail";
 
 jest.mock("@/lib/env", () => ({
@@ -29,10 +31,79 @@ const meeting = {
   analyses: [],
 };
 
+const extraction: VisitReportExtraction = {
+  enUnePhrase: "Un premier échange qui pose le besoin sans chiffrer le budget.",
+  participants: {
+    client: [
+      {
+        nom: "Antoine Lambert",
+        role: "Directeur des achats",
+        statut: "présent",
+      },
+    ],
+    nous: [],
+    cites: [],
+  },
+  origine: "",
+  themes: [],
+  perimetre: { texte: "", citations: [] },
+  concurrence: { texte: "", citations: [] },
+  objections: [],
+  engagements: { texte: "", liste: [], citations: [] },
+  prochainRendezVous: {
+    quand: "",
+    objectif: "",
+    participants: "",
+    aPreparer: "",
+  },
+  prochainesEtapes: [],
+  interlocutorProfile: "Un acheteur prudent qui veut des garanties.",
+};
+
+const prompts = {
+  getCurrentVersion: jest.fn().mockResolvedValue(null),
+  getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+};
+
+function withAiKey() {
+  const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
+  getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: "key" });
+}
+
+function meetingsRepository() {
+  return {
+    updateMeetingVisitReportDraft: jest.fn().mockResolvedValue(true),
+    findMeetingByIdForOrg: jest.fn().mockResolvedValue({ durationMin: 45 }),
+    listMeetingsForPersonInOrg: jest.fn().mockResolvedValue([
+      {
+        id: "m0",
+        sellerUserId: "u1",
+        meetingAt: new Date("2025-12-10T10:00:00.000Z"),
+        meetingType: "Découverte",
+      },
+      {
+        id: "m2",
+        sellerUserId: "u1",
+        meetingAt: new Date("2026-02-01T10:00:00.000Z"),
+        meetingType: "Démo",
+      },
+    ]),
+    findLatestAnalysisForMeeting: jest.fn().mockResolvedValue(null),
+  };
+}
+
 describe("summarizeMeetingDetail", () => {
+  afterEach(() => {
+    const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
+    getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: undefined });
+  });
+
   it("returns stored visit report when present", async () => {
     const result = await summarizeMeetingDetail(
-      { analysis: { summarizeMeetingDetail: jest.fn() } as never, prompts: {} as never },
+      {
+        analysis: { extractVisitReport: jest.fn() } as never,
+        prompts: {} as never,
+      },
       {
         meeting: {
           ...meeting,
@@ -49,7 +120,10 @@ describe("summarizeMeetingDetail", () => {
 
   it("returns fallback when AI is not configured", async () => {
     const result = await summarizeMeetingDetail(
-      { analysis: { summarizeMeetingDetail: jest.fn() } as never, prompts: {} as never },
+      {
+        analysis: { extractVisitReport: jest.fn() } as never,
+        prompts: {} as never,
+      },
       {
         meeting,
         discResult: null,
@@ -72,7 +146,10 @@ describe("summarizeMeetingDetail", () => {
 
   it("shows processing message while analysis runs", async () => {
     const result = await summarizeMeetingDetail(
-      { analysis: { summarizeMeetingDetail: jest.fn() } as never, prompts: {} as never },
+      {
+        analysis: { extractVisitReport: jest.fn() } as never,
+        prompts: {} as never,
+      },
       {
         meeting: { ...meeting, status: "PROCESSING" },
         discResult: null,
@@ -84,51 +161,96 @@ describe("summarizeMeetingDetail", () => {
     expect(result.meetingSynthesis).toContain("en cours de génération");
   });
 
-  it("calls analysis when AI key is set", async () => {
-    const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
-    getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: "key" });
-
-    const summarizeMeetingDetailMock = jest.fn().mockResolvedValue({
-      meetingSynthesis: "Compte-rendu IA.",
-      interlocutorProfile: "Profil IA.",
-    });
-    const prompts = {
-      getCurrentVersion: jest.fn().mockResolvedValue(null),
-      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
-    };
+  it("assembles the visit report from the extraction when the AI key is set", async () => {
+    withAiKey();
+    const extractVisitReport = jest.fn().mockResolvedValue(extraction);
 
     const result = await summarizeMeetingDetail(
-      {
-        analysis: { summarizeMeetingDetail: summarizeMeetingDetailMock } as never,
-        prompts: prompts as never,
-      },
+      { analysis: { extractVisitReport } as never, prompts: prompts as never },
       { meeting, discResult: null, soncasResult: null, kissResult: null },
     );
 
     expect(result.fromAi).toBe(true);
-    expect(result.meetingSynthesis).toBe("Compte-rendu IA.");
-    expect(summarizeMeetingDetailMock).toHaveBeenCalled();
+    expect(
+      result.meetingSynthesis.startsWith(
+        "COMPTE RENDU DE VISITE\nTechVision · 24 janvier 2026 · Découverte",
+      ),
+    ).toBe(true);
+    expect(result.meetingSynthesis).toContain(
+      "EN UNE PHRASE\nUn premier échange qui pose le besoin sans chiffrer le budget.",
+    );
+    expect(result.interlocutorProfile).toBe(
+      "Un acheteur prudent qui veut des garanties.",
+    );
   });
 
-  it("persists AI visit report on first page render when draft is null", async () => {
-    const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
-    getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: "key" });
-
-    const summarizeMeetingDetailMock = jest.fn().mockResolvedValue({
-      meetingSynthesis: "Compte-rendu IA.",
-      interlocutorProfile: "Profil IA.",
-    });
-    const updateMeetingVisitReportDraft = jest.fn().mockResolvedValue(true);
-    const prompts = {
-      getCurrentVersion: jest.fn().mockResolvedValue(null),
-      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
-    };
+  it("sends the transcript within the length limit, with the profiles to adapt to", async () => {
+    withAiKey();
+    const extractVisitReport = jest.fn().mockResolvedValue(extraction);
+    const long = "a".repeat(VISIT_REPORT_TRANSCRIPT_MAX_CHARS + 500);
 
     await summarizeMeetingDetail(
+      { analysis: { extractVisitReport } as never, prompts: prompts as never },
       {
-        analysis: { summarizeMeetingDetail: summarizeMeetingDetailMock } as never,
+        meeting: { ...meeting, transcript: long },
+        discResult: {
+          scores: { D: 10, I: 10, S: 60, C: 20 },
+          dominant: "S",
+          evidence: [],
+          summary: "Un interlocuteur posé.",
+        },
+        soncasResult: null,
+        kissResult: null,
+      },
+    );
+
+    const call = extractVisitReport.mock.calls[0][0];
+    expect(call.transcript).toHaveLength(VISIT_REPORT_TRANSCRIPT_MAX_CHARS);
+    expect(call.discSummary).toBe("Un interlocuteur posé.");
+    expect(call.soncasSummary).toBeNull();
+  });
+
+  it("persists the assembled report with the account history, the duration and both sides", async () => {
+    withAiKey();
+    const extractVisitReport = jest.fn().mockResolvedValue(extraction);
+    const meetings = meetingsRepository();
+    meetings.findLatestAnalysisForMeeting.mockImplementation(
+      async ({ meetingId }: { meetingId: string }) =>
+        meetingId === "m0"
+          ? {
+              result: {
+                gridId: "DECOUVERTE",
+                gridName: "Rendez-vous de découverte",
+                overallScore: 52,
+                blocks: [],
+                criteria: [],
+                pointsLost: [],
+                keep: [],
+                improve: [],
+                stop: [],
+                goldenQuestion: "q",
+                challenge: "c",
+                summary: "s",
+              },
+            }
+          : null,
+    );
+
+    const result = await summarizeMeetingDetail(
+      {
+        analysis: { extractVisitReport } as never,
         prompts: prompts as never,
-        meetings: { updateMeetingVisitReportDraft } as never,
+        meetings: meetings as never,
+        users: {
+          findAccountProfileByUserId: jest
+            .fn()
+            .mockResolvedValue({ firstName: "Julie", lastName: "Martin" }),
+        } as never,
+        organizationSettings: {
+          findByOrganizationId: jest
+            .fn()
+            .mockResolvedValue({ companyName: "Acme Conseil" }),
+        } as never,
       },
       {
         meeting,
@@ -139,34 +261,44 @@ describe("summarizeMeetingDetail", () => {
       },
     );
 
-    expect(updateMeetingVisitReportDraft).toHaveBeenCalledWith({
+    expect(result.meetingSynthesis).toContain(
+      "TechVision · 24 janvier 2026 · Découverte · 45 min",
+    );
+    expect(result.meetingSynthesis).toContain(
+      "1 rendez-vous antérieur avec ce contact :\n- 10 décembre 2025 · Découverte · Julie Martin · grille 52 sur 100",
+    );
+    expect(result.meetingSynthesis).not.toContain("1 février 2026");
+    expect(meetings.updateMeetingVisitReportDraft).toHaveBeenCalledWith({
       id: "m1",
       organizationId: "org1",
-      visitReportDraft: "Compte-rendu IA.",
+      visitReportDraft: result.meetingSynthesis,
     });
+  });
+
+  it("falls back when the model fails", async () => {
+    withAiKey();
+    const extractVisitReport = jest.fn().mockRejectedValue(new Error("boom"));
+
+    const result = await summarizeMeetingDetail(
+      { analysis: { extractVisitReport } as never, prompts: prompts as never },
+      { meeting, discResult: null, soncasResult: null, kissResult: null },
+    );
+
+    expect(result.fromAi).toBe(false);
   });
 });
 
 describe("generateAndPersistMeetingVisitReport", () => {
-  it("persists AI visit report", async () => {
-    const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
-    getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: "key" });
-
-    const summarizeMeetingDetailMock = jest.fn().mockResolvedValue({
-      meetingSynthesis: "Compte-rendu CRM.",
-      interlocutorProfile: "Profil.",
-    });
-    const updateMeetingVisitReportDraft = jest.fn().mockResolvedValue(true);
-    const prompts = {
-      getCurrentVersion: jest.fn().mockResolvedValue(null),
-      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
-    };
+  it("persists the visit report while the meeting is still processing", async () => {
+    withAiKey();
+    const extractVisitReport = jest.fn().mockResolvedValue(extraction);
+    const meetings = meetingsRepository();
 
     await generateAndPersistMeetingVisitReport(
       {
-        analysis: { summarizeMeetingDetail: summarizeMeetingDetailMock } as never,
+        analysis: { extractVisitReport } as never,
         prompts: prompts as never,
-        meetings: { updateMeetingVisitReportDraft } as never,
+        meetings: meetings as never,
       },
       {
         organizationId: "org1",
@@ -177,10 +309,10 @@ describe("generateAndPersistMeetingVisitReport", () => {
       },
     );
 
-    expect(updateMeetingVisitReportDraft).toHaveBeenCalledWith({
-      id: "m1",
-      organizationId: "org1",
-      visitReportDraft: "Compte-rendu CRM.",
-    });
+    expect(meetings.updateMeetingVisitReportDraft).toHaveBeenCalledTimes(1);
+    const saved = meetings.updateMeetingVisitReportDraft.mock.calls[0][0];
+    expect(saved.visitReportDraft.startsWith("COMPTE RENDU DE VISITE")).toBe(
+      true,
+    );
   });
 });

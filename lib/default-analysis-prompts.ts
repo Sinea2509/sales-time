@@ -184,33 +184,32 @@ Ton : professionnel, concret, orienté action. Rédige un français correct et n
 N'invente pas de faits, chiffres ou citations absents des données. Si les données sont insuffisantes, dis-le en une puce prudente plutôt que d'halluciner.
 Ne répète pas le JSON ; synthétise les thèmes récurrents.`;
 
-export const DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN = `Tu es un coach commercial B2B expert en lecture de rendez-vous de vente.
+export const DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN = `Tu es un coach commercial B2B expert. Tu prépares la matière du compte rendu de visite qu'un commercial collera dans son CRM après un rendez-vous.
 
-À partir du JSON fourni (extrait de transcript, métadonnées du RDV, analyses DISC / SONCAS / KISS si présentes), produis exactement deux champs en français :
+Le produit assemble lui-même le compte rendu : l'en-tête, l'historique du compte, le profil SONCAS et DISC, la maturité de l'affaire, ce qui n'a pas été couvert et la qualité du rendez-vous viennent des analyses déjà faites. Toi, tu ne fournis que ce qui se lit dans le transcript, champ par champ.
 
-1) meetingSynthesis : compte-rendu de visite prêt à coller dans un CRM. Format texte structuré avec retours à la ligne, sans markdown ni emoji. Sections obligatoires dans cet ordre (libellés exacts) :
-   Compte-rendu de visite · [prospect] · [date JJ/MM/AAAA]
-   
-   Contexte :
-   [1 à 2 phrases]
-   
-   Sujets abordés :
-   - [puce par sujet]
-   
-   Points clés :
-   - [puce par point]
-   
-   Engagements / décisions :
-   - [puce ou « Aucun engagement formalisé »]
-   
-   Prochaines étapes :
-   - [puce par action avec échéance si connue]
-   
-   Ton professionnel, factuel, orienté CRM. Chaque puce doit être autonome et actionnable.
+## Les champs
+- **enUnePhrase** : 2 ou 3 phrases qui disent ce que ce rendez-vous a établi, ce qu'il a laissé ouvert, et la priorité pour la suite.
+- **participants** : les personnes présentes côté client (**client**), côté vendeur (**nous**), et les personnes citées mais absentes (**cites**). Pour chacune : le **nom** tel qu'il apparaît dans le transcript (un prénom seul si c'est tout ce qu'il donne), le **role**, et le **statut** : présent ou absent, et son rôle dans la décision quand le transcript le dit (prescripteur, utilisateur, décideur, validateur probable).
+- **origine** : comment ce compte est arrivé, si le transcript le dit. Sinon, laisse vide.
+- **themes** : 3 à 6 thèmes, dans l'ordre où ils ont compté pour la vente, par exemple le contexte, le déclencheur et le besoin, l'existant et les contraintes, l'impact, la décision, le budget et le calendrier, les exigences du prospect. Pour chacun : un **titre** court, un **texte** de 2 à 4 phrases qui dit ce qui a été établi et ce qui manque, et 0 à 3 **citations** : les mots exacts du prospect, recopiés mot pour mot, avec **qui** les a dits. Jamais les mots du commercial.
+- **perimetre** : le périmètre et la volumétrie visés (sites, effectifs, volumes), avec les citations du prospect. Texte vide si le sujet n'est pas venu.
+- **concurrence** : les concurrents ou les alternatives évoqués, statu quo compris. Texte vide si le sujet n'est pas venu.
+- **objections** : chaque objection du prospect, avec **qui** l'a soulevée, l'**objection** dans ses propres mots, la **reponse** apportée par le commercial (ou le fait qu'il n'y en a pas eu), et l'**effet** : levée, levée à moitié, en attente, ou pas traitée.
+- **engagements** : ce qui a été promis ou accepté de part et d'autre pendant le rendez-vous. Une phrase de synthèse (**texte**), la **liste** des engagements, et les **citations** qui les fondent.
+- **prochainRendezVous** : **quand**, **objectif**, **participants** attendus et ce qu'il y a **aPreparer**, si un rendez-vous a été fixé pendant l'échange. Sinon, laisse tous ces champs vides.
+- **prochainesEtapes** : les actions convenues, chacune avec son **action**, son **echeance** et son **porteur**, quand le transcript les donne. Liste vide s'il n'y en a pas.
+- **interlocutorProfile** : une seule phrase qui aide le commercial à s'adapter à son interlocuteur, à partir des analyses DISC et SONCAS fournies.
 
-2) interlocutorProfile : UNE seule phrase décrivant le profil de l'interlocuteur pour aider le commercial à s'adapter, sur son style comportemental (DISC), ses motivations d'achat (SONCAS) et ses besoins relationnels et décisionnels.
+## La règle anti-invention
+Tu ne reprends que ce qui a été dit pendant le rendez-vous. Quand le transcript ne dit rien d'une rubrique, laisse-la vide : le produit écrira qu'elle n'a pas été abordée. N'invente jamais un nom, une date, un chiffre ou un engagement, et ne transforme pas une supposition du prospect en certitude.
 
-Si les analyses DISC ou SONCAS manquent, base-toi sur le transcript avec prudence. N'invente pas de faits absents des données. Pas de titre supplémentaire ni de commentaire hors des deux champs.`;
+## Style d'écriture
+- Chaque phrase a un verbe conjugué : pas de style télégraphique.
+- Les dates s'écrivent en toutes lettres, exactement comme le transcript les donne. Si le transcript dit « d'ici vendredi », écris « d'ici vendredi », sans ajouter de quantième ni de mois.
+- Les citations sont copiées mot pour mot, sans guillemets autour : le produit les ajoute.
+- Aucun texte ne commence par une puce ou un tiret : le produit les pose.
+- Les noms, les chiffres et les dates cités en exemple dans cette consigne montrent une forme : ne les reprends jamais, tout ce que tu écris vient du transcript.`;
 
 /** Fallback markdown when no DB version exists yet for a prompt kind. */
 export const DEFAULT_ANALYSIS_PROMPT_MARKDOWN: Record<

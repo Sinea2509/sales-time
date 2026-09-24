@@ -7,12 +7,22 @@ import type {
 } from "@/src/core/domain/analysis-result-zod";
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import type { MeetingStatus } from "@/src/core/domain/meeting-status";
+import {
+  scorecardResultSchema,
+  type ScorecardAnalysisResult,
+} from "@/src/core/domain/scorecard-result-zod";
+import {
+  composeVisitReport,
+  type VisitReportHistoryEntry,
+} from "@/src/core/domain/visit-report";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type {
   MeetingDetailWithAnalyses,
   MeetingRepositoryPort,
 } from "@/src/core/ports/meeting-repository-port";
+import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
+import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 
 export type MeetingDetailSynthesisContent = {
   meetingSynthesis: string;
@@ -25,6 +35,31 @@ const PROCESSING_REPORT_MESSAGE =
 
 const PENDING_REPORT_MESSAGE =
   "L'analyse automatique (SONCAS, DISC, KISS) démarrera dès que le rendez-vous sera enregistré.";
+
+/**
+ * La part du transcript transmise pour le compte rendu.
+ *
+ * Elle était de 8 000 caractères, soit une douzaine de minutes de rendez-vous :
+ * le compte rendu d'un rendez-vous d'une heure s'écrivait sur son premier
+ * quart, et tout ce qui se décidait à la fin (le prochain rendez-vous, les
+ * engagements) n'y figurait jamais. 60 000 caractères couvrent un rendez-vous
+ * de plus d'une heure et restent loin des limites des modèles proposés.
+ */
+export const VISIT_REPORT_TRANSCRIPT_MAX_CHARS = 60_000;
+
+/** Les rendez-vous précédents repris dans l'historique du compte. */
+const VISIT_REPORT_HISTORY_MAX = 5;
+
+type VisitReportDeps = {
+  analysis: AnalysisPort;
+  prompts: PromptTemplateRepositoryPort;
+  meetings?: MeetingRepositoryPort;
+  users?: Pick<UserRepositoryPort, "findAccountProfileByUserId">;
+  organizationSettings?: Pick<
+    OrganizationSettingsRepositoryPort,
+    "findByOrganizationId"
+  >;
+};
 
 function interlocutorProfileFromAnalyses(input: {
   discResult: DiscAnalysisResult | null;
@@ -57,17 +92,122 @@ function fallbackSynthesis(input: {
   };
 }
 
+async function sellerDisplayName(
+  users: VisitReportDeps["users"],
+  sellerUserId: string,
+  cache: Map<string, string | null>,
+): Promise<string | null> {
+  if (!users) return null;
+  if (cache.has(sellerUserId)) return cache.get(sellerUserId) ?? null;
+  const profile = await users
+    .findAccountProfileByUserId(sellerUserId)
+    .catch(() => null);
+  const name =
+    [profile?.firstName, profile?.lastName]
+      .map((part) => part?.trim())
+      .filter(Boolean)
+      .join(" ") || null;
+  cache.set(sellerUserId, name);
+  return name;
+}
+
+/**
+ * Ce que la base sait autour du rendez-vous : sa durée, le nom de
+ * l'organisation, le commercial, et les rendez-vous précédents avec ce contact.
+ *
+ * Chaque morceau est facultatif. Un compte rendu sans historique reste un bon
+ * compte rendu ; un compte rendu jamais écrit parce qu'une requête annexe a
+ * échoué serait une perte sèche.
+ */
+async function loadVisitReportContext(
+  deps: VisitReportDeps,
+  input: { meeting: MeetingDetailWithAnalyses; organizationId?: string },
+): Promise<{
+  durationMin: number | null;
+  organizationName: string | null;
+  sellerName: string | null;
+  history: VisitReportHistoryEntry[];
+}> {
+  const names = new Map<string, string | null>();
+  const sellerName = await sellerDisplayName(
+    deps.users,
+    input.meeting.sellerUserId,
+    names,
+  );
+  const organizationId = input.organizationId;
+  if (!organizationId || !deps.meetings) {
+    return {
+      durationMin: null,
+      organizationName: null,
+      sellerName,
+      history: [],
+    };
+  }
+  const meetings = deps.meetings;
+
+  const [row, settings, personMeetings] = await Promise.all([
+    meetings
+      .findMeetingByIdForOrg({ id: input.meeting.id, organizationId })
+      .catch(() => null),
+    deps.organizationSettings
+      ? deps.organizationSettings
+          .findByOrganizationId(organizationId)
+          .catch(() => null)
+      : Promise.resolve(null),
+    meetings
+      .listMeetingsForPersonInOrg({
+        organizationId,
+        personId: input.meeting.personId,
+      })
+      .catch(() => []),
+  ]);
+
+  const previous = personMeetings
+    .filter(
+      (m) =>
+        m.id !== input.meeting.id &&
+        m.meetingAt.getTime() < input.meeting.meetingAt.getTime(),
+    )
+    .sort((a, b) => b.meetingAt.getTime() - a.meetingAt.getTime())
+    .slice(0, VISIT_REPORT_HISTORY_MAX);
+
+  const history: VisitReportHistoryEntry[] = [];
+  for (const m of previous) {
+    const scorecard = await meetings
+      .findLatestAnalysisForMeeting({
+        meetingId: m.id,
+        organizationId,
+        kind: "SCORECARD",
+      })
+      .catch(() => null);
+    const parsed = scorecard
+      ? scorecardResultSchema.safeParse(scorecard.result)
+      : null;
+    history.push({
+      meetingAt: m.meetingAt,
+      meetingType: m.meetingType,
+      sellerName: await sellerDisplayName(deps.users, m.sellerUserId, names),
+      gridScore: parsed?.success ? parsed.data.overallScore : null,
+    });
+  }
+
+  return {
+    durationMin: row?.durationMin ?? null,
+    organizationName: settings?.companyName?.trim() || null,
+    sellerName,
+    history,
+  };
+}
+
 export async function summarizeMeetingDetail(
-  deps: {
-    analysis: AnalysisPort;
-    prompts: PromptTemplateRepositoryPort;
-    meetings?: MeetingRepositoryPort;
-  },
+  deps: VisitReportDeps,
   input: {
     meeting: MeetingDetailWithAnalyses;
     discResult: DiscAnalysisResult | null;
     soncasResult: SoncasAnalysisResult | null;
     kissResult: KissAnalysisResult | null;
+    /** La grille du rendez-vous : maturité, manques et qualité s'y lisent. */
+    scorecardResult?: ScorecardAnalysisResult | null;
     /** Bypass READY guard (analysis worker after SONCAS/DISC/KISS). */
     forceAiGeneration?: boolean;
     organizationId?: string;
@@ -99,11 +239,15 @@ export async function summarizeMeetingDetail(
   }
 
   try {
-    const [systemMarkdown, model] = await Promise.all([
+    const [systemMarkdown, model, context] = await Promise.all([
       loadAnalysisPromptMarkdown(deps.prompts, "MEETING_DETAIL_SYNTHESIS"),
       resolvePromptGatewayModel(deps.prompts, "MEETING_DETAIL_SYNTHESIS"),
+      loadVisitReportContext(deps, {
+        meeting: input.meeting,
+        organizationId: input.organizationId,
+      }),
     ]);
-    const result = await deps.analysis.summarizeMeetingDetail({
+    const extraction = await deps.analysis.extractVisitReport({
       systemMarkdown,
       model,
       prospectName: input.meeting.prospectName,
@@ -111,62 +255,74 @@ export async function summarizeMeetingDetail(
       meetingAt: input.meeting.meetingAt.toISOString(),
       outcome: input.meeting.outcome,
       meetingType: input.meeting.meetingType,
-      pipelineStage: input.meeting.pipelineStage,
-      transcriptExcerpt: input.meeting.transcript.slice(0, 8_000),
-      discResult: input.discResult,
-      soncasResult: input.soncasResult,
-      kissResult: input.kissResult,
+      transcript: input.meeting.transcript.slice(
+        0,
+        VISIT_REPORT_TRANSCRIPT_MAX_CHARS,
+      ),
+      notes: input.meeting.notes,
+      soncasSummary: input.soncasResult?.summary?.trim() || null,
+      discSummary: input.discResult?.summary?.trim() || null,
     });
-    const synthesis = {
-      meetingSynthesis: result.meetingSynthesis.trim(),
-      interlocutorProfile: result.interlocutorProfile.trim(),
-      fromAi: true,
-    };
-    if (
-      deps.meetings &&
-      input.organizationId &&
-      synthesis.meetingSynthesis.length > 0
-    ) {
+
+    const meetingSynthesis = composeVisitReport({
+      meeting: {
+        prospectName: input.meeting.prospectName,
+        prospectCompany: input.meeting.prospectCompany,
+        meetingAt: input.meeting.meetingAt,
+        meetingType: input.meeting.meetingType,
+        durationMin: context.durationMin,
+        potentialAmount: input.meeting.potentialAmount,
+      },
+      organizationName: context.organizationName,
+      sellerName: context.sellerName,
+      history: context.history,
+      extraction,
+      soncas: input.soncasResult,
+      disc: input.discResult,
+      scorecard: input.scorecardResult ?? null,
+    });
+
+    if (deps.meetings && input.organizationId) {
       await deps.meetings
         .updateMeetingVisitReportDraft({
           id: input.meeting.id,
           organizationId: input.organizationId,
-          visitReportDraft: synthesis.meetingSynthesis,
+          visitReportDraft: meetingSynthesis,
         })
         .catch(() => undefined);
     }
-    return synthesis;
+    return {
+      meetingSynthesis,
+      interlocutorProfile:
+        extraction.interlocutorProfile.trim() ||
+        interlocutorProfileFromAnalyses(input),
+      fromAi: true,
+    };
   } catch {
     return fallback;
   }
 }
 
-/** Generates and persists the CRM visit report after SONCAS/DISC/KISS analyses. */
+/**
+ * Écrit et enregistre le compte rendu de visite à la fin des analyses.
+ *
+ * Il s'écrit ici, en arrière-plan, plutôt qu'à la première ouverture de la
+ * fiche : la page n'attend pas le modèle, et le texte est prêt quand le
+ * commercial arrive.
+ */
 export async function generateAndPersistMeetingVisitReport(
-  deps: {
-    analysis: AnalysisPort;
-    prompts: PromptTemplateRepositoryPort;
-    meetings: MeetingRepositoryPort;
-  },
+  deps: VisitReportDeps & { meetings: MeetingRepositoryPort },
   input: {
     organizationId: string;
     meeting: MeetingDetailWithAnalyses;
     discResult: DiscAnalysisResult | null;
     soncasResult: SoncasAnalysisResult | null;
     kissResult: KissAnalysisResult | null;
+    scorecardResult?: ScorecardAnalysisResult | null;
   },
 ): Promise<void> {
-  const synthesis = await summarizeMeetingDetail(deps, {
+  await summarizeMeetingDetail(deps, {
     ...input,
     forceAiGeneration: true,
-    organizationId: input.organizationId,
-  });
-  if (!synthesis.fromAi || !synthesis.meetingSynthesis.trim()) {
-    return;
-  }
-  await deps.meetings.updateMeetingVisitReportDraft({
-    id: input.meeting.id,
-    organizationId: input.organizationId,
-    visitReportDraft: synthesis.meetingSynthesis.trim(),
   });
 }

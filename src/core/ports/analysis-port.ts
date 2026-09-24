@@ -7,7 +7,7 @@ import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
 import type { ScorecardGeneratedResult } from "@/src/core/domain/scorecard-result-zod";
 import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod";
 import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
-import type { MeetingDetailSynthesisResult } from "@/src/core/domain/meeting-detail-synthesis-zod";
+import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import type { SalesProfileScores } from "@/src/core/domain/sales-profile-from-meetings";
 import type { TeamCoachingRecommendations } from "@/src/core/domain/team-coaching-recommendations-zod";
@@ -163,8 +163,14 @@ export interface AnalysisPort {
     kissRollup: OrgKissRollupForSummary;
   }): Promise<TeamCoachingRecommendations>;
 
-  /** Synthèse narrative du RDV + phrase profil interlocuteur (fiche RDV). */
-  summarizeMeetingDetail(input: {
+  /**
+   * La matière du compte rendu de visite, lue dans le transcript.
+   *
+   * Le modèle ne rend que ce qui ne se trouve nulle part ailleurs (participants,
+   * thèmes, objections, engagements, suite) ; le produit assemble le compte
+   * rendu avec les analyses déjà faites, voir `composeVisitReport`.
+   */
+  extractVisitReport(input: {
     systemMarkdown: string;
     model: string;
     prospectName: string;
@@ -172,10 +178,9 @@ export interface AnalysisPort {
     meetingAt: string;
     outcome: string;
     meetingType: string | null;
-    pipelineStage: string | null;
-    transcriptExcerpt: string;
-    discResult: unknown;
-    soncasResult: unknown;
-    kissResult: unknown;
-  }): Promise<MeetingDetailSynthesisResult>;
+    transcript: string;
+    notes: string | null;
+    soncasSummary: string | null;
+    discSummary: string | null;
+  }): Promise<VisitReportExtraction>;
 }

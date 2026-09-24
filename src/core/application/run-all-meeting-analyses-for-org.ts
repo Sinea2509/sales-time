@@ -3,6 +3,7 @@ import {
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
+import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
@@ -165,11 +166,19 @@ export async function runAllMeetingAnalysesForOrg(
     organizationId: input.organizationId,
     kind: "KISS",
   });
+  const scorecard = await deps.meetings.findLatestAnalysisForMeeting({
+    meetingId: meeting.id,
+    organizationId: input.organizationId,
+    kind: "SCORECARD",
+  });
   const discParsed = disc ? discResultSchema.safeParse(disc.result) : null;
   const soncasParsed = soncas
     ? soncasResultSchema.safeParse(soncas.result)
     : null;
   const kissParsed = kiss ? kissResultSchema.safeParse(kiss.result) : null;
+  const scorecardParsed = scorecard
+    ? scorecardResultSchema.safeParse(scorecard.result)
+    : null;
   if (discParsed?.success || soncasParsed?.success) {
     await deps.meetings.updatePersonProfileCache({
       personId: meeting.personId,
@@ -191,6 +200,8 @@ export async function runAllMeetingAnalysesForOrg(
         analysis: deps.analysis,
         prompts: deps.prompts,
         meetings: deps.meetings,
+        users: deps.users,
+        organizationSettings: deps.organizationSettings,
       },
       {
         organizationId: input.organizationId,
@@ -198,6 +209,7 @@ export async function runAllMeetingAnalysesForOrg(
         discResult: discParsed?.success ? discParsed.data : null,
         soncasResult: soncasParsed?.success ? soncasParsed.data : null,
         kissResult: kissParsed?.success ? kissParsed.data : null,
+        scorecardResult: scorecardParsed?.success ? scorecardParsed.data : null,
       },
     ).catch(() => undefined);
   }

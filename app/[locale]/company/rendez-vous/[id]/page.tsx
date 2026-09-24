@@ -35,7 +35,8 @@ async function previousSalesScoreForMeeting(
   const previousMeeting = personMeetings
     .filter(
       (m) =>
-        m.id !== input.meetingId && m.meetingAt.getTime() < input.meetingAt.getTime(),
+        m.id !== input.meetingId &&
+        m.meetingAt.getTime() < input.meetingAt.getTime(),
     )
     .sort((a, b) => b.meetingAt.getTime() - a.meetingAt.getTime())[0];
   if (!previousMeeting) return null;
@@ -108,9 +109,7 @@ export default async function RendezVousDetailPage({
     ? scorecardResultSchema.safeParse(scorecard.result)
     : null;
 
-  const salesScore = soncas
-    ? salesScoreFromSoncasResult(soncas.result)
-    : null;
+  const salesScore = soncas ? salesScoreFromSoncasResult(soncas.result) : null;
   const previousSalesScore = await previousSalesScoreForMeeting(deps, {
     organizationId,
     personId: meeting.personId,
@@ -138,14 +137,22 @@ export default async function RendezVousDetailPage({
   });
 
   const synthesis = await summarizeMeetingDetail(
-    { ...deps, meetings: deps.meetings },
     {
-    meeting,
-    discResult: discParsed?.success ? discParsed.data : null,
-    soncasResult: soncasParsed?.success ? soncasParsed.data : null,
-    kissResult: kissParsed?.success ? kissParsed.data : null,
-    organizationId,
-  });
+      analysis: deps.analysis,
+      prompts: deps.prompts,
+      meetings: deps.meetings,
+      users: deps.users,
+      organizationSettings: deps.organizationSettings,
+    },
+    {
+      meeting,
+      discResult: discParsed?.success ? discParsed.data : null,
+      soncasResult: soncasParsed?.success ? soncasParsed.data : null,
+      kissResult: kissParsed?.success ? kissParsed.data : null,
+      scorecardResult: scorecardParsed?.success ? scorecardParsed.data : null,
+      organizationId,
+    },
+  );
 
   const canViewSellerCoaching = isSeller || actor.canManageOrganization;
 
