@@ -193,6 +193,7 @@ export function AdminUserTable({ users, organizations }: Props) {
         </div>
         <Select
           value={statusFilter}
+          items={{ all: "Tous", ACTIVE: "Actifs", DISABLED: "Bloqués" }}
           onValueChange={(v: string | null) => {
             if (v) setStatusFilter(v as "all" | "ACTIVE" | "DISABLED");
           }}
@@ -621,6 +622,10 @@ export function AdminUserTable({ users, organizations }: Props) {
               <Label>Rôle</Label>
               <Select
                 value={inviteRole}
+                items={{
+                  MEMBER: organizationMembershipRoleLabel("MEMBER"),
+                  ADMIN: organizationMembershipRoleLabel("ADMIN"),
+                }}
                 onValueChange={(v: string | null) => {
                   if (v) setInviteRole(v as "ADMIN" | "MEMBER");
                 }}

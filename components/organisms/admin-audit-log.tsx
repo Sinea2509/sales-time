@@ -127,6 +127,13 @@ export function AdminAuditLog({ logs }: Props) {
         />
         <Select
           value={actionFilter}
+          items={ACTION_OPTIONS.map((opt) => ({
+            value: opt,
+            label:
+              opt === "Tous"
+                ? "Tous les types"
+                : (PLATFORM_AUDIT_ACTION_LABELS[opt] ?? opt),
+          }))}
           onValueChange={(v: string | null) => {
             if (v) setActionFilter(v as ActionType);
           }}

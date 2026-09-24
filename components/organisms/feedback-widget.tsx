@@ -40,6 +40,25 @@ import type {
 
 type WidgetPhase = "idle" | "choose" | "picking" | "form";
 
+/*
+  Les libellés des deux listes, donnés aussi à la racine du Select : sans eux,
+  la liste fermée affichait la valeur technique (« BUG », « HIGH ») tant qu'elle
+  n'avait pas été ouverte une fois.
+*/
+const FEEDBACK_TYPE_LABELS = {
+  BUG: "Bug",
+  IDEA: "Idée",
+  QUESTION: "Question",
+  OTHER: "Autre",
+};
+
+const FEEDBACK_PRIORITY_LABELS = {
+  LOW: "Basse",
+  MEDIUM: "Moyenne",
+  HIGH: "Haute",
+  CRITICAL: "Critique",
+};
+
 export function FeedbackWidget() {
   const [phase, setPhase] = useState<WidgetPhase>("idle");
   const [pending, startTransition] = useTransition();
@@ -259,6 +278,7 @@ export function FeedbackWidget() {
                     <Label htmlFor="feedback-type">Type</Label>
                     <Select
                       value={type}
+                      items={FEEDBACK_TYPE_LABELS}
                       onValueChange={(value) => {
                         if (
                           value !== "BUG" &&
@@ -289,6 +309,7 @@ export function FeedbackWidget() {
                     <Label htmlFor="feedback-priority">Priorité</Label>
                     <Select
                       value={priority}
+                      items={FEEDBACK_PRIORITY_LABELS}
                       onValueChange={(value) => {
                         if (
                           value !== "LOW" &&
@@ -344,6 +365,7 @@ export function FeedbackWidget() {
                     disabled={pending || message.trim().length < 5}
                     onClick={handleSubmit}
                     data-feedback-id="feedback-submit"
+                    className="bg-brand text-brand-foreground hover:bg-brand-hover"
                   >
                     {pending ? "Envoi…" : "Envoyer"}
                   </Button>

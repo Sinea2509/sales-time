@@ -135,6 +135,7 @@ export function PlanUpgradeRequestForm() {
             type="submit"
             disabled={pending}
             data-feedback-id="plan-upgrade-submit"
+            className="bg-brand text-brand-foreground hover:bg-brand-hover"
           >
             {pending ? "Envoi…" : "Envoyer la demande"}
           </Button>

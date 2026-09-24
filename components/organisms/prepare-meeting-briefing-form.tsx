@@ -258,7 +258,11 @@ export function PrepareMeetingBriefingForm({
             {error}
           </p>
         ) : null}
-        <Button type="submit" disabled={pending}>
+        <Button
+          type="submit"
+          disabled={pending}
+          className="bg-brand text-brand-foreground hover:bg-brand-hover"
+        >
           {pending ? "Génération…" : "Préparer le briefing"}
         </Button>
       </form>

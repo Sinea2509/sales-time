@@ -127,6 +127,7 @@ export function TeamMemberInviteDialog({
                 <Label htmlFor="team-invite-role">Rôle</Label>
                 <Select
                   value={role}
+                  items={ONBOARDING_INVITE_ROLE_OPTIONS}
                   onValueChange={(value: string | null) => {
                     if (value === "ADMIN" || value === "MEMBER") {
                       setRole(value);
