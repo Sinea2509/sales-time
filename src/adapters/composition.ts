@@ -24,6 +24,7 @@ import { PrismaNotificationRepository } from "@/src/adapters/prisma/prisma-notif
 import { PrismaOrganizationQuotaRepository } from "@/src/adapters/prisma/prisma-organization-quota-repository";
 import { PrismaAiSummaryCacheRepository } from "@/src/adapters/prisma/prisma-ai-summary-cache-repository";
 import { PrismaPromptTemplateRepository } from "@/src/adapters/prisma/prisma-prompt-template-repository";
+import { PrismaOrganizationPromptRepository } from "@/src/adapters/prisma/prisma-organization-prompt-repository";
 import { PrismaSignInReadRepository } from "@/src/adapters/prisma/prisma-sign-in-read-repository";
 import { PrismaOrganizationInvitationRepository } from "@/src/adapters/prisma/prisma-organization-invitation-repository";
 import { PrismaSuperAdminInvitationRepository } from "@/src/adapters/prisma/prisma-super-admin-invitation-repository";
@@ -46,6 +47,7 @@ import type { SuperAdminInvitationRepositoryPort } from "@/src/core/ports/super-
 import type { PlatformHealthRepositoryPort } from "@/src/core/ports/platform-health-repository-port";
 import type { PasswordResetRepositoryPort } from "@/src/core/ports/password-reset-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
+import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organization-prompt-repository-port";
 import type { RegistrationRepositoryPort } from "@/src/core/ports/registration-repository-port";
 import type { SignInReadPort } from "@/src/core/ports/sign-in-read-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
@@ -69,6 +71,8 @@ export type ApplicationDeps = {
   meetings: MeetingRepositoryPort;
   contacts: ContactRepositoryPort;
   prompts: PromptTemplateRepositoryPort;
+  /** Les consignes modifiées par une organisation (Paramètres, Coach IA). */
+  organizationPrompts: OrganizationPromptRepositoryPort;
   analysis: AnalysisPort;
   organizationSettings: OrganizationSettingsRepositoryPort;
   onboardingProfiles: OnboardingProfileRepositoryPort;
@@ -104,6 +108,7 @@ export function makeApplicationDeps(): ApplicationDeps {
     meetings: new PrismaMeetingRepository(prisma),
     contacts: new PrismaContactRepository(prisma),
     prompts: new PrismaPromptTemplateRepository(prisma),
+    organizationPrompts: new PrismaOrganizationPromptRepository(prisma),
     analysis: new VercelAIAnalysisAdapter(),
     organizationSettings: new PrismaOrganizationSettingsRepository(prisma),
     onboardingProfiles: new PrismaOnboardingProfileRepository(prisma),
