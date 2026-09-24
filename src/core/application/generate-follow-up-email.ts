@@ -11,6 +11,43 @@ function xml(tag: string, body: string) {
   return `<${tag}>\n${body}\n</${tag}>`;
 }
 
+const meetingDate = new Intl.DateTimeFormat("fr-FR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "Europe/Paris",
+});
+
+/**
+ * Ce que la fiche sait du rendez-vous, en tête du message.
+ *
+ * Sans la date, un modèle qui veut dater le mail la prend où il la trouve :
+ * au premier essai en production, il a recopié celle que sa consigne donnait
+ * en exemple. Avec elle, il peut écrire « suite à notre rendez-vous de jeudi »
+ * sans rien inventer, et la consigne lui interdit d'en déduire d'autres dates.
+ */
+export function meetingContextBlock(
+  meeting: Pick<
+    MeetingDetailWithAnalyses,
+    "meetingAt" | "prospectName" | "prospectCompany" | "meetingType"
+  >,
+): string {
+  return xml(
+    "meeting",
+    [
+      `meetingDate: ${meetingDate.format(meeting.meetingAt)}`,
+      `prospectName: ${meeting.prospectName}`,
+      meeting.prospectCompany
+        ? `prospectCompany: ${meeting.prospectCompany}`
+        : "",
+      meeting.meetingType ? `meetingType: ${meeting.meetingType}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
+}
+
 export async function generateFollowUpEmailForMeeting(
   deps: {
     analysis: AnalysisPort;
@@ -22,6 +59,7 @@ export async function generateFollowUpEmailForMeeting(
   },
 ) {
   const prefs = [
+    meetingContextBlock(input.meeting),
     xml(
       "email_preferences",
       [

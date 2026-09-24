@@ -1,11 +1,18 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  DEFAULT_DISC_MARKDOWN,
+  DEFAULT_FOLLOW_UP_EMAIL_SYSTEM,
   DEFAULT_KISS_MARKDOWN,
+  DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN,
   DEFAULT_ORG_KISS_ROLLUP_MARKDOWN,
+  DEFAULT_SCORECARD_MARKDOWN,
   DEFAULT_SELLER_AFFINITY_MARKDOWN,
   DEFAULT_SELLER_PERFORMANCE_MARKDOWN,
+  DEFAULT_SONCAS_MARKDOWN,
   DEFAULT_TEAM_COACHING_MARKDOWN,
+  STYLE_SALES_TIME_MARKDOWN,
 } from "./default-analysis-prompts";
+import { visitReportExtractionSchema } from "@/src/core/domain/visit-report-zod";
 
 /**
  * Ces tests relisent le contrat de précision des cinq prompts de coaching :
@@ -66,16 +73,155 @@ describe("contrat de précision des prompts de coaching", () => {
   });
 
   it("le prompt KISS ancre chaque puce dans le transcript et vise la suite", () => {
-    expect(DEFAULT_KISS_MARKDOWN).toContain("Anchor every bullet");
-    expect(DEFAULT_KISS_MARKDOWN).toContain("next meeting");
-    expect(DEFAULT_KISS_MARKDOWN).toContain("any seller in any meeting");
+    expect(DEFAULT_KISS_MARKDOWN).toContain("Ancre chaque puce");
+    expect(DEFAULT_KISS_MARKDOWN).toContain("prochain rendez-vous");
+    expect(DEFAULT_KISS_MARKDOWN).toContain(
+      "n'importe quel commercial, dans n'importe quel rendez-vous",
+    );
   });
 
-  it("le prompt KISS demande une voix de coach, pas de preneur de notes", () => {
-    expect(DEFAULT_KISS_MARKDOWN).toContain("the seller's coach, not a note");
-    // Le geste concret : une question, une phrase, un exercice, utilisable au
-    // prochain appel. Sans lui, la puce redevient une étiquette.
-    expect(DEFAULT_KISS_MARKDOWN).toContain("the concrete move");
-    expect(DEFAULT_KISS_MARKDOWN).toContain("is a label, not coaching");
+  it("le prompt KISS demande une voix de coach allié, pas de preneur de notes", () => {
+    expect(DEFAULT_KISS_MARKDOWN).toContain(
+      "le coach du commercial et son allié, ni un preneur de notes ni un juge",
+    );
+    // La suggestion concrète : une question, une phrase, un exercice, utilisable
+    // au prochain rendez-vous. Sans elle, la puce redevient une étiquette.
+    expect(DEFAULT_KISS_MARKDOWN).toContain(
+      "une question à poser, une phrase à dire, un exercice à essayer",
+    );
+    expect(DEFAULT_KISS_MARKDOWN).toContain(
+      "est une étiquette, pas du coaching",
+    );
+  });
+});
+
+describe("les décisions des revues du 2 et du 8 septembre", () => {
+  it("les quatre consignes d'analyse finissent sur les règles d'écriture de Sales Time", () => {
+    for (const consigne of [
+      DEFAULT_SONCAS_MARKDOWN,
+      DEFAULT_DISC_MARKDOWN,
+      DEFAULT_KISS_MARKDOWN,
+      DEFAULT_SCORECARD_MARKDOWN,
+    ]) {
+      expect(consigne.endsWith(STYLE_SALES_TIME_MARKDOWN)).toBe(true);
+    }
+    expect(STYLE_SALES_TIME_MARKDOWN).toContain("verbe conjugué");
+    expect(STYLE_SALES_TIME_MARKDOWN).toContain("nous vous suggérons de");
+    expect(STYLE_SALES_TIME_MARKDOWN).toContain(
+      "ne remplis pas un champ pour le remplir",
+    );
+  });
+
+  it("le DISC lit la forme plutôt que le fond, et parle d'une tendance observée", () => {
+    expect(DEFAULT_DISC_MARKDOWN).toContain("Lire la forme, pas le fond");
+    expect(DEFAULT_DISC_MARKDOWN).toContain("pas un test de personnalité");
+    expect(DEFAULT_DISC_MARKDOWN).toContain("jamais du « style dominant »");
+  });
+
+  it("la grille présente ses manques comme une marge de progrès, avec notre suggestion", () => {
+    expect(DEFAULT_SCORECARD_MARKDOWN).toContain("« Où gagner des points »");
+    expect(DEFAULT_SCORECARD_MARKDOWN).toContain("« Notre suggestion : »");
+    expect(DEFAULT_SCORECARD_MARKDOWN).toContain(
+      "elle dit pourquoi la question est posée, puis la pose",
+    );
+  });
+
+  it("l'e-mail de suivi a un objet sobre et n'invente aucune date", () => {
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "un objet sobre et factuel",
+    );
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain("en toutes lettres");
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "n'invente jamais une date",
+    );
+  });
+
+  it("la consigne du compte rendu décrit chacun des champs que le schéma attend", () => {
+    /*
+      Le format de réponse est imposé par le schéma, mais c'est la consigne
+      qui dit au modèle ce que chaque champ doit contenir. Un champ ajouté au
+      schéma sans être décrit ici reviendrait vide, ou rempli au hasard.
+    */
+    for (const cle of Object.keys(visitReportExtractionSchema.shape)) {
+      expect([
+        cle,
+        DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN.includes(`**${cle}**`),
+      ]).toEqual([cle, true]);
+    }
+    expect(DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN).toContain(
+      "La règle anti-invention",
+    );
+  });
+});
+
+describe("les corrections du premier essai en production", () => {
+  /*
+    Au premier essai, le mail de Claire Morel annonçait un rendez-vous le
+    « vendredi 12 mai » : la date venait de l'exemple de la consigne, pas du
+    transcript. Ces tests gardent les trois parades : aucune consigne ne donne
+    une date précise à recopier, chacune dit que ses exemples montrent une
+    forme, et le mail reprend les étapes que le premier essai avait oubliées.
+  */
+  const CONSIGNES_DU_TRANSCRIPT = {
+    SONCAS: DEFAULT_SONCAS_MARKDOWN,
+    DISC: DEFAULT_DISC_MARKDOWN,
+    KISS: DEFAULT_KISS_MARKDOWN,
+    SCORECARD: DEFAULT_SCORECARD_MARKDOWN,
+    FOLLOW_UP_EMAIL: DEFAULT_FOLLOW_UP_EMAIL_SYSTEM,
+    MEETING_DETAIL_SYNTHESIS: DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN,
+  };
+  const DATE_PRECISE =
+    /\b\d{1,2}(er)? (janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)\b/i;
+
+  it("aucune consigne ne donne une date précise qu'un modèle pourrait recopier", () => {
+    for (const [type, consigne] of Object.entries(CONSIGNES_DU_TRANSCRIPT)) {
+      expect([type, consigne.match(DATE_PRECISE)?.[0] ?? null]).toEqual([
+        type,
+        null,
+      ]);
+    }
+  });
+
+  it("chaque consigne dit que ses exemples montrent une forme, jamais un fait", () => {
+    for (const [type, consigne] of Object.entries(CONSIGNES_DU_TRANSCRIPT)) {
+      expect([type, consigne.includes("montrent une forme")]).toEqual([
+        type,
+        true,
+      ]);
+    }
+    expect(
+      STYLE_SALES_TIME_MARKDOWN.endsWith(
+        "tout ce que tu écris vient du transcript.",
+      ),
+    ).toBe(true);
+  });
+
+  it("le mail garde la date telle que le transcript la donne", () => {
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "Si le transcript dit « d'ici vendredi », écris « d'ici vendredi », sans ajouter de quantième ni de mois.",
+    );
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "n'en déduis aucune autre date",
+    );
+  });
+
+  it("le mail reprend toutes les étapes convenues, et les écrit comme acquises", () => {
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "les mises en relation que le prospect a proposées",
+    );
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain("pas au conditionnel");
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "les objectifs chiffrés qu'il a donnés",
+    );
+  });
+
+  it("le mail ouvre sur la formule d'appel seule, et se passe de signature quand il n'y en a pas", () => {
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "la formule d'appel seule sur sa première ligne",
+    );
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "Si aucune signature n'est fournie, termine par la formule de politesse seule",
+    );
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain("on n'« adresse » pas");
   });
 });
