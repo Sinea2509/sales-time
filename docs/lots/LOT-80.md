@@ -2,9 +2,10 @@
 
 Le lot est coupé en deux pour avancer vite. **80a** ne touche pas la base de
 données : il est codé sur la branche `lot-80`, créée depuis `lot-77`. **80b**
-ajoute une table : il se code sur une branche `lot-80b`, créée depuis
-`lot-80`. Lire `README.md` avant de commencer. Le lot 78 passe après : les
-deux lots sont indépendants.
+ajoute une table : il est codé sur la branche `lot-80b`, créée depuis
+`lot-80c`, les correctifs de l'audit du 24 septembre passés entre les deux
+(`NOTE-LOT-80C.md`). Lire `README.md` avant de commencer. Le lot 78 passe
+après : les deux lots sont indépendants.
 
 ## 1. Ce que le lot change, en une phrase par sujet
 
@@ -21,7 +22,7 @@ deux lots sont indépendants.
    l'éditeur ne s'ouvre plus sur un texte de service.
 5. **Le test des colonnes** passe sous Windows.
 
-80b, à coder :
+80b, codé le 24 septembre (`NOTE-LOT-80B.md`) :
 
 6. **Chaque manager** modifie les consignes de son organisation dans
    Paramètres, Coach IA, avec « Réinitialiser » et la date de la
@@ -101,7 +102,8 @@ avec « Tout afficher » et « Replier ». En pied, le nombre de caractères.
 pour un rendez-vous fictif ; ici, chaque rubrique est remplie par le modèle à
 partir du vrai transcript, donc la formulation varie d'un rendez-vous à
 l'autre et une rubrique sans matière dit « non abordé ». La recette note les
-écarts visibles ; ceux qui gênent se corrigent au lot 80b.
+écarts visibles ; ceux qui gênent se corrigent au lot suivant, le 80b
+n'ayant reçu aucun retour de recette sur le compte rendu.
 
 ## 3. Les consignes d'origine (80a, codé)
 
@@ -151,7 +153,7 @@ consigne d'origine, celle que les analyses emploient déjà, et non plus sur
 « Aucun prompt : exécutez npx prisma db seed », qu'une publication distraite
 aurait installé comme consigne de toutes les organisations.
 
-## 5. Les consignes par organisation (80b, à coder)
+## 5. Les consignes par organisation (80b, codé)
 
 **Le besoin** (point 27 de la revue du 8 septembre, maquette, Paramètres,
 Coach IA). Chaque manager ajuste le rôle et le ton du coach pour son
@@ -178,19 +180,26 @@ model OrganizationPromptVersion {
   kind           AnalysisKind
   /// Le texte enregistré par le manager ; null quand il a réinitialisé.
   markdown       String?      @db.Text
-  authorUserId   String
-  author         User         @relation(fields: [authorUserId], references: [id], onDelete: Restrict)
+  /// Null quand l'auteur a été supprimé par le super admin : la ligne reste.
+  authorUserId   String?
+  author         User?        @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
   createdAt      DateTime     @default(now())
+  analyses       MeetingAnalysis[]
 
   @@index([organizationId, kind, createdAt])
 }
 ```
 
+L'auteur est facultatif, et non `Restrict` comme prévu d'abord : le super
+admin supprime définitivement un utilisateur, et la suppression d'un manager
+qui a modifié une consigne aurait échoué. La migration s'appelle
+`20260924120000_organization_prompt_version`.
+
 Et une colonne facultative sur `MeetingAnalysis` :
 `organizationPromptVersionId String?`, reliée à `OrganizationPromptVersion`
-avec `onDelete: SetNull`, pour savoir après coup quelle consigne a produit
-une analyse. `promptVersionId` reste obligatoire et continue de pointer vers
-la version du super admin.
+avec `onDelete: SetNull` et un index, pour savoir après coup quelle consigne
+a produit une analyse. `promptVersionId` reste obligatoire et continue de
+pointer vers la version du super admin.
 
 Rien ne se modifie ni ne s'efface : chaque enregistrement et chaque
 réinitialisation ajoutent une ligne. La consigne en vigueur est la dernière
@@ -306,3 +315,15 @@ change pas : il règle la consigne d'origine de toutes les organisations.
 - [ ] Le journal d'audit du super admin montre les deux actions.
 - [ ] La migration passe sur la branche Neon dev avec `npx prisma migrate
 deploy`, jamais ailleurs, et `npm run build` passe.
+
+### 5.7 Ce que le code a précisé
+
+Le détail est dans `NOTE-LOT-80B.md`, section 2. En bref : un texte
+identique à celui en vigueur n'ajoute pas de version, pour ne pas figer la
+consigne d'origine du jour ; « Réinitialiser » se confirme d'un second
+clic ; la fenêtre ne se ferme pas sur un clic à côté et demande de confirmer
+l'abandon d'un texte modifié ; l'action refuse d'écrire si l'organisation
+active a changé dans un autre onglet ; les membres sans droit voient l'état
+des consignes, pas leur texte ; la carte DISC ne promet pas de preuves par
+style, que le schéma DISC n'a pas ; le journal des appels écrit
+`org:<identifiant>` quand la consigne de l'organisation a servi.

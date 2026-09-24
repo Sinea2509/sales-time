@@ -127,3 +127,14 @@ deploy && next build`). Aucune migration destructive sans décision écrite.
 - Une consigne publiée en production par le super admin se recopie dans
   `lib/default-analysis-prompts.ts` au lot suivant, pour que le bouton
   « Consigne d'origine » ramène le texte en vigueur.
+- Une organisation peut remplacer six consignes (Scorecard, SONCAS, DISC,
+  KISS, compte rendu, e-mail de suivi) par les siennes, dans Paramètres,
+  Coach IA ; les échelles, la grille, la règle de preuve et la typographie
+  restent ajoutées par le produit autour de toute consigne. La règle est
+  unique (`src/core/application/resolve-analysis-prompt.ts`) : consigne de
+  l'organisation, sinon version courante du super admin, sinon consigne du
+  code. Le briefing, les synthèses du manager et le modèle d'IA restent
+  globaux (lot 80b).
+- Une consigne d'organisation ne se modifie ni ne s'efface : chaque
+  enregistrement et chaque réinitialisation ajoutent une ligne, et chaque
+  analyse garde la trace de la consigne qui l'a produite.
