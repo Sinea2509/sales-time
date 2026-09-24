@@ -13,6 +13,17 @@ describe("platform-audit-actions", () => {
     expect(PLATFORM_AUDIT_ACTION_LABELS.CREATE_MEETING).toBe("Créer rendez-vous");
   });
 
+  it("nomme les deux actions des consignes d'organisation", () => {
+    expect(PLATFORM_AUDIT_ACTIONS).toContain("ORG_PROMPT_UPDATED");
+    expect(PLATFORM_AUDIT_ACTIONS).toContain("ORG_PROMPT_RESET");
+    expect(PLATFORM_AUDIT_ACTION_LABELS.ORG_PROMPT_UPDATED).toBe(
+      "Consigne d'organisation modifiée",
+    );
+    expect(PLATFORM_AUDIT_ACTION_LABELS.ORG_PROMPT_RESET).toBe(
+      "Consigne d'organisation réinitialisée",
+    );
+  });
+
   it("resolves system and global organization labels", () => {
     expect(resolveAuditOrganizationLabel(SYSTEM_AUDIT_ORG_ID, null)).toBe(
       "Système",

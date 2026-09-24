@@ -23,6 +23,8 @@ export const PLATFORM_AUDIT_ACTIONS = [
   "USER_JOIN_ORGANIZATION",
   "ORG_CREATED",
   "CREATE_MEETING",
+  "ORG_PROMPT_UPDATED",
+  "ORG_PROMPT_RESET",
 ] as const;
 
 export type PlatformAuditAction = (typeof PLATFORM_AUDIT_ACTIONS)[number];
@@ -53,6 +55,8 @@ export const PLATFORM_AUDIT_ACTION_LABELS: Record<string, string> = {
   USER_JOIN_ORGANIZATION: "Rejoindre une org",
   ORG_CREATED: "Création org (onboarding)",
   CREATE_MEETING: "Créer rendez-vous",
+  ORG_PROMPT_UPDATED: "Consigne d'organisation modifiée",
+  ORG_PROMPT_RESET: "Consigne d'organisation réinitialisée",
 };
 
 export const SYSTEM_AUDIT_ORG_ID = "system";
