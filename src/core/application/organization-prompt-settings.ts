@@ -74,6 +74,29 @@ export type OrganizationPromptChangeResult =
 const NOT_EDITABLE_MESSAGE = "Cette consigne ne se règle pas par organisation.";
 
 /**
+ * Inscrit le changement au journal d'audit, sans faire échouer le changement.
+ *
+ * La consigne est déjà enregistrée quand le journal s'écrit. Une erreur ici
+ * annoncerait au manager un échec qui n'a pas eu lieu, et le nouvel essai ne
+ * changerait plus rien, puisque le texte est déjà en vigueur : l'entrée
+ * manquerait de toute façon. Elle est donc signalée aux journaux du serveur.
+ */
+async function logChange(
+  audit: AuditRepositoryPort,
+  entry: Parameters<AuditRepositoryPort["logPlatformAction"]>[0],
+): Promise<void> {
+  try {
+    await audit.logPlatformAction(entry);
+  } catch (error) {
+    console.error("Journal d'audit non écrit pour une consigne", {
+      action: entry.action,
+      organizationId: entry.organizationId,
+      error,
+    });
+  }
+}
+
+/**
  * Enregistre la consigne d'un manager, en nouvelle version.
  *
  * Un texte identique à la consigne en vigueur n'ajoute rien : ni ligne, ni
@@ -123,7 +146,7 @@ export async function saveOrganizationPrompt(
     markdown: checked.markdown,
     authorUserId: input.actorUserId,
   });
-  await deps.audit.logPlatformAction({
+  await logChange(deps.audit, {
     actorUserId: input.actorUserId,
     organizationId: input.organizationId,
     action: "ORG_PROMPT_UPDATED",
@@ -164,7 +187,7 @@ export async function resetOrganizationPrompt(
     markdown: null,
     authorUserId: input.actorUserId,
   });
-  await deps.audit.logPlatformAction({
+  await logChange(deps.audit, {
     actorUserId: input.actorUserId,
     organizationId: input.organizationId,
     action: "ORG_PROMPT_RESET",

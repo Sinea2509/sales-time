@@ -111,6 +111,7 @@ describe("summarizeMeetingDetail", () => {
         organizationPrompts: noOrganizationPrompts(),
       },
       {
+        organizationId: "org_1",
         meeting: {
           ...meeting,
           visitReportDraft: "Compte-rendu CRM stocké.",
@@ -132,6 +133,7 @@ describe("summarizeMeetingDetail", () => {
         organizationPrompts: noOrganizationPrompts(),
       },
       {
+        organizationId: "org_1",
         meeting,
         discResult: null,
         soncasResult: null,
@@ -159,6 +161,7 @@ describe("summarizeMeetingDetail", () => {
         organizationPrompts: noOrganizationPrompts(),
       },
       {
+        organizationId: "org_1",
         meeting: { ...meeting, status: "PROCESSING" },
         discResult: null,
         soncasResult: null,
@@ -179,7 +182,13 @@ describe("summarizeMeetingDetail", () => {
         prompts: prompts as never,
         organizationPrompts: noOrganizationPrompts(),
       },
-      { meeting, discResult: null, soncasResult: null, kissResult: null },
+      {
+        organizationId: "org_1",
+        meeting,
+        discResult: null,
+        soncasResult: null,
+        kissResult: null,
+      },
     );
 
     expect(result.fromAi).toBe(true);
@@ -247,6 +256,7 @@ describe("summarizeMeetingDetail", () => {
         organizationPrompts: noOrganizationPrompts(),
       },
       {
+        organizationId: "org_1",
         meeting: { ...meeting, transcript: long },
         discResult: {
           scores: { D: 10, I: 10, S: 60, C: 20 },
@@ -341,7 +351,13 @@ describe("summarizeMeetingDetail", () => {
         prompts: prompts as never,
         organizationPrompts: noOrganizationPrompts(),
       },
-      { meeting, discResult: null, soncasResult: null, kissResult: null },
+      {
+        organizationId: "org_1",
+        meeting,
+        discResult: null,
+        soncasResult: null,
+        kissResult: null,
+      },
     );
 
     expect(result.fromAi).toBe(false);

@@ -242,7 +242,12 @@ export async function summarizeMeetingDetail(
     scorecardResult?: ScorecardAnalysisResult | null;
     /** Bypass READY guard (analysis worker after SONCAS/DISC/KISS). */
     forceAiGeneration?: boolean;
-    organizationId?: string;
+    /**
+     * L'organisation du rendez-vous, obligatoire : c'est elle qui choisit la
+     * consigne du compte rendu, et un appel qui l'oublierait écrirait en
+     * silence avec la consigne d'origine.
+     */
+    organizationId: string;
   },
 ): Promise<MeetingDetailSynthesisContent> {
   const storedReport = input.meeting.visitReportDraft?.trim();
@@ -274,7 +279,7 @@ export async function summarizeMeetingDetail(
     const [prompt, model, context] = await Promise.all([
       resolveAnalysisPrompt(deps, {
         kind: "MEETING_DETAIL_SYNTHESIS",
-        organizationId: input.organizationId ?? null,
+        organizationId: input.organizationId,
       }),
       resolvePromptGatewayModel(deps.prompts, "MEETING_DETAIL_SYNTHESIS"),
       loadVisitReportContext(deps, {
@@ -319,7 +324,7 @@ export async function summarizeMeetingDetail(
       scorecard: input.scorecardResult ?? null,
     });
 
-    if (deps.meetings && input.organizationId) {
+    if (deps.meetings) {
       await deps.meetings
         .updateMeetingVisitReportDraft({
           id: input.meeting.id,

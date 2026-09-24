@@ -1,7 +1,13 @@
 import { describe, expect, it } from "@jest/globals";
-import { KISS_SELLER_SKILLS_INSTRUCTION } from "@/lib/ai-system-prompt";
+import {
+  FRENCH_TYPOGRAPHY_INSTRUCTION,
+  KISS_SELLER_SKILLS_INSTRUCTION,
+} from "@/lib/ai-system-prompt";
 import type { OrganizationPromptKind } from "@/src/core/domain/organization-prompts";
-import { soncasScoreScaleInstruction } from "@/src/core/domain/profile-score-scale";
+import {
+  discScoreScaleInstruction,
+  soncasScoreScaleInstruction,
+} from "@/src/core/domain/profile-score-scale";
 import {
   DEFAULT_SCORECARD_GRID,
   scorecardCriteria,
@@ -248,5 +254,79 @@ describe("runMeetingAnalysis avec une consigne d'organisation", () => {
 
     expect(logged(deps).systemPrompt).toContain(SUPER_ADMIN_TEXT);
     expect(logged(deps).systemPrompt).not.toContain(ORG_TEXT);
+  });
+  it("garde l'échelle DISC et la typographie autour d'une consigne DISC modifiée", async () => {
+    const deps = harness([
+      { organizationId: "org_a", kind: "DISC", markdown: ORG_TEXT },
+    ]);
+    await runMeetingAnalysis(deps as never, {
+      organizationId: "org_a",
+      meetingId: "m1",
+      kind: "DISC",
+    });
+
+    const systemPrompt = logged(deps).systemPrompt;
+    expect(systemPrompt).toContain(ORG_TEXT);
+    expect(systemPrompt).toContain(discScoreScaleInstruction());
+    expect(systemPrompt).toContain(FRENCH_TYPOGRAPHY_INSTRUCTION);
+  });
+
+  it("n'analyse pas avec la consigne d'origine quand la table ne se lit pas", async () => {
+    const deps = harness([]);
+    deps.organizationPrompts.findLatest = jest
+      .fn()
+      .mockRejectedValue(new Error("base indisponible"));
+
+    const result = await runMeetingAnalysis(deps as never, {
+      organizationId: "org_a",
+      meetingId: "m1",
+      kind: "SONCAS",
+    });
+
+    /*
+      Pas de repli silencieux : une analyse faite avec une autre consigne que
+      celle de l'organisation serait fausse sans que personne le sache. La
+      tâche échoue, et la reprise la relancera.
+    */
+    expect(result).toEqual({
+      ok: false,
+      error: "PROMPT_NOT_CONFIGURED",
+      message: "base indisponible",
+    });
+    expect(deps.analysis.analyzeSoncas).not.toHaveBeenCalled();
+    expect(deps.meetings.createAnalysis).not.toHaveBeenCalled();
+  });
+
+  it("laisse intactes les analyses faites avant l'enregistrement d'une consigne", async () => {
+    const deps = harness([]);
+    await runMeetingAnalysis(deps as never, {
+      organizationId: "org_a",
+      meetingId: "m1",
+      kind: "SONCAS",
+    });
+    await deps.organizationPrompts.append({
+      organizationId: "org_a",
+      kind: "SONCAS",
+      markdown: ORG_TEXT,
+      authorUserId: "manager_a",
+    });
+    await runMeetingAnalysis(deps as never, {
+      organizationId: "org_a",
+      meetingId: "m1",
+      kind: "SONCAS",
+    });
+
+    // Une nouvelle analyse s'ajoute ; la précédente n'est ni relue ni réécrite.
+    const calls = deps.meetings.createAnalysis.mock.calls.map(
+      (call) =>
+        (call[0] as { organizationPromptVersionId?: string | null })
+          .organizationPromptVersionId,
+    );
+    expect(calls).toEqual([null, "opv_1"]);
+    expect(Object.keys(deps.meetings)).toEqual([
+      "findMeetingByIdForOrg",
+      "createAnalysis",
+      "findLatestAnalysisForMeeting",
+    ]);
   });
 });

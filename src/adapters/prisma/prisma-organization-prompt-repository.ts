@@ -6,6 +6,7 @@ import {
   type OrganizationPromptKind,
 } from "@/src/core/domain/organization-prompts";
 import type {
+  OrganizationPromptLatest,
   OrganizationPromptRepositoryPort,
   OrganizationPromptVersionRow,
 } from "@/src/core/ports/organization-prompt-repository-port";
@@ -55,16 +56,19 @@ function toRow(row: RowWithAuthor): OrganizationPromptVersionRow {
 export class PrismaOrganizationPromptRepository implements OrganizationPromptRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
+  /*
+    Lue à chaque analyse : l'organisation et le type filtrent toujours, et
+    rien d'autre que l'identifiant et le texte ne sort de la base.
+  */
   async findLatest(input: {
     organizationId: string;
     kind: OrganizationPromptKind;
-  }): Promise<OrganizationPromptVersionRow | null> {
-    const row = await this.db.organizationPromptVersion.findFirst({
+  }): Promise<OrganizationPromptLatest | null> {
+    return this.db.organizationPromptVersion.findFirst({
       where: { organizationId: input.organizationId, kind: input.kind },
       orderBy: [...latestFirst],
-      include: withAuthor,
+      select: { id: true, markdown: true },
     });
-    return row ? toRow(row) : null;
   }
 
   async listLatest(input: {
@@ -76,12 +80,16 @@ export class PrismaOrganizationPromptRepository implements OrganizationPromptRep
     */
     const rows = await Promise.all(
       ORGANIZATION_PROMPT_KINDS.map((kind) =>
-        this.findLatest({ organizationId: input.organizationId, kind }),
+        this.db.organizationPromptVersion.findFirst({
+          where: { organizationId: input.organizationId, kind },
+          orderBy: [...latestFirst],
+          include: withAuthor,
+        }),
       ),
     );
-    return rows.filter((row): row is OrganizationPromptVersionRow =>
-      Boolean(row),
-    );
+    return rows
+      .filter((row): row is NonNullable<typeof row> => row !== null)
+      .map(toRow);
   }
 
   async append(input: {

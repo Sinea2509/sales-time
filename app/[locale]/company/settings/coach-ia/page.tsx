@@ -32,6 +32,7 @@ export default async function OrganizationSettingsCoachPage() {
       {!canEdit ? <OrgSettingsReadOnlyBanner /> : null}
       <OrgSettingsPromptCards
         canEdit={canEdit}
+        organizationId={orgId}
         cards={promptCards.map(organizationPromptCardView)}
       />
       {/*

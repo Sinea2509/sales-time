@@ -1,12 +1,20 @@
 import type { OrganizationPromptKind } from "@/src/core/domain/organization-prompts";
 
-/** Une ligne de l'historique des consignes d'une organisation. */
-export type OrganizationPromptVersionRow = {
+/**
+ * La dernière ligne d'une organisation pour un type, telle que l'analyse la
+ * lit : son texte, et de quoi en garder la trace. L'auteur n'y est pas, une
+ * analyse n'en a pas besoin.
+ */
+export type OrganizationPromptLatest = {
   id: string;
-  organizationId: string;
-  kind: OrganizationPromptKind;
   /** Le texte enregistré ; null pour une réinitialisation. */
   markdown: string | null;
+};
+
+/** Une ligne de l'historique des consignes d'une organisation, pour l'écran. */
+export type OrganizationPromptVersionRow = OrganizationPromptLatest & {
+  organizationId: string;
+  kind: OrganizationPromptKind;
   /** Null quand l'auteur a été supprimé depuis. */
   authorUserId: string | null;
   /** « Prénom Nom », à défaut l'adresse ; null quand l'auteur a été supprimé. */
@@ -26,9 +34,9 @@ export interface OrganizationPromptRepositoryPort {
   findLatest(input: {
     organizationId: string;
     kind: OrganizationPromptKind;
-  }): Promise<OrganizationPromptVersionRow | null>;
+  }): Promise<OrganizationPromptLatest | null>;
 
-  /** La dernière ligne de chaque type qui en a une, pour l'écran. */
+  /** La dernière ligne de chaque type qui en a une, avec son auteur, pour l'écran. */
   listLatest(input: {
     organizationId: string;
   }): Promise<OrganizationPromptVersionRow[]>;
