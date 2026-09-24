@@ -22,7 +22,11 @@ import {
 } from "@/src/core/domain/analysis-system-markdown";
 import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { computeScorecardScore } from "@/src/core/domain/scorecard-score";
-import { applySoncasEvidenceRule } from "@/src/core/domain/soncas-evidence-rule";
+import { applyScorecardEvidenceRule } from "@/src/core/domain/scorecard-evidence-rule";
+import {
+  applySoncasEvidenceRule,
+  keepSoncasEvidenceFoundIn,
+} from "@/src/core/domain/soncas-evidence-rule";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type {
   AiCallKind,
@@ -118,6 +122,10 @@ export async function runMeetingAnalysis(
     sourceBlobUrl: meeting.sourceBlobUrl,
     sourceType: meeting.sourceType,
   });
+  /** Ce que le modèle a lu, et donc où ses preuves doivent se retrouver. */
+  const evidenceSource = [transcriptForAnalysis, meeting.notes ?? ""].join(
+    "\n",
+  );
 
   let promptVersion;
   try {
@@ -125,9 +133,10 @@ export async function runMeetingAnalysis(
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     if (deps.aiLogs) {
-      const model = await resolvePromptGatewayModel(deps.prompts, input.kind).catch(
-        () => "unknown",
-      );
+      const model = await resolvePromptGatewayModel(
+        deps.prompts,
+        input.kind,
+      ).catch(() => "unknown");
       await recordAiRequestError(
         deps.aiLogs,
         {
@@ -227,7 +236,9 @@ export async function runMeetingAnalysis(
         });
         const result =
           input.kind === "SONCAS"
-            ? applySoncasEvidenceRule(out.result)
+            ? applySoncasEvidenceRule(
+                keepSoncasEvidenceFoundIn(out.result, evidenceSource),
+              )
             : out.result;
         const row = await deps.meetings.createAnalysis({
           meetingId: meeting.id,
@@ -306,9 +317,15 @@ export async function runMeetingAnalysis(
           outputTokens: out.usage?.outputTokens ?? null,
           latencyMs: Date.now() - started,
         });
+        /*
+          Les preuves introuvables dans le transcript sont retirées, et un
+          critère resté sans preuve est plafonné, avant le calcul du score :
+          une grille notée 100 sur des définitions recopiées ne passe plus.
+        */
+        const checked = applyScorecardEvidenceRule(out.result, evidenceSource);
         const { blocks, overallScore } = computeScorecardScore(
           grid,
-          out.result.criteria,
+          checked.criteria,
         );
         const row = await deps.meetings.createAnalysis({
           meetingId: meeting.id,
@@ -321,7 +338,7 @@ export async function runMeetingAnalysis(
             où elle a été produite, même si la grille a gagné un critère depuis.
           */
           result: {
-            ...out.result,
+            ...checked,
             gridId: grid.id,
             gridName: grid.name,
             overallScore,

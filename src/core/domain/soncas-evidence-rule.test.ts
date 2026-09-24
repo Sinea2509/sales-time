@@ -4,7 +4,10 @@ import {
   type SoncasAnalysisResult,
 } from "./analysis-result-zod";
 import { PROFILE_SCORE_UNPROVEN_MAX } from "./profile-score-scale";
-import { applySoncasEvidenceRule } from "./soncas-evidence-rule";
+import {
+  applySoncasEvidenceRule,
+  keepSoncasEvidenceFoundIn,
+} from "./soncas-evidence-rule";
 
 type Levier = { readonly score: number; readonly evidence: readonly string[] };
 
@@ -279,5 +282,43 @@ describe("applySoncasEvidenceRule", () => {
     for (const [cle, note] of Object.entries(notes(corrige))) {
       expect([cle, note]).toEqual([cle, PROFILE_SCORE_UNPROVEN_MAX]);
     }
+  });
+});
+
+describe("keepSoncasEvidenceFoundIn", () => {
+  const transcript =
+    "Claire : Je veux voir la remise moyenne baisser. Et je veux des chiffres.";
+
+  function soncas(argentEvidence: string[]) {
+    const plancher = { score: 10, evidence: [] as string[] };
+    return {
+      drivers: {
+        securite: plancher,
+        orgueil: plancher,
+        nouveaute: plancher,
+        confort: plancher,
+        argent: { score: 72, evidence: argentEvidence },
+        sympathie: plancher,
+      },
+      dominant: "argent" as const,
+      summary: "Le levier principal est l'argent.",
+    };
+  }
+
+  it("retire un extrait introuvable, et la règle ramène le levier sans preuve au seuil", () => {
+    const filtre = keepSoncasEvidenceFoundIn(
+      soncas(["Le retour sur investissement passe avant tout"]),
+      transcript,
+    ) as ReturnType<typeof soncas>;
+    expect(filtre.drivers.argent.evidence).toEqual([]);
+    const corrige = applySoncasEvidenceRule(filtre) as ReturnType<
+      typeof soncas
+    >;
+    expect(corrige.drivers.argent.score).toBe(PROFILE_SCORE_UNPROVEN_MAX);
+  });
+
+  it("garde les extraits retrouvés, et rend l'entrée telle quelle quand tout est retrouvé", () => {
+    const appuye = soncas(["Je veux voir la remise moyenne baisser."]);
+    expect(keepSoncasEvidenceFoundIn(appuye, transcript)).toBe(appuye);
   });
 });

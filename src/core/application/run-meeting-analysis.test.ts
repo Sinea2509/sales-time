@@ -492,7 +492,9 @@ describe("runMeetingAnalysis : prompt système composé", () => {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue({
         id: "m1",
         organizationId: "org_1",
-        transcript: "t",
+        // Les preuves citées par les résultats simulés sont dans le transcript.
+        transcript:
+          "On l a entendu. Je veux que ça roule tout seul. C'est trop cher.",
         notes: null,
       }),
       createAnalysis: jest.fn().mockResolvedValue({
@@ -739,7 +741,9 @@ describe("runMeetingAnalysis : verbatim obligatoire sur SONCAS", () => {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue({
         id: "m1",
         organizationId: "org_1",
-        transcript: "t",
+        // Les preuves citées par les résultats simulés sont dans le transcript.
+        transcript:
+          "On l a entendu. Je veux que ça roule tout seul. C'est trop cher.",
         notes: null,
       }),
       createAnalysis: jest.fn().mockResolvedValue({
@@ -893,7 +897,8 @@ describe("runMeetingAnalysis : scorecard", () => {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue({
         id: "m1",
         organizationId: "org_1",
-        transcript: "t",
+        // Le mot cité en preuve par les critères simulés est dans le transcript.
+        transcript: "Voici un extrait du rendez-vous.",
         notes: null,
         meetingType: options?.meetingType ?? "RDV découverte",
         pipelineStage: null,

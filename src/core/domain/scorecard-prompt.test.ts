@@ -66,6 +66,10 @@ describe("scorecardGridInstruction", () => {
       "When you hesitate between two levels, take the lower one",
     );
     expect(CONSIGNE).toContain("Never rewrite a quote and never compose one");
+    expect(CONSIGNE).toContain("never quote the criterion itself");
+    expect(CONSIGNE).toContain(
+      "a criterion left without evidence cannot stay above level 1",
+    );
   });
 
   it("dit que le commercial est noté, et non ce qu'il vend", () => {

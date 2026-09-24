@@ -3,6 +3,7 @@ import {
   type SoncasAnalysisResult,
 } from "./analysis-result-zod";
 import { PROFILE_SCORE_UNPROVEN_MAX } from "./profile-score-scale";
+import { evidenceWords, isExcerptInSource } from "./transcript-evidence";
 
 /**
  * « Pas de preuve, pas de note » : la règle appliquée par le produit.
@@ -109,4 +110,38 @@ export function applySoncasEvidenceRule(result: unknown): unknown {
   );
 
   return { ...parsed.data, drivers, dominant };
+}
+
+/**
+ * Retire des preuves SONCAS les extraits introuvables dans ce qui a été dit.
+ *
+ * La consigne demande les mots du prospect, recopiés tels quels. Un extrait
+ * qui ne se retrouve ni dans le transcript ni dans les notes, à quelques
+ * fautes près, n'est pas une preuve : il est retiré avant la règle ci-dessus,
+ * qui ramène alors dans la première tranche un levier resté sans preuve.
+ *
+ * Rend l'entrée telle quelle si elle n'est pas un résultat SONCAS lisible, ou
+ * si tous les extraits ont été retrouvés.
+ */
+export function keepSoncasEvidenceFoundIn(
+  result: unknown,
+  sourceText: string,
+): unknown {
+  const parsed = soncasResultSchema.safeParse(result);
+  if (!parsed.success) return result;
+  const sourceWords = evidenceWords(sourceText);
+  const drivers: Record<SoncasDriverKey, SoncasDriverBlock> = {
+    ...parsed.data.drivers,
+  };
+  let changed = false;
+  for (const cle of LEVIERS_SONCAS) {
+    const levier = drivers[cle];
+    const evidence = levier.evidence.filter((extrait) =>
+      isExcerptInSource(extrait, sourceWords),
+    );
+    if (evidence.length === levier.evidence.length) continue;
+    drivers[cle] = { ...levier, evidence };
+    changed = true;
+  }
+  return changed ? { ...parsed.data, drivers } : result;
 }
