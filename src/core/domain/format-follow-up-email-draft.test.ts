@@ -27,6 +27,19 @@ describe("formatFollowUpEmailDraft", () => {
     });
   });
 
+  it("retire les espaces laissées en fin de ligne par le modèle", () => {
+    const body = formatFollowUpEmailBody({
+      ...email,
+      greeting: "Bonjour Marie, \n\nMerci pour votre accueil.\u00a0",
+      closing: "Bien cordialement,\t",
+    });
+    expect(
+      body.startsWith("Bonjour Marie,\n\nMerci pour votre accueil.\n"),
+    ).toBe(true);
+    expect(body.endsWith("Bien cordialement,")).toBe(true);
+    expect(body).not.toMatch(/[ \t\u00a0]\n/u);
+  });
+
   it("round-trips custom subject and body", () => {
     const draft = composeFollowUpEmailDraft("Objet test", "Corps\ndeux lignes");
     expect(parseFollowUpEmailDraft(draft)).toEqual({

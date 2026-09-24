@@ -2,17 +2,31 @@ import type { FollowUpEmailResult } from "./follow-up-email-zod";
 
 const SUBJECT_PREFIX = "Objet : ";
 
+/**
+ * Un champ du mail sans les espaces laissées en fin de ligne par le modèle.
+ *
+ * Elles ne se voient pas à l'écran, mais partent dans le mail copié : au
+ * deuxième essai en production, « Bonjour Claire, » en portait une.
+ */
+function tidyEmailField(text: string | null | undefined): string {
+  return (text ?? "")
+    .split("\n")
+    .map((line) => line.replace(/[ \t\u00a0\u202f]+$/u, ""))
+    .join("\n")
+    .trim();
+}
+
 export function formatFollowUpEmailBody(email: FollowUpEmailResult): string {
   return [
-    email.greeting,
+    tidyEmailField(email.greeting),
     "",
-    email.painPoints,
+    tidyEmailField(email.painPoints),
     "",
-    email.proposedSolutions,
+    tidyEmailField(email.proposedSolutions),
     "",
-    email.nextSteps,
+    tidyEmailField(email.nextSteps),
     "",
-    email.closing,
+    tidyEmailField(email.closing),
   ].join("\n");
 }
 

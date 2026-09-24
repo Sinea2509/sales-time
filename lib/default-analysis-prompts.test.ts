@@ -207,12 +207,40 @@ describe("les corrections du premier essai en production", () => {
 
   it("le mail reprend toutes les étapes convenues, et les écrit comme acquises", () => {
     expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
-      "les mises en relation que le prospect a proposées",
+      "les échanges demandés pour préparer la suite",
     );
     expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain("pas au conditionnel");
     expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
-      "les objectifs chiffrés qu'il a donnés",
+      "recopie-les avec leurs chiffres et leurs échéances",
     );
+  });
+
+  it("le mail laisse à chacun ses engagements, et ne promet rien de plus", () => {
+    /*
+      Au deuxième essai, le mail faisait prendre au commercial une mise en
+      relation que la prospect avait proposé de faire elle-même, et promettait
+      de « garantir l'application des acquis », ce que l'offre décrite ne
+      disait pas.
+    */
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "Chaque étape garde la personne qui s'y est engagée.",
+    );
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "le mail la lui rappelle et la lui demande",
+    );
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "Ne promets aucun résultat, aucune garantie",
+    );
+  });
+
+  it("le mail garde chaque date entière, et finit sans nom quand il n'y a pas de signature", () => {
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "avec toutes ses précisions, moment de la journée compris",
+    );
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain(
+      "sans aucun nom, même si le transcript donne celui du commercial",
+    );
+    expect(DEFAULT_FOLLOW_UP_EMAIL_SYSTEM).toContain("pas « impactée »");
   });
 
   it("le mail ouvre sur la formule d'appel seule, et se passe de signature quand il n'y en a pas", () => {
