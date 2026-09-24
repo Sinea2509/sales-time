@@ -99,3 +99,31 @@ describe("allowedEvidenceEdits", () => {
     expect(allowedEvidenceEdits(10)).toBe(2);
   });
 });
+
+describe("les tolérances ajoutées après la relecture", () => {
+  it("recolle les tranches de milliers, des deux côtés", () => {
+    expect(evidenceWords("15 000 euros")).toEqual(["15000", "euros"]);
+    expect(evidenceWords("1 500 000 €")).toEqual(["1500000"]);
+    expect(evidenceWords("en 2025 200 affaires")).toEqual([
+      "en",
+      "2025",
+      "200",
+      "affaires",
+    ]);
+    expect(
+      isExcerptInSource("Nous avions mis 15000 euros de côté", source),
+    ).toBe(true);
+  });
+
+  it("retrouve une citation sur deux phrases que le transcript sépare d'un nom et d'une heure", () => {
+    const teams = evidenceWords(
+      "Claire Dupont 00:12:34\nLe chiffre d'affaires tient, mais la marge baisse.\nClaire Dupont 00:12:41\nMes commerciaux accordent des remises trop vite.",
+    );
+    expect(
+      isExcerptInSource(
+        "Le chiffre d'affaires tient, mais la marge baisse. Mes commerciaux accordent des remises trop vite.",
+        teams,
+      ),
+    ).toBe(true);
+  });
+});

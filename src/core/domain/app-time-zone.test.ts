@@ -35,6 +35,12 @@ describe("parseWallClockInAppTimeZone", () => {
     );
   });
 
+  it("lit aussi une heure sans fuseau qui porte des secondes et des millisecondes", () => {
+    expect(
+      parseWallClockInAppTimeZone("2026-09-24T16:30:00.000")?.toISOString(),
+    ).toBe("2026-09-24T14:30:00.000Z");
+  });
+
   it("refuse ce qui n'est pas une heure sans fuseau", () => {
     expect(parseWallClockInAppTimeZone("2026-09-24T14:30:00.000Z")).toBeNull();
     expect(parseWallClockInAppTimeZone("hier")).toBeNull();

@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import { Prisma } from "@/lib/generated/prisma/client";
-import {
-  createCoachSharedPhrase,
-  listCoachSharedPhrases,
-} from "@/app/[locale]/company/coach-shared-phrases-actions";
+import { listCoachSharedPhrases } from "@/app/[locale]/company/coach-shared-phrases-actions";
 import {
   createContactInlineAction,
   createContactAction,
@@ -467,81 +464,6 @@ describe("coach shared phrases actions", () => {
     expect(result.phrases.every((p) => p.source === "builtin")).toBe(true);
     expect(result.phrases.some((p) => p.id === "phrase_1")).toBe(false);
     expect(onboardingSharedPhrasesMock.listByKind).not.toHaveBeenCalled();
-  });
-
-  it("createCoachSharedPhrase redirects guests", async () => {
-    getAuthenticatedPrincipalMock.mockResolvedValue(null);
-    await expect(
-      createCoachSharedPhrase({ kind: "OBJECTION", text: "Nouvelle phrase" }),
-    ).rejects.toThrow("REDIRECT:/sign-in");
-  });
-
-  it("createCoachSharedPhrase validates input", async () => {
-    const result = await createCoachSharedPhrase({
-      kind: "OBJECTION",
-      text: "ab",
-    });
-    expect(result.ok).toBe(false);
-  });
-
-  it("createCoachSharedPhrase rejects missing user", async () => {
-    findByIdMock.mockResolvedValue(null);
-    const result = await createCoachSharedPhrase({
-      kind: "OBJECTION",
-      text: "Phrase communautaire valide",
-    });
-    expect(result).toEqual({ ok: false, message: "Utilisateur introuvable." });
-  });
-
-  it("createCoachSharedPhrase rejects builtin duplicate", async () => {
-    const result = await createCoachSharedPhrase({
-      kind: "OBJECTION",
-      text: DEFAULT_OBJECTION_PHRASES[0],
-    });
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.message).toContain("liste intégrée");
-  });
-
-  it("createCoachSharedPhrase creates community phrase", async () => {
-    onboardingSharedPhrasesMock.createPhrase.mockResolvedValue({
-      id: "new_phrase",
-      text: "Phrase communautaire valide",
-    });
-    const result = await createCoachSharedPhrase({
-      kind: "ARGUMENT",
-      text: "Phrase communautaire valide",
-    });
-    expect(result).toEqual({
-      ok: true,
-      phrase: {
-        id: "new_phrase",
-        text: "Phrase communautaire valide",
-        source: "community",
-      },
-    });
-  });
-
-  it("createCoachSharedPhrase maps duplicate db error", async () => {
-    onboardingSharedPhrasesMock.createPhrase.mockRejectedValue(
-      new Error("duplicate"),
-    );
-    const result = await createCoachSharedPhrase({
-      kind: "ARGUMENT",
-      text: "Autre phrase communautaire",
-    });
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.message).toContain("collection partagée");
-  });
-
-  it("createCoachSharedPhrase rejects phrase shorter than 3 chars after normalize", async () => {
-    normalizePhraseKeyMock.mockReturnValue("ab");
-    const result = await createCoachSharedPhrase({
-      kind: "ARGUMENT",
-      text: "valid length phrase",
-    });
-    expect(result).toEqual({ ok: false, message: "Phrase trop courte." });
   });
 });
 

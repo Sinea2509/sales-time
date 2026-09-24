@@ -90,11 +90,13 @@ export function soncasBarItemsForUi(result: SoncasAnalysisResult) {
 }
 
 /**
- * Le levier principal annoncé par l'analyse, celui dont parlent ses textes.
+ * Le levier principal annoncé par l'analyse.
  *
- * Pris dans le résultat, et non en tête des barres : c'est lui que le résumé
- * et les conseils décrivent. La règle de preuve le recalcule quand elle baisse
- * une note, si bien qu'il reste aussi le mieux noté.
+ * Pris dans le résultat, et non en tête des barres : c'est celui que le
+ * modèle a nommé, et dont parlent son résumé et ses conseils. Une limite
+ * connue : quand la règle de preuve baisse la note de ce levier faute de
+ * citation retrouvée, elle désigne un autre levier principal, alors que le
+ * résumé et les conseils, écrits par le modèle, parlent encore du premier.
  */
 export function soncasPrincipalForUi(result: SoncasAnalysisResult) {
   return {

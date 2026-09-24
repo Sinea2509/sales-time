@@ -15,14 +15,39 @@
  * points de suspension se vérifie morceau par morceau.
  */
 
-/** Les mots d'un texte, en minuscules, sans accents ni ponctuation. */
+/**
+ * Les mots d'un texte, en minuscules, sans accents ni ponctuation.
+ *
+ * Les tranches de milliers sont recollées : « 15 000 » et « 15000 » donnent
+ * le même mot, sans quoi un montant recopié sans espace comptait pour deux
+ * écarts.
+ */
 export function evidenceWords(text: string): string[] {
-  return text
+  const words = text
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .toLocaleLowerCase("fr-FR")
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean);
+  const merged: string[] = [];
+  // Vrai quand le dernier mot est déjà un nombre recollé : « 1 500 000 ».
+  let lastIsGroupedNumber = false;
+  for (const word of words) {
+    const previous = merged[merged.length - 1];
+    const continuesNumber =
+      previous !== undefined &&
+      /^\d{3}$/.test(word) &&
+      /^\d+$/.test(previous) &&
+      (previous.length <= 3 || lastIsGroupedNumber);
+    if (continuesNumber) {
+      merged[merged.length - 1] = previous + word;
+      lastIsGroupedNumber = true;
+    } else {
+      merged.push(word);
+      lastIsGroupedNumber = false;
+    }
+  }
+  return merged;
 }
 
 /** Le nombre d'écarts admis pour un extrait de `wordCount` mots. */
@@ -72,8 +97,14 @@ export function isExcerptInSource(
   excerpt: string,
   sourceWords: readonly string[],
 ): boolean {
+  /*
+    Morceau par morceau, coupé aux fins de phrase comme aux points de
+    suspension : une citation qui court sur deux phrases se retrouve même
+    quand le transcript intercale entre elles un nom et un horodatage
+    (« Claire Dupont 00:12:34 »), comme ceux de Teams ou de Zoom.
+  */
   const pieces = excerpt
-    .split(/…|\.\.\./)
+    .split(/…|\.\.\.|[.!?;]+(?=\s|$)|\n+/)
     .map(evidenceWords)
     .filter((words) => words.length > 0);
   if (pieces.length === 0) return false;

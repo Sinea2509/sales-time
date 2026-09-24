@@ -23,6 +23,7 @@ import type {
 import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
+import { toAppTimeZoneDatetimeLocal } from "@/src/core/domain/app-time-zone";
 
 export type MeetingDetailSynthesisContent = {
   meetingSynthesis: string;
@@ -280,7 +281,8 @@ export async function summarizeMeetingDetail(
       model,
       prospectName: input.meeting.prospectName,
       prospectCompany: input.meeting.prospectCompany,
-      meetingAt: input.meeting.meetingAt.toISOString(),
+      // L'heure de Paris, celle que le commercial a saisie, et non l'heure universelle.
+      meetingAt: toAppTimeZoneDatetimeLocal(input.meeting.meetingAt),
       outcome: input.meeting.outcome,
       meetingType: input.meeting.meetingType,
       transcript: input.meeting.transcript.slice(
