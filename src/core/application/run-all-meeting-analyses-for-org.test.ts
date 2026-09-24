@@ -1,9 +1,19 @@
 import { runAllMeetingAnalysesForOrg } from "./run-all-meeting-analyses-for-org";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
+import { generateAndPersistMeetingVisitReport } from "./summarize-meeting-detail";
 
 jest.mock("./run-meeting-analysis", () => ({
   runMeetingAnalysis: jest.fn(),
 }));
+
+jest.mock("./summarize-meeting-detail", () => ({
+  generateAndPersistMeetingVisitReport: jest.fn().mockResolvedValue(undefined),
+}));
+
+const visitReportMock =
+  generateAndPersistMeetingVisitReport as jest.MockedFunction<
+    typeof generateAndPersistMeetingVisitReport
+  >;
 
 const runMeetingAnalysisMock = runMeetingAnalysis as jest.MockedFunction<
   typeof runMeetingAnalysis
@@ -255,5 +265,34 @@ describe("runAllMeetingAnalysesForOrg", () => {
     for (const call of runMeetingAnalysisMock.mock.calls) {
       expect(call[1].organizationPlaybookMarkdown).toBeNull();
     }
+  });
+  /*
+    Chaque étage de la séquence recompose les dépendances qu'il transmet :
+    une consigne d'organisation oubliée en route ferait analyser avec la
+    consigne d'origine sans que rien ne le signale.
+  */
+  it("transmet les consignes de l'organisation aux quatre analyses et au compte rendu", async () => {
+    runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
+    const organizationPrompts = { findLatest: jest.fn() };
+    const deps = { ...makeDeps(), organizationPrompts };
+    deps.meetings.findMeetingDetailWithAnalyses.mockResolvedValue({
+      id: "m1",
+      analyses: [],
+    });
+
+    await runAllMeetingAnalysesForOrg(deps as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    expect(runMeetingAnalysisMock).toHaveBeenCalledTimes(4);
+    for (const call of runMeetingAnalysisMock.mock.calls) {
+      expect(call[0].organizationPrompts).toBe(organizationPrompts);
+    }
+    expect(visitReportMock).toHaveBeenCalledTimes(1);
+    expect(visitReportMock.mock.calls[0][0].organizationPrompts).toBe(
+      organizationPrompts,
+    );
   });
 });

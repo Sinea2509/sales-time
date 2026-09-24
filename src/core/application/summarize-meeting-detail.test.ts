@@ -1,3 +1,4 @@
+import { DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN } from "@/lib/default-analysis-prompts";
 import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
 import {
   generateAndPersistMeetingVisitReport,
@@ -5,6 +6,10 @@ import {
   summarizeMeetingDetail,
   VISIT_REPORT_TRANSCRIPT_MAX_CHARS,
 } from "./summarize-meeting-detail";
+import {
+  inMemoryOrganizationPrompts,
+  noOrganizationPrompts,
+} from "./testing/in-memory-organization-prompts";
 
 jest.mock("@/lib/env", () => ({
   getEnv: jest.fn(() => ({ AI_GATEWAY_API_KEY: undefined })),
@@ -103,6 +108,7 @@ describe("summarizeMeetingDetail", () => {
       {
         analysis: { extractVisitReport: jest.fn() } as never,
         prompts: {} as never,
+        organizationPrompts: noOrganizationPrompts(),
       },
       {
         meeting: {
@@ -123,6 +129,7 @@ describe("summarizeMeetingDetail", () => {
       {
         analysis: { extractVisitReport: jest.fn() } as never,
         prompts: {} as never,
+        organizationPrompts: noOrganizationPrompts(),
       },
       {
         meeting,
@@ -149,6 +156,7 @@ describe("summarizeMeetingDetail", () => {
       {
         analysis: { extractVisitReport: jest.fn() } as never,
         prompts: {} as never,
+        organizationPrompts: noOrganizationPrompts(),
       },
       {
         meeting: { ...meeting, status: "PROCESSING" },
@@ -166,7 +174,11 @@ describe("summarizeMeetingDetail", () => {
     const extractVisitReport = jest.fn().mockResolvedValue(extraction);
 
     const result = await summarizeMeetingDetail(
-      { analysis: { extractVisitReport } as never, prompts: prompts as never },
+      {
+        analysis: { extractVisitReport } as never,
+        prompts: prompts as never,
+        organizationPrompts: noOrganizationPrompts(),
+      },
       { meeting, discResult: null, soncasResult: null, kissResult: null },
     );
 
@@ -184,13 +196,56 @@ describe("summarizeMeetingDetail", () => {
     );
   });
 
+  it("écrit le compte rendu avec la consigne de l'organisation, et seulement pour elle", async () => {
+    withAiKey();
+    const extractVisitReport = jest.fn().mockResolvedValue(extraction);
+    const organizationPrompts = inMemoryOrganizationPrompts([
+      {
+        organizationId: "org_a",
+        kind: "MEETING_DETAIL_SYNTHESIS",
+        markdown: "Compte rendu à la manière de l'organisation A.",
+      },
+    ]);
+    const deps = {
+      analysis: { extractVisitReport } as never,
+      prompts: prompts as never,
+      organizationPrompts,
+    };
+
+    await summarizeMeetingDetail(deps, {
+      meeting,
+      discResult: null,
+      soncasResult: null,
+      kissResult: null,
+      organizationId: "org_a",
+    });
+    await summarizeMeetingDetail(deps, {
+      meeting,
+      discResult: null,
+      soncasResult: null,
+      kissResult: null,
+      organizationId: "org_b",
+    });
+
+    expect(extractVisitReport.mock.calls[0][0].systemMarkdown).toBe(
+      "Compte rendu à la manière de l'organisation A.",
+    );
+    expect(extractVisitReport.mock.calls[1][0].systemMarkdown).toBe(
+      DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN,
+    );
+  });
+
   it("sends the transcript within the length limit, with the profiles to adapt to", async () => {
     withAiKey();
     const extractVisitReport = jest.fn().mockResolvedValue(extraction);
     const long = "a".repeat(VISIT_REPORT_TRANSCRIPT_MAX_CHARS + 500);
 
     await summarizeMeetingDetail(
-      { analysis: { extractVisitReport } as never, prompts: prompts as never },
+      {
+        analysis: { extractVisitReport } as never,
+        prompts: prompts as never,
+        organizationPrompts: noOrganizationPrompts(),
+      },
       {
         meeting: { ...meeting, transcript: long },
         discResult: {
@@ -240,6 +295,7 @@ describe("summarizeMeetingDetail", () => {
       {
         analysis: { extractVisitReport } as never,
         prompts: prompts as never,
+        organizationPrompts: noOrganizationPrompts(),
         meetings: meetings as never,
         users: {
           findAccountProfileByUserId: jest
@@ -280,7 +336,11 @@ describe("summarizeMeetingDetail", () => {
     const extractVisitReport = jest.fn().mockRejectedValue(new Error("boom"));
 
     const result = await summarizeMeetingDetail(
-      { analysis: { extractVisitReport } as never, prompts: prompts as never },
+      {
+        analysis: { extractVisitReport } as never,
+        prompts: prompts as never,
+        organizationPrompts: noOrganizationPrompts(),
+      },
       { meeting, discResult: null, soncasResult: null, kissResult: null },
     );
 
@@ -311,6 +371,7 @@ describe("l'historique du compte rendu", () => {
           extractVisitReport: jest.fn().mockResolvedValue(extraction),
         } as never,
         prompts: prompts as never,
+        organizationPrompts: noOrganizationPrompts(),
         meetings: meetings as never,
         users: {
           findAccountProfileByUserId: jest.fn(async (id: string) =>
@@ -417,6 +478,7 @@ describe("generateAndPersistMeetingVisitReport", () => {
       {
         analysis: { extractVisitReport } as never,
         prompts: prompts as never,
+        organizationPrompts: noOrganizationPrompts(),
         meetings: meetings as never,
       },
       {

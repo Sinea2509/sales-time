@@ -4,6 +4,10 @@ import {
   generateFollowUpEmailForMeeting,
   meetingContextBlock,
 } from "./generate-follow-up-email";
+import {
+  inMemoryOrganizationPrompts,
+  noOrganizationPrompts,
+} from "./testing/in-memory-organization-prompts";
 
 const meeting = {
   id: "m1",
@@ -88,8 +92,9 @@ describe("generateFollowUpEmailForMeeting", () => {
           getCurrentVersion: jest.fn().mockResolvedValue(null),
           getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
         } as never,
+        organizationPrompts: noOrganizationPrompts(),
       },
-      { meeting, emailPreferences: preferences },
+      { organizationId: "org_1", meeting, emailPreferences: preferences },
     );
 
     const call = generateFollowUpEmail.mock.calls[0][0];
@@ -103,5 +108,42 @@ describe("generateFollowUpEmailForMeeting", () => {
       call.userContent.indexOf("<transcript>"),
     );
     expect(call.userContent).toContain("emailSignature: (none)");
+  });
+  it("rédige avec la consigne de mail de l'organisation, et seulement pour elle", async () => {
+    const generateFollowUpEmail = jest.fn().mockResolvedValue({
+      result: { subject: "Suite à notre rendez-vous" },
+    });
+    const deps = {
+      analysis: { generateFollowUpEmail } as never,
+      prompts: {
+        getCurrentVersion: jest.fn().mockResolvedValue(null),
+        getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+      } as never,
+      organizationPrompts: inMemoryOrganizationPrompts([
+        {
+          organizationId: "org_a",
+          kind: "FOLLOW_UP_EMAIL",
+          markdown: "Un mail bref, à la manière de l'organisation A.",
+        },
+      ]),
+    };
+
+    await generateFollowUpEmailForMeeting(deps, {
+      organizationId: "org_a",
+      meeting,
+      emailPreferences: preferences,
+    });
+    await generateFollowUpEmailForMeeting(deps, {
+      organizationId: "org_b",
+      meeting,
+      emailPreferences: preferences,
+    });
+
+    expect(generateFollowUpEmail.mock.calls[0][0].systemMarkdown).toBe(
+      "Un mail bref, à la manière de l'organisation A.",
+    );
+    expect(generateFollowUpEmail.mock.calls[1][0].systemMarkdown).toBe(
+      DEFAULT_FOLLOW_UP_EMAIL_SYSTEM,
+    );
   });
 });

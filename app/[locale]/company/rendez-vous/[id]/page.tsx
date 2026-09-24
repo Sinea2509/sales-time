@@ -162,6 +162,7 @@ export default async function RendezVousDetailPage({
         {
           analysis: deps.analysis,
           prompts: deps.prompts,
+          organizationPrompts: deps.organizationPrompts,
           meetings: deps.meetings,
           users: deps.users,
           organizationSettings: deps.organizationSettings,

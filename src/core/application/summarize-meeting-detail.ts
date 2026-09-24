@@ -1,5 +1,4 @@
 import { getEnv } from "@/lib/env";
-import { loadAnalysisPromptMarkdown } from "@/lib/load-analysis-prompt";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import type {
   DiscAnalysisResult,
@@ -21,9 +20,11 @@ import type {
   MeetingRepositoryPort,
 } from "@/src/core/ports/meeting-repository-port";
 import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
+import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organization-prompt-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 import { toAppTimeZoneDatetimeLocal } from "@/src/core/domain/app-time-zone";
+import { resolveAnalysisPrompt } from "./resolve-analysis-prompt";
 
 export type MeetingDetailSynthesisContent = {
   meetingSynthesis: string;
@@ -64,6 +65,8 @@ const VISIT_REPORT_HISTORY_MAX = 5;
 type VisitReportDeps = {
   analysis: AnalysisPort;
   prompts: PromptTemplateRepositoryPort;
+  /** La consigne du compte rendu, quand l'organisation a modifié la sienne. */
+  organizationPrompts: OrganizationPromptRepositoryPort;
   meetings?: MeetingRepositoryPort;
   users?: Pick<UserRepositoryPort, "findAccountProfileByUserId">;
   organizationSettings?: Pick<
@@ -268,8 +271,11 @@ export async function summarizeMeetingDetail(
   }
 
   try {
-    const [systemMarkdown, model, context] = await Promise.all([
-      loadAnalysisPromptMarkdown(deps.prompts, "MEETING_DETAIL_SYNTHESIS"),
+    const [prompt, model, context] = await Promise.all([
+      resolveAnalysisPrompt(deps, {
+        kind: "MEETING_DETAIL_SYNTHESIS",
+        organizationId: input.organizationId ?? null,
+      }),
       resolvePromptGatewayModel(deps.prompts, "MEETING_DETAIL_SYNTHESIS"),
       loadVisitReportContext(deps, {
         meeting: input.meeting,
@@ -277,7 +283,7 @@ export async function summarizeMeetingDetail(
       }),
     ]);
     const extraction = await deps.analysis.extractVisitReport({
-      systemMarkdown,
+      systemMarkdown: prompt.markdown,
       model,
       prospectName: input.meeting.prospectName,
       prospectCompany: input.meeting.prospectCompany,

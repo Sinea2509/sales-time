@@ -1,12 +1,11 @@
-import {
-  loadAnalysisPromptMarkdown,
-} from "@/lib/load-analysis-prompt";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
+import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organization-prompt-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { MeetingDetailWithAnalyses } from "@/src/core/ports/meeting-repository-port";
 import type { ResolvedFollowUpEmailPreferences } from "@/src/core/domain/follow-up-email-preferences";
 import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
+import { resolveAnalysisPrompt } from "./resolve-analysis-prompt";
 
 function xml(tag: string, body: string) {
   return `<${tag}>\n${body}\n</${tag}>`;
@@ -58,8 +57,12 @@ export async function generateFollowUpEmailForMeeting(
   deps: {
     analysis: AnalysisPort;
     prompts: PromptTemplateRepositoryPort;
+    /** La consigne du mail, quand l'organisation a modifié la sienne. */
+    organizationPrompts: OrganizationPromptRepositoryPort;
   },
   input: {
+    /** L'organisation de la session, celle du rendez-vous. */
+    organizationId: string;
     meeting: MeetingDetailWithAnalyses;
     emailPreferences: ResolvedFollowUpEmailPreferences;
   },
@@ -85,14 +88,14 @@ export async function generateFollowUpEmailForMeeting(
     .filter(Boolean)
     .join("\n\n");
 
-  const systemMarkdown = await loadAnalysisPromptMarkdown(
-    deps.prompts,
-    "FOLLOW_UP_EMAIL",
-  );
+  const prompt = await resolveAnalysisPrompt(deps, {
+    kind: "FOLLOW_UP_EMAIL",
+    organizationId: input.organizationId,
+  });
   const model = await resolvePromptGatewayModel(deps.prompts, "FOLLOW_UP_EMAIL");
 
   const { result } = await deps.analysis.generateFollowUpEmail({
-    systemMarkdown,
+    systemMarkdown: prompt.markdown,
     userContent: prefs,
     model,
   });

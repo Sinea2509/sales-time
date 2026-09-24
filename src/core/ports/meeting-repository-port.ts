@@ -155,6 +155,8 @@ export interface MeetingRepositoryPort {
     meetingId: string;
     kind: MeetingAnalysisKind;
     promptVersionId: string;
+    /** La consigne de l'organisation qui a servi ; absente ou null sinon. */
+    organizationPromptVersionId?: string | null;
     model: string;
     result: unknown;
     rawText?: string | null;
