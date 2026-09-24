@@ -42,6 +42,8 @@ export type MeetingDetailShellProps = {
   salesScoreDelta: number | null;
   meetingSynthesis: string;
   synthesisFromAi: boolean;
+  /** Vrai quand le compte rendu manque et s'écrit en arrière-plan. */
+  synthesisWriting?: boolean;
   interlocutorProfile: string;
   soncasResult: SoncasAnalysisResult | null;
   discResult: DiscAnalysisResult | null;
@@ -68,6 +70,7 @@ export function MeetingDetailShell({
   salesScoreDelta,
   meetingSynthesis,
   synthesisFromAi,
+  synthesisWriting = false,
   interlocutorProfile,
   soncasResult,
   discResult,
@@ -134,6 +137,7 @@ export function MeetingDetailShell({
       <MeetingSynthesisSection
         meetingSynthesis={meetingSynthesis}
         fromAi={synthesisFromAi}
+        writing={synthesisWriting}
       />
 
       <MeetingInterlocutorSection

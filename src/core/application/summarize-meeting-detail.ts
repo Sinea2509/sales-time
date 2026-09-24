@@ -30,6 +30,16 @@ export type MeetingDetailSynthesisContent = {
   fromAi: boolean;
 };
 
+/** Le compte rendu à afficher sur la fiche, et s'il reste à l'écrire. */
+export type MeetingVisitReportForPage = MeetingDetailSynthesisContent & {
+  /**
+   * Vrai quand le rendez-vous est analysé mais que son compte rendu manque :
+   * la fiche le fait écrire en arrière-plan, et affiche en attendant le texte
+   * indicatif.
+   */
+  needsWriting: boolean;
+};
+
 const PROCESSING_REPORT_MESSAGE =
   "Compte-rendu en cours de génération, disponible à la fin de l'analyse automatique.";
 
@@ -117,7 +127,13 @@ async function sellerDisplayName(
  *
  * Chaque morceau est facultatif. Un compte rendu sans historique reste un bon
  * compte rendu ; un compte rendu jamais écrit parce qu'une requête annexe a
- * échoué serait une perte sèche.
+ * échoué serait une perte sèche. Un historique illisible vaut `null`, et non
+ * une liste vide : le texte ne doit pas annoncer un premier rendez-vous sur un
+ * compte qui en a déjà eu.
+ *
+ * Le score de grille d'un rendez-vous précédent n'est repris que s'il est du
+ * même commercial : la grille d'un collègue ne se lit que par lui et par les
+ * managers.
  */
 async function loadVisitReportContext(
   deps: VisitReportDeps,
@@ -126,7 +142,8 @@ async function loadVisitReportContext(
   durationMin: number | null;
   organizationName: string | null;
   sellerName: string | null;
-  history: VisitReportHistoryEntry[];
+  history: VisitReportHistoryEntry[] | null;
+  historyTotal: number;
 }> {
   const names = new Map<string, string | null>();
   const sellerName = await sellerDisplayName(
@@ -140,7 +157,8 @@ async function loadVisitReportContext(
       durationMin: null,
       organizationName: null,
       sellerName,
-      history: [],
+      history: null,
+      historyTotal: 0,
     };
   }
   const meetings = deps.meetings;
@@ -159,20 +177,37 @@ async function loadVisitReportContext(
         organizationId,
         personId: input.meeting.personId,
       })
-      .catch(() => []),
+      .catch(() => null),
   ]);
 
-  const previous = personMeetings
+  const base = {
+    durationMin: row?.durationMin ?? null,
+    organizationName: settings?.companyName?.trim() || null,
+    sellerName,
+  };
+  if (personMeetings === null) {
+    return { ...base, history: null, historyTotal: 0 };
+  }
+
+  const earlier = personMeetings
     .filter(
       (m) =>
         m.id !== input.meeting.id &&
         m.meetingAt.getTime() < input.meeting.meetingAt.getTime(),
     )
-    .sort((a, b) => b.meetingAt.getTime() - a.meetingAt.getTime())
-    .slice(0, VISIT_REPORT_HISTORY_MAX);
+    .sort((a, b) => b.meetingAt.getTime() - a.meetingAt.getTime());
 
   const history: VisitReportHistoryEntry[] = [];
-  for (const m of previous) {
+  for (const m of earlier.slice(0, VISIT_REPORT_HISTORY_MAX)) {
+    const entry = {
+      meetingAt: m.meetingAt,
+      meetingType: m.meetingType,
+      sellerName: await sellerDisplayName(deps.users, m.sellerUserId, names),
+    };
+    if (m.sellerUserId !== input.meeting.sellerUserId) {
+      history.push(entry);
+      continue;
+    }
     const scorecard = await meetings
       .findLatestAnalysisForMeeting({
         meetingId: m.id,
@@ -184,19 +219,12 @@ async function loadVisitReportContext(
       ? scorecardResultSchema.safeParse(scorecard.result)
       : null;
     history.push({
-      meetingAt: m.meetingAt,
-      meetingType: m.meetingType,
-      sellerName: await sellerDisplayName(deps.users, m.sellerUserId, names),
+      ...entry,
       gridScore: parsed?.success ? parsed.data.overallScore : null,
     });
   }
 
-  return {
-    durationMin: row?.durationMin ?? null,
-    organizationName: settings?.companyName?.trim() || null,
-    sellerName,
-    history,
-  };
+  return { ...base, history, historyTotal: earlier.length };
 }
 
 export async function summarizeMeetingDetail(
@@ -276,6 +304,7 @@ export async function summarizeMeetingDetail(
       organizationName: context.organizationName,
       sellerName: context.sellerName,
       history: context.history,
+      historyTotal: context.historyTotal,
       extraction,
       soncas: input.soncasResult,
       disc: input.discResult,
@@ -293,14 +322,50 @@ export async function summarizeMeetingDetail(
     }
     return {
       meetingSynthesis,
-      interlocutorProfile:
-        extraction.interlocutorProfile.trim() ||
-        interlocutorProfileFromAnalyses(input),
+      interlocutorProfile: interlocutorProfileFromAnalyses(input),
       fromAi: true,
     };
   } catch {
     return fallback;
   }
+}
+
+/**
+ * Le compte rendu à afficher sur la fiche, sans jamais appeler le modèle.
+ *
+ * Le compte rendu s'écrit en arrière-plan à la fin des analyses. S'il manque
+ * sur un rendez-vous analysé (l'écriture a échoué, ou le rendez-vous vient
+ * d'être modifié), la fiche ne l'écrit pas pendant son affichage : lire 60 000
+ * caractères de transcript prend une minute, que le commercial passerait
+ * devant une page blanche. Elle affiche le texte indicatif et signale, par
+ * `needsWriting`, qu'il reste à l'écrire en arrière-plan.
+ */
+export function meetingVisitReportForPage(input: {
+  meeting: Pick<
+    MeetingDetailWithAnalyses,
+    "visitReportDraft" | "status" | "transcript"
+  >;
+  discResult: DiscAnalysisResult | null;
+  soncasResult: SoncasAnalysisResult | null;
+  kissResult: KissAnalysisResult | null;
+}): MeetingVisitReportForPage {
+  const storedReport = input.meeting.visitReportDraft?.trim();
+  if (storedReport) {
+    return {
+      meetingSynthesis: storedReport,
+      interlocutorProfile: interlocutorProfileFromAnalyses(input),
+      fromAi: true,
+      needsWriting: false,
+    };
+  }
+  const needsWriting =
+    input.meeting.status === "READY" &&
+    Boolean(getEnv().AI_GATEWAY_API_KEY) &&
+    input.meeting.transcript.trim().length > 0;
+  return {
+    ...fallbackSynthesis({ status: input.meeting.status, ...input }),
+    needsWriting,
+  };
 }
 
 /**

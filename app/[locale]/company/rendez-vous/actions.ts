@@ -366,6 +366,18 @@ export async function updateMeetingAction(formData: FormData) {
     };
   }
 
+  /*
+    Le compte rendu de visite reprend la fiche (contact, date, type, durée,
+    montant) et le transcript : après une modification, il ne dit plus la même
+    chose que la page. On l'efface pour qu'il soit réécrit, par la nouvelle
+    analyse si elle part, sinon à la prochaine ouverture de la fiche.
+  */
+  await actor.deps.meetings.updateMeetingVisitReportDraft({
+    id: parsedId.data,
+    organizationId: actor.organizationId,
+    visitReportDraft: null,
+  });
+
   const notesChanged =
     (parsed.data.notes ?? null) !==
     (access.meeting.notes?.trim() ? access.meeting.notes.trim() : null);

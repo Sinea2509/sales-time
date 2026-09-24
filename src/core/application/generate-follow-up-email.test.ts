@@ -11,7 +11,7 @@ const meeting = {
   personId: "p1",
   prospectName: "Claire Morel",
   prospectCompany: "Atelier Morel",
-  meetingAt: new Date("2026-09-24T08:00:00.000Z"),
+  meetingAt: new Date(2026, 8, 24, 10, 0),
   outcome: "FOLLOW_UP" as const,
   meetingType: "Découverte",
   pipelineStage: null,
@@ -47,13 +47,17 @@ describe("meetingContextBlock", () => {
     );
   });
 
-  it("date le rendez-vous à l'heure de Paris, pas à celle du serveur", () => {
-    /* 22 h 30 en temps universel, c'est déjà le lendemain à Paris. */
+  it("garde le jour saisi pour un rendez-vous tard le soir", () => {
+    /*
+      Le formulaire envoie l'heure saisie sans fuseau, lue dans celui du
+      serveur : la date s'écrit dans ce même fuseau, et 23 h 30 reste le jour
+      saisi, quel que soit le fuseau de la machine qui lance le test.
+    */
     const block = meetingContextBlock({
       ...meeting,
-      meetingAt: new Date("2026-09-24T22:30:00.000Z"),
+      meetingAt: new Date(2026, 8, 24, 23, 30),
     });
-    expect(block).toContain("meetingDate: vendredi 25 septembre 2026");
+    expect(block).toContain("meetingDate: jeudi 24 septembre 2026");
   });
 
   it("omet l'entreprise et le type quand la fiche ne les donne pas", () => {

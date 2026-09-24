@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { after } from "next/server";
 import { MeetingDetailShell } from "@/components/organisms/meeting-detail-shell";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
@@ -10,7 +11,11 @@ import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
 import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
 import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
-import { summarizeMeetingDetail } from "@/src/core/application/summarize-meeting-detail";
+import {
+  generateAndPersistMeetingVisitReport,
+  meetingVisitReportForPage,
+} from "@/src/core/application/summarize-meeting-detail";
+import { visitReportWithoutSellerCoaching } from "@/src/core/domain/visit-report";
 import { getApplicationDeps } from "@/lib/application-deps";
 import {
   isMeetingAnalysisSlow,
@@ -136,25 +141,46 @@ export default async function RendezVousDetailPage({
     updatedAt: meeting.updatedAt,
   });
 
-  const synthesis = await summarizeMeetingDetail(
-    {
-      analysis: deps.analysis,
-      prompts: deps.prompts,
-      meetings: deps.meetings,
-      users: deps.users,
-      organizationSettings: deps.organizationSettings,
-    },
-    {
-      meeting,
-      discResult: discParsed?.success ? discParsed.data : null,
-      soncasResult: soncasParsed?.success ? soncasParsed.data : null,
-      kissResult: kissParsed?.success ? kissParsed.data : null,
-      scorecardResult: scorecardParsed?.success ? scorecardParsed.data : null,
-      organizationId,
-    },
-  );
+  const analysesForReport = {
+    discResult: discParsed?.success ? discParsed.data : null,
+    soncasResult: soncasParsed?.success ? soncasParsed.data : null,
+    kissResult: kissParsed?.success ? kissParsed.data : null,
+    scorecardResult: scorecardParsed?.success ? scorecardParsed.data : null,
+  };
+  const synthesis = meetingVisitReportForPage({
+    meeting,
+    ...analysesForReport,
+  });
+  if (synthesis.needsWriting) {
+    /*
+      Le compte rendu manque sur un rendez-vous analysé : il s'écrit après la
+      réponse, pour que la fiche s'affiche tout de suite. Le commercial le
+      trouve en rechargeant la page.
+    */
+    after(() =>
+      generateAndPersistMeetingVisitReport(
+        {
+          analysis: deps.analysis,
+          prompts: deps.prompts,
+          meetings: deps.meetings,
+          users: deps.users,
+          organizationSettings: deps.organizationSettings,
+        },
+        { organizationId, meeting, ...analysesForReport },
+      ).catch(() => undefined),
+    );
+  }
 
   const canViewSellerCoaching = isSeller || actor.canManageOrganization;
+  /*
+    La grille et le coaching ne se lisent que par le commercial assigné et les
+    managers. Le compte rendu en reprend une partie : pour les autres membres,
+    ces rubriques sont retirées ici, côté serveur, avant d'atteindre la page.
+  */
+  const meetingSynthesis =
+    synthesis.fromAi && !canViewSellerCoaching
+      ? visitReportWithoutSellerCoaching(synthesis.meetingSynthesis)
+      : synthesis.meetingSynthesis;
 
   return (
     <MeetingDetailShell
@@ -177,8 +203,9 @@ export default async function RendezVousDetailPage({
       tamMinutesPerRdv={tamMinutesPerRdv}
       salesScore={salesScore}
       salesScoreDelta={salesScoreDelta}
-      meetingSynthesis={synthesis.meetingSynthesis}
+      meetingSynthesis={meetingSynthesis}
       synthesisFromAi={synthesis.fromAi}
+      synthesisWriting={synthesis.needsWriting}
       interlocutorProfile={synthesis.interlocutorProfile}
       soncasResult={soncasParsed?.success ? soncasParsed.data : null}
       discResult={discParsed?.success ? discParsed.data : null}

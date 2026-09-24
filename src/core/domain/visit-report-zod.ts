@@ -92,8 +92,6 @@ export const visitReportExtractionSchema = z.object({
   }),
   prochainRendezVous: visitReportNextMeetingSchema,
   prochainesEtapes: z.array(visitReportNextStepSchema).max(15),
-  /** Une phrase pour s'adapter à l'interlocuteur, affichée sur la fiche. */
-  interlocutorProfile: z.string().min(1).max(1000),
 });
 
 export type VisitReportQuote = z.infer<typeof visitReportQuoteSchema>;

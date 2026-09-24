@@ -220,6 +220,7 @@ jest.mock("@/lib/application-deps", () => {
       findMeetingDetailWithAnalyses: jest.fn(),
       updateMeetingFollowUpDraft: jest.fn().mockResolvedValue(undefined),
       updateMeetingStatus: jest.fn().mockResolvedValue(undefined),
+      updateMeetingVisitReportDraft: jest.fn().mockResolvedValue(true),
     },
     organizationTeamMock: {
       listMembersAndPendingInvitations: jest
@@ -1343,6 +1344,12 @@ describe("rendez-vous actions", () => {
     });
     expect(analysisJobsMock.enqueueMeetingAnalysis).toHaveBeenCalled();
     expect(scheduleAnalysisJobsAfterResponseMock).toHaveBeenCalled();
+    // Le compte rendu enregistré ne correspond plus à la fiche : il sera réécrit.
+    expect(meetingsMock.updateMeetingVisitReportDraft).toHaveBeenCalledWith({
+      id: MEETING_ID,
+      organizationId: expect.any(String),
+      visitReportDraft: null,
+    });
   });
 });
 

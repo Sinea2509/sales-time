@@ -22,7 +22,7 @@ import type {
  * (rendez-vous précédents). L'assemblage se fait ici, sans modèle : les
  * chiffres du texte sont ceux de la fiche, au point près.
  *
- * Deux retraits décidés à la même revue ne reviennent pas : ni déroulé
+ * Trois retraits décidés à la même revue ne reviennent pas : ni déroulé
  * horodaté, ni risques sur l'affaire, ni mémoire du compte.
  *
  * La règle anti-invention s'écrit dans le texte lui-même. Une rubrique sans
@@ -35,8 +35,13 @@ export type VisitReportHistoryEntry = {
   readonly meetingAt: Date;
   readonly meetingType: string | null;
   readonly sellerName: string | null;
-  /** Score de la grille du rendez-vous, ou `null` s'il n'a pas été noté. */
-  readonly gridScore: number | null;
+  /**
+   * Score de la grille du rendez-vous, `null` s'il n'a pas été noté. Absent
+   * quand il n'est pas à montrer : la grille d'un rendez-vous ne se lit que
+   * par son commercial et par les managers, et le rendez-vous d'un collègue
+   * n'affiche donc pas la sienne.
+   */
+  readonly gridScore?: number | null;
 };
 
 export type VisitReportInput = {
@@ -51,8 +56,14 @@ export type VisitReportInput = {
   /** Le nom de l'organisation du commercial, pour la ligne « Côté … ». */
   readonly organizationName: string | null;
   readonly sellerName: string | null;
-  /** Les rendez-vous précédents avec ce contact, du plus récent au plus ancien. */
-  readonly history: readonly VisitReportHistoryEntry[];
+  /**
+   * Les rendez-vous précédents avec ce contact, du plus récent au plus
+   * ancien ; `null` quand la base n'a pas pu les lire, pour ne pas écrire
+   * « premier rendez-vous » sur un compte qui en a déjà eu.
+   */
+  readonly history: readonly VisitReportHistoryEntry[] | null;
+  /** Le nombre de rendez-vous précédents quand `history` n'en garde qu'une partie. */
+  readonly historyTotal?: number;
   readonly extraction: VisitReportExtraction;
   readonly soncas: SoncasAnalysisResult | null;
   readonly disc: DiscAnalysisResult | null;
@@ -107,11 +118,16 @@ export const VISIT_REPORT_METHOD_NOTE =
 
 const NOT_COVERED = "Non abordé pendant le rendez-vous.";
 
+/*
+  Pas de fuseau imposé : la date s'écrit dans le fuseau du serveur, comme
+  l'en-tête de la fiche. Le formulaire envoie l'heure saisie sans fuseau et le
+  serveur la lit dans le sien ; l'écrire dans un autre fuseau décalerait d'un
+  jour les rendez-vous saisis tard le soir.
+*/
 const longDate = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
   month: "long",
   year: "numeric",
-  timeZone: "Europe/Paris",
 });
 
 const euro = new Intl.NumberFormat("fr-FR", {
@@ -160,16 +176,51 @@ function nonEmpty<T>(items: readonly (T | null)[]): T[] {
   return items.filter((x): x is T => x !== null);
 }
 
-/** Retire les citations du commercial : le compte rendu garde les mots du prospect. */
+/** Un nom tel qu'on le compare : en minuscules, sans précision entre parenthèses ni après une virgule. */
+function personKey(name: string): string {
+  return clean(name.replace(/\([^)]*\)/g, " ").split(",")[0]).toLocaleLowerCase(
+    "fr-FR",
+  );
+}
+
+/**
+ * Retire les citations du commercial : le compte rendu garde les mots du prospect.
+ *
+ * Une citation est au commercial quand son auteur porte le nom complet d'une
+ * personne de son côté (le commercial de la fiche, ou « nous » dans
+ * l'extraction), ou seulement le prénom de l'une d'elles, si personne du côté
+ * client ne porte ce prénom. Comparer des débuts de chaîne écartait les mots de
+ * Jeanne quand le commercial s'appelle Jean.
+ */
 function prospectQuotes(
   quotes: readonly VisitReportQuote[],
-  sellerName: string | null,
+  input: VisitReportInput,
 ): VisitReportQuote[] {
-  const sellerFirstName = clean(sellerName).split(" ")[0]?.toLowerCase() ?? "";
-  if (!sellerFirstName) return [...quotes];
-  return quotes.filter(
-    (q) => !clean(q.qui).toLowerCase().startsWith(sellerFirstName),
+  const participants = input.extraction.participants;
+  const sellerSide = [
+    input.sellerName ?? "",
+    ...participants.nous.map((p) => p.nom),
+  ]
+    .map(personKey)
+    .filter(Boolean);
+  if (sellerSide.length === 0) return [...quotes];
+  const clientFirstNames = new Set(
+    [...participants.client, ...participants.cites]
+      .map((p) => personKey(p.nom).split(" ")[0])
+      .filter(Boolean),
   );
+  const sellerFullNames = new Set(sellerSide);
+  const sellerFirstNames = new Set(
+    sellerSide
+      .map((name) => name.split(" ")[0])
+      .filter((first) => first && !clientFirstNames.has(first)),
+  );
+  return quotes.filter((q) => {
+    const who = personKey(q.qui);
+    if (!who) return true;
+    if (sellerFullNames.has(who)) return false;
+    return !(!who.includes(" ") && sellerFirstNames.has(who));
+  });
 }
 
 class Lines {
@@ -252,22 +303,36 @@ function participants(out: Lines, input: VisitReportInput): void {
 function history(out: Lines, input: VisitReportInput): void {
   const origine = clean(input.extraction.origine);
   out.title("Historique du compte");
+  if (input.history === null) {
+    out.push(
+      "Historique non disponible : les rendez-vous précédents n'ont pas pu être lus.",
+    );
+    if (origine) out.push(`Origine du compte : ${origine}`);
+    return;
+  }
   if (input.history.length === 0) {
     out.push(
       `Premier rendez-vous avec ce contact.${origine ? ` Origine : ${origine}` : ""}`,
     );
     return;
   }
-  const n = input.history.length;
-  out.push(`${n} rendez-vous antérieur${n > 1 ? "s" : ""} avec ce contact :`);
+  const shown = input.history.length;
+  const total = Math.max(input.historyTotal ?? shown, shown);
+  out.push(
+    total > shown
+      ? `${total} rendez-vous antérieurs avec ce contact, dont ${shown > 1 ? `les ${shown} plus récents` : "le plus récent"} :`
+      : `${shown} rendez-vous antérieur${shown > 1 ? "s" : ""} avec ce contact :`,
+  );
   for (const h of input.history) {
     const parts = [
       formatDate(h.meetingAt),
       clean(h.meetingType),
       clean(h.sellerName),
-      h.gridScore != null
-        ? `grille ${h.gridScore} sur 100`
-        : "non noté sur une grille",
+      h.gridScore === undefined
+        ? ""
+        : h.gridScore === null
+          ? "non noté sur une grille"
+          : `grille ${h.gridScore} sur 100`,
     ].filter(Boolean);
     out.push(`- ${parts.join(" · ")}`);
   }
@@ -285,7 +350,7 @@ function body(out: Lines, input: VisitReportInput): void {
     if (!titre || !texte) continue;
     out.title(titre);
     out.push(texte);
-    out.quotes(prospectQuotes(theme.citations, input.sellerName));
+    out.quotes(prospectQuotes(theme.citations, input));
   }
 
   const optionalBlocks: [
@@ -300,7 +365,7 @@ function body(out: Lines, input: VisitReportInput): void {
     if (!texte) continue;
     out.title(titre);
     out.push(texte);
-    out.quotes(prospectQuotes(bloc.citations, input.sellerName));
+    out.quotes(prospectQuotes(bloc.citations, input));
   }
 }
 
@@ -576,15 +641,60 @@ export function composeVisitReport(input: VisitReportInput): string {
 /**
  * Vrai pour une ligne de titre du compte rendu, que la fiche met en valeur.
  *
- * Les titres sont écrits en capitales et rien d'autre dans le texte ne l'est
- * sur une ligne entière : c'est la seule marque qui survit au copier-coller
- * dans un CRM, où le gras disparaît.
+ * Les titres sont écrits en capitales, après une ligne vide : c'est la seule
+ * marque qui survit au copier-coller dans un CRM, où le gras disparaît. La
+ * ligne précédente, quand on la donne, écarte une ligne de texte écrite en
+ * capitales juste sous un titre.
  */
-export function isVisitReportHeading(line: string): boolean {
+export function isVisitReportHeading(
+  line: string,
+  previousLine?: string,
+): boolean {
   // Une ligne en retrait est une citation ou un détail, jamais un titre.
   if (line !== line.trimStart()) return false;
+  if (previousLine !== undefined && previousLine.trim() !== "") return false;
   const trimmed = line.trim();
-  if (trimmed.length < 4) return false;
-  if (!/^\p{Lu}/u.test(trimmed)) return false;
-  return !/\p{Ll}/u.test(trimmed);
+  if (trimmed.length < 3 || trimmed.startsWith("-")) return false;
+  if (/\p{Ll}/u.test(trimmed)) return false;
+  return (trimmed.match(/\p{Lu}/gu) ?? []).length >= 2;
+}
+
+/** Les rubriques tirées de la grille, qui ne se lisent que par le commercial et les managers. */
+const SELLER_COACHING_TITLES = new Set(
+  [
+    "Maturité de l'affaire",
+    "Ce qui n'a pas été couvert, et la question à poser",
+    "Qualité du rendez-vous",
+  ].map(sectionTitle),
+);
+
+/**
+ * Le compte rendu tel que le lit un membre sans accès au coaching du
+ * commercial.
+ *
+ * La grille et le coaching d'un rendez-vous ne se lisent que par le commercial
+ * assigné et par les managers ; le reste du compte rendu (qui était là, ce qui
+ * a été dit, la suite) sert à toute l'équipe. On retire les rubriques tirées de
+ * la grille et les scores de grille de l'historique. Le texte copié est le
+ * texte affiché : il ne contient donc rien de ce qui est retiré.
+ */
+export function visitReportWithoutSellerCoaching(report: string): string {
+  const lines = report.split("\n");
+  const kept: string[] = [];
+  let skipping = false;
+  lines.forEach((line, index) => {
+    if (isVisitReportHeading(line, index > 0 ? lines[index - 1] : undefined)) {
+      skipping = SELLER_COACHING_TITLES.has(line.trim());
+    }
+    if (skipping) return;
+    const withoutScore = line.replace(
+      / · (grille \d+ sur 100|non noté sur une grille)$/,
+      "",
+    );
+    if (withoutScore.trim() === "" && kept[kept.length - 1]?.trim() === "") {
+      return;
+    }
+    kept.push(withoutScore);
+  });
+  return kept.join("\n").trim();
 }

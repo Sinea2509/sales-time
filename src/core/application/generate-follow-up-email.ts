@@ -11,12 +11,17 @@ function xml(tag: string, body: string) {
   return `<${tag}>\n${body}\n</${tag}>`;
 }
 
+/*
+  Pas de fuseau imposé, comme l'en-tête de la fiche : le formulaire envoie
+  l'heure saisie sans fuseau et le serveur la lit dans le sien. L'écrire dans
+  un autre fuseau donnerait le lendemain, et un mauvais jour de la semaine,
+  aux rendez-vous saisis tard le soir.
+*/
 const meetingDate = new Intl.DateTimeFormat("fr-FR", {
   weekday: "long",
   day: "numeric",
   month: "long",
   year: "numeric",
-  timeZone: "Europe/Paris",
 });
 
 /**

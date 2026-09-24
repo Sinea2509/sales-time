@@ -9,6 +9,7 @@ import {
   isVisitReportHeading,
   VISIT_REPORT_METHOD_NOTE,
   VISIT_REPORT_TITLE,
+  visitReportWithoutSellerCoaching,
   type VisitReportInput,
 } from "./visit-report";
 import {
@@ -91,7 +92,6 @@ const extraction: VisitReportExtraction = {
       porteur: "Julien Arnaud",
     },
   ],
-  interlocutorProfile: "Une directrice directe qui veut des chiffres.",
 };
 
 const soncas: SoncasAnalysisResult = {
@@ -186,7 +186,9 @@ function input(overrides: Partial<VisitReportInput> = {}): VisitReportInput {
 describe("composeVisitReport", () => {
   it("suit l'ordre des rubriques validé le 2 septembre", () => {
     const text = composeVisitReport(input());
-    const titles = text.split("\n").filter(isVisitReportHeading);
+    const titles = text
+      .split("\n")
+      .filter((line, i, all) => isVisitReportHeading(line, all[i - 1]));
     expect(titles).toEqual([
       VISIT_REPORT_TITLE,
       "PARTICIPANTS",
@@ -503,16 +505,188 @@ describe("visitReportExtractionSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
-  it("exige la phrase de synthèse et le profil de l'interlocuteur", () => {
+  it("exige la phrase de synthèse", () => {
     expect(
       visitReportExtractionSchema.safeParse({ ...extraction, enUnePhrase: "" })
         .success,
     ).toBe(false);
-    expect(
-      visitReportExtractionSchema.safeParse({
-        ...extraction,
-        interlocutorProfile: "",
-      }).success,
-    ).toBe(false);
+  });
+});
+
+describe("les retours de la relecture du 24 septembre", () => {
+  /** Les citations attribuées des thèmes, celles qui portent le nom de leur auteur. */
+  function quotesOf(text: string): string[] {
+    return text
+      .split("\n")
+      .filter((line) => line.startsWith("  « ") && line.endsWith(")"))
+      .map((line) => line.trim());
+  }
+
+  it("garde les mots de Jeanne quand le commercial s'appelle Jean", () => {
+    const text = composeVisitReport(
+      input({
+        sellerName: "Jean Dupont",
+        extraction: {
+          ...extraction,
+          participants: {
+            client: [
+              { nom: "Jeanne Martin", role: "Acheteuse", statut: "présente" },
+            ],
+            nous: [],
+            cites: [],
+          },
+          themes: [
+            {
+              titre: "Le besoin",
+              texte: "Le besoin est posé.",
+              citations: [
+                { qui: "Jeanne Martin", texte: "Nous perdons de la marge." },
+                { qui: "Jean-Pierre (DAF)", texte: "Le budget est serré." },
+                { qui: "Jean", texte: "Combien cela vous coûte-t-il ?" },
+                {
+                  qui: "Jean Dupont, commercial",
+                  texte: "Je vous propose un essai.",
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(quotesOf(text)).toEqual([
+      "« Nous perdons de la marge. » (Jeanne Martin)",
+      "« Le budget est serré. » (Jean-Pierre (DAF))",
+    ]);
+  });
+
+  it("garde un prénom seul quand le côté client porte aussi ce prénom", () => {
+    const text = composeVisitReport(
+      input({
+        sellerName: "Julien Arnaud",
+        extraction: {
+          ...extraction,
+          participants: {
+            client: [
+              { nom: "Julien Morel", role: "Directeur", statut: "présent" },
+            ],
+            nous: [],
+            cites: [],
+          },
+          themes: [
+            {
+              titre: "Le besoin",
+              texte: "Le besoin est posé.",
+              citations: [
+                { qui: "Julien", texte: "Nous voulons des chiffres." },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+    expect(quotesOf(text)).toEqual(["« Nous voulons des chiffres. » (Julien)"]);
+  });
+
+  it("donne le nombre réel de rendez-vous antérieurs quand l'historique en montre une partie", () => {
+    const text = composeVisitReport(
+      input({
+        history: [
+          {
+            meetingAt: new Date("2026-09-10T08:00:00Z"),
+            meetingType: "Découverte",
+            sellerName: "Julien Arnaud",
+            gridScore: 48,
+          },
+        ],
+        historyTotal: 8,
+      }),
+    );
+    expect(text).toContain(
+      "8 rendez-vous antérieurs avec ce contact, dont le plus récent :",
+    );
+  });
+
+  it("n'écrit pas le score de grille d'un rendez-vous qui n'est pas à montrer", () => {
+    const text = composeVisitReport(
+      input({
+        history: [
+          {
+            meetingAt: new Date("2026-09-10T08:00:00Z"),
+            meetingType: "Découverte",
+            sellerName: "Julie Martin",
+          },
+        ],
+      }),
+    );
+    expect(text).toContain("- 10 septembre 2026 · Découverte · Julie Martin\n");
+    expect(text).not.toContain("Julie Martin · grille");
+  });
+
+  it("n'annonce pas un premier rendez-vous quand l'historique n'a pas pu être lu", () => {
+    const text = composeVisitReport(input({ history: null }));
+    expect(text).toContain(
+      "HISTORIQUE DU COMPTE\nHistorique non disponible : les rendez-vous précédents n'ont pas pu être lus.",
+    );
+    expect(text).not.toContain("Premier rendez-vous");
+  });
+
+  it("garde le jour saisi pour un rendez-vous tard le soir", () => {
+    const lines = composeVisitReport(
+      input({
+        meeting: {
+          ...input().meeting,
+          meetingAt: new Date(2026, 8, 24, 23, 30),
+        },
+      }),
+    ).split("\n");
+    expect(lines[1]).toBe(
+      "Menuiseries Vermont · 24 septembre 2026 · Découverte · 40 min",
+    );
+  });
+
+  it("retire la grille et le coaching pour un membre qui n'y a pas accès", () => {
+    const full = composeVisitReport(
+      input({
+        history: [
+          {
+            meetingAt: new Date("2026-09-10T08:00:00Z"),
+            meetingType: "Découverte",
+            sellerName: "Julien Arnaud",
+            gridScore: 48,
+          },
+        ],
+      }),
+    );
+    const text = visitReportWithoutSellerCoaching(full);
+    const titles = text
+      .split("\n")
+      .filter((line, i, all) => isVisitReportHeading(line, all[i - 1]));
+    expect(titles).toEqual([
+      VISIT_REPORT_TITLE,
+      "PARTICIPANTS",
+      "HISTORIQUE DU COMPTE",
+      "EN UNE PHRASE",
+      "DÉCLENCHEUR ET BESOIN EXPRIMÉ",
+      "PÉRIMÈTRE ET VOLUMÉTRIE",
+      "OBJECTIONS ET RÉPONSES APPORTÉES",
+      "PROFIL DE L'INTERLOCUTEUR",
+      "ENGAGEMENTS PRIS PENDANT LE RENDEZ-VOUS",
+      "PROCHAIN RENDEZ-VOUS",
+      "PROCHAINES ÉTAPES",
+      "NOTE DE MÉTHODE",
+    ]);
+    expect(text).toContain(
+      "- 10 septembre 2026 · Découverte · Julien Arnaud\n",
+    );
+    expect(text).not.toMatch(/grille|Défi du commercial|niveau \d sur 4/);
+    expect(text).not.toMatch(/\n\n\n/);
+  });
+
+  it("reconnaît un titre après une ligne vide, même court ou commençant par un chiffre", () => {
+    expect(isVisitReportHeading("ROI", "")).toBe(true);
+    expect(isVisitReportHeading("3 SITES À ÉQUIPER", "")).toBe(true);
+    expect(isVisitReportHeading("« CLÉ EN MAIN »", "")).toBe(true);
+    expect(isVisitReportHeading("RAS.", "PÉRIMÈTRE ET VOLUMÉTRIE")).toBe(false);
+    expect(isVisitReportHeading("- RAS", "")).toBe(false);
   });
 });

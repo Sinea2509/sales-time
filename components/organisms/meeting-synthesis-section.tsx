@@ -17,9 +17,12 @@ import { cn } from "@/lib/utils";
 export function MeetingSynthesisSection({
   meetingSynthesis,
   fromAi,
+  writing = false,
 }: {
   meetingSynthesis: string;
   fromAi: boolean;
+  /** Le compte rendu manque et s'écrit en arrière-plan : le texte montré est indicatif. */
+  writing?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const [folded, setFolded] = useState(true);
@@ -70,7 +73,10 @@ export function MeetingSynthesisSection({
       >
         <div className="text-foreground text-[13px] leading-7 break-words whitespace-pre-wrap">
           {lines.map((line, index) =>
-            isVisitReportHeading(line) ? (
+            isVisitReportHeading(
+              line,
+              index > 0 ? lines[index - 1] : undefined,
+            ) ? (
               <p
                 key={index}
                 className="text-brand mt-3 text-[11.5px] font-bold tracking-wide first:mt-0"
@@ -92,10 +98,12 @@ export function MeetingSynthesisSection({
         ) : null}
         {!fromAi ? (
           <p className="text-muted-foreground mt-3 text-xs">
-            {text.includes("en cours de génération") ||
-            text.includes("analyse automatique")
-              ? "Le compte rendu complet apparaîtra une fois l'analyse automatique terminée."
-              : "Compte rendu indicatif : la version complète est générée après l'analyse."}
+            {writing
+              ? "Compte rendu indicatif : la version complète s'écrit en ce moment. Rechargez la page dans une minute."
+              : text.includes("en cours de génération") ||
+                  text.includes("analyse automatique")
+                ? "Le compte rendu complet apparaîtra une fois l'analyse automatique terminée."
+                : "Compte rendu indicatif : la version complète est générée après l'analyse."}
           </p>
         ) : null}
       </div>

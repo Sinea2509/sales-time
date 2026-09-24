@@ -1,6 +1,7 @@
 import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
 import {
   generateAndPersistMeetingVisitReport,
+  meetingVisitReportForPage,
   summarizeMeetingDetail,
   VISIT_REPORT_TRANSCRIPT_MAX_CHARS,
 } from "./summarize-meeting-detail";
@@ -57,7 +58,6 @@ const extraction: VisitReportExtraction = {
     aPreparer: "",
   },
   prochainesEtapes: [],
-  interlocutorProfile: "Un acheteur prudent qui veut des garanties.",
 };
 
 const prompts = {
@@ -180,7 +180,7 @@ describe("summarizeMeetingDetail", () => {
       "EN UNE PHRASE\nUn premier échange qui pose le besoin sans chiffrer le budget.",
     );
     expect(result.interlocutorProfile).toBe(
-      "Un acheteur prudent qui veut des garanties.",
+      "Profil interlocuteur disponible après l'analyse automatique.",
     );
   });
 
@@ -285,6 +285,125 @@ describe("summarizeMeetingDetail", () => {
     );
 
     expect(result.fromAi).toBe(false);
+  });
+});
+
+describe("l'historique du compte rendu", () => {
+  afterEach(() => {
+    const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
+    getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: undefined });
+  });
+
+  function earlierMeeting(n: number, sellerUserId = "u1") {
+    return {
+      id: `m-${n}`,
+      sellerUserId,
+      meetingAt: new Date(Date.UTC(2025, 0, n, 10)),
+      meetingType: "Découverte",
+    };
+  }
+
+  async function reportWith(meetings: ReturnType<typeof meetingsRepository>) {
+    withAiKey();
+    const result = await summarizeMeetingDetail(
+      {
+        analysis: {
+          extractVisitReport: jest.fn().mockResolvedValue(extraction),
+        } as never,
+        prompts: prompts as never,
+        meetings: meetings as never,
+        users: {
+          findAccountProfileByUserId: jest.fn(async (id: string) =>
+            id === "u1"
+              ? { firstName: "Julie", lastName: "Martin" }
+              : { firstName: "Paul", lastName: "Durand" },
+          ),
+        } as never,
+      },
+      {
+        meeting,
+        discResult: null,
+        soncasResult: null,
+        kissResult: null,
+        organizationId: "org1",
+      },
+    );
+    return result.meetingSynthesis;
+  }
+
+  it("donne le nombre réel de rendez-vous antérieurs, et les cinq plus récents", async () => {
+    const meetings = meetingsRepository();
+    meetings.listMeetingsForPersonInOrg.mockResolvedValue(
+      [1, 2, 3, 4, 5, 6, 7].map((n) => earlierMeeting(n)),
+    );
+    const text = await reportWith(meetings);
+    expect(text).toContain(
+      "7 rendez-vous antérieurs avec ce contact, dont les 5 plus récents :",
+    );
+    expect(text).toContain("- 7 janvier 2025 ·");
+    expect(text).not.toContain("- 2 janvier 2025 ·");
+  });
+
+  it("ne reprend pas le score de grille du rendez-vous d'un collègue", async () => {
+    const meetings = meetingsRepository();
+    meetings.listMeetingsForPersonInOrg.mockResolvedValue([
+      earlierMeeting(3, "u2"),
+    ]);
+    const text = await reportWith(meetings);
+    expect(text).toContain("- 3 janvier 2025 · Découverte · Paul Durand\n");
+    expect(meetings.findLatestAnalysisForMeeting).not.toHaveBeenCalled();
+  });
+
+  it("n'annonce pas un premier rendez-vous quand la liste n'a pas pu être lue", async () => {
+    const meetings = meetingsRepository();
+    meetings.listMeetingsForPersonInOrg.mockRejectedValue(new Error("base"));
+    const text = await reportWith(meetings);
+    expect(text).toContain("Historique non disponible");
+    expect(text).not.toContain("Premier rendez-vous");
+  });
+});
+
+describe("meetingVisitReportForPage", () => {
+  afterEach(() => {
+    const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
+    getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: undefined });
+  });
+
+  const analyses = { discResult: null, soncasResult: null, kissResult: null };
+
+  it("rend le compte rendu enregistré, sans rien écrire", () => {
+    withAiKey();
+    const result = meetingVisitReportForPage({
+      meeting: { ...meeting, visitReportDraft: "COMPTE RENDU DE VISITE" },
+      ...analyses,
+    });
+    expect(result).toMatchObject({
+      meetingSynthesis: "COMPTE RENDU DE VISITE",
+      fromAi: true,
+      needsWriting: false,
+    });
+  });
+
+  it("signale un compte rendu à écrire sur un rendez-vous analysé qui n'en a pas", () => {
+    withAiKey();
+    const result = meetingVisitReportForPage({ meeting, ...analyses });
+    expect(result.fromAi).toBe(false);
+    expect(result.needsWriting).toBe(true);
+  });
+
+  it("n'écrit rien tant que l'analyse tourne, ni sans clé d'IA", () => {
+    withAiKey();
+    expect(
+      meetingVisitReportForPage({
+        meeting: { ...meeting, status: "PROCESSING" },
+        ...analyses,
+      }).needsWriting,
+    ).toBe(false);
+    const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
+    getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: undefined });
+    expect(
+      meetingVisitReportForPage({ meeting, ...analyses }).needsWriting,
+    ).toBe(false);
   });
 });
 
