@@ -452,33 +452,21 @@ describe("coach shared phrases actions", () => {
     expect(result).toEqual({ ok: false, message: "Type invalide." });
   });
 
-  it("listCoachSharedPhrases returns builtins and community rows", async () => {
+  it("listCoachSharedPhrases ne propose que les suggestions intégrées, jamais les formulations d'une autre organisation", async () => {
     onboardingSharedPhrasesMock.listByKind.mockResolvedValue([
       {
         id: "phrase_1",
-        text: "Phrase communautaire unique",
-        normalizedText: "phrase communautaire unique",
+        text: "Phrase saisie par une autre organisation",
+        normalizedText: "phrase saisie par une autre organisation",
       },
     ]);
     const result = await listCoachSharedPhrases("OBJECTION");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.phrases.some((p) => p.source === "builtin")).toBe(true);
-    expect(result.phrases.some((p) => p.id === "phrase_1")).toBe(true);
-  });
-
-  it("listCoachSharedPhrases skips community rows matching builtins", async () => {
-    onboardingSharedPhrasesMock.listByKind.mockResolvedValue([
-      {
-        id: "dup",
-        text: DEFAULT_OBJECTION_PHRASES[0],
-        normalizedText: DEFAULT_OBJECTION_PHRASES[0].trim().toLowerCase(),
-      },
-    ]);
-    const result = await listCoachSharedPhrases("OBJECTION");
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.phrases.some((p) => p.id === "dup")).toBe(false);
+    expect(result.phrases.length).toBe(DEFAULT_OBJECTION_PHRASES.length);
+    expect(result.phrases.every((p) => p.source === "builtin")).toBe(true);
+    expect(result.phrases.some((p) => p.id === "phrase_1")).toBe(false);
+    expect(onboardingSharedPhrasesMock.listByKind).not.toHaveBeenCalled();
   });
 
   it("createCoachSharedPhrase redirects guests", async () => {

@@ -19,7 +19,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  createCoachSharedPhrase,
   listCoachSharedPhrases,
   type CoachSharedPhraseRow,
 } from "@/app/[locale]/company/coach-shared-phrases-actions";
@@ -57,8 +56,7 @@ export function CoachSharedPhrasePickerSheet({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [filter, setFilter] = useState("");
   const [newPhrase, setNewPhrase] = useState("");
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [ownError, setOwnError] = useState<string | null>(null);
 
   const chosenSet = useMemo(
     () => new Set(alreadyChosen.map((t) => normalizePhraseKey(t))),
@@ -83,7 +81,7 @@ export function CoachSharedPhrasePickerSheet({
       setSelectedIds(new Set());
       setFilter("");
       setNewPhrase("");
-      setCreateError(null);
+      setOwnError(null);
       onOpenChange(next);
     },
     [onOpenChange],
@@ -106,7 +104,6 @@ export function CoachSharedPhrasePickerSheet({
   }, [phrases, filter, chosenSet]);
 
   const builtins = visiblePhrases.filter((p) => p.source === "builtin");
-  const community = visiblePhrases.filter((p) => p.source === "community");
 
   function toggle(id: string) {
     setSelectedIds((prev) => {
@@ -131,25 +128,24 @@ export function CoachSharedPhrasePickerSheet({
     handleOpenChange(false);
   }
 
-  async function handleCreateAndShare() {
+  /*
+    Une formulation saisie ici va dans la liste de l'organisation, et nulle
+    part ailleurs. Elle partait dans une collection partagée avec toutes les
+    organisations clientes : l'objection d'un client devenait lisible par ses
+    concurrents.
+  */
+  function handleAddOwn() {
     const t = newPhrase.trim();
     if (t.length < 3) {
-      setCreateError("Minimum 3 caractères.");
+      setOwnError("Minimum 3 caractères.");
       return;
     }
-    setCreateError(null);
-    setCreating(true);
-    const r = await createCoachSharedPhrase({ kind, text: t });
-    setCreating(false);
-    if (!r.ok) {
-      setCreateError(r.message);
+    if (chosenSet.has(normalizePhraseKey(t))) {
+      setOwnError("Cette formulation est déjà dans votre liste.");
       return;
     }
-    setPhrases((prev) => {
-      if (prev.some((p) => p.id === r.phrase.id)) return prev;
-      return [r.phrase, ...prev];
-    });
-    setSelectedIds((prev) => new Set(prev).add(r.phrase.id));
+    setOwnError(null);
+    onAddToList([t]);
     setNewPhrase("");
   }
 
@@ -195,44 +191,35 @@ export function CoachSharedPhrasePickerSheet({
                   selectedIds={selectedIds}
                   onToggle={toggle}
                 />
-                <PhraseBlock
-                  heading="Collection partagée"
-                  sub="Enrichie depuis l’onboarding et les réglages Coach IA. Vous pouvez proposer de nouvelles formulations ci-dessous."
-                  items={community}
-                  selectedIds={selectedIds}
-                  onToggle={toggle}
-                />
               </>
             )}
           </div>
 
           <div className="border-border space-y-2 rounded-xl border bg-muted/20 p-3">
-            <Label htmlFor="new-phrase">
-              Créer une nouvelle option (partagée)
-            </Label>
+            <Label htmlFor="new-phrase">Votre formulation</Label>
             <p className="text-muted-foreground text-xs">
-              Visible pour toutes les organisations (onboarding et Coach IA).
+              Elle s&apos;ajoute à la liste de votre organisation, et
+              d&apos;aucune autre.
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 id="new-phrase"
                 value={newPhrase}
-                onChange={(e) => setNewPhrase(e.target.value.slice(0, 300))}
+                onChange={(e) => setNewPhrase(e.target.value)}
+                maxLength={300}
                 placeholder="Votre formulation…"
-                disabled={creating}
               />
               <Button
                 type="button"
                 variant="secondary"
                 className={cn("shrink-0", secondaryGreyClass)}
-                disabled={creating}
-                onClick={() => void handleCreateAndShare()}
+                onClick={handleAddOwn}
               >
-                Créer et partager
+                Ajouter à ma liste
               </Button>
             </div>
-            {createError ? (
-              <p className="text-destructive text-xs">{createError}</p>
+            {ownError ? (
+              <p className="text-destructive text-xs">{ownError}</p>
             ) : null}
           </div>
         </div>

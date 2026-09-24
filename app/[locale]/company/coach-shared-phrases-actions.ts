@@ -39,7 +39,16 @@ export type ListCoachSharedPhrasesResult =
   | { ok: true; phrases: CoachSharedPhraseRow[] }
   | { ok: false; message: string };
 
-/** Liste intégrée + collection partagée (onboarding & réglages Coach IA). */
+/**
+ * Les suggestions proposées dans l'onboarding et les réglages Coach IA.
+ *
+ * Seulement la liste intégrée à Sales Time. La « collection partagée »
+ * mêlait aux suggestions les formulations saisies par les autres
+ * organisations : l'objection ou l'argument d'un client devenait lisible par
+ * tous les autres. Sales Time est vendu à plusieurs entreprises, parfois
+ * concurrentes : une formulation saisie par une organisation reste désormais
+ * dans sa liste, et la collection n'est plus lue ici.
+ */
 export async function listCoachSharedPhrases(
   rawKind: string,
 ): Promise<ListCoachSharedPhrasesResult> {
@@ -49,10 +58,6 @@ export async function listCoachSharedPhrases(
   }
   const kind = kindParsed.data;
 
-  const builtInSet = new Set(
-    builtinsForKind(kind).map((t) => normalizePhraseKey(t)),
-  );
-
   const builtIns: CoachSharedPhraseRow[] = builtinsForKind(kind).map(
     (text, i) => ({
       id: `builtin:${kind}:${i}`,
@@ -61,23 +66,7 @@ export async function listCoachSharedPhrases(
     }),
   );
 
-  const deps = getApplicationDeps();
-  const dbRows = await deps.onboardingSharedPhrases.listByKind({
-    kind,
-    take: 150,
-  });
-
-  const community: CoachSharedPhraseRow[] = [];
-  for (const row of dbRows) {
-    if (builtInSet.has(row.normalizedText)) continue;
-    community.push({
-      id: row.id,
-      text: row.text,
-      source: "community",
-    });
-  }
-
-  return { ok: true, phrases: [...builtIns, ...community] };
+  return { ok: true, phrases: builtIns };
 }
 
 export type CreateCoachSharedPhraseResult =
