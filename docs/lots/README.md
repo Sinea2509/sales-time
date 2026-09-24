@@ -25,7 +25,9 @@ le lot.
 ## Les règles qui ne se discutent pas
 
 1. **Le produit parle français**, ses commentaires de code aussi. Les
-   consignes envoyées au modèle peuvent rester en anglais.
+   consignes modifiables envoyées au modèle sont en français depuis le lot
+   80 ; les enrobages fixés par le code (échelles, compétences du
+   commercial) peuvent rester en anglais.
 2. **Aucun tiret cadratin** (le caractère U+2014), nulle part : code, textes,
    commentaires, documents, messages de commit. `tests/typographie.test.ts`
    balaie tout le dépôt et échoue au premier. Écrivez des deux-points, des
@@ -103,3 +105,13 @@ deploy && next build`). Aucune migration destructive sans décision écrite.
 - Le ton du coach : des phrases avec un verbe, « notre suggestion » plutôt
   qu'un impératif, et jamais une rubrique remplie sans information dans le
   transcript.
+- Le compte rendu de visite est assemblé par le produit à partir d'une
+  extraction faite par le modèle ; une rubrique sans matière dit qu'elle n'a
+  pas été abordée (lot 80).
+- Les exemples d'une consigne montrent une forme, et la consigne le dit.
+  Aucune consigne ne donne de date précise en exemple : au premier essai en
+  production, un modèle a recopié celle d'un exemple dans un mail de suivi.
+  `lib/default-analysis-prompts.test.ts` le garde.
+- Une consigne publiée en production par le super admin se recopie dans
+  `lib/default-analysis-prompts.ts` au lot suivant, pour que le bouton
+  « Consigne d'origine » ramène le texte en vigueur.
