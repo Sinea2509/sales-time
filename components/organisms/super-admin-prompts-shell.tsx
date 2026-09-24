@@ -26,6 +26,8 @@ type VersionRow = {
 export type SuperAdminPromptPanel = {
   kind: AnalysisKindSlug;
   initialMarkdown: string;
+  /** La consigne d'origine de Sales Time, écrite dans le code. */
+  defaultMarkdown: string;
   initialModel: string;
   versionCount: number;
   versions: VersionRow[];
@@ -93,7 +95,10 @@ export function SuperAdminPromptsShell({ panels, initialKind }: Props) {
             href="/admin/prompts/kiss-consignes"
             className="text-muted-foreground hover:text-foreground flex items-start gap-2 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-muted/60"
           >
-            <Sparkles className="text-brand mt-0.5 size-4 shrink-0" aria-hidden />
+            <Sparkles
+              className="text-brand mt-0.5 size-4 shrink-0"
+              aria-hidden
+            />
             <span>
               <span className="text-foreground block font-medium">
                 Consignes KISS
@@ -118,6 +123,7 @@ export function SuperAdminPromptsShell({ panels, initialKind }: Props) {
           key={selectedKind}
           kind={selectedKind}
           initialMarkdown={selected.initialMarkdown}
+          defaultMarkdown={selected.defaultMarkdown}
           initialModel={selected.initialModel}
           versions={selected.versions}
         />
