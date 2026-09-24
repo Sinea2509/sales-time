@@ -17,77 +17,83 @@ import { z } from "zod";
  * écrit qu'elle n'a pas été abordée. Des champs nuls auraient dépendu de la
  * façon dont chaque fournisseur de modèle traduit un schéma ; une chaîne vide
  * se lit partout de la même manière.
+ *
+ * Les plafonds de longueur sont larges exprès. Le modèle les lit comme des
+ * indications, mais le schéma les vérifie après coup : un seul titre trop long
+ * ferait perdre tout le compte rendu, remplacé par le texte de secours. La
+ * longueur voulue se règle dans la consigne ; les plafonds n'arrêtent qu'un
+ * texte qui s'emballe.
  */
 
 /** Des mots prononcés, et par qui. */
 export const visitReportQuoteSchema = z.object({
-  qui: z.string().max(120),
-  texte: z.string().max(600),
+  qui: z.string().max(200),
+  texte: z.string().max(1000),
 });
 
 /** Une personne présente, ou citée sans être là. */
 export const visitReportParticipantSchema = z.object({
-  nom: z.string().max(120),
-  role: z.string().max(160),
-  statut: z.string().max(200),
+  nom: z.string().max(200),
+  role: z.string().max(300),
+  statut: z.string().max(400),
 });
 
 /** Un thème du rendez-vous : une synthèse, puis les mots du prospect. */
 export const visitReportThemeSchema = z.object({
-  titre: z.string().max(80),
-  texte: z.string().max(1500),
-  citations: z.array(visitReportQuoteSchema).max(4),
+  titre: z.string().max(200),
+  texte: z.string().max(2500),
+  citations: z.array(visitReportQuoteSchema).max(6),
 });
 
 /** Une rubrique facultative du corps : vide quand le sujet n'est pas venu. */
 export const visitReportBlockSchema = z.object({
-  texte: z.string().max(1200),
-  citations: z.array(visitReportQuoteSchema).max(4),
+  texte: z.string().max(2000),
+  citations: z.array(visitReportQuoteSchema).max(6),
 });
 
 export const visitReportObjectionSchema = z.object({
-  qui: z.string().max(120),
+  qui: z.string().max(200),
   /** Les mots du prospect, tels qu'il les a dits. */
-  objection: z.string().max(500),
-  reponse: z.string().max(600),
-  effet: z.string().max(400),
+  objection: z.string().max(1000),
+  reponse: z.string().max(1200),
+  effet: z.string().max(600),
 });
 
 export const visitReportNextMeetingSchema = z.object({
   /** Vide quand aucun rendez-vous n'a été fixé pendant l'échange. */
-  quand: z.string().max(200),
-  objectif: z.string().max(500),
-  participants: z.string().max(300),
-  aPreparer: z.string().max(600),
+  quand: z.string().max(400),
+  objectif: z.string().max(1000),
+  participants: z.string().max(600),
+  aPreparer: z.string().max(1000),
 });
 
 export const visitReportNextStepSchema = z.object({
-  action: z.string().max(300),
-  echeance: z.string().max(120),
-  porteur: z.string().max(120),
+  action: z.string().max(600),
+  echeance: z.string().max(300),
+  porteur: z.string().max(200),
 });
 
 export const visitReportExtractionSchema = z.object({
-  enUnePhrase: z.string().min(1).max(1200),
+  enUnePhrase: z.string().min(1).max(2000),
   participants: z.object({
-    client: z.array(visitReportParticipantSchema).max(12),
-    nous: z.array(visitReportParticipantSchema).max(8),
-    cites: z.array(visitReportParticipantSchema).max(12),
+    client: z.array(visitReportParticipantSchema).max(20),
+    nous: z.array(visitReportParticipantSchema).max(12),
+    cites: z.array(visitReportParticipantSchema).max(20),
   }),
-  origine: z.string().max(600),
-  themes: z.array(visitReportThemeSchema).max(8),
+  origine: z.string().max(1000),
+  themes: z.array(visitReportThemeSchema).max(10),
   perimetre: visitReportBlockSchema,
   concurrence: visitReportBlockSchema,
-  objections: z.array(visitReportObjectionSchema).max(8),
+  objections: z.array(visitReportObjectionSchema).max(12),
   engagements: z.object({
-    texte: z.string().max(800),
-    liste: z.array(z.string().max(300)).max(10),
-    citations: z.array(visitReportQuoteSchema).max(4),
+    texte: z.string().max(1500),
+    liste: z.array(z.string().max(600)).max(15),
+    citations: z.array(visitReportQuoteSchema).max(6),
   }),
   prochainRendezVous: visitReportNextMeetingSchema,
-  prochainesEtapes: z.array(visitReportNextStepSchema).max(10),
+  prochainesEtapes: z.array(visitReportNextStepSchema).max(15),
   /** Une phrase pour s'adapter à l'interlocuteur, affichée sur la fiche. */
-  interlocutorProfile: z.string().min(1).max(600),
+  interlocutorProfile: z.string().min(1).max(1000),
 });
 
 export type VisitReportQuote = z.infer<typeof visitReportQuoteSchema>;

@@ -475,6 +475,34 @@ describe("visitReportExtractionSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("accepte un titre de thème ou une échéance plus longs que prévu", () => {
+    /*
+      Un dépassement de plafond fait perdre tout le compte rendu : les
+      plafonds laissent donc une large marge au-delà de ce que la consigne
+      demande.
+    */
+    const parsed = visitReportExtractionSchema.safeParse({
+      ...extraction,
+      themes: [
+        {
+          titre:
+            "Le contexte : une équipe de neuf commerciaux sur quatre secteurs, et une marge brute qui recule depuis deux ans",
+          texte: "Claire décrit son équipe et la baisse de la marge.",
+          citations: [],
+        },
+      ],
+      prochainesEtapes: [
+        {
+          action: "Envoyer la proposition",
+          echeance:
+            "d'ici vendredi, avant la présentation au directeur général et bien avant le comité de direction de novembre",
+          porteur: "Julien Arnaud",
+        },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
   it("exige la phrase de synthèse et le profil de l'interlocuteur", () => {
     expect(
       visitReportExtractionSchema.safeParse({ ...extraction, enUnePhrase: "" })
