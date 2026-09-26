@@ -3,6 +3,7 @@ import { PrismaAdminSearchRepository } from "@/src/adapters/prisma/prisma-admin-
 import { PrismaPlatformHealthRepository } from "@/src/adapters/prisma/prisma-platform-health-repository";
 import { PrismaOrganizationTeamRepository } from "@/src/adapters/prisma/prisma-organization-team-repository";
 import { PrismaBackofficeRepository } from "@/src/adapters/prisma/prisma-backoffice-repository";
+import { PrismaDemoTenantAdapter } from "@/src/adapters/prisma/prisma-demo-tenant-adapter";
 import { makeSessionAuthAdapter } from "@/src/adapters/auth/session-auth-adapter";
 import { PrismaSessionRepository } from "@/src/adapters/prisma/prisma-session-repository";
 import { makePrismaOrganizationDirectoryPort } from "@/src/adapters/prisma/prisma-organization-directory";
@@ -59,6 +60,7 @@ import type { FeedbackRepositoryPort } from "@/src/core/ports/feedback-repositor
 import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
 import type { OrganizationQuotaRepositoryPort } from "@/src/core/ports/organization-quota-repository-port";
 import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
+import type { DemoTenantPort } from "@/src/core/ports/demo-tenant-port";
 
 export type ApplicationDeps = {
   auth: AuthSessionPort;
@@ -91,6 +93,7 @@ export type ApplicationDeps = {
   notifications: NotificationRepositoryPort;
   organizationQuota: OrganizationQuotaRepositoryPort;
   aiSummaryCache: AiSummaryCacheRepositoryPort;
+  demoTenant: DemoTenantPort;
 };
 
 export function makeApplicationDeps(): ApplicationDeps {
@@ -128,5 +131,6 @@ export function makeApplicationDeps(): ApplicationDeps {
     notifications: new PrismaNotificationRepository(prisma),
     organizationQuota: new PrismaOrganizationQuotaRepository(prisma),
     aiSummaryCache: new PrismaAiSummaryCacheRepository(prisma),
+    demoTenant: new PrismaDemoTenantAdapter(prisma),
   };
 }

@@ -3,9 +3,32 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { ensureDemoOrganization } from "@/src/core/application/ensure-demo-organization";
 import { requireSuperAdminActor } from "@/src/core/application/require-super-admin";
+import type { DemoOrganizationResult } from "@/src/core/ports/demo-tenant-port";
 
 type ActionResult = { ok: true } | { ok: false; message: string };
+
+export type EnsureDemoOrganizationActionResult =
+  | { ok: true; demo: DemoOrganizationResult }
+  | { ok: false; message: string };
+
+export async function ensureDemoOrganizationAction(): Promise<EnsureDemoOrganizationActionResult> {
+  const deps = getApplicationDeps();
+  const gate = await requireSuperAdminActor(deps);
+  if (!gate.ok) return gate;
+
+  const result = await ensureDemoOrganization(deps, {
+    actorUserId: gate.actorUserId,
+  });
+  if (!result.ok) {
+    return { ok: false, message: result.message };
+  }
+
+  revalidatePath("/admin/organizations");
+  revalidatePath("/admin");
+  return { ok: true, demo: result.demo };
+}
 
 const createOrgSchema = z.object({
   name: z.string().trim().min(1, "Le nom est requis.").max(200),

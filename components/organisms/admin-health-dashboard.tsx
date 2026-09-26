@@ -12,8 +12,12 @@ import {
   MailPlus,
   Cog,
   AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cardTitleClass } from "@/lib/page-typography";
+import type { PlatformConfigCheck } from "@/lib/platform-config-status";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { AdminKpiCard } from "@/components/molecules/admin-kpi-card";
 import { cn } from "@/lib/utils";
@@ -68,6 +72,7 @@ export type AdminHealthDashboardProps = {
     jobsDead: number;
     meetingsProcessingStuck: number;
   };
+  configChecks: PlatformConfigCheck[];
   now: Date;
   region: string;
   nodeEnv: string;
@@ -78,11 +83,13 @@ export function AdminHealthDashboard({
   dbHealth,
   counts,
   pipeline,
+  configChecks,
   now,
   region,
   nodeEnv,
   nextVersion,
 }: AdminHealthDashboardProps) {
+  const missingCritical = configChecks.filter((c) => !c.ok && c.critical);
   const {
     userCount,
     orgCount,
@@ -105,6 +112,61 @@ export function AdminHealthDashboard({
         title="Santé système"
         description="État de l'infrastructure et métriques de la base de données."
       />
+
+      {/*
+        La configuration avant la base : une clé manquante casse une
+        fonctionnalité en silence, alors qu'une base lente se voit tout de
+        suite. Ce que le produit ne sait pas faire aujourd'hui se lit ici, en
+        conséquences pour l'utilisateur, pas en noms de variables.
+      */}
+      <Card
+        className={cn(
+          missingCritical.length > 0 &&
+            "border-amber-300 dark:border-amber-700",
+        )}
+      >
+        <CardHeader>
+          <CardTitle className={cn(cardTitleClass, "flex items-center gap-2")}>
+            <SlidersHorizontal className="size-4" />
+            Configuration
+          </CardTitle>
+          <CardDescription>
+            {missingCritical.length > 0
+              ? `${missingCritical.length} réglage${missingCritical.length > 1 ? "s" : ""} manquant${missingCritical.length > 1 ? "s" : ""} empêche${missingCritical.length > 1 ? "nt" : ""} une fonctionnalité de marcher.`
+              : "Tout ce dont le produit a besoin est en place."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {configChecks.map((check) => (
+              <li key={check.key} className="flex items-start gap-2 text-sm">
+                {check.ok ? (
+                  <CheckCircle2
+                    className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+                    aria-label="Configuré"
+                  />
+                ) : (
+                  <XCircle
+                    className={cn(
+                      "mt-0.5 size-4 shrink-0",
+                      check.critical
+                        ? "text-red-600 dark:text-red-400"
+                        : "text-amber-600 dark:text-amber-400",
+                    )}
+                    aria-label="Manquant"
+                  />
+                )}
+                <div>
+                  <p className="font-medium">{check.label}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {check.detail}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
 
       {/* Database Health */}
       <Card>
