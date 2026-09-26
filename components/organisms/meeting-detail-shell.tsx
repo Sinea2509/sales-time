@@ -45,6 +45,8 @@ export type MeetingDetailShellProps = {
   analysisProgress: MeetingAnalysisProgress;
   meetingSynthesis: string;
   synthesisFromAi: boolean;
+  /** Vrai quand le compte rendu manque et doit s'écrire au fil de l'eau. */
+  streamVisitReport?: boolean;
   interlocutorProfile: string;
   soncasResult: SoncasAnalysisResult | null;
   discResult: DiscAnalysisResult | null;
@@ -72,6 +74,7 @@ export function MeetingDetailShell({
   analysisProgress,
   meetingSynthesis,
   synthesisFromAi,
+  streamVisitReport = false,
   interlocutorProfile,
   soncasResult,
   discResult,
@@ -142,6 +145,7 @@ export function MeetingDetailShell({
       <MeetingSynthesisSection
         meetingSynthesis={meetingSynthesis}
         fromAi={synthesisFromAi}
+        streamMeetingId={streamVisitReport ? meeting.id : null}
       />
 
       <MeetingInterlocutorSection

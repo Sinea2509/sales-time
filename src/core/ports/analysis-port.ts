@@ -163,6 +163,25 @@ export interface AnalysisPort {
     kissRollup: OrgKissRollupForSummary;
   }): Promise<TeamCoachingRecommendations>;
 
+  /**
+   * Le compte rendu de visite écrit au fil de l'eau, pour l'afficher pendant
+   * qu'il s'écrit. `text` se résout avec le texte complet, à conserver.
+   */
+  streamMeetingVisitReport(input: {
+    systemMarkdown: string;
+    model: string;
+    prospectName: string;
+    prospectCompany: string | null;
+    meetingAt: string;
+    outcome: string;
+    meetingType: string | null;
+    pipelineStage: string | null;
+    transcriptExcerpt: string;
+    discResult: unknown;
+    soncasResult: unknown;
+    kissResult: unknown;
+  }): Promise<{ textStream: AsyncIterable<string>; text: PromiseLike<string> }>;
+
   /** Synthèse narrative du RDV + phrase profil interlocuteur (fiche RDV). */
   summarizeMeetingDetail(input: {
     systemMarkdown: string;

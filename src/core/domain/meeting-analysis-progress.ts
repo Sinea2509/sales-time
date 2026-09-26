@@ -4,16 +4,13 @@ import type { MeetingStatus } from "./meeting-status";
  * Les étapes que la fiche rendez-vous montre pendant l'analyse automatique.
  *
  * Elles suivent l'ordre réel du traitement : SONCAS, DISC et la scorecard
- * partent ensemble, KISS attend les deux profils, le compte rendu relit tout.
- * La liste s'affiche dans cet ordre pour que le commercial voie les cases se
- * cocher dans le sens où elles se remplissent, pas dans un ordre décoratif.
+ * partent ensemble, KISS attend les deux profils. Le compte rendu de visite
+ * n'en fait pas partie : il s'écrit à la demande, au fil de l'eau, quand on
+ * ouvre la fiche une fois l'analyse prête. La liste s'affiche dans cet ordre
+ * pour que le commercial voie les cases se cocher dans le sens où elles se
+ * remplissent, pas dans un ordre décoratif.
  */
-export type AnalysisProgressStepKey =
-  | "SONCAS"
-  | "DISC"
-  | "SCORECARD"
-  | "KISS"
-  | "REPORT";
+export type AnalysisProgressStepKey = "SONCAS" | "DISC" | "SCORECARD" | "KISS";
 
 export type AnalysisProgressStepState = "done" | "running" | "pending";
 
@@ -37,7 +34,6 @@ const STEP_LABELS: Readonly<Record<AnalysisProgressStepKey, string>> = {
   DISC: "Profil DISC",
   SCORECARD: "Scorecard",
   KISS: "Coaching KISS",
-  REPORT: "Compte rendu de visite",
 };
 
 /** Les étapes lancées ensemble, avant KISS. */
@@ -74,13 +70,12 @@ export function meetingAnalysisProgress(input: {
   status: MeetingStatus;
   updatedAt: Date;
   analyses: ReadonlyArray<{ kind: string; createdAt?: Date }>;
-  visitReportDraft: string | null;
   /** Faux quand le type de rendez-vous n'a pas de grille : l'étape n'est pas listée. */
   scorecardApplicable: boolean;
 }): MeetingAnalysisProgress {
   const keys: AnalysisProgressStepKey[] = input.scorecardApplicable
-    ? ["SONCAS", "DISC", "SCORECARD", "KISS", "REPORT"]
-    : ["SONCAS", "DISC", "KISS", "REPORT"];
+    ? ["SONCAS", "DISC", "SCORECARD", "KISS"]
+    : ["SONCAS", "DISC", "KISS"];
 
   const freshKinds = new Set(
     input.analyses
@@ -96,11 +91,7 @@ export function meetingAnalysisProgress(input: {
 
   const done = new Set<AnalysisProgressStepKey>();
   for (const key of keys) {
-    if (input.status === "READY") {
-      done.add(key);
-    } else if (key === "REPORT") {
-      if (input.visitReportDraft?.trim()) done.add(key);
-    } else if (freshKinds.has(key)) {
+    if (input.status === "READY" || freshKinds.has(key)) {
       done.add(key);
     }
   }
@@ -114,8 +105,6 @@ export function meetingAnalysisProgress(input: {
       for (const k of firstWavePending) running.add(k);
     } else if (!done.has("KISS")) {
       running.add("KISS");
-    } else if (!done.has("REPORT")) {
-      running.add("REPORT");
     }
   }
 

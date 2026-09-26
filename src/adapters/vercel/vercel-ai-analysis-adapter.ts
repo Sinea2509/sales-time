@@ -1,4 +1,4 @@
-import { generateObject, generateText } from "ai";
+import { generateObject, generateText, streamText } from "ai";
 import { z } from "zod";
 import {
   discAnalysisOutputSchema,
@@ -326,6 +326,62 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       progressBullets: object.progressBullets.map((s) => s.trim()),
       improvementBullets: object.improvementBullets.map((s) => s.trim()),
     };
+  }
+
+  async streamMeetingVisitReport(input: {
+    systemMarkdown: string;
+    model: string;
+    prospectName: string;
+    prospectCompany: string | null;
+    meetingAt: string;
+    outcome: string;
+    meetingType: string | null;
+    pipelineStage: string | null;
+    transcriptExcerpt: string;
+    discResult: unknown;
+    soncasResult: unknown;
+    kissResult: unknown;
+  }) {
+    /*
+      Le même prompt que la synthèse structurée, mais il ne rend qu'un seul
+      des deux champs : le compte rendu, en texte brut, pour qu'il puisse
+      s'afficher lettre à lettre. Le profil de l'interlocuteur, lui, se lit
+      déjà dans les analyses DISC et SONCAS.
+    */
+    const system = withDataScopeSystemPrompt(
+      [
+        input.systemMarkdown,
+        "",
+        "Consigne de format pour cette réponse : rends uniquement le texte du champ meetingSynthesis, sans JSON, sans guillemets, sans le champ interlocutorProfile, sans commentaire.",
+      ].join("\n"),
+    );
+    const userContent = [
+      "Contexte rendez-vous (JSON) :",
+      JSON.stringify(
+        {
+          prospect: input.prospectName,
+          entreprise: input.prospectCompany,
+          dateRdv: input.meetingAt,
+          resultat: input.outcome,
+          typeRdv: input.meetingType,
+          etape: input.pipelineStage,
+          extraitTranscript: input.transcriptExcerpt,
+          discResult: input.discResult,
+          soncasResult: input.soncasResult,
+          kissResult: input.kissResult,
+        },
+        null,
+        2,
+      ),
+    ].join("\n");
+
+    const result = streamText({
+      model: input.model,
+      system,
+      prompt: userContent,
+      maxOutputTokens: 900,
+    });
+    return { textStream: result.textStream, text: result.text };
   }
 
   async summarizeMeetingDetail(input: {
