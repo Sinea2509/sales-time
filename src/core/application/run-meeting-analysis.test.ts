@@ -31,6 +31,7 @@ describe("runMeetingAnalysis", () => {
       analyzeSoncas: jest.fn(),
       analyzeDisc: jest.fn(),
       analyzeKiss: jest.fn(),
+      analyzeObjections: jest.fn(),
     };
 
     const result = await runMeetingAnalysis(
@@ -65,6 +66,7 @@ describe("runMeetingAnalysis", () => {
       analyzeSoncas: jest.fn(),
       analyzeDisc: jest.fn(),
       analyzeKiss: jest.fn(),
+      analyzeObjections: jest.fn(),
     };
 
     const result = await runMeetingAnalysis(
@@ -129,6 +131,7 @@ describe("runMeetingAnalysis", () => {
       }),
       analyzeDisc: jest.fn(),
       analyzeKiss: jest.fn(),
+      analyzeObjections: jest.fn(),
     };
 
     const result = await runMeetingAnalysis(
@@ -163,6 +166,7 @@ describe("runMeetingAnalysis", () => {
           analyzeSoncas: jest.fn(),
           analyzeDisc: jest.fn(),
           analyzeKiss: jest.fn(),
+          analyzeObjections: jest.fn(),
         },
       } as never,
       {
@@ -208,6 +212,7 @@ describe("runMeetingAnalysis", () => {
       analyzeSoncas: jest.fn(),
       analyzeDisc: jest.fn().mockResolvedValue({ result: { disc: true } }),
       analyzeKiss: jest.fn(),
+      analyzeObjections: jest.fn(),
     };
 
     const result = await runMeetingAnalysis(
@@ -333,6 +338,7 @@ describe("runMeetingAnalysis", () => {
       analyzeSoncas: jest.fn().mockRejectedValue("not-an-error"),
       analyzeDisc: jest.fn(),
       analyzeKiss: jest.fn(),
+      analyzeObjections: jest.fn(),
     };
 
     const result = await runMeetingAnalysis(
@@ -368,6 +374,7 @@ describe("runMeetingAnalysis", () => {
       analyzeSoncas: jest.fn(),
       analyzeDisc: jest.fn(),
       analyzeKiss: jest.fn(),
+      analyzeObjections: jest.fn(),
     };
 
     const result = await runMeetingAnalysis(
@@ -415,6 +422,7 @@ describe("runMeetingAnalysis", () => {
       analyzeSoncas: jest.fn().mockRejectedValue(new Error("soncas fail")),
       analyzeDisc: jest.fn(),
       analyzeKiss: jest.fn(),
+      analyzeObjections: jest.fn(),
     };
 
     const result = await runMeetingAnalysis(
@@ -467,6 +475,7 @@ describe("runMeetingAnalysis", () => {
           analyzeSoncas: jest.fn(),
           analyzeDisc: jest.fn(),
           analyzeKiss: jest.fn(),
+          analyzeObjections: jest.fn(),
         },
       } as never,
       {
@@ -768,6 +777,7 @@ describe("runMeetingAnalysis : verbatim obligatoire sur SONCAS", () => {
       analyzeSoncas: jest.fn().mockResolvedValue({ result: resultatRendu }),
       analyzeDisc: jest.fn().mockResolvedValue({ result: resultatRendu }),
       analyzeKiss: jest.fn(),
+      analyzeObjections: jest.fn(),
     };
     const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
     return { meetings, prompts, analysis, aiLogs };
@@ -929,6 +939,7 @@ describe("runMeetingAnalysis : scorecard", () => {
       analyzeSoncas: jest.fn(),
       analyzeDisc: jest.fn(),
       analyzeKiss: jest.fn(),
+      analyzeObjections: jest.fn(),
       analyzeScorecard,
     };
     const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
@@ -1149,5 +1160,82 @@ describe("runMeetingAnalysis : scorecard", () => {
     });
     expect(deps.analysis.analyzeKiss).not.toHaveBeenCalled();
     expect(deps.meetings.createAnalysis).not.toHaveBeenCalled();
+  });
+});
+
+describe("runMeetingAnalysis : objections", () => {
+  /*
+    Les objections passent par la même branche que SONCAS et DISC : rien que
+    le transcript, l'enrobage générique, et le résultat enregistré tel quel.
+    Le test tient à deux choses : l'appel part bien vers analyzeObjections et
+    non vers un profil, et la ligne enregistrée porte le bon genre.
+  */
+  it("appelle analyzeObjections et enregistre le résultat sous OBJECTIONS", async () => {
+    const result = {
+      objections: [
+        {
+          objection: "On verra selon ce que vous proposez.",
+          who: "Le prospect",
+          moment: null,
+          response: "Aucune relance.",
+          effect: "L'objection n'est pas traitée.",
+          outcome: "open",
+          suggestion:
+            "Reposez la question : « Ce serait quoi, dans les clous ? »",
+        },
+      ],
+      summary: "Une objection, laissée ouverte.",
+    };
+    const meetings = {
+      findMeetingByIdForOrg: jest.fn().mockResolvedValue({
+        id: "m1",
+        organizationId: "org_1",
+        transcript: "t",
+        notes: null,
+        meetingType: null,
+        pipelineStage: null,
+      }),
+      createAnalysis: jest.fn().mockResolvedValue({
+        id: "a-obj",
+        meetingId: "m1",
+        kind: "OBJECTIONS",
+        model: "m",
+        result,
+        createdAt: new Date(),
+      }),
+      findLatestAnalysisForMeeting: jest.fn().mockResolvedValue(null),
+    };
+    const prompts = {
+      ensureCurrentVersion: jest.fn().mockResolvedValue({
+        id: "pv",
+        markdown: "base",
+        templateId: "t",
+        kind: "OBJECTIONS" as const,
+        version: 1,
+        authorUserId: "u1",
+        createdAt: new Date(),
+      }),
+      getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+    };
+    const analysis = {
+      analyzeSoncas: jest.fn(),
+      analyzeDisc: jest.fn(),
+      analyzeKiss: jest.fn(),
+      analyzeScorecard: jest.fn(),
+      analyzeObjections: jest.fn().mockResolvedValue({ result }),
+    };
+
+    const out = await runMeetingAnalysis(
+      { meetings, prompts, analysis } as never,
+      { organizationId: "org_1", meetingId: "m1", kind: "OBJECTIONS" },
+    );
+
+    expect(out).toEqual({ ok: true, analysisId: "a-obj" });
+    expect(analysis.analyzeObjections).toHaveBeenCalledTimes(1);
+    expect(analysis.analyzeSoncas).not.toHaveBeenCalled();
+    expect(analysis.analyzeDisc).not.toHaveBeenCalled();
+    expect(meetings.createAnalysis).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "OBJECTIONS", result }),
+    );
   });
 });

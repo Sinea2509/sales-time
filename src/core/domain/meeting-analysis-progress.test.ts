@@ -12,13 +12,14 @@ describe("meetingAnalysisProgress", () => {
       scorecardApplicable: true,
     });
 
-    expect(p.totalCount).toBe(4);
+    expect(p.totalCount).toBe(5);
     expect(p.doneCount).toBe(0);
     expect(p.percent).toBe(0);
     expect(p.steps.map((s) => [s.key, s.state])).toEqual([
       ["SONCAS", "running"],
       ["DISC", "running"],
       ["SCORECARD", "running"],
+      ["OBJECTIONS", "running"],
       ["KISS", "pending"],
     ]);
   });
@@ -32,14 +33,14 @@ describe("meetingAnalysisProgress", () => {
     });
 
     expect(p.doneCount).toBe(1);
-    expect(p.percent).toBe(25);
+    expect(p.percent).toBe(20);
     expect(p.steps.find((s) => s.key === "SONCAS")?.state).toBe("done");
     expect(p.steps.find((s) => s.key === "DISC")?.state).toBe("running");
     expect(p.steps.find((s) => s.key === "KISS")?.state).toBe("pending");
   });
 
   it("passe à KISS quand la vague est complète", () => {
-    const wave = ["SONCAS", "DISC", "SCORECARD"].map((kind) => ({
+    const wave = ["SONCAS", "DISC", "SCORECARD", "OBJECTIONS"].map((kind) => ({
       kind,
       createdAt: later(15),
     }));
@@ -54,7 +55,7 @@ describe("meetingAnalysisProgress", () => {
       "running",
     );
     expect(kissRunning.runningCount).toBe(1);
-    expect(kissRunning.percent).toBe(75);
+    expect(kissRunning.percent).toBe(80);
   });
 
   /*
@@ -77,6 +78,7 @@ describe("meetingAnalysisProgress", () => {
     expect(p.steps.map((s) => s.state)).toEqual([
       "running",
       "running",
+      "running",
       "pending",
     ]);
   });
@@ -89,8 +91,13 @@ describe("meetingAnalysisProgress", () => {
       scorecardApplicable: false,
     });
 
-    expect(p.totalCount).toBe(3);
-    expect(p.steps.map((s) => s.key)).toEqual(["SONCAS", "DISC", "KISS"]);
+    expect(p.totalCount).toBe(4);
+    expect(p.steps.map((s) => s.key)).toEqual([
+      "SONCAS",
+      "DISC",
+      "OBJECTIONS",
+      "KISS",
+    ]);
   });
 
   it("en READY, tout est fait", () => {
@@ -119,6 +126,11 @@ describe("meetingAnalysisProgress", () => {
     });
 
     expect(p.runningCount).toBe(0);
-    expect(p.steps.map((s) => s.state)).toEqual(["done", "pending", "pending"]);
+    expect(p.steps.map((s) => s.state)).toEqual([
+      "done",
+      "pending",
+      "pending",
+      "pending",
+    ]);
   });
 });

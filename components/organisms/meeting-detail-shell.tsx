@@ -34,6 +34,7 @@ import type {
 } from "@/src/core/domain/analysis-result-zod";
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import type { ScorecardAnalysisResult } from "@/src/core/domain/scorecard-result-zod";
+import type { ObjectionsAnalysisResult } from "@/src/core/domain/objections-result-zod";
 
 export type MeetingDetailShellProps = {
   meeting: {
@@ -61,6 +62,8 @@ export type MeetingDetailShellProps = {
   scorecardResult: ScorecardAnalysisResult | null;
   scorecardGridIntent: string | null;
   scorecardGridAssumed: boolean;
+  /** Absente sur un rendez-vous analysé avant que les objections ne le soient. */
+  objectionsResult: ObjectionsAnalysisResult | null;
   transcriptSourceLabel: string | null;
   /**
    * Une seule autorisation pour les deux blocs qui notent le commercial : la
@@ -106,6 +109,7 @@ export function MeetingDetailShell({
   scorecardResult,
   scorecardGridIntent,
   scorecardGridAssumed,
+  objectionsResult,
   transcriptSourceLabel,
   showSellerCoaching,
   canEdit = false,
@@ -147,7 +151,13 @@ export function MeetingDetailShell({
     {
       id: "objections",
       label: "Objections",
-      panel: <MeetingObjectionsTab prospectName={meeting.prospectName} />,
+      panel: (
+        <MeetingObjectionsTab
+          objections={objectionsResult}
+          prospectName={meeting.prospectName}
+          pending={pending}
+        />
+      ),
     },
     {
       id: "soncas",

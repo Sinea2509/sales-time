@@ -25,8 +25,8 @@ function creepFraction(elapsedMs: number): number {
 
 /**
  * Le remplissage montré : les étapes faites, plus une avance progressive sur
- * celles qui tournent. Avec trois étapes lancées ensemble, l'avance porte
- * sur les trois, puisqu'elles finiront à peu près en même temps.
+ * celles qui tournent. Avec quatre étapes lancées ensemble, l'avance porte
+ * sur chacune, puisqu'elles finiront à peu près en même temps.
  */
 function displayedPercent(
   progress: MeetingAnalysisProgress,

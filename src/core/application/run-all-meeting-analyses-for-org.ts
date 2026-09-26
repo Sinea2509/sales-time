@@ -109,9 +109,9 @@ export async function runAllMeetingAnalysesForOrg(
   /*
     Deux vagues, et non une file.
 
-    SONCAS, DISC et la scorecard ne lisent que le transcript : rien ne justifie
-    de les faire attendre l'une derrière l'autre, et le commercial attendait
-    trois appels au modèle là où un seul suffit. KISS, lui, relit SONCAS et
+    SONCAS, DISC, la scorecard et les objections ne lisent que le transcript :
+    rien ne justifie de les faire attendre l'une derrière l'autre, et le
+    commercial attendait quatre appels au modèle là où un seul suffit. KISS, lui, relit SONCAS et
     DISC déjà enregistrés : il ne part qu'une fois la vague terminée, sans quoi
     il jugerait un rendez-vous dont le profil d'interlocuteur n'existe pas
     encore. Le compte rendu de visite, plus bas, relit tout.
@@ -120,7 +120,7 @@ export async function runAllMeetingAnalysesForOrg(
     que le rendez-vous nomme toujours la même étape fautive quand deux échouent
     ensemble.
   */
-  const FIRST_WAVE = ["SONCAS", "DISC", "SCORECARD"] as const;
+  const FIRST_WAVE = ["SONCAS", "DISC", "SCORECARD", "OBJECTIONS"] as const;
   const firstWave = await Promise.all(FIRST_WAVE.map((kind) => runKind(kind)));
 
   for (let i = 0; i < FIRST_WAVE.length; i += 1) {

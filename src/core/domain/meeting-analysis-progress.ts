@@ -3,14 +3,19 @@ import type { MeetingStatus } from "./meeting-status";
 /**
  * Les étapes que la fiche rendez-vous montre pendant l'analyse automatique.
  *
- * Elles suivent l'ordre réel du traitement : SONCAS, DISC et la scorecard
- * partent ensemble, KISS attend les deux profils. Le compte rendu de visite
+ * Elles suivent l'ordre réel du traitement : SONCAS, DISC, la scorecard et
+ * les objections partent ensemble, KISS attend les deux profils. Le compte rendu de visite
  * n'en fait pas partie : il s'écrit à la demande, au fil de l'eau, quand on
  * ouvre la fiche une fois l'analyse prête. La liste s'affiche dans cet ordre
  * pour que le commercial voie les cases se cocher dans le sens où elles se
  * remplissent, pas dans un ordre décoratif.
  */
-export type AnalysisProgressStepKey = "SONCAS" | "DISC" | "SCORECARD" | "KISS";
+export type AnalysisProgressStepKey =
+  | "SONCAS"
+  | "DISC"
+  | "SCORECARD"
+  | "OBJECTIONS"
+  | "KISS";
 
 export type AnalysisProgressStepState = "done" | "running" | "pending";
 
@@ -33,6 +38,7 @@ const STEP_LABELS: Readonly<Record<AnalysisProgressStepKey, string>> = {
   SONCAS: "Profil SONCAS",
   DISC: "Profil DISC",
   SCORECARD: "Scorecard",
+  OBJECTIONS: "Objections",
   KISS: "Coaching KISS",
 };
 
@@ -41,6 +47,7 @@ const FIRST_WAVE: ReadonlySet<AnalysisProgressStepKey> = new Set([
   "SONCAS",
   "DISC",
   "SCORECARD",
+  "OBJECTIONS",
 ]);
 
 /**
@@ -74,8 +81,8 @@ export function meetingAnalysisProgress(input: {
   scorecardApplicable: boolean;
 }): MeetingAnalysisProgress {
   const keys: AnalysisProgressStepKey[] = input.scorecardApplicable
-    ? ["SONCAS", "DISC", "SCORECARD", "KISS"]
-    : ["SONCAS", "DISC", "KISS"];
+    ? ["SONCAS", "DISC", "SCORECARD", "OBJECTIONS", "KISS"]
+    : ["SONCAS", "DISC", "OBJECTIONS", "KISS"];
 
   const freshKinds = new Set(
     input.analyses

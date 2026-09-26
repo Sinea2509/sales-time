@@ -50,7 +50,7 @@ describe("runAllMeetingAnalysesForOrg", () => {
     rendez-vous dont le profil d'interlocuteur n'existe pas encore. La scorecard
     part avec les deux profils, elle ne nourrit aucune des autres.
   */
-  it("runs SONCAS, DISC and SCORECARD, then KISS, and marks meeting READY", async () => {
+  it("runs SONCAS, DISC, SCORECARD and OBJECTIONS, then KISS, and marks meeting READY", async () => {
     runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
     const deps = makeDeps();
 
@@ -65,6 +65,7 @@ describe("runAllMeetingAnalysesForOrg", () => {
       "SONCAS",
       "DISC",
       "SCORECARD",
+      "OBJECTIONS",
       "KISS",
     ]);
     expect(deps.meetings.updateMeetingStatus).toHaveBeenLastCalledWith(
@@ -78,7 +79,7 @@ describe("runAllMeetingAnalysesForOrg", () => {
     doit l'être une fois qu'ils ont tous rendu leur résultat. Un `await` oublié
     devant la première vague garderait l'ordre des appels et casserait cela.
   */
-  it("ne lance KISS qu'une fois SONCAS, DISC et la scorecard terminés", async () => {
+  it("ne lance KISS qu'une fois SONCAS, DISC, la scorecard et les objections terminés", async () => {
     const settled = new Set<string>();
     let kindsSettledWhenKissStarted: string[] | null = null;
 
@@ -102,6 +103,7 @@ describe("runAllMeetingAnalysesForOrg", () => {
 
     expect(kindsSettledWhenKissStarted).toEqual([
       "DISC",
+      "OBJECTIONS",
       "SCORECARD",
       "SONCAS",
     ]);
@@ -162,6 +164,7 @@ describe("runAllMeetingAnalysesForOrg", () => {
       "SONCAS",
       "DISC",
       "SCORECARD",
+      "OBJECTIONS",
       "KISS",
     ]);
   });

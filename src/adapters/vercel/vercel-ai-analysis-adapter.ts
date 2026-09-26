@@ -7,6 +7,7 @@ import {
 import { kissGeneratedResultSchema } from "@/src/core/domain/kiss-result-zod";
 import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
 import { scorecardGeneratedResultSchema } from "@/src/core/domain/scorecard-result-zod";
+import { objectionsResultSchema } from "@/src/core/domain/objections-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import { meetingDetailSynthesisSchema } from "@/src/core/domain/meeting-detail-synthesis-zod";
@@ -163,6 +164,36 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       schema: scorecardGeneratedResultSchema,
+      system: systemPrompt,
+      prompt: userPrompt,
+    });
+
+    return {
+      result: object,
+      systemPrompt,
+      userPrompt,
+      usage: {
+        inputTokens: usage?.inputTokens,
+        outputTokens: usage?.outputTokens,
+      },
+    };
+  }
+
+  async analyzeObjections(input: {
+    systemMarkdown: string;
+    transcript: string;
+    notes: string | null;
+    model: string;
+  }) {
+    const userPrompt = buildDelimitedMeetingUserContent({
+      transcript: input.transcript,
+      notes: input.notes,
+    });
+    const systemPrompt = withDataScopeSystemPrompt(input.systemMarkdown);
+
+    const { object, usage } = await generateObject({
+      model: input.model,
+      schema: objectionsResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
     });
