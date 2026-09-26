@@ -22,6 +22,7 @@ import {
   isMeetingAnalysisStuck,
 } from "@/src/core/domain/meeting-analysis-stuck";
 import { salesScoreAverage } from "@/src/core/domain/note-globale-on5";
+import { objectionsResultSchema } from "@/src/core/domain/objections-result-zod";
 import { scorecardCriteria } from "@/src/core/domain/scorecard-grid";
 import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
@@ -101,6 +102,7 @@ export default async function RendezVousDetailPage({
   const disc = meeting.analyses.find((a) => a.kind === "DISC");
   const kiss = meeting.analyses.find((a) => a.kind === "KISS");
   const scorecard = meeting.analyses.find((a) => a.kind === "SCORECARD");
+  const objections = meeting.analyses.find((a) => a.kind === "OBJECTIONS");
   const soncasParsed = soncas
     ? soncasResultSchema.safeParse(soncas.result)
     : null;
@@ -112,6 +114,9 @@ export default async function RendezVousDetailPage({
   */
   const scorecardParsed = scorecard
     ? scorecardResultSchema.safeParse(scorecard.result)
+    : null;
+  const objectionsParsed = objections
+    ? objectionsResultSchema.safeParse(objections.result)
     : null;
 
   const salesScore = soncas ? salesScoreFromSoncasResult(soncas.result) : null;
@@ -230,6 +235,9 @@ export default async function RendezVousDetailPage({
       scorecardResult={scorecardParsed?.success ? scorecardParsed.data : null}
       scorecardGridIntent={grid?.intent ?? null}
       scorecardGridAssumed={gridAssumed}
+      objectionsResult={
+        objectionsParsed?.success ? objectionsParsed.data : null
+      }
       transcriptSourceLabel={
         transcribedFromAudio
           ? "Transcrit automatiquement depuis un enregistrement audio, un intervenant par ligne."

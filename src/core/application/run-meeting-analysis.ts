@@ -1,4 +1,5 @@
 import {
+  withDataScopeSystemPrompt,
   withDiscSystemPrompt,
   withKissSystemPrompt,
   withScorecardSystemPrompt,
@@ -91,7 +92,7 @@ export async function runMeetingAnalysis(
     /** Suffixe markdown (paramètres org.) concaténé au prompt KISS global. */
     kissSystemMarkdownAppendix?: string | null;
     /**
-     * Bloc playbook de l'organisation, ajouté aux trois analyses.
+     * Bloc playbook de l'organisation, ajouté à toutes les analyses.
      *
      * SONCAS et DISC ne recevaient jusqu'ici aucun contexte d'entreprise : le
      * modèle jugeait la découverte d'un prospect sans savoir ce qui se vend,
@@ -125,9 +126,10 @@ export async function runMeetingAnalysis(
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     if (deps.aiLogs) {
-      const model = await resolvePromptGatewayModel(deps.prompts, input.kind).catch(
-        () => "unknown",
-      );
+      const model = await resolvePromptGatewayModel(
+        deps.prompts,
+        input.kind,
+      ).catch(() => "unknown");
       await recordAiRequestError(
         deps.aiLogs,
         {
@@ -169,7 +171,11 @@ export async function runMeetingAnalysis(
   const model = await resolvePromptGatewayModel(deps.prompts, input.kind);
 
   try {
-    if (input.kind === "SONCAS" || input.kind === "DISC") {
+    if (
+      input.kind === "SONCAS" ||
+      input.kind === "DISC" ||
+      input.kind === "OBJECTIONS"
+    ) {
       const profileSystemMarkdown = composeAnalysisSystemMarkdown(
         promptVersion.markdown,
         [input.organizationPlaybookMarkdown],
@@ -185,7 +191,9 @@ export async function runMeetingAnalysis(
       const systemPrompt =
         input.kind === "SONCAS"
           ? withSoncasSystemPrompt(profileSystemMarkdown)
-          : withDiscSystemPrompt(profileSystemMarkdown);
+          : input.kind === "DISC"
+            ? withDiscSystemPrompt(profileSystemMarkdown)
+            : withDataScopeSystemPrompt(profileSystemMarkdown);
       const userPrompt = buildDelimitedMeetingUserContent({
         transcript: transcriptForAnalysis,
         notes: meeting.notes,
@@ -205,7 +213,9 @@ export async function runMeetingAnalysis(
       const analyze =
         input.kind === "SONCAS"
           ? deps.analysis.analyzeSoncas
-          : deps.analysis.analyzeDisc;
+          : input.kind === "DISC"
+            ? deps.analysis.analyzeDisc
+            : deps.analysis.analyzeObjections;
       try {
         const out = await analyze({
           systemMarkdown: profileSystemMarkdown,

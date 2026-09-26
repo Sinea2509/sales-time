@@ -5,7 +5,12 @@ import type {
 } from "@/src/core/domain/meeting-status";
 
 /** Analysis kinds persisted on \`MeetingAnalysis\`. */
-export type MeetingAnalysisKind = "SONCAS" | "DISC" | "KISS" | "SCORECARD";
+export type MeetingAnalysisKind =
+  | "SONCAS"
+  | "DISC"
+  | "KISS"
+  | "SCORECARD"
+  | "OBJECTIONS";
 
 export type MeetingRow = {
   id: string;
