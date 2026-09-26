@@ -107,6 +107,9 @@ export type MeetingDetailWithAnalyses = {
   visitReportDraft: string | null;
   transcript: string;
   notes: string | null;
+  durationMin: number | null;
+  sourceType: MeetingSourceType;
+  sourceBlobUrl: string | null;
   updatedAt: Date;
   analyses: Array<{
     kind: MeetingAnalysisKind;
