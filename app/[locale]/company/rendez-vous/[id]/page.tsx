@@ -14,6 +14,7 @@ import { meetingAnalysisProgress } from "@/src/core/domain/meeting-analysis-prog
 import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { summarizeMeetingDetail } from "@/src/core/application/summarize-meeting-detail";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { checkAiGatewayConfigured } from "@/lib/env";
 import {
   isMeetingAnalysisSlow,
   isMeetingAnalysisStuck,
@@ -142,7 +143,6 @@ export default async function RendezVousDetailPage({
     status: meeting.status,
     updatedAt: meeting.updatedAt,
     analyses: meeting.analyses,
-    visitReportDraft: meeting.visitReportDraft,
     scorecardApplicable:
       scorecardGridForMeeting({
         meetingType: meeting.meetingType,
@@ -150,6 +150,10 @@ export default async function RendezVousDetailPage({
       }) != null,
   });
 
+  /*
+    Le compte rendu ne s'écrit plus pendant le rendu de la page : la fiche
+    s'ouvre tout de suite, et le texte se compose sous les yeux du lecteur.
+  */
   const synthesis = await summarizeMeetingDetail(
     { ...deps, meetings: deps.meetings },
     {
@@ -158,8 +162,14 @@ export default async function RendezVousDetailPage({
       soncasResult: soncasParsed?.success ? soncasParsed.data : null,
       kissResult: kissParsed?.success ? kissParsed.data : null,
       organizationId,
+      generateIfMissing: false,
     },
   );
+  const streamVisitReport =
+    !synthesis.fromAi &&
+    meeting.status === "READY" &&
+    meeting.transcript.trim().length > 0 &&
+    checkAiGatewayConfigured().ok;
 
   const canViewSellerCoaching = isSeller || actor.canManageOrganization;
 
@@ -187,6 +197,7 @@ export default async function RendezVousDetailPage({
       analysisProgress={analysisProgress}
       meetingSynthesis={synthesis.meetingSynthesis}
       synthesisFromAi={synthesis.fromAi}
+      streamVisitReport={streamVisitReport}
       interlocutorProfile={synthesis.interlocutorProfile}
       soncasResult={soncasParsed?.success ? soncasParsed.data : null}
       discResult={discParsed?.success ? discParsed.data : null}

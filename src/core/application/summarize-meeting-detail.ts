@@ -70,6 +70,11 @@ export async function summarizeMeetingDetail(
     kissResult: KissAnalysisResult | null;
     /** Bypass READY guard (analysis worker after SONCAS/DISC/KISS). */
     forceAiGeneration?: boolean;
+    /**
+     * Faux quand la fiche écrit le compte rendu au fil de l'eau côté client :
+     * le rendu de la page ne doit alors pas bloquer sur un appel au modèle.
+     */
+    generateIfMissing?: boolean;
     organizationId?: string;
   },
 ): Promise<MeetingDetailSynthesisContent> {
@@ -86,6 +91,10 @@ export async function summarizeMeetingDetail(
     status: input.meeting.status,
     ...input,
   });
+
+  if (input.generateIfMissing === false && input.forceAiGeneration !== true) {
+    return fallback;
+  }
 
   const canGenerateAi =
     input.forceAiGeneration === true || input.meeting.status === "READY";

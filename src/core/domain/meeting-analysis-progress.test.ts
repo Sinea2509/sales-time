@@ -9,11 +9,10 @@ describe("meetingAnalysisProgress", () => {
       status: "PROCESSING",
       updatedAt: T0,
       analyses: [],
-      visitReportDraft: null,
       scorecardApplicable: true,
     });
 
-    expect(p.totalCount).toBe(5);
+    expect(p.totalCount).toBe(4);
     expect(p.doneCount).toBe(0);
     expect(p.percent).toBe(0);
     expect(p.steps.map((s) => [s.key, s.state])).toEqual([
@@ -21,7 +20,6 @@ describe("meetingAnalysisProgress", () => {
       ["DISC", "running"],
       ["SCORECARD", "running"],
       ["KISS", "pending"],
-      ["REPORT", "pending"],
     ]);
   });
 
@@ -30,18 +28,17 @@ describe("meetingAnalysisProgress", () => {
       status: "PROCESSING",
       updatedAt: T0,
       analyses: [{ kind: "SONCAS", createdAt: later(12) }],
-      visitReportDraft: null,
       scorecardApplicable: true,
     });
 
     expect(p.doneCount).toBe(1);
-    expect(p.percent).toBe(20);
+    expect(p.percent).toBe(25);
     expect(p.steps.find((s) => s.key === "SONCAS")?.state).toBe("done");
     expect(p.steps.find((s) => s.key === "DISC")?.state).toBe("running");
     expect(p.steps.find((s) => s.key === "KISS")?.state).toBe("pending");
   });
 
-  it("passe à KISS quand la vague est complète, puis au compte rendu", () => {
+  it("passe à KISS quand la vague est complète", () => {
     const wave = ["SONCAS", "DISC", "SCORECARD"].map((kind) => ({
       kind,
       createdAt: later(15),
@@ -51,25 +48,13 @@ describe("meetingAnalysisProgress", () => {
       status: "PROCESSING",
       updatedAt: T0,
       analyses: wave,
-      visitReportDraft: null,
       scorecardApplicable: true,
     });
     expect(kissRunning.steps.find((s) => s.key === "KISS")?.state).toBe(
       "running",
     );
     expect(kissRunning.runningCount).toBe(1);
-
-    const reportRunning = meetingAnalysisProgress({
-      status: "PROCESSING",
-      updatedAt: T0,
-      analyses: [...wave, { kind: "KISS", createdAt: later(30) }],
-      visitReportDraft: null,
-      scorecardApplicable: true,
-    });
-    expect(reportRunning.steps.find((s) => s.key === "REPORT")?.state).toBe(
-      "running",
-    );
-    expect(reportRunning.percent).toBe(80);
+    expect(kissRunning.percent).toBe(75);
   });
 
   /*
@@ -85,7 +70,6 @@ describe("meetingAnalysisProgress", () => {
         { kind: "DISC", createdAt: later(-600) },
         { kind: "KISS", createdAt: later(-600) },
       ],
-      visitReportDraft: null,
       scorecardApplicable: false,
     });
 
@@ -93,7 +77,6 @@ describe("meetingAnalysisProgress", () => {
     expect(p.steps.map((s) => s.state)).toEqual([
       "running",
       "running",
-      "pending",
       "pending",
     ]);
   });
@@ -103,20 +86,14 @@ describe("meetingAnalysisProgress", () => {
       status: "PROCESSING",
       updatedAt: T0,
       analyses: [],
-      visitReportDraft: null,
       scorecardApplicable: false,
     });
 
-    expect(p.totalCount).toBe(4);
-    expect(p.steps.map((s) => s.key)).toEqual([
-      "SONCAS",
-      "DISC",
-      "KISS",
-      "REPORT",
-    ]);
+    expect(p.totalCount).toBe(3);
+    expect(p.steps.map((s) => s.key)).toEqual(["SONCAS", "DISC", "KISS"]);
   });
 
-  it("en READY, tout est fait, même si le compte rendu manque", () => {
+  it("en READY, tout est fait", () => {
     const p = meetingAnalysisProgress({
       status: "READY",
       updatedAt: later(60),
@@ -125,7 +102,6 @@ describe("meetingAnalysisProgress", () => {
         { kind: "DISC", createdAt: later(10) },
         { kind: "KISS", createdAt: later(30) },
       ],
-      visitReportDraft: null,
       scorecardApplicable: false,
     });
 
@@ -139,16 +115,10 @@ describe("meetingAnalysisProgress", () => {
       status: "FAILED",
       updatedAt: later(60),
       analyses: [{ kind: "SONCAS", createdAt: later(10) }],
-      visitReportDraft: null,
       scorecardApplicable: false,
     });
 
     expect(p.runningCount).toBe(0);
-    expect(p.steps.map((s) => s.state)).toEqual([
-      "done",
-      "pending",
-      "pending",
-      "pending",
-    ]);
+    expect(p.steps.map((s) => s.state)).toEqual(["done", "pending", "pending"]);
   });
 });

@@ -2,7 +2,6 @@ import {
   discResultSchema,
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
-import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
@@ -17,7 +16,6 @@ import type { NotificationRepositoryPort } from "@/src/core/ports/notification-r
 import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
-import { generateAndPersistMeetingVisitReport } from "./summarize-meeting-detail";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
 
 export type RunAllMeetingAnalysesResult =
@@ -177,16 +175,10 @@ export async function runAllMeetingAnalysesForOrg(
     organizationId: input.organizationId,
     kind: "SONCAS",
   });
-  const kiss = await deps.meetings.findLatestAnalysisForMeeting({
-    meetingId: meeting.id,
-    organizationId: input.organizationId,
-    kind: "KISS",
-  });
   const discParsed = disc ? discResultSchema.safeParse(disc.result) : null;
   const soncasParsed = soncas
     ? soncasResultSchema.safeParse(soncas.result)
     : null;
-  const kissParsed = kiss ? kissResultSchema.safeParse(kiss.result) : null;
   if (discParsed?.success || soncasParsed?.success) {
     await deps.meetings.updatePersonProfileCache({
       personId: meeting.personId,
@@ -198,27 +190,12 @@ export async function runAllMeetingAnalysesForOrg(
     });
   }
 
-  const meetingDetail = await deps.meetings.findMeetingDetailWithAnalyses({
-    id: meeting.id,
-    organizationId: input.organizationId,
-  });
-  if (meetingDetail) {
-    await generateAndPersistMeetingVisitReport(
-      {
-        analysis: deps.analysis,
-        prompts: deps.prompts,
-        meetings: deps.meetings,
-      },
-      {
-        organizationId: input.organizationId,
-        meeting: meetingDetail,
-        discResult: discParsed?.success ? discParsed.data : null,
-        soncasResult: soncasParsed?.success ? soncasParsed.data : null,
-        kissResult: kissParsed?.success ? kissParsed.data : null,
-      },
-    ).catch(() => undefined);
-  }
-
+  /*
+    Le compte rendu de visite n'est plus écrit ici. Il l'est à la demande, au
+    fil de l'eau, la première fois qu'on ouvre la fiche : le rendez-vous est
+    prêt un appel au modèle plus tôt, et le commercial voit le texte se
+    composer au lieu d'attendre un paragraphe fini.
+  */
   await deps.meetings.updateMeetingStatus({
     id: meeting.id,
     organizationId: input.organizationId,
