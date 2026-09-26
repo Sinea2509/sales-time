@@ -10,6 +10,7 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
+import { statsWindowLabel } from "@/lib/stats-window-labels";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import {
   resolveManagerTeamUserIds,
@@ -115,7 +116,7 @@ export default async function DashboardHomePage({
         : null;
     return (
       <div className="space-y-6">
-        <PageHeaderSimple title="Tableau de bord" />
+        <PageHeaderSimple title="Tableau de bord équipe" />
         {!admin ? null : (
           <DashboardAdminShell
             admin={admin}
@@ -164,6 +165,7 @@ export default async function DashboardHomePage({
         organizationId: actor.activeOrganizationId,
         statsWindowDays,
         sellerUserId: sellerId,
+        withSellerFocus: true,
       }),
       deps.organizationSettings.findByOrganizationId(
         actor.activeOrganizationId,
@@ -207,7 +209,14 @@ export default async function DashboardHomePage({
         opérationnels », un h2 sans h1 au-dessus. Le libellé reprend mot pour
         mot celui de la navigation qui y mène.
       */}
-      <PageHeaderSimple title="Mon tableau de bord" />
+      <PageHeaderSimple
+        title={
+          actor.firstName?.trim()
+            ? `Bonjour ${actor.firstName.trim()}`
+            : "Mon tableau de bord"
+        }
+        description={`Votre activité des ${statsWindowLabel(statsWindowDays)}, et ce qui mérite votre attention aujourd'hui.`}
+      />
       {!home ? null : (
         <DashboardHomeShell
           home={home}

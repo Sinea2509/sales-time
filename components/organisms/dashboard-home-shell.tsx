@@ -7,13 +7,17 @@ import { RendezVousMeetingRowActions } from "@/components/organisms/rendez-vous-
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
 import { MeetingActionBadge } from "@/components/molecules/meeting-action-badge";
 import { CommercialActionPlan } from "@/components/organisms/commercial-action-plan";
-import { CommercialStandingHero } from "@/components/organisms/commercial-standing-hero";
+import { CommercialDashboardHero } from "@/components/organisms/commercial-dashboard-hero";
+import { CommercialMonthFocusCards } from "@/components/organisms/commercial-month-focus-cards";
 import { DashboardKpiCards } from "@/components/organisms/dashboard-kpi-cards";
 import { MeetingCreateDialog } from "@/components/organisms/meeting-create-dialog";
 import { meetingsTodoSummary } from "@/src/core/domain/meeting-next-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPotentialEuro } from "@/lib/format-potential-euro";
+import { Link } from "@/i18n/navigation";
+import { buttonVariants } from "@/components/ui/button";
 import { sectionHeadingClass } from "@/lib/page-typography";
+import { sousTitreDuGroupe } from "@/components/organisms/dashboard-standing-card";
 import { salesScoreColorClass } from "@/lib/sales-score-color";
 import type { TeamScopeGroup } from "@/lib/team-seller-scope";
 import { cn } from "@/lib/utils";
@@ -66,49 +70,58 @@ export function DashboardHomeShell({
         alors sur les indicateurs, seul écran qui reste, pour ne pas se retrouver
         sans point d'ancrage.
       */}
-      {standing ? (
-        <section className="space-y-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className={sectionHeadingClass}>Où j&apos;en suis</h2>
-            <Suspense
-              fallback={
-                <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
-              }
-            >
-              <DashboardStatsPeriodSelect
-                value={home.statsWindowDays}
-                disabledDays={disabledStatsDays}
-              />
-            </Suspense>
-          </div>
-          <CommercialStandingHero
-            standing={standing}
-            comparisonGroup={comparisonGroup}
-            managerNameLine={managerNameLine}
-            skillSignature={standing.row?.skillSignature ?? null}
-            coachingHref="/company/analyse"
-          />
-        </section>
-      ) : null}
-
       <section className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className={sectionHeadingClass}>Mes indicateurs de la période</h2>
-          {standing ? null : (
-            <Suspense
-              fallback={
-                <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
-              }
-            >
-              <DashboardStatsPeriodSelect
-                value={home.statsWindowDays}
-                disabledDays={disabledStatsDays}
-              />
-            </Suspense>
-          )}
+          <h2 className={sectionHeadingClass}>Où j&apos;en suis</h2>
+          <Suspense
+            fallback={
+              <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
+            }
+          >
+            <DashboardStatsPeriodSelect
+              value={home.statsWindowDays}
+              disabledDays={disabledStatsDays}
+            />
+          </Suspense>
         </div>
-        <DashboardKpiCards home={home} />
+        <CommercialDashboardHero
+          salesScoreAvg={home.salesScoreAvg}
+          scoredMeetings={home.noteGlobaleSampleCount}
+          statsWindowDays={home.statsWindowDays}
+          trendPoints={home.salesScoreTrendPoints}
+          rank={
+            standing?.row?.rank != null && standing.ranking.rankedCount > 1
+              ? {
+                  rank: standing.row.rank,
+                  rankedCount: standing.ranking.rankedCount,
+                }
+              : null
+          }
+          challenge={home.sellerFocus?.challenge ?? null}
+        />
+        {managerNameLine && standing?.row?.rank != null ? (
+          <p className="text-muted-foreground text-xs">
+            {sousTitreDuGroupe(comparisonGroup, managerNameLine).texte}
+          </p>
+        ) : null}
       </section>
+
+      <section className="space-y-3">
+        <h2 className={sectionHeadingClass}>Mes indicateurs de la période</h2>
+        <DashboardKpiCards
+          home={home}
+          audience="seller"
+          pipeline={home.sellerFocus?.pipeline ?? null}
+        />
+      </section>
+
+      {home.sellerFocus ? (
+        <CommercialMonthFocusCards
+          axis={home.sellerFocus.axis}
+          strengths={home.sellerFocus.strengths}
+          profileHref="/company/analyse"
+        />
+      ) : null}
 
       {/*
         Le plan d'action se pose entre les chiffres et la liste : « voilà où
@@ -127,20 +140,36 @@ export function DashboardHomeShell({
 
       <section className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className={sectionHeadingClass}>Mes rendez-vous</h2>
+          <div>
+            <h2 className={sectionHeadingClass}>Mes derniers rendez-vous</h2>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Cliquez une ligne pour ouvrir le compte rendu et l&apos;analyse.
+            </p>
+          </div>
           {/*
             L'action d'analyse vit dans l'en-tête des rendez-vous, là où on la
             cherche : elle nourrit ce tableau et toute la page. Elle flottait
             avant seule sur une ligne, entre la position et la liste, sans dire
             à quoi elle se rattachait.
           */}
-          <MeetingCreateDialog
-            meetingTypeOptions={meetingTypeOptions}
-            pipelineStageOptions={pipelineStageOptions}
-            showPlusIcon={false}
-            dataFeedbackId="dashboard-prepare-rdv"
-            className="h-10 shrink-0 rounded-md shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_2px_8px_rgba(108,77,255,0.35)]"
-          />
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href="/company/rendez-vous"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "h-10",
+              )}
+            >
+              Tout voir
+            </Link>
+            <MeetingCreateDialog
+              meetingTypeOptions={meetingTypeOptions}
+              pipelineStageOptions={pipelineStageOptions}
+              showPlusIcon={false}
+              dataFeedbackId="dashboard-prepare-rdv"
+              className="h-10 shrink-0 rounded-md shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_2px_8px_rgba(108,77,255,0.35)]"
+            />
+          </div>
         </div>
 
         {/*

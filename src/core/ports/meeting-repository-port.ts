@@ -80,6 +80,8 @@ export type RecentMeetingListRow = MeetingRow & {
   latestDiscResult?: unknown | null;
   /** Dernier résultat KISS brut (agrégations coaching équipe). */
   latestKissResult?: unknown | null;
+  /** Dernière scorecard brute (axes de la grille sur les tableaux de bord). */
+  latestScorecardResult?: unknown | null;
 };
 
 /** Per-person rollup for outreach / Person360 lists. */
@@ -211,6 +213,8 @@ export interface MeetingRepositoryPort {
     includeLatestDiscResult?: boolean;
     /** Inclut `latestKissResult` (coaching KISS agrégé). */
     includeLatestKissResult?: boolean;
+    /** Inclut `latestScorecardResult` (axes de la grille, défi de la semaine). */
+    includeLatestScorecardResult?: boolean;
     /** Scope to one seller (member role). */
     sellerUserId?: string;
   }): Promise<RecentMeetingListRow[]>;
