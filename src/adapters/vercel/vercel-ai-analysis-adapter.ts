@@ -328,6 +328,46 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     };
   }
 
+  async transcribeAudio(input: {
+    audio: Uint8Array;
+    mediaType: string;
+    model: string;
+  }) {
+    /*
+      L'enregistrement part en pièce jointe du message, pas en lien : la
+      passerelle n'a alors rien à télécharger, et le fichier ne quitte le
+      stockage que vers le modèle. La consigne interdit le résumé : un
+      transcript raccourci fausserait ensuite SONCAS, DISC et le coaching.
+    */
+    const { text, usage } = await generateText({
+      model: input.model,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: [
+                "Transcris intégralement cet enregistrement d'un rendez-vous commercial, en français, mot pour mot.",
+                "Ne résume pas, ne reformule pas, n'omets rien. Quand tu distingues les intervenants, écris un intervenant par ligne, sous la forme « Commercial : » et « Prospect : » (ou « Intervenant 1 : », « Intervenant 2 : » si leur rôle n'est pas clair).",
+                "Ne mets ni titre, ni commentaire, ni horodatage : uniquement le transcript.",
+              ].join(" "),
+            },
+            { type: "file", data: input.audio, mediaType: input.mediaType },
+          ],
+        },
+      ],
+      maxOutputTokens: 32_000,
+    });
+    return {
+      text: text.trim(),
+      usage: {
+        inputTokens: usage?.inputTokens,
+        outputTokens: usage?.outputTokens,
+      },
+    };
+  }
+
   async streamMeetingVisitReport(input: {
     systemMarkdown: string;
     model: string;

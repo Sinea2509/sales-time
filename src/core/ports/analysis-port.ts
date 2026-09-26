@@ -164,6 +164,19 @@ export interface AnalysisPort {
   }): Promise<TeamCoachingRecommendations>;
 
   /**
+   * Le transcript d'un enregistrement audio, mot pour mot, un intervenant
+   * par ligne quand le modèle sait les distinguer.
+   */
+  transcribeAudio(input: {
+    audio: Uint8Array;
+    mediaType: string;
+    model: string;
+  }): Promise<{
+    text: string;
+    usage?: { inputTokens?: number; outputTokens?: number };
+  }>;
+
+  /**
    * Le compte rendu de visite écrit au fil de l'eau, pour l'afficher pendant
    * qu'il s'écrit. `text` se résout avec le texte complet, à conserver.
    */
