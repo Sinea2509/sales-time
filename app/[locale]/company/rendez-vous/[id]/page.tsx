@@ -16,6 +16,7 @@ import {
 } from "@/src/core/domain/analysis-reliability";
 import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
+import { meetingActionPlan } from "@/src/core/domain/meeting-action-plan";
 import { meetingAnalysisProgress } from "@/src/core/domain/meeting-analysis-progress";
 import {
   isMeetingAnalysisSlow,
@@ -32,7 +33,6 @@ import { memberDisplayName } from "@/src/core/domain/weekly-manager-digest";
 export const dynamic = "force-dynamic";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-const PLAN_ACTIONS_MAX = 4;
 
 export default async function RendezVousDetailPage({
   params,
@@ -169,12 +169,26 @@ export default async function RendezVousDetailPage({
     isAudioFilename(meeting.sourceBlobUrl ?? "");
 
   const kissData = kissParsed?.success ? kissParsed.data : null;
-  const planActions = kissData
-    ? [...kissData.start, ...kissData.improve]
-        .map((s) => s.replace(/^[\s\-\u2013\u2014\u2022\u00b7]+\s*/, "").trim())
-        .filter(Boolean)
-        .slice(0, PLAN_ACTIONS_MAX)
-    : [];
+  const sellerName = sellerMembership
+    ? memberDisplayName({
+        firstName: sellerMembership.user.firstName,
+        lastName: sellerMembership.user.lastName,
+        email: sellerMembership.user.email,
+      })
+    : isSeller
+      ? [actor.firstName, actor.lastName].filter(Boolean).join(" ").trim() ||
+        null
+      : null;
+  /*
+    Le plan d'action se déduit de la scorecard d'abord, du coaching ensuite :
+    le premier nomme le critère à couvrir et la phrase à dire, le second le
+    geste à prendre. Le responsable est le commercial du rendez-vous.
+  */
+  const planActions = meetingActionPlan({
+    scorecard: scorecardParsed?.success ? scorecardParsed.data : null,
+    kiss: kissData,
+    sellerName,
+  });
 
   return (
     <MeetingDetailShell
@@ -198,13 +212,7 @@ export default async function RendezVousDetailPage({
         meetingType: meeting.meetingType,
         pipelineStage: meeting.pipelineStage,
         potentialAmount: meeting.potentialAmount,
-        sellerName: sellerMembership
-          ? memberDisplayName({
-              firstName: sellerMembership.user.firstName,
-              lastName: sellerMembership.user.lastName,
-              email: sellerMembership.user.email,
-            })
-          : null,
+        sellerName: sellerMembership ? sellerName : null,
         backHref: "/company/rendez-vous",
       }}
       rail={{

@@ -380,7 +380,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
               type: "text",
               text: [
                 "Transcris intégralement cet enregistrement d'un rendez-vous commercial, en français, mot pour mot.",
-                "Ne résume pas, ne reformule pas, n'omets rien. Quand tu distingues les intervenants, écris un intervenant par ligne, sous la forme « Commercial : » et « Prospect : » (ou « Intervenant 1 : », « Intervenant 2 : » si leur rôle n'est pas clair).",
+                "Ne résume pas, ne reformule pas, n'omets rien. Écris une réplique par ligne, et fais commencer chaque ligne par celui qui parle : « Commercial : » pour la personne qui présente l'offre et pose les questions de découverte, « Prospect : » pour celle qui répond (ou « Intervenant 1 : », « Intervenant 2 : » si leur rôle n'est vraiment pas clair). Ces étiquettes servent à mesurer la répartition de la parole : ne les omets sur aucune ligne.",
                 "Ne mets ni titre, ni commentaire, ni horodatage : uniquement le transcript.",
               ].join(" "),
             },
