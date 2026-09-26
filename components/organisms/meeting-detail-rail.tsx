@@ -6,6 +6,7 @@ import { plurielFr } from "@/lib/pluriel-fr";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type { AnalysisReliability } from "@/src/core/domain/analysis-reliability";
+import type { MeetingActionItem } from "@/src/core/domain/meeting-action-plan";
 import {
   TALK_SHARE_CEILING_PCT,
   type TalkShare,
@@ -26,8 +27,8 @@ export type MeetingDetailRailProps = {
   /** Moyenne de l'organisation sur la même fenêtre. */
   teamAverage30d: number | null;
   talkShare: TalkShare | null;
-  /** Les gestes engagés par ce rendez-vous, tirés du coaching. */
-  planActions: string[];
+  /** Les actions engagées par ce rendez-vous, chacune avec une échéance et un responsable. */
+  planActions: MeetingActionItem[];
   provenance: {
     gridName: string | null;
     criteriaCount: number | null;
@@ -194,28 +195,43 @@ function TalkShareCard({ share }: { share: TalkShare | null }) {
   );
 }
 
-function PlanCard({ actions }: { actions: string[] }) {
+function PlanCard({ actions }: { actions: MeetingActionItem[] }) {
   return (
     <Card>
       <CardContent className="pt-6">
         <h2 className={cardTitleClass}>Plan d&apos;action</h2>
         <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-          Ce rendez-vous engage ces gestes, repris du coaching KISS.
+          Ce rendez-vous engage ces actions. Chacune porte une échéance et un
+          responsable.
         </p>
         {actions.length > 0 ? (
           <ul className="mt-3 grid gap-2">
-            {actions.map((a) => (
+            {actions.map((a, index) => (
               <li
-                key={a}
+                key={`${index}-${a.title}`}
                 className="rounded-lg border border-border bg-muted/40 px-3.5 py-3 text-[12.5px] leading-relaxed"
               >
-                {a}
+                {a.criterionKey && a.criterionLabel ? (
+                  <ToneChip tone="brand" className="mb-1.5">
+                    {a.criterionKey}, {a.criterionLabel}
+                  </ToneChip>
+                ) : null}
+                <p className="font-semibold">{a.title}</p>
+                {a.hint ? (
+                  <p className="text-muted-foreground mt-1 text-[12px] italic">
+                    {a.hint}
+                  </p>
+                ) : null}
+                <p className="text-muted-foreground mt-1 text-[11.5px]">
+                  {a.when} · {a.who}
+                </p>
               </li>
             ))}
           </ul>
         ) : (
           <p className="text-muted-foreground mt-3 text-[12.5px]">
-            Aucun geste engagé pour l&apos;instant.
+            Aucune action engagée pour l&apos;instant : elles se déduisent de la
+            scorecard et du coaching de ce rendez-vous.
           </p>
         )}
       </CardContent>
