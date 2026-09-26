@@ -4,8 +4,18 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { revalidateTeamMemberPerformancePaths } from "@/lib/revalidate-team-member-paths";
 import { uploadMeetingTranscriptFile } from "@/lib/meeting-transcript-upload";
-import { blobUrlBelongsToOrg } from "@/lib/blob-paths";
-import { mergeMeetingTranscriptSources, isTranscriptAnalyzable } from "@/lib/transcript-extract";
+import { fetchOrgBlobBytes } from "@/lib/blob-access";
+import {
+  blobUrlBelongsToOrg,
+  buildOrgBlobPath,
+  sanitizeBlobFilename,
+} from "@/lib/blob-paths";
+import { checkAiGatewayConfigured } from "@/lib/env";
+import { transcribeMeetingAudio } from "@/src/core/application/transcribe-meeting-audio";
+import {
+  mergeMeetingTranscriptSources,
+  isTranscriptAnalyzable,
+} from "@/lib/transcript-extract";
 import { scheduleAnalysisJobsAfterResponse } from "@/app/[locale]/company/rendez-vous/schedule-analysis-jobs";
 import { requireOrgActor } from "@/lib/analysis-server-context";
 import { requireMeetingMutationAccess } from "@/lib/meeting-mutation-access";
@@ -92,6 +102,25 @@ export async function getOrgMeetingFormOptionsAction(): Promise<
   };
 }
 
+/**
+ * Le chemin où le navigateur dépose un enregistrement audio, dans le dossier
+ * de l'organisation active. Le navigateur ne connaît pas l'organisation ; le
+ * serveur, si, et le jeton de dépôt n'acceptera que ce dossier.
+ */
+export async function getAudioUploadPathnameAction(filename: string) {
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
+
+  return {
+    ok: true as const,
+    pathname: buildOrgBlobPath(
+      actor.organizationId,
+      "meetings/audio",
+      `${Date.now()}-${sanitizeBlobFilename(filename)}`,
+    ),
+  };
+}
+
 export async function createMeetingAction(formData: FormData) {
   const actor = await requireOrgActor();
   if (!actor.ok) return { ok: false as const, error: actor.error };
@@ -101,7 +130,29 @@ export async function createMeetingAction(formData: FormData) {
   let sourceBlobUrl: string | null = null;
   let transcriptFromFile = "";
 
-  if (file instanceof File && file.size > 0) {
+  const audioBlobUrl = String(formData.get("audioBlobUrl") ?? "").trim();
+  if (audioBlobUrl) {
+    if (!blobUrlBelongsToOrg(audioBlobUrl, actor.organizationId)) {
+      return { ok: false as const, error: "VALIDATION" as const };
+    }
+    const ai = checkAiGatewayConfigured();
+    if (!ai.ok) return { ok: false as const, error: ai.error };
+
+    const transcribed = await transcribeMeetingAudio(
+      { analysis: actor.deps.analysis, fetchAudio: fetchOrgBlobBytes },
+      {
+        organizationId: actor.organizationId,
+        blobUrl: audioBlobUrl,
+        mediaType: String(formData.get("audioMediaType") ?? ""),
+      },
+    );
+    if (!transcribed.ok) {
+      return { ok: false as const, error: transcribed.error };
+    }
+    transcriptFromFile = transcribed.transcript;
+    sourceBlobUrl = audioBlobUrl;
+    sourceType = "UPLOAD";
+  } else if (file instanceof File && file.size > 0) {
     const uploaded = await uploadMeetingTranscriptFile({
       organizationId: actor.organizationId,
       file,
@@ -217,7 +268,12 @@ export async function getMeetingForEditAction(meetingId: string): Promise<
   | { ok: true; meeting: MeetingEditPayload }
   | {
       ok: false;
-      error: "UNAUTHENTICATED" | "NO_ORG" | "VALIDATION" | "NOT_FOUND" | "FORBIDDEN";
+      error:
+        | "UNAUTHENTICATED"
+        | "NO_ORG"
+        | "VALIDATION"
+        | "NOT_FOUND"
+        | "FORBIDDEN";
     }
 > {
   const parsedId = meetingIdSchema.safeParse(meetingId);
@@ -273,7 +329,10 @@ export async function updateMeetingAction(formData: FormData) {
   if (!access.ok) {
     return {
       ok: false as const,
-      error: access.error === "FORBIDDEN" ? ("FORBIDDEN" as const) : ("NOT_FOUND" as const),
+      error:
+        access.error === "FORBIDDEN"
+          ? ("FORBIDDEN" as const)
+          : ("NOT_FOUND" as const),
     };
   }
 

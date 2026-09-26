@@ -9,7 +9,7 @@ const ORG_PATH_PREFIXES = [
 
 export function buildOrgBlobPath(
   organizationId: string,
-  category: "meetings/transcripts" | "feedbacks" | "logos",
+  category: "meetings/transcripts" | "meetings/audio" | "feedbacks" | "logos",
   filename: string,
 ): string {
   return `${ORG_ROOT}/${organizationId}/${category}/${filename}`;
@@ -81,7 +81,10 @@ export function extractOrgIdFromBlobPath(pathname: string): string | null {
 
 /** Pre-org-prefix uploads (e.g. `feedbacks/123.png`), super-admin only via proxy. */
 export function isLegacyUnscopedBlobPath(pathname: string): boolean {
-  return pathname.startsWith("feedbacks/") && extractOrgIdFromBlobPath(pathname) === null;
+  return (
+    pathname.startsWith("feedbacks/") &&
+    extractOrgIdFromBlobPath(pathname) === null
+  );
 }
 
 export function blobPathBelongsToOrg(
