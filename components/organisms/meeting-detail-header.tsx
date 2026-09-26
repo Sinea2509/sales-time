@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { MeetingEtapeBadge } from "@/components/atoms/meeting-etape-badge";
+import { AnimatedSalesScore } from "@/components/molecules/animated-sales-score";
 import { MeetingFollowUpEmailDialog } from "@/components/organisms/meeting-follow-up-email-dialog";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { formatPotentialEuro } from "@/lib/format-potential-euro";
@@ -11,9 +12,7 @@ import {
 import { pageTitleClass } from "@/lib/page-typography";
 import { plurielFr } from "@/lib/pluriel-fr";
 import { prospectInitials } from "@/lib/prospect-initials";
-import { salesScoreColorClass } from "@/lib/sales-score-color";
 import { cn } from "@/lib/utils";
-import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -28,7 +27,7 @@ function statColumn({
   valueExtra,
   valueClassName,
 }: {
-  value: string;
+  value: ReactNode;
   label: string;
   title?: string;
   valueExtra?: ReactNode;
@@ -103,6 +102,8 @@ export type MeetingDetailHeaderProps = {
   tamMinutesPerRdv: number;
   salesScore: number | null;
   salesScoreDelta: number | null;
+  /** Vrai pendant l'analyse automatique : le score est attendu, pas absent. */
+  salesScorePending?: boolean;
   followUpEmailDraft: string | null;
 };
 
@@ -117,6 +118,7 @@ export function MeetingDetailHeader({
   tamMinutesPerRdv,
   salesScore,
   salesScoreDelta,
+  salesScorePending = false,
   followUpEmailDraft,
 }: MeetingDetailHeaderProps) {
   const etapeLabel = meetingEtapeDisplayLabel({
@@ -171,15 +173,19 @@ export function MeetingDetailHeader({
             label: "Date du RDV",
           })}
           {statColumn({
-            value:
-              salesScore != null ? String(salesScore) : VALEUR_NON_CALCULABLE,
+            value: (
+              <AnimatedSalesScore
+                score={salesScore}
+                pending={salesScorePending}
+              />
+            ),
             label: "SalesScore",
             title:
               salesScore == null
-                ? "Non calculable : ce rendez-vous n'a pas encore d'analyse SONCAS."
+                ? salesScorePending
+                  ? "Calcul en cours : le SalesScore apparaît dès que le profil SONCAS est analysé."
+                  : "Non calculable : ce rendez-vous n'a pas encore d'analyse SONCAS."
                 : undefined,
-            valueClassName:
-              salesScore != null ? salesScoreColorClass(salesScore) : undefined,
             valueExtra:
               salesScoreDelta != null && salesScoreDelta !== 0 ? (
                 <SalesScoreDeltaBadge delta={salesScoreDelta} />

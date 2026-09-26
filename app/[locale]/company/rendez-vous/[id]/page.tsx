@@ -10,6 +10,8 @@ import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
 import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
 import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
+import { meetingAnalysisProgress } from "@/src/core/domain/meeting-analysis-progress";
+import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { summarizeMeetingDetail } from "@/src/core/application/summarize-meeting-detail";
 import { getApplicationDeps } from "@/lib/application-deps";
 import {
@@ -35,7 +37,8 @@ async function previousSalesScoreForMeeting(
   const previousMeeting = personMeetings
     .filter(
       (m) =>
-        m.id !== input.meetingId && m.meetingAt.getTime() < input.meetingAt.getTime(),
+        m.id !== input.meetingId &&
+        m.meetingAt.getTime() < input.meetingAt.getTime(),
     )
     .sort((a, b) => b.meetingAt.getTime() - a.meetingAt.getTime())[0];
   if (!previousMeeting) return null;
@@ -108,9 +111,7 @@ export default async function RendezVousDetailPage({
     ? scorecardResultSchema.safeParse(scorecard.result)
     : null;
 
-  const salesScore = soncas
-    ? salesScoreFromSoncasResult(soncas.result)
-    : null;
+  const salesScore = soncas ? salesScoreFromSoncasResult(soncas.result) : null;
   const previousSalesScore = await previousSalesScoreForMeeting(deps, {
     organizationId,
     personId: meeting.personId,
@@ -137,15 +138,28 @@ export default async function RendezVousDetailPage({
     updatedAt: meeting.updatedAt,
   });
 
+  const analysisProgress = meetingAnalysisProgress({
+    status: meeting.status,
+    updatedAt: meeting.updatedAt,
+    analyses: meeting.analyses,
+    visitReportDraft: meeting.visitReportDraft,
+    scorecardApplicable:
+      scorecardGridForMeeting({
+        meetingType: meeting.meetingType,
+        pipelineStage: meeting.pipelineStage,
+      }) != null,
+  });
+
   const synthesis = await summarizeMeetingDetail(
     { ...deps, meetings: deps.meetings },
     {
-    meeting,
-    discResult: discParsed?.success ? discParsed.data : null,
-    soncasResult: soncasParsed?.success ? soncasParsed.data : null,
-    kissResult: kissParsed?.success ? kissParsed.data : null,
-    organizationId,
-  });
+      meeting,
+      discResult: discParsed?.success ? discParsed.data : null,
+      soncasResult: soncasParsed?.success ? soncasParsed.data : null,
+      kissResult: kissParsed?.success ? kissParsed.data : null,
+      organizationId,
+    },
+  );
 
   const canViewSellerCoaching = isSeller || actor.canManageOrganization;
 
@@ -170,6 +184,7 @@ export default async function RendezVousDetailPage({
       tamMinutesPerRdv={tamMinutesPerRdv}
       salesScore={salesScore}
       salesScoreDelta={salesScoreDelta}
+      analysisProgress={analysisProgress}
       meetingSynthesis={synthesis.meetingSynthesis}
       synthesisFromAi={synthesis.fromAi}
       interlocutorProfile={synthesis.interlocutorProfile}
