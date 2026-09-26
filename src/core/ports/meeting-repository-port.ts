@@ -112,6 +112,11 @@ export type MeetingDetailWithAnalyses = {
     kind: MeetingAnalysisKind;
     model: string;
     result: unknown;
+    /**
+     * Date d'écriture de l'analyse. La fiche s'en sert pendant une relance
+     * pour ne cocher que les analyses nées après le début du traitement.
+     */
+    createdAt: Date;
   }>;
 };
 
