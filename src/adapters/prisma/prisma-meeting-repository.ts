@@ -286,6 +286,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     includeLatestSoncasResult?: boolean;
     includeLatestDiscResult?: boolean;
     includeLatestKissResult?: boolean;
+    includeLatestScorecardResult?: boolean;
     sellerUserId?: string;
   }): Promise<RecentMeetingListRow[]> {
     const rows = await this.db.meeting.findMany({
@@ -323,6 +324,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       const soncas = row.analyses.find((a) => a.kind === "SONCAS");
       const disc = row.analyses.find((a) => a.kind === "DISC");
       const kiss = row.analyses.find((a) => a.kind === "KISS");
+      const scorecard = row.analyses.find((a) => a.kind === "SCORECARD");
       const base = mapMeeting(row);
       const out: RecentMeetingListRow = {
         ...base,
@@ -344,6 +346,9 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       }
       if (input.includeLatestKissResult === true) {
         out.latestKissResult = kiss?.result ?? null;
+      }
+      if (input.includeLatestScorecardResult === true) {
+        out.latestScorecardResult = scorecard?.result ?? null;
       }
       return out;
     });
