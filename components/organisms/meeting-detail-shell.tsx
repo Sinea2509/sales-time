@@ -1,17 +1,31 @@
-import { KissResultView } from "@/components/molecules/kiss-result-view";
+import { ToneChip } from "@/components/atoms/tone-chip";
+import { InfoCard } from "@/components/molecules/info-card";
 import { MeetingAnalysisProgressCard } from "@/components/molecules/meeting-analysis-progress-card";
 import { MeetingAnalysisStatusPoller } from "@/components/molecules/meeting-analysis-status-poller";
+import { Card, CardContent } from "@/components/ui/card";
 import { MeetingAnalysisRecoverySection } from "@/components/organisms/meeting-analysis-recovery-section";
-import { ContentCard } from "@/components/molecules/content-card";
-import { InfoCard } from "@/components/molecules/info-card";
-import { NavLinkButton } from "@/components/molecules/nav-link-button";
-import { MeetingDetailHeader } from "@/components/organisms/meeting-detail-header";
+import {
+  MeetingDetailHeader,
+  type MeetingDetailHeaderProps,
+} from "@/components/organisms/meeting-detail-header";
+import {
+  MeetingDetailRail,
+  type MeetingDetailRailProps,
+} from "@/components/organisms/meeting-detail-rail";
+import {
+  MeetingDetailTabs,
+  type MeetingDetailTab,
+} from "@/components/organisms/meeting-detail-tabs";
+import { MeetingDiscTab } from "@/components/organisms/meeting-disc-tab";
 import { MeetingEditButton } from "@/components/organisms/meeting-edit-trigger";
-import { MeetingInterlocutorSection } from "@/components/organisms/meeting-interlocutor-section";
+import { MeetingEmailTab } from "@/components/organisms/meeting-email-tab";
+import { MeetingKissTab } from "@/components/organisms/meeting-kiss-tab";
+import { MeetingObjectionsTab } from "@/components/organisms/meeting-objections-tab";
+import { MeetingSoncasTab } from "@/components/organisms/meeting-soncas-tab";
 import { MeetingSynthesisSection } from "@/components/organisms/meeting-synthesis-section";
-import { MeetingTranscriptPreview } from "@/components/molecules/meeting-transcript-preview";
+import { MeetingTranscriptTab } from "@/components/organisms/meeting-transcript-tab";
 import { ScorecardResultSection } from "@/components/organisms/scorecard-result-section";
-import { sectionHeadingClass } from "@/lib/page-typography";
+import { cardTitleClass } from "@/lib/page-typography";
 import type { MeetingAnalysisProgress } from "@/src/core/domain/meeting-analysis-progress";
 import type { MeetingStatus } from "@/src/core/domain/meeting-status";
 import type {
@@ -25,40 +39,32 @@ export type MeetingDetailShellProps = {
   meeting: {
     id: string;
     prospectName: string;
-    prospectCompany: string | null;
     status: MeetingStatus;
-    feeling: number | null;
-    meetingAt: Date;
-    outcome: string;
-    meetingType: string | null;
-    pipelineStage: string | null;
-    potentialAmount: number | null;
     transcript: string;
     notes: string | null;
     followUpEmailDraft: string | null;
     errorMessage: string | null;
+    meetingType: string | null;
+    pipelineStage: string | null;
   };
-  tamMinutesPerRdv: number;
-  salesScore: number | null;
-  salesScoreDelta: number | null;
-  /** Les étapes de l'analyse automatique et leur état, pour la carte d'avancement. */
+  header: Omit<MeetingDetailHeaderProps, "status">;
+  rail: MeetingDetailRailProps;
   analysisProgress: MeetingAnalysisProgress;
   meetingSynthesis: string;
   synthesisFromAi: boolean;
   /** Vrai quand le compte rendu manque et doit s'écrire au fil de l'eau. */
   streamVisitReport?: boolean;
-  interlocutorProfile: string;
   soncasResult: SoncasAnalysisResult | null;
   discResult: DiscAnalysisResult | null;
   kissResult: KissAnalysisResult | null;
   /** Absente tant que le type de rendez-vous n'a pas de grille. */
   scorecardResult: ScorecardAnalysisResult | null;
+  scorecardGridIntent: string | null;
+  scorecardGridAssumed: boolean;
+  transcriptSourceLabel: string | null;
   /**
-   * Une seule autorisation pour les deux blocs qui notent le commercial.
-   *
-   * La scorecard dit ce que KISS dit, en plus détaillé. Deux réglages
-   * séparés finiraient par diverger, et le jour où l'un serait ouvert sans
-   * l'autre, la note serait cachée pendant que son détail resterait lisible.
+   * Une seule autorisation pour les deux blocs qui notent le commercial : la
+   * scorecard dit ce que KISS dit, en plus détaillé.
    */
   showSellerCoaching: boolean;
   canEdit?: boolean;
@@ -66,31 +72,145 @@ export type MeetingDetailShellProps = {
   processingLooksStuck?: boolean;
 };
 
+function CoachingReserved({ what }: { what: string }) {
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <h2 className={cardTitleClass}>{what}</h2>
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+          Cette lecture note le commercial. Elle est visible par le commercial
+          assigné à ce rendez-vous et par les managers de l&apos;organisation.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * La fiche d'un rendez-vous, comme la maquette du 11 septembre la dessine :
+ * le compte rendu prêt à coller ouvre la page, tout le reste est le détail
+ * qui l'explique, en sept onglets. La colonne de droite porte ce qui se
+ * décide : le score, la parole, le plan d'action, la provenance.
+ */
 export function MeetingDetailShell({
   meeting,
-  tamMinutesPerRdv,
-  salesScore,
-  salesScoreDelta,
+  header,
+  rail,
   analysisProgress,
   meetingSynthesis,
   synthesisFromAi,
   streamVisitReport = false,
-  interlocutorProfile,
   soncasResult,
   discResult,
   kissResult,
   scorecardResult,
+  scorecardGridIntent,
+  scorecardGridAssumed,
+  transcriptSourceLabel,
   showSellerCoaching,
   canEdit = false,
   processingLooksSlow = false,
   processingLooksStuck = false,
 }: MeetingDetailShellProps) {
+  const pending = meeting.status === "PROCESSING";
+
+  const tabs: MeetingDetailTab[] = [
+    {
+      id: "grille",
+      label: "Mon SalesScore",
+      panel: scorecardResult ? (
+        showSellerCoaching ? (
+          <ScorecardResultSection
+            result={scorecardResult}
+            gridAssumed={scorecardGridAssumed}
+            gridIntent={scorecardGridIntent}
+          />
+        ) : (
+          <CoachingReserved what="Mon SalesScore détaillé" />
+        )
+      ) : (
+        <Card>
+          <CardContent className="space-y-2 pt-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className={cardTitleClass}>Mon SalesScore détaillé</h2>
+              {pending ? <ToneChip tone="info">en cours</ToneChip> : null}
+            </div>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              {pending
+                ? "La scorecard se remplit pendant l'analyse."
+                : "Ce type de rendez-vous n'a pas encore de grille de notation : seule la découverte en a une. Le SalesScore de la colonne de droite reste calculé à partir des leviers SONCAS."}
+            </p>
+          </CardContent>
+        </Card>
+      ),
+    },
+    {
+      id: "objections",
+      label: "Objections",
+      panel: <MeetingObjectionsTab prospectName={meeting.prospectName} />,
+    },
+    {
+      id: "soncas",
+      label: "SONCAS",
+      panel: (
+        <MeetingSoncasTab
+          soncas={soncasResult}
+          prospectName={meeting.prospectName}
+          pending={pending}
+        />
+      ),
+    },
+    {
+      id: "disc",
+      label: "DISC",
+      panel: (
+        <MeetingDiscTab
+          disc={discResult}
+          prospectName={meeting.prospectName}
+          pending={pending}
+        />
+      ),
+    },
+    {
+      id: "kiss",
+      label: "KISS",
+      panel: showSellerCoaching ? (
+        <MeetingKissTab
+          kiss={kissResult}
+          challenge={scorecardResult?.challenge ?? null}
+          pending={pending}
+        />
+      ) : (
+        <CoachingReserved what="Coaching KISS" />
+      ),
+    },
+    {
+      id: "email",
+      label: "E-mail",
+      panel: (
+        <MeetingEmailTab
+          meetingId={meeting.id}
+          initialDraft={meeting.followUpEmailDraft}
+        />
+      ),
+    },
+    {
+      id: "transcript",
+      label: "Transcript",
+      panel: (
+        <MeetingTranscriptTab
+          transcript={meeting.transcript}
+          notes={meeting.notes}
+          sourceLabel={transcriptSourceLabel}
+        />
+      ),
+    },
+  ];
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <NavLinkButton href="/company/rendez-vous" variant="ghost" size="sm">
-          Retour
-        </NavLinkButton>
+        <MeetingDetailHeader {...header} status={meeting.status} />
         {canEdit ? (
           <MeetingEditButton
             meetingId={meeting.id}
@@ -98,21 +218,6 @@ export function MeetingDetailShell({
           />
         ) : null}
       </div>
-
-      <MeetingDetailHeader
-        meetingId={meeting.id}
-        prospectName={meeting.prospectName}
-        prospectCompany={meeting.prospectCompany}
-        meetingAt={meeting.meetingAt}
-        meetingType={meeting.meetingType}
-        pipelineStage={meeting.pipelineStage}
-        potentialAmount={meeting.potentialAmount}
-        tamMinutesPerRdv={tamMinutesPerRdv}
-        salesScore={salesScore}
-        salesScoreDelta={salesScoreDelta}
-        salesScorePending={meeting.status === "PROCESSING"}
-        followUpEmailDraft={meeting.followUpEmailDraft}
-      />
 
       <MeetingAnalysisProgressCard
         status={meeting.status}
@@ -122,7 +227,7 @@ export function MeetingDetailShell({
 
       {meeting.status === "FAILED" && meeting.errorMessage ? (
         <InfoCard
-          title="Échec de l'analyse"
+          title="L'analyse n'a pas abouti"
           description={meeting.errorMessage}
           className="border-destructive/50 bg-destructive/5"
         />
@@ -131,7 +236,7 @@ export function MeetingDetailShell({
       {canEdit && processingLooksStuck ? (
         <InfoCard
           title="Analyse bloquée"
-          description="L'analyse semble bloquée depuis plus de 15 minutes. Relancez l'analyse, rechargez la page, ou attendez la réconciliation quotidienne automatique."
+          description="L'analyse semble bloquée depuis plus de 15 minutes. Relancez l'analyse, ou attendez le rattrapage automatique, toutes les cinq minutes."
         />
       ) : null}
 
@@ -142,60 +247,17 @@ export function MeetingDetailShell({
         <MeetingAnalysisRecoverySection meetingId={meeting.id} />
       ) : null}
 
-      <MeetingSynthesisSection
-        meetingSynthesis={meetingSynthesis}
-        fromAi={synthesisFromAi}
-        streamMeetingId={streamVisitReport ? meeting.id : null}
-      />
-
-      <MeetingInterlocutorSection
-        prospectName={meeting.prospectName}
-        prospectCompany={meeting.prospectCompany}
-        interlocutorProfile={interlocutorProfile}
-        discResult={discResult}
-        soncasResult={soncasResult}
-        analysisPending={meeting.status === "PROCESSING"}
-      />
-
-      {/*
-        La scorecard passe avant le coaching KISS : elle note ce qui s'est
-        passé, KISS dit quoi en faire. Lire le conseil avant la note obligerait
-        à remonter pour savoir de quoi il parle.
-      */}
-      {scorecardResult ? (
-        showSellerCoaching ? (
-          <ScorecardResultSection result={scorecardResult} />
-        ) : (
-          <InfoCard
-            title="Scorecard du rendez-vous"
-            description="La scorecard note la conduite du rendez-vous. Elle est visible par le commercial assigné et les managers de l'organisation."
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.62fr)_minmax(300px,1fr)]">
+        <div className="grid min-w-0 content-start gap-5">
+          <MeetingSynthesisSection
+            meetingSynthesis={meetingSynthesis}
+            fromAi={synthesisFromAi}
+            streamMeetingId={streamVisitReport ? meeting.id : null}
           />
-        )
-      ) : null}
-
-      {kissResult ? (
-        showSellerCoaching ? (
-          <section className="space-y-3">
-            <h2 className={sectionHeadingClass}>Coaching KISS</h2>
-            <KissResultView result={kissResult} />
-          </section>
-        ) : (
-          <InfoCard
-            title="Coaching KISS"
-            description="Le coaching KISS (Keep / Improve / Stop / Start) est visible par le commercial assigné à ce rendez-vous et les managers de l'organisation."
-          />
-        )
-      ) : null}
-
-      <ContentCard title="Transcript">
-        <MeetingTranscriptPreview transcript={meeting.transcript} />
-      </ContentCard>
-
-      {meeting.notes ? (
-        <ContentCard title="Notes">
-          <p className="text-sm whitespace-pre-wrap">{meeting.notes}</p>
-        </ContentCard>
-      ) : null}
+          <MeetingDetailTabs tabs={tabs} />
+        </div>
+        <MeetingDetailRail {...rail} />
+      </div>
     </div>
   );
 }

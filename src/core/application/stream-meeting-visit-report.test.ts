@@ -28,6 +28,9 @@ const meeting: {
   visitReportDraft: string | null;
   transcript: string;
   notes: string | null;
+  durationMin: number | null;
+  sourceType: "TRANSCRIPT";
+  sourceBlobUrl: string | null;
   updatedAt: Date;
   analyses: never[];
 } = {
@@ -48,6 +51,9 @@ const meeting: {
   visitReportDraft: null,
   transcript: "Bonjour, parlons budget.",
   notes: null,
+  durationMin: null,
+  sourceType: "TRANSCRIPT",
+  sourceBlobUrl: null,
   updatedAt: new Date(),
   analyses: [],
 };

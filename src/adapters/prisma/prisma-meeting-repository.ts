@@ -468,6 +468,9 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       visitReportDraft: row.visitReportDraft,
       transcript: row.transcript,
       notes: row.notes,
+      durationMin: row.durationMin,
+      sourceType: row.sourceType,
+      sourceBlobUrl: row.sourceBlobUrl,
       updatedAt: row.updatedAt,
       analyses: row.analyses.map((a) => ({
         kind: a.kind as MeetingAnalysisKind,

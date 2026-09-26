@@ -25,6 +25,9 @@ const meeting = {
   visitReportDraft: null,
   transcript: "Bonjour, nous parlons budget et sécurité.",
   notes: null,
+  durationMin: null,
+  sourceType: "TRANSCRIPT" as const,
+  sourceBlobUrl: null,
   updatedAt: new Date(),
   analyses: [],
 };
@@ -32,7 +35,10 @@ const meeting = {
 describe("summarizeMeetingDetail", () => {
   it("returns stored visit report when present", async () => {
     const result = await summarizeMeetingDetail(
-      { analysis: { summarizeMeetingDetail: jest.fn() } as never, prompts: {} as never },
+      {
+        analysis: { summarizeMeetingDetail: jest.fn() } as never,
+        prompts: {} as never,
+      },
       {
         meeting: {
           ...meeting,
@@ -49,7 +55,10 @@ describe("summarizeMeetingDetail", () => {
 
   it("returns fallback when AI is not configured", async () => {
     const result = await summarizeMeetingDetail(
-      { analysis: { summarizeMeetingDetail: jest.fn() } as never, prompts: {} as never },
+      {
+        analysis: { summarizeMeetingDetail: jest.fn() } as never,
+        prompts: {} as never,
+      },
       {
         meeting,
         discResult: null,
@@ -72,7 +81,10 @@ describe("summarizeMeetingDetail", () => {
 
   it("shows processing message while analysis runs", async () => {
     const result = await summarizeMeetingDetail(
-      { analysis: { summarizeMeetingDetail: jest.fn() } as never, prompts: {} as never },
+      {
+        analysis: { summarizeMeetingDetail: jest.fn() } as never,
+        prompts: {} as never,
+      },
       {
         meeting: { ...meeting, status: "PROCESSING" },
         discResult: null,
@@ -99,7 +111,9 @@ describe("summarizeMeetingDetail", () => {
 
     const result = await summarizeMeetingDetail(
       {
-        analysis: { summarizeMeetingDetail: summarizeMeetingDetailMock } as never,
+        analysis: {
+          summarizeMeetingDetail: summarizeMeetingDetailMock,
+        } as never,
         prompts: prompts as never,
       },
       { meeting, discResult: null, soncasResult: null, kissResult: null },
@@ -126,7 +140,9 @@ describe("summarizeMeetingDetail", () => {
 
     await summarizeMeetingDetail(
       {
-        analysis: { summarizeMeetingDetail: summarizeMeetingDetailMock } as never,
+        analysis: {
+          summarizeMeetingDetail: summarizeMeetingDetailMock,
+        } as never,
         prompts: prompts as never,
         meetings: { updateMeetingVisitReportDraft } as never,
       },
@@ -164,7 +180,9 @@ describe("generateAndPersistMeetingVisitReport", () => {
 
     await generateAndPersistMeetingVisitReport(
       {
-        analysis: { summarizeMeetingDetail: summarizeMeetingDetailMock } as never,
+        analysis: {
+          summarizeMeetingDetail: summarizeMeetingDetailMock,
+        } as never,
         prompts: prompts as never,
         meetings: { updateMeetingVisitReportDraft } as never,
       },
