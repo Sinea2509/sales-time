@@ -1,5 +1,5 @@
 import { KissResultView } from "@/components/molecules/kiss-result-view";
-import { MeetingAnalysisStatusBanner } from "@/components/molecules/meeting-analysis-status-banner";
+import { MeetingAnalysisProgressCard } from "@/components/molecules/meeting-analysis-progress-card";
 import { MeetingAnalysisStatusPoller } from "@/components/molecules/meeting-analysis-status-poller";
 import { MeetingAnalysisRecoverySection } from "@/components/organisms/meeting-analysis-recovery-section";
 import { ContentCard } from "@/components/molecules/content-card";
@@ -12,6 +12,7 @@ import { MeetingSynthesisSection } from "@/components/organisms/meeting-synthesi
 import { MeetingTranscriptPreview } from "@/components/molecules/meeting-transcript-preview";
 import { ScorecardResultSection } from "@/components/organisms/scorecard-result-section";
 import { sectionHeadingClass } from "@/lib/page-typography";
+import type { MeetingAnalysisProgress } from "@/src/core/domain/meeting-analysis-progress";
 import type { MeetingStatus } from "@/src/core/domain/meeting-status";
 import type {
   DiscAnalysisResult,
@@ -40,6 +41,8 @@ export type MeetingDetailShellProps = {
   tamMinutesPerRdv: number;
   salesScore: number | null;
   salesScoreDelta: number | null;
+  /** Les étapes de l'analyse automatique et leur état, pour la carte d'avancement. */
+  analysisProgress: MeetingAnalysisProgress;
   meetingSynthesis: string;
   synthesisFromAi: boolean;
   interlocutorProfile: string;
@@ -66,6 +69,7 @@ export function MeetingDetailShell({
   tamMinutesPerRdv,
   salesScore,
   salesScoreDelta,
+  analysisProgress,
   meetingSynthesis,
   synthesisFromAi,
   interlocutorProfile,
@@ -103,10 +107,14 @@ export function MeetingDetailShell({
         tamMinutesPerRdv={tamMinutesPerRdv}
         salesScore={salesScore}
         salesScoreDelta={salesScoreDelta}
+        salesScorePending={meeting.status === "PROCESSING"}
         followUpEmailDraft={meeting.followUpEmailDraft}
       />
 
-      <MeetingAnalysisStatusBanner status={meeting.status} />
+      <MeetingAnalysisProgressCard
+        status={meeting.status}
+        progress={analysisProgress}
+      />
       <MeetingAnalysisStatusPoller status={meeting.status} />
 
       {meeting.status === "FAILED" && meeting.errorMessage ? (

@@ -473,6 +473,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
         kind: a.kind as MeetingAnalysisKind,
         model: a.model,
         result: a.result,
+        createdAt: a.createdAt,
       })),
     };
   }

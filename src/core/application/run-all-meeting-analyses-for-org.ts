@@ -90,20 +90,8 @@ export async function runAllMeetingAnalysesForOrg(
   let lastError = "";
   let failedKind: MeetingAnalysisKind | undefined;
 
-  /*
-    La scorecard passe en dernier, et cet ordre porte une décision.
-
-    Elle est la seule des quatre à pouvoir ne pas s'appliquer : tant qu'un type
-    de rendez-vous n'a pas de grille, il n'y a rien à noter. La placer après les
-    trois autres garantit qu'un rendez-vous dont la grille manque garde malgré
-    tout son analyse SONCAS, DISC et KISS, et arrive en READY comme avant.
-
-    C'est aussi la seule qui ne nourrit personne : KISS relit SONCAS et DISC, le
-    compte rendu de visite relit les trois. Un échec de la scorecard n'invalide
-    donc rien de ce qui précède, à la différence d'un échec de SONCAS.
-  */
-  for (const kind of ["SONCAS", "DISC", "KISS", "SCORECARD"] as const) {
-    const r = await runMeetingAnalysis(
+  const runKind = (kind: MeetingAnalysisKind) =>
+    runMeetingAnalysis(
       {
         meetings: deps.meetings,
         prompts: deps.prompts,
@@ -119,6 +107,27 @@ export async function runAllMeetingAnalysesForOrg(
         organizationPlaybookMarkdown: playbookMarkdown,
       },
     );
+
+  /*
+    Deux vagues, et non une file.
+
+    SONCAS, DISC et la scorecard ne lisent que le transcript : rien ne justifie
+    de les faire attendre l'une derrière l'autre, et le commercial attendait
+    trois appels au modèle là où un seul suffit. KISS, lui, relit SONCAS et
+    DISC déjà enregistrés : il ne part qu'une fois la vague terminée, sans quoi
+    il jugerait un rendez-vous dont le profil d'interlocuteur n'existe pas
+    encore. Le compte rendu de visite, plus bas, relit tout.
+
+    Les résultats de la vague sont dépouillés dans l'ordre de la liste, pour
+    que le rendez-vous nomme toujours la même étape fautive quand deux échouent
+    ensemble.
+  */
+  const FIRST_WAVE = ["SONCAS", "DISC", "SCORECARD"] as const;
+  const firstWave = await Promise.all(FIRST_WAVE.map((kind) => runKind(kind)));
+
+  for (let i = 0; i < FIRST_WAVE.length; i += 1) {
+    const kind = FIRST_WAVE[i];
+    const r = firstWave[i];
     /*
       Absence de grille : ce n'est pas un incident, c'est un type de rendez-vous
       qu'on ne sait pas encore noter. Le compter comme un échec marquerait le
@@ -132,6 +141,14 @@ export async function runAllMeetingAnalysesForOrg(
       lastError = r.message ?? r.error;
       failedKind = kind;
       break;
+    }
+  }
+
+  if (!failedKind) {
+    const r = await runKind("KISS");
+    if (!r.ok) {
+      lastError = r.message ?? r.error;
+      failedKind = "KISS";
     }
   }
 
