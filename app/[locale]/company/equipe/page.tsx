@@ -14,10 +14,8 @@ import {
 } from "@/lib/team-seller-scope";
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
-import {
-  disabledStatsWindowDays,
-} from "@/src/core/domain/dashboard-stats-window";
-import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
+import { disabledStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import { resolveStatsPeriod } from "@/lib/resolve-stats-window-days";
 
 export const dynamic = "force-dynamic";
 
@@ -70,16 +68,18 @@ export default async function MonEquipePage({ searchParams }: Props) {
   // La requête entière, et pas seulement `jours` : si cette période n'a pas
   // assez de RDV, la redirection qui suit doit ramener le lecteur sur la page
   // de liste où il était, et non sur la première.
-  const statsWindowDays = ensureEligibleStatsWindowDays({
+  const period = resolveStatsPeriod({
     searchParams: sp,
     counts: windowCounts,
     redirectPath: "/company/equipe",
   });
+  const statsWindowDays = period.days;
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
 
   const admin = await getOrgAdminDashboard(deps, {
     organizationId: actor.activeOrganizationId,
     statsWindowDays,
+    statsUntil: period.until,
     monEquipePage,
     teamUserIds,
   });
@@ -122,6 +122,7 @@ export default async function MonEquipePage({ searchParams }: Props) {
             <DashboardStatsPeriodSelect
               value={statsWindowDays}
               disabledDays={disabledStatsDays}
+              range={period.range}
             />
           </Suspense>
           <TeamMemberInviteDialog currentUserEmail={actor.email} />

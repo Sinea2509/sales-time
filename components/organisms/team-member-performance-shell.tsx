@@ -26,6 +26,7 @@ import type { SalesProfilePeriodPoint } from "@/src/core/domain/sales-profile-hi
 import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signature";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
+import type { StatsRangeInput } from "@/src/core/domain/stats-range";
 import {
   cardProseBodyClass,
   pageTitleClass,
@@ -193,6 +194,8 @@ export type TeamMemberPerformanceShellProps = {
   scoreSeries?: number[];
   /** Les rendez-vous de la période, du plus récent au plus ancien. */
   windowMeetings?: RecentMeetingListRow[];
+  /** La période libre en vigueur, quand l'adresse en porte une. */
+  statsRange?: StatsRangeInput | null;
 };
 
 /**
@@ -253,6 +256,7 @@ function ManagerMemberPerformanceShell({
   progressBullets,
   improvementBullets,
   home,
+  statsRange = null,
 }: TeamMemberPerformanceShellProps) {
   const luParSonManager = perspective === "manager";
   return (
@@ -418,6 +422,7 @@ function ManagerMemberPerformanceShell({
           <AnalysePagePeriodFallback
             value={statsWindowDays}
             disabledDays={disabledStatsDays}
+            range={statsRange}
           />
         </div>
 

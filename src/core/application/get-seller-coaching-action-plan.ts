@@ -27,6 +27,8 @@ export async function getSellerCoachingActionPlan(
     organizationId: string | null;
     statsWindowDays: StatsWindowDays;
     sellerUserId: string;
+    /** La fin de la période ; maintenant par défaut. */
+    statsUntil?: Date;
   },
 ): Promise<CoachingAction[]> {
   if (!input.organizationId) return [];
@@ -34,7 +36,11 @@ export async function getSellerCoachingActionPlan(
   const meetings = await deps.meetings.listRecentMeetingsForDashboard({
     organizationId: input.organizationId,
     limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
-    meetingAtSince: meetingAtSinceForStatsWindow(input.statsWindowDays),
+    meetingAtSince: meetingAtSinceForStatsWindow(
+      input.statsWindowDays,
+      input.statsUntil ?? new Date(),
+    ),
+    meetingAtBefore: input.statsUntil,
     sellerUserId: input.sellerUserId,
     includeLatestKissResult: true,
   });

@@ -23,6 +23,7 @@ import {
 import type { TeamScopeGroup } from "@/lib/team-seller-scope";
 import type { OrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type { StatsRangeInput } from "@/src/core/domain/stats-range";
 
 /**
  * Le tableau de bord du manager, comme la maquette du 11 septembre le
@@ -40,7 +41,10 @@ export function DashboardAdminShell({
   currentUserEmail,
   disabledStatsDays = [],
   comparisonGroup,
+  statsRange = null,
 }: {
+  /** La période libre en vigueur, quand l'adresse en porte une. */
+  statsRange?: StatsRangeInput | null;
   admin: OrgAdminDashboard;
   kissTeamStrengthsNarrative?: string | null;
   currentUserEmail: string;
@@ -71,9 +75,10 @@ export function DashboardAdminShell({
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-muted-foreground text-sm leading-relaxed">
-            L&apos;activité des {statsWindowLabel(jours)}, comparée aux{" "}
-            {previousWindowLabel(jours)}. La période choisie s&apos;applique à
-            toutes les pages du manager.
+            L&apos;activité {statsRange ? "" : "des "}
+            {statsWindowLabel(jours, statsRange)}, comparée aux{" "}
+            {previousWindowLabel(jours, statsRange)}. La période choisie
+            s&apos;applique à toutes les pages du manager.
           </p>
           <Suspense
             fallback={
@@ -83,6 +88,7 @@ export function DashboardAdminShell({
             <DashboardStatsPeriodSelect
               value={home.statsWindowDays}
               disabledDays={disabledStatsDays}
+              range={statsRange}
             />
           </Suspense>
         </div>
@@ -92,6 +98,7 @@ export function DashboardAdminShell({
           pipeline={teamReading.pipeline}
           scoreSeries={teamReading.scoreSeries}
           sellersCount={teamReading.sellersCount}
+          statsRange={statsRange}
         />
       </div>
 
@@ -100,6 +107,7 @@ export function DashboardAdminShell({
           <TeamSalesScoreBarsCard
             bars={teamReading.scoreBars}
             statsWindowDays={jours}
+            statsRange={statsRange}
             equipePage={monEquipe.page}
           />
           <TeamBlockAxesCard

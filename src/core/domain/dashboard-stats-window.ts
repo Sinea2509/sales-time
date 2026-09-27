@@ -1,6 +1,17 @@
 export const STATS_WINDOW_DAYS_OPTIONS = [30, 60, 90] as const;
 
-export type StatsWindowDays = (typeof STATS_WINDOW_DAYS_OPTIONS)[number];
+/** Les trois fenêtres glissantes que le sélecteur propose. */
+export type StatsWindowPreset = (typeof STATS_WINDOW_DAYS_OPTIONS)[number];
+
+/**
+ * La longueur d'une période, en jours.
+ *
+ * Un nombre quelconque, et non plus l'une des trois fenêtres : une période
+ * choisie au calendrier en fait autant de jours qu'elle en couvre, et tous les
+ * calculs prennent une longueur et une borne de fin, sans savoir d'où elles
+ * viennent. Les fonctions qui parlent du sélecteur, elles, rendent un préréglage.
+ */
+export type StatsWindowDays = number;
 
 /**
  * La fenêtre retenue quand l'adresse n'en nomme aucune.
@@ -10,7 +21,7 @@ export type StatsWindowDays = (typeof STATS_WINDOW_DAYS_OPTIONS)[number];
  * qui l'omettent volontairement de l'adresse, et la page qui retire ce
  * paramètre quand il ne dit rien de plus que le défaut.
  */
-export const DEFAULT_STATS_WINDOW_DAYS: StatsWindowDays = 30;
+export const DEFAULT_STATS_WINDOW_DAYS: StatsWindowPreset = 30;
 
 /** Seuil minimal de RDV pour afficher tendances KPI et activer une fenêtre stats. */
 export const MIN_RDV_FOR_STATS = 5;
@@ -55,11 +66,11 @@ export function resolveEligibleStatsWindowDays(
 
 export function parseStatsWindowDays(
   raw: string | string[] | undefined,
-): StatsWindowDays {
+): StatsWindowPreset {
   const v = Array.isArray(raw) ? raw[0] : raw;
   const s = v != null ? String(v) : "";
   if (s === "30" || s === "60" || s === "90") {
-    return Number(s) as StatsWindowDays;
+    return Number(s) as StatsWindowPreset;
   }
   return DEFAULT_STATS_WINDOW_DAYS;
 }

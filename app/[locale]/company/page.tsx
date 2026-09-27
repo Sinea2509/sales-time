@@ -10,7 +10,7 @@ import { disabledStatsWindowDays } from "@/src/core/domain/dashboard-stats-windo
 import { getApplicationDeps } from "@/lib/application-deps";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
-import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
+import { resolveStatsPeriod } from "@/lib/resolve-stats-window-days";
 import { statsWindowLabel } from "@/lib/stats-window-labels";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import {
@@ -75,11 +75,12 @@ export default async function DashboardHomePage({
       organizationId: actor.activeOrganizationId,
       sellerUserIds: teamUserIds,
     });
-    const statsWindowDays = ensureEligibleStatsWindowDays({
+    const period = resolveStatsPeriod({
       searchParams: sp,
       counts: windowCounts,
       redirectPath: "/company",
     });
+    const statsWindowDays = period.days;
     const disabledStatsDays = disabledStatsWindowDays(windowCounts);
     /*
       Les réglages de l'organisation rejoignent cette salve pour son playbook :
@@ -91,6 +92,7 @@ export default async function DashboardHomePage({
       getOrgAdminDashboard(deps, {
         organizationId: actor.activeOrganizationId,
         statsWindowDays,
+        statsUntil: period.until,
         monEquipePage,
         teamUserIds,
       }),
@@ -125,6 +127,7 @@ export default async function DashboardHomePage({
             currentUserEmail={actor.email}
             disabledStatsDays={disabledStatsDays}
             comparisonGroup={teamScopeGroup(teamUserIds)}
+            statsRange={period.range}
           />
         )}
       </div>
@@ -181,11 +184,12 @@ export default async function DashboardHomePage({
       </div>
     );
   }
-  const statsWindowDays = ensureEligibleStatsWindowDays({
+  const period = resolveStatsPeriod({
     searchParams: sp,
     counts: windowCounts,
     redirectPath: "/company",
   });
+  const statsWindowDays = period.days;
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
   // Le rang est relatif : il se calcule sur l'équipe du manager de ce
   // commercial, exactement le groupe que ce manager voit dans « Mon équipe ».
@@ -199,6 +203,7 @@ export default async function DashboardHomePage({
       getOrgDashboardHome(deps, {
         organizationId: actor.activeOrganizationId,
         statsWindowDays,
+        statsUntil: period.until,
         sellerUserId: sellerId,
         withSellerFocus: true,
       }),
@@ -208,6 +213,7 @@ export default async function DashboardHomePage({
       getTeamMemberStanding(deps, {
         organizationId: actor.activeOrganizationId,
         statsWindowDays,
+        statsUntil: period.until,
         sellerUserId: sellerId,
         teamUserIds,
       }),
@@ -230,6 +236,7 @@ export default async function DashboardHomePage({
       getSellerCoachingActionPlan(deps, {
         organizationId: actor.activeOrganizationId,
         statsWindowDays,
+        statsUntil: period.until,
         sellerUserId: sellerId,
       }),
     ]);
@@ -250,7 +257,7 @@ export default async function DashboardHomePage({
             ? `Bonjour ${actor.firstName.trim()}`
             : "Mon tableau de bord"
         }
-        description={`Votre activité des ${statsWindowLabel(statsWindowDays)}, et ce qui mérite votre attention aujourd'hui.`}
+        description={`Votre activité ${period.range ? "" : "des "}${statsWindowLabel(statsWindowDays, period.range)}, et ce qui mérite votre attention aujourd'hui.`}
       />
       {!home ? null : (
         <DashboardHomeShell
@@ -262,6 +269,7 @@ export default async function DashboardHomePage({
           meetingTypeOptions={meetingTypeOptions}
           pipelineStageOptions={pipelineStageOptions}
           disabledStatsDays={disabledStatsDays}
+          statsRange={period.range}
         />
       )}
     </div>

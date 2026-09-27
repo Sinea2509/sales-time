@@ -59,12 +59,18 @@ export async function getOrgDashboardHome(
     sellerUserId?: string | null;
     /** Demande les analyses de la fenêtre pour calculer `sellerFocus`. */
     withSellerFocus?: boolean;
+    /** La fin de la période ; maintenant par défaut, le lendemain du dernier jour pour des dates libres. */
+    statsUntil?: Date;
   },
 ): Promise<OrgDashboardHome | null> {
   if (!input.organizationId) return null;
 
-  const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
-  const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays);
+  const until = input.statsUntil ?? new Date();
+  const sinceCurrent = meetingAtSinceForStatsWindow(
+    input.statsWindowDays,
+    until,
+  );
+  const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays, until);
   const seller =
     input.sellerUserId != null && input.sellerUserId !== ""
       ? input.sellerUserId
@@ -75,6 +81,7 @@ export async function getOrgDashboardHome(
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: input.organizationId,
       meetingAtSince: sinceCurrent,
+      meetingAtBefore: input.statsUntil,
       sellerUserId: seller,
       includeLatestScorecardResult: input.withSellerFocus === true,
       includeLatestKissResult: input.withSellerFocus === true,

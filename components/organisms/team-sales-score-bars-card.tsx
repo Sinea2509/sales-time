@@ -11,6 +11,7 @@ import { teamMemberDisplayName } from "@/lib/team-member-display-name";
 import { cn } from "@/lib/utils";
 import type { OrgAdminScoreBar } from "@/src/core/application/get-org-admin-dashboard";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type { StatsRangeInput } from "@/src/core/domain/stats-range";
 
 /**
  * Le SalesScore moyen de chaque commercial, en barres, du plus haut au plus
@@ -24,10 +25,12 @@ import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 export function TeamSalesScoreBarsCard({
   bars,
   statsWindowDays,
+  statsRange = null,
   equipePage,
 }: {
   bars: OrgAdminScoreBar[];
   statsWindowDays: StatsWindowDays;
+  statsRange?: StatsRangeInput | null;
   equipePage: number;
 }) {
   const max = Math.max(1, ...bars.map((b) => b.salesScoreAvg));
@@ -37,9 +40,9 @@ export function TeamSalesScoreBarsCard({
         <div>
           <h2 className={cardTitleClass}>SalesScore moyen par commercial</h2>
           <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-            Moyenne sur les rendez-vous analysés des{" "}
-            {statsWindowLabel(statsWindowDays)}. Cliquez un nom pour ouvrir sa
-            fiche.
+            Moyenne sur les rendez-vous analysés {statsRange ? "" : "des "}
+            {statsWindowLabel(statsWindowDays, statsRange)}. Cliquez un nom pour
+            ouvrir sa fiche.
           </p>
         </div>
         {bars.length === 0 ? (

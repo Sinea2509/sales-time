@@ -60,6 +60,7 @@ export function SellerPerformanceView({
   priorityOpportunities,
   rdvSurLaPeriode,
   etapeOrder,
+  statsRange = null,
 }: TeamMemberPerformanceShellProps) {
   const reading = salesProfile
     ? salesProfileReading(salesProfile, previousSalesProfile, "commercial")
@@ -72,12 +73,13 @@ export function SellerPerformanceView({
         <p className="text-muted-foreground text-sm leading-relaxed">
           Moyenne sur {analyzed}{" "}
           {plurielFr(analyzed, "rendez-vous analysé", "rendez-vous analysés")},{" "}
-          {statsWindowLabel(statsWindowDays)}, comparée aux{" "}
-          {previousWindowLabel(statsWindowDays)}.
+          {statsWindowLabel(statsWindowDays, statsRange)}, comparée aux{" "}
+          {previousWindowLabel(statsWindowDays, statsRange)}.
         </p>
         <AnalysePagePeriodFallback
           value={statsWindowDays}
           disabledDays={disabledStatsDays}
+          range={statsRange}
         />
       </div>
 

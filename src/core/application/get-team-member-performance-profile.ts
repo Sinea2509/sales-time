@@ -40,16 +40,28 @@ export async function getTeamMemberPerformanceProfile(
     sellerUserId: string;
     sellerDisplayName: string;
     statsWindowDays?: number;
+    /** La fin de la période ; maintenant par défaut. */
+    statsUntil?: Date;
   },
 ): Promise<TeamMemberPerformanceProfile> {
-  const statsWindowDays = parseStatsWindowDays(
-    input.statsWindowDays != null ? String(input.statsWindowDays) : undefined,
+  /*
+    Une période libre a une longueur quelconque : elle passe telle quelle.
+    Sans longueur, ou avec une fenêtre inconnue, le préréglage par défaut.
+  */
+  const statsWindowDays =
+    input.statsWindowDays != null && input.statsWindowDays > 0
+      ? input.statsWindowDays
+      : parseStatsWindowDays(undefined);
+  const until = input.statsUntil ?? new Date();
+  const sincePreviousWindow = previousMeetingAtWindowStart(
+    statsWindowDays,
+    until,
   );
-  const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
   const meetingsForWindow = await deps.meetings.listRecentMeetingsForDashboard({
     organizationId: input.organizationId,
     limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
     meetingAtSince: sincePreviousWindow,
+    meetingAtBefore: input.statsUntil,
     sellerUserId: input.sellerUserId,
     includeLatestSoncasResult: true,
     includeLatestDiscResult: true,
@@ -59,6 +71,7 @@ export async function getTeamMemberPerformanceProfile(
   const { currentWindow: meetings } = partitionMeetingsByStatsWindow(
     meetingsForWindow,
     statsWindowDays,
+    until,
   );
 
   const meetingDigests = buildMeetingDigestsForAiSummary(meetings);

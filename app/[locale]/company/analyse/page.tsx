@@ -24,7 +24,7 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
-import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
+import { resolveStatsPeriod } from "@/lib/resolve-stats-window-days";
 import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-admin-dashboard";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
 import {
@@ -98,11 +98,12 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       organizationId: actor.activeOrganizationId,
       sellerUserIds: [sellerId],
     });
-    const statsWindowDays = ensureEligibleStatsWindowDays({
+    const period = resolveStatsPeriod({
       searchParams: sp,
       counts: windowCounts,
       redirectPath: "/company/analyse",
     });
+    const statsWindowDays = period.days;
     /*
       Le rang se mesure dans l'équipe de son manager, exactement le groupe que
       ce manager voit dans « Mon équipe ». Sans ce cadrage, cet écran et la
@@ -116,6 +117,8 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       organizationId: actor.activeOrganizationId,
       sellerUserId: sellerId,
       statsWindowDays,
+      statsUntil: period.until,
+      statsRange: period.range,
       teamUserIds,
       audience: "commercial",
     });
@@ -168,16 +171,18 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     organizationId: actor.activeOrganizationId,
     sellerUserIds: teamUserIds,
   });
-  const statsWindowDays = ensureEligibleStatsWindowDays({
+  const period = resolveStatsPeriod({
     searchParams: sp,
     counts: windowCounts,
     redirectPath: "/company/analyse",
   });
+  const statsWindowDays = period.days;
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
 
   const sinceProfileHistory = meetingAtSinceForWindows(
     statsWindowDays,
     SALES_PROFILE_HISTORY_PERIODS,
+    period.until,
   );
 
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
@@ -188,6 +193,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       // est fait par le filtre d'équipe ci-dessous.
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
       meetingAtSince: sinceProfileHistory,
+      meetingAtBefore: period.range ? period.until : undefined,
       includeLatestSoncasResult: true,
       includeLatestDiscResult: true,
       includeLatestKissResult: true,
@@ -222,12 +228,17 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   const scopedMeetings = scopeMeetingsToTeam(meetingsForWindow, teamUserIds);
 
   const { currentWindow: meetings, previousWindow: previousMeetings } =
-    partitionMeetingsByStatsWindow(scopedMeetings, statsWindowDays);
+    partitionMeetingsByStatsWindow(
+      scopedMeetings,
+      statsWindowDays,
+      period.until,
+    );
 
   const profileHistory = salesProfileHistory(
     scopedMeetings,
     statsWindowDays,
     SALES_PROFILE_HISTORY_PERIODS,
+    period.until,
   );
 
   /*
@@ -300,6 +311,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
             <AnalysePagePeriodFallback
               value={home.statsWindowDays}
               disabledDays={disabledStatsDays}
+              range={period.range}
             />
           }
         />

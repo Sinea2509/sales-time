@@ -14,6 +14,7 @@ import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import { MIN_RDV_FOR_STATS } from "@/src/core/domain/dashboard-stats-window";
 import type { DashboardHomeFigures } from "@/src/core/domain/dashboard-home-from-meetings";
 import type { PipelineInProgress } from "@/src/core/domain/pipeline-in-progress";
+import type { StatsRangeInput } from "@/src/core/domain/stats-range";
 
 const TAM_SANS_DONNEE =
   "Non calculable : aucun rendez-vous renseigné sur la période. Le gain administratif se compte sur les rendez-vous dont la durée est saisie.";
@@ -42,7 +43,10 @@ export function DashboardKpiCards({
   scoreSeries = [],
   sellersCount = null,
   showSalesScore = false,
+  statsRange = null,
 }: {
+  /** La période libre en vigueur, quand l'adresse en porte une. */
+  statsRange?: StatsRangeInput | null;
   home: DashboardHomeFigures;
   audience?: "seller" | "team";
   /** Les affaires ouvertes et leur potentiel. Absent : la tuile n'est pas montrée. */
@@ -60,7 +64,8 @@ export function DashboardKpiCards({
   };
   const rdvRenseignes = home.nbRdvsRenseignes;
   const analyzed = home.nbRdvsAnalyses;
-  const periode = statsWindowLabel(home.statsWindowDays);
+  const periode = statsWindowLabel(home.statsWindowDays, statsRange);
+  const surLaPeriode = statsRange ? periode : `des ${periode}`;
 
   return (
     <div
@@ -72,7 +77,7 @@ export function DashboardKpiCards({
         label="Rendez-vous analysés"
         footer={
           home.nbRdvs > 0
-            ? `sur ${home.nbRdvs} rendez-vous des ${periode}`
+            ? `sur ${home.nbRdvs} rendez-vous ${surLaPeriode}`
             : "Aucun rendez-vous sur la période sélectionnée."
         }
         trend={
@@ -141,7 +146,7 @@ export function DashboardKpiCards({
         footer={
           rdvRenseignes > 0
             ? audience === "team" && sellersCount != null
-              ? `pour ${sellersCount} ${plurielFr(sellersCount, "commercial", "commerciaux")}, sur les ${periode}`
+              ? `pour ${sellersCount} ${plurielFr(sellersCount, "commercial", "commerciaux")}, ${statsRange ? periode : `sur les ${periode}`}`
               : `${formatDurationHoursMinutes(home.tamMinutesPerRdv)} économisées sur ${rdvRenseignes === 1 ? "le rendez-vous renseigné" : `chacun des ${rdvRenseignes} rendez-vous renseignés`}`
             : null
         }

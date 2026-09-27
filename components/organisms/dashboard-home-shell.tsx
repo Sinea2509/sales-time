@@ -18,6 +18,7 @@ import type { TeamMemberStanding } from "@/src/core/application/get-org-admin-da
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { CoachingAction } from "@/src/core/domain/seller-action-plan";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type { StatsRangeInput } from "@/src/core/domain/stats-range";
 
 export function DashboardHomeShell({
   home,
@@ -28,8 +29,11 @@ export function DashboardHomeShell({
   meetingTypeOptions,
   pipelineStageOptions,
   disabledStatsDays = [],
+  statsRange = null,
 }: {
   home: OrgDashboardHome;
+  /** La période libre en vigueur, quand l'adresse en porte une. */
+  statsRange?: StatsRangeInput | null;
   /** Place du commercial dans son équipe. `null` hors organisation ou hors équipe. */
   standing?: TeamMemberStanding | null;
   /** Groupe sur lequel le rang a été calculé, tel que `teamScopeGroup` le nomme. */
@@ -67,6 +71,7 @@ export function DashboardHomeShell({
             <DashboardStatsPeriodSelect
               value={home.statsWindowDays}
               disabledDays={disabledStatsDays}
+              range={statsRange}
             />
           </Suspense>
         </div>
@@ -74,6 +79,7 @@ export function DashboardHomeShell({
           salesScoreAvg={home.salesScoreAvg}
           scoredMeetings={home.noteGlobaleSampleCount}
           statsWindowDays={home.statsWindowDays}
+          statsRange={statsRange}
           trendPoints={home.salesScoreTrendPoints}
           rank={
             standing?.row?.rank != null && standing.ranking.rankedCount > 1
@@ -98,6 +104,7 @@ export function DashboardHomeShell({
           home={home}
           audience="seller"
           pipeline={home.sellerFocus?.pipeline ?? null}
+          statsRange={statsRange}
         />
       </section>
 

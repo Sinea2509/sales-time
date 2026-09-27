@@ -558,6 +558,8 @@ export async function getTeamMemberStanding(
     sellerUserId: string;
     /** Cadrage manager : quand il est fourni, le rang porte sur ce sous-ensemble. */
     teamUserIds?: string[];
+    /** La fin de la période ; maintenant par défaut. */
+    statsUntil?: Date;
   },
 ): Promise<TeamMemberStanding | null> {
   if (!input.organizationId) return null;
@@ -569,7 +571,11 @@ export async function getTeamMemberStanding(
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: input.organizationId,
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
-      meetingAtSince: meetingAtSinceForStatsWindow(input.statsWindowDays),
+      meetingAtSince: meetingAtSinceForStatsWindow(
+        input.statsWindowDays,
+        input.statsUntil ?? new Date(),
+      ),
+      meetingAtBefore: input.statsUntil,
       includeLatestSoncasResult: true,
       includeLatestKissResult: true,
     }),
@@ -865,18 +871,25 @@ export async function getOrgAdminDashboard(
     monEquipePage?: number;
     /** When set, limits team dashboard to these seller user ids (manager scope). */
     teamUserIds?: string[];
+    /** La fin de la période ; maintenant par défaut, le lendemain du dernier jour pour des dates libres. */
+    statsUntil?: Date;
   },
 ): Promise<OrgAdminDashboard | null> {
   if (!input.organizationId) return null;
 
-  const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
-  const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays);
+  const until = input.statsUntil ?? new Date();
+  const sinceCurrent = meetingAtSinceForStatsWindow(
+    input.statsWindowDays,
+    until,
+  );
+  const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays, until);
 
   const [meetings, prevMeetings, teamList, orgSettings] = await Promise.all([
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: input.organizationId,
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
       meetingAtSince: sinceCurrent,
+      meetingAtBefore: input.statsUntil,
       includeLatestSoncasResult: true,
       includeLatestDiscResult: true,
       includeLatestKissResult: true,
