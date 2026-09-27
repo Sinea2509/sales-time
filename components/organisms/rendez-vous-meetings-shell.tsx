@@ -487,7 +487,7 @@ export function RendezVousMeetingsShell({
                   }
                   description={
                     meetings.length === 0
-                      ? "Créez votre premier rendez-vous pour lancer une analyse SONCAS, DISC et KISS : c'est elle qui alimente votre SalesScore et vos statistiques."
+                      ? "Créez votre premier rendez-vous pour lancer l'analyse : la scorecard donne votre SalesScore, SONCAS et DISC le profil du prospect, KISS votre coaching."
                       : todoFilter != null
                         ? "Relâchez la pastille pour retrouver la liste, ou videz la recherche si elle réduit ce que le filtre peut trouver."
                         : `La recherche porte sur le nom du prospect et sur son entreprise. Videz le champ pour retrouver vos ${meetings.length} rendez-vous.`
@@ -583,7 +583,7 @@ export function RendezVousMeetingsShell({
                         ) : (
                           <span
                             className="text-muted-foreground"
-                            title="Non calculable : ce rendez-vous n'a pas encore d'analyse SONCAS."
+                            title="Non calculable : ce rendez-vous n'a pas de scorecard. Seule la découverte a une grille pour l'instant."
                           >
                             {VALEUR_NON_CALCULABLE}
                           </span>

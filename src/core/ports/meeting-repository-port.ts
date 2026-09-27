@@ -72,7 +72,7 @@ export type RecentMeetingListRow = MeetingRow & {
     aura tranché ce que « coaché » veut dire, pas parce qu'un drapeau était
     disponible.
   */
-  /** Moyenne des scores SONCAS (6 leviers), si analyse présente. */
+  /** La note de la scorecard sur 100, si le rendez-vous en porte une. */
   salesScore: number | null;
   /** Dernier résultat SONCAS brut (agrégations admin / radar équipe). */
   latestSoncasResult?: unknown | null;

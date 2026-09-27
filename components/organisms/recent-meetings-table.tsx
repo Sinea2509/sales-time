@@ -128,7 +128,7 @@ export function RecentMeetingsTable({
                     ) : (
                       <span
                         className="text-muted-foreground dark:text-zinc-400"
-                        title="Non calculable : ce rendez-vous n'a pas encore d'analyse SONCAS."
+                        title="Non calculable : ce rendez-vous n'a pas de scorecard. Seule la découverte a une grille pour l'instant."
                       >
                         {VALEUR_NON_CALCULABLE}
                       </span>

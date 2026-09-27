@@ -14,7 +14,6 @@ import {
   analysisReliabilityFromWords,
   countWords,
 } from "@/src/core/domain/analysis-reliability";
-import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { meetingActionPlan } from "@/src/core/domain/meeting-action-plan";
 import { meetingAnalysisProgress } from "@/src/core/domain/meeting-analysis-progress";
@@ -119,7 +118,13 @@ export default async function RendezVousDetailPage({
     ? objectionsResultSchema.safeParse(objections.result)
     : null;
 
-  const salesScore = soncas ? salesScoreFromSoncasResult(soncas.result) : null;
+  /*
+    Le SalesScore est la note de la grille : ce qu'on attend de ce rendez-vous,
+    critère par critère. Il n'existe pas sans grille, et ne se remplace pas.
+  */
+  const salesScore = scorecardParsed?.success
+    ? scorecardParsed.data.overallScore
+    : null;
   const scoresOf = (rows: typeof sellerMeetings30d) =>
     rows
       .filter((m) => m.id !== meeting.id)
@@ -217,7 +222,8 @@ export default async function RendezVousDetailPage({
       }}
       rail={{
         salesScore,
-        scorePending: meeting.status === "PROCESSING" && salesScore == null,
+        scorePending:
+          meeting.status === "PROCESSING" && salesScore == null && grid != null,
         gridName: grid?.name ?? null,
         sellerAverage30d: salesScoreAverage(scoresOf(sellerMeetings30d)),
         teamAverage30d: salesScoreAverage(scoresOf(teamMeetings30d)),
@@ -233,7 +239,7 @@ export default async function RendezVousDetailPage({
           transcriptWords,
           transcribedFromAudio,
           durationMin: meeting.durationMin,
-          computedAt: soncas?.createdAt ?? null,
+          computedAt: scorecard?.createdAt ?? null,
         },
       }}
       analysisProgress={analysisProgress}

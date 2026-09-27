@@ -34,6 +34,7 @@ function baseHome(over: Partial<OrgDashboardHome> = {}): OrgDashboardHome {
     salesScoreAvg: 80,
     salesScoreTrendPoints: 4,
     noteGlobaleSampleCount: 2,
+    nbRdvsAnalyses: 2,
     noteGlobaleTrendPoints: 0.2,
     noteGlobaleTrendPercent: 5,
     recentMeetings: [],

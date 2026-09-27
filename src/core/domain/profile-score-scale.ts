@@ -109,14 +109,14 @@ function blocDesTranches(): string {
  * la consigne par défaut n'est de toute façon plus lue dès qu'une version est
  * publiée en base.
  *
- * Le paragraphe sur la moyenne n'est pas une figure de style : le produit fait
- * bien la moyenne des six leviers et l'affiche comme le SalesScore du
- * rendez-vous, voir `dashboard-sales-score.ts`. Le modèle a le droit de savoir ce
- * qu'on fait de ses nombres.
+ * Le paragraphe sur l'usage des nombres n'est pas une figure de style : les
+ * six leviers sont comparés d'un rendez-vous à l'autre et agrégés par
+ * commercial dans les affinités. Le modèle a le droit de savoir ce qu'on fait
+ * de ses nombres.
  */
 export function soncasScoreScaleInstruction(): string {
   return `## SONCAS driver scores (0–${PROFILE_SCORE_MAX}, calibrated)
-These six numbers are not impressions. The product averages them and shows the result as this meeting's score, next to meetings scored by other runs of this prompt, so six numbers placed loosely here end up compared with numbers that were not. Score each driver on how strongly it shows in THIS transcript, against these bands:
+These six numbers are not impressions. The product compares them across meetings and aggregates them per seller, next to numbers produced by other runs of this prompt, so six numbers placed loosely here end up compared with numbers that were not. Score each driver on how strongly it shows in THIS transcript, against these bands:
 
 ${blocDesTranches()}
 

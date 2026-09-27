@@ -22,7 +22,10 @@ import {
 export type DashboardHomeMeeting = Pick<
   RecentMeetingListRow,
   "durationMin" | "salesScore"
->;
+> & {
+  /** Vrai quand le rendez-vous porte un coaching : il compte comme analysé même sans grille. */
+  hasKiss?: boolean;
+};
 
 /** Les chiffres de tête d'un tableau de bord, hors liste des derniers RDV. */
 export type DashboardHomeFigures = {
@@ -70,8 +73,16 @@ export type DashboardHomeFigures = {
   noteGlobaleTrendPoints: number | null;
   /** Variation % de la note globale vs période précédente. */
   noteGlobaleTrendPercent: number | null;
-  /** RDV avec SalesScore (SONCAS) sur la fenêtre, base du gating de la tendance de note globale. */
+  /** RDV avec SalesScore, c'est-à-dire notés sur une grille, base du gating de la tendance de note globale. */
   noteGlobaleSampleCount: number;
+  /**
+   * RDV analysés sur la fenêtre : ceux qui portent un coaching ou une note.
+   *
+   * Un rendez-vous dont le type n'a pas de grille n'a pas de SalesScore, et
+   * il est pourtant analysé : le compter comme non analysé ferait mentir la
+   * tuile « rendez-vous analysés » sur tout ce qui n'est pas une découverte.
+   */
+  nbRdvsAnalyses: number;
 };
 
 function salesScoresOf(meetings: DashboardHomeMeeting[]): number[] {
@@ -140,6 +151,9 @@ export function dashboardHomeFromMeetings(input: {
   const salesScorePrev = salesScoreAverage(salesScoresOf(input.previous));
   const noteGlobaleSampleCount = input.current.filter(
     (m) => m.salesScore != null,
+  ).length;
+  const nbRdvsAnalyses = input.current.filter(
+    (m) => m.salesScore != null || m.hasKiss === true,
   ).length;
 
   const nbRdvsTrendPercent = percentChangeVsPrevious(nbRdvs, nbRdvsPrev);
@@ -212,5 +226,6 @@ export function dashboardHomeFromMeetings(input: {
     noteGlobaleTrendPoints,
     noteGlobaleTrendPercent,
     noteGlobaleSampleCount,
+    nbRdvsAnalyses,
   };
 }

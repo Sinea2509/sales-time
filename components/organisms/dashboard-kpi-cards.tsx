@@ -59,7 +59,7 @@ export function DashboardKpiCards({
     minSampleCount: MIN_RDV_FOR_STATS,
   };
   const rdvRenseignes = home.nbRdvsRenseignes;
-  const analyzed = home.noteGlobaleSampleCount;
+  const analyzed = home.nbRdvsAnalyses;
   const periode = statsWindowLabel(home.statsWindowDays);
 
   return (

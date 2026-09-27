@@ -20,7 +20,7 @@ function prefersReducedMotion(): boolean {
 
 /**
  * Le SalesScore d'un rendez-vous, qui monte de zéro jusqu'à sa valeur quand
- * l'analyse SONCAS arrive, et change de couleur en passant les paliers.
+ * la scorecard arrive, et change de couleur en passant les paliers.
  *
  * Une fiche ouverte avec son score déjà connu l'affiche tel quel : le
  * mouvement raconte l'arrivée d'un résultat, pas le chargement d'une page.

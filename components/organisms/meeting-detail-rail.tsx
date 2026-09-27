@@ -92,7 +92,8 @@ function ScoreCard(props: MeetingDetailRailProps) {
               {props.gridName ? `, grille ${props.gridName.toLowerCase()}` : ""}
             </p>
             <p className="text-muted-foreground mt-0.5 text-[11.5px]">
-              Moyenne des six leviers SONCAS de ce rendez-vous.
+              La note de ce qu&apos;on attend de ce rendez-vous, critère par
+              critère.
             </p>
           </div>
         </div>

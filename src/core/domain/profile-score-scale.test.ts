@@ -197,13 +197,12 @@ describe("soncasScoreScaleInstruction", () => {
   });
 
   /*
-    Le modèle a le droit de savoir ce qu'on fait de ses nombres. La moyenne des
-    six leviers devient le SalesScore du rendez-vous, puis la moyenne du
-    commercial, puis sa place au classement : six notes posées au jugé ne
-    restent pas dans la fiche du rendez-vous.
+    Le modèle a le droit de savoir ce qu'on fait de ses nombres : ils sont
+    comparés d'un rendez-vous à l'autre et agrégés par commercial, six notes
+    posées au jugé ne restent donc pas dans la fiche du rendez-vous.
   */
-  it("dit que le produit fait la moyenne des six leviers", () => {
-    expect(soncasScoreScaleInstruction()).toContain("averages them");
+  it("dit que le produit compare et agrège les six leviers", () => {
+    expect(soncasScoreScaleInstruction()).toContain("compares them across");
   });
 
   /*

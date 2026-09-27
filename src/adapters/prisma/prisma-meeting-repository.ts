@@ -4,7 +4,7 @@ import type {
   MeetingSourceType,
   MeetingStatus,
 } from "@/src/core/domain/meeting-status";
-import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
+import { salesScoreFromScorecardResult } from "@/src/core/domain/meeting-sales-score";
 import { normalizePersonDisplayKey } from "@/src/core/domain/person-normalize";
 import { outreachPriorityScore } from "@/src/core/domain/person-outreach-priority";
 import type {
@@ -336,7 +336,9 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
         hasSoncas: kinds.has("SONCAS"),
         hasDisc: kinds.has("DISC"),
         hasKiss: kinds.has("KISS"),
-        salesScore: soncas ? salesScoreFromSoncasResult(soncas.result) : null,
+        salesScore: scorecard
+          ? salesScoreFromScorecardResult(scorecard.result)
+          : null,
       };
       if (input.includeLatestSoncasResult === true) {
         out.latestSoncasResult = soncas?.result ?? null;

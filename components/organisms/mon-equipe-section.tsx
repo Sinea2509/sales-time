@@ -401,7 +401,7 @@ export function MonEquipeSection({
                         className="px-4 py-3.5 tabular-nums"
                         title={
                           row.scoredMeetings > 0
-                            ? `Moyenne des SalesScores de ${row.scoredMeetings} rendez-vous. Un rendez-vous coaché n'est pas toujours noté : le coaching porte sur l'analyse KISS, la note vient de l'analyse SONCAS.`
+                            ? `Moyenne des SalesScores de ${row.scoredMeetings} rendez-vous. Un rendez-vous coaché n'est pas toujours noté : le coaching porte sur l'analyse KISS, la note vient de la scorecard, que seule la découverte a pour l'instant.`
                             : "Non calculable : aucun rendez-vous noté sur la période."
                         }
                       >
