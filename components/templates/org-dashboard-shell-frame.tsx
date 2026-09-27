@@ -62,6 +62,8 @@ export type OrgDashboardShellFrameProps = {
   sessionUser: SessionUserMenuInfo;
   superAdminNavLabel: string;
   emptyOrganizationHint: string;
+  /** L'action principale de l'espace, posée dans la barre du haut. */
+  primaryAction?: React.ReactNode;
 };
 
 function navActive(pathname: string, item: OrgDashboardNavItem) {
@@ -89,6 +91,7 @@ export function OrgDashboardShellFrame({
   sessionUser,
   superAdminNavLabel,
   emptyOrganizationHint,
+  primaryAction = null,
 }: OrgDashboardShellFrameProps) {
   const pathname = usePathname();
   const isMobile = useIsMobile();
@@ -312,6 +315,7 @@ export function OrgDashboardShellFrame({
           unreadNotificationCount={unreadNotificationCount}
           notifications={notifications}
           showFeedbackWidget
+          primaryAction={primaryAction}
         />
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-6">
           <div className="mx-auto w-full max-w-6xl">{children}</div>

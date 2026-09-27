@@ -127,7 +127,13 @@ export function MeetingCreateForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [feeling, setFeeling] = useState(initialValues?.feeling ?? 3);
-  const [sourceMode, setSourceMode] = useState<SourceMode>("paste");
+  /*
+    Le dépôt de fichier vient en premier : c'est le geste attendu, et le
+    copier-coller reste à un clic pour qui préfère.
+  */
+  const [sourceMode, setSourceMode] = useState<SourceMode>(
+    mode === "edit" ? "paste" : "file",
+  );
   const [file, setFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioPhase, setAudioPhase] = useState<AudioPhase>({ kind: "idle" });
@@ -339,19 +345,19 @@ export function MeetingCreateForm({
             <input
               type="radio"
               name="sourceMode"
-              checked={sourceMode === "paste"}
-              onChange={() => setSourceMode("paste")}
+              checked={sourceMode === "file"}
+              onChange={() => setSourceMode("file")}
             />
-            Coller le transcript
+            Glisser-déposer un fichier (.txt, .docx, .pdf…)
           </label>
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input
               type="radio"
               name="sourceMode"
-              checked={sourceMode === "file"}
-              onChange={() => setSourceMode("file")}
+              checked={sourceMode === "paste"}
+              onChange={() => setSourceMode("paste")}
             />
-            Importer un fichier (.txt, .csv, .doc, .docx, .pdf…)
+            Copier-coller le transcript
           </label>
           {!isEdit ? (
             <label className="flex cursor-pointer items-center gap-2 text-sm">

@@ -1,12 +1,19 @@
 /**
  * La répartition de la parole, lue dans un transcript où chaque réplique
  * commence par le nom de celui qui parle : « Commercial : … », « Prospect :
- * … », ou des prénoms.
+ * … », des prénoms, ou le format des outils de visioconférence, où le nom
+ * est suivi d'une heure sur sa propre ligne.
  *
  * Elle ne se calcule que si le transcript distingue vraiment les
  * intervenants : un texte d'un seul bloc n'a rien à en dire, et une
  * répartition inventée serait pire qu'une case vide. Le temps de parole est
- * approché par le nombre de mots, faute d'horodatage.
+ * approché par le nombre de mots, faute d'horodatage fiable.
+ *
+ * Les horodatages ne sont pas des intervenants. Un export de réunion écrit
+ * « 16 septembre 2026, 09:14 » en tête et « Perrine Durand 7:32 » avant
+ * chaque réplique : lus naïvement, ces deux-points fabriquaient un
+ * intervenant « 16 septembre 2026, 09 » et un autre « Perrine Durand 7 », et
+ * la carte annonçait 3 % contre 97 % entre une date et une personne.
  */
 export type TalkShare = {
   commercialLabel: string;
@@ -18,26 +25,108 @@ export type TalkShare = {
   longestCommercialRunWords: number;
   /**
    * Vrai quand les rôles ont été reconnus à leur nom (« Commercial »,
-   * « Client »…) ; faux quand ils ont été devinés d'après l'ordre de parole.
+   * « Client », le nom du commercial du rendez-vous) ; faux quand ils ont été
+   * devinés d'après l'ordre de parole.
    */
   rolesRecognized: boolean;
+};
+
+export type TalkShareNames = {
+  /** Le commercial du rendez-vous, tel que la base le nomme. */
+  sellerName?: string | null;
+  /** Le prospect du rendez-vous. */
+  prospectName?: string | null;
 };
 
 /** Plafond conseillé pour la part du commercial : une limite, pas un objectif. */
 export const TALK_SHARE_CEILING_PCT = 50;
 
-const SPEAKER_LINE = /^\s*([^:\n]{1,40}?)\s*:\s*(.*)$/;
+const TIME = String.raw`\d{1,2}:\d{2}(?::\d{2})?(?:[.,]\d{1,3})?`;
+/** Une heure seule, un repère de sous-titres (« 00:01:02 --> 00:01:05 ») ou un numéro de cue. */
+const TIME_ONLY_LINE = new RegExp(
+  String.raw`^\s*[\[(]?${TIME}[\])]?\s*(?:-->\s*${TIME}\s*)?$|^\s*\d+\s*$`,
+);
+/** « 16 septembre 2026, 09:14 » ou « 16/09/2026 09:14 » : une date, pas une personne. */
+const DATE_LINE = new RegExp(
+  String.raw`^\s*\d{1,2}(?:\s+[\p{L}.]+\s+|[/.-]\d{1,2}[/.-])\d{2,4}(?:,?\s*(?:à\s*)?${TIME})?\s*$`,
+  "u",
+);
+/** « Perrine Durand 7:32 » : le nom puis l'heure, la réplique suit sur la ligne d'après. */
+const SPEAKER_THEN_TIME_LINE = new RegExp(
+  String.raw`^\s*([\p{L}][^:\n]{0,50}?)\s+[\[(]?${TIME}[\])]?\s*$`,
+  "u",
+);
+/** « [09:14] Commercial : … », « Commercial (09:14) : … », « Commercial 7:32 : … », « Commercial : … ». */
+const SPEAKER_LINE = new RegExp(
+  String.raw`^\s*(?:[\[(]?${TIME}[\])]?\s*[-–]?\s*)?([\p{L}][^:\n]{0,40}?)\s*(?:[\[(]?${TIME}[\])]?)?\s*:\s*(.*)$`,
+  "u",
+);
 const COMMERCIAL_LABEL =
   /(commercial|vendeur|vendeuse|seller|sales|intervenant\s*1|speaker\s*1|moi)\b/i;
 const PROSPECT_LABEL =
   /(prospect|client|acheteur|acheteuse|buyer|intervenant\s*2|speaker\s*2)\b/i;
 const MIN_ATTRIBUTED_SHARE = 0.8;
+const MAX_LABEL_WORDS = 4;
 
 function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-export function talkShareFromTranscript(transcript: string): TalkShare | null {
+function normalize(text: string): string {
+  return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+}
+
+/** Un libellé d'intervenant plausible : des lettres, peu de mots, pas une phrase. */
+function isPlausibleLabel(label: string): boolean {
+  const trimmed = label.trim();
+  if (!/\p{L}/u.test(trimmed)) return false;
+  if (/\d{1,2}:\d{2}/.test(trimmed)) return false;
+  return countWords(trimmed) <= MAX_LABEL_WORDS;
+}
+
+type ParsedLine =
+  | { kind: "skip" }
+  | { kind: "speaker"; label: string; text: string }
+  | { kind: "text" };
+
+function parseLine(line: string): ParsedLine {
+  if (countWords(line) === 0) return { kind: "skip" };
+  if (TIME_ONLY_LINE.test(line) || DATE_LINE.test(line))
+    return { kind: "skip" };
+
+  const speakerThenTime = SPEAKER_THEN_TIME_LINE.exec(line);
+  if (speakerThenTime && isPlausibleLabel(speakerThenTime[1])) {
+    return { kind: "speaker", label: speakerThenTime[1].trim(), text: "" };
+  }
+
+  const speaker = SPEAKER_LINE.exec(line);
+  if (speaker && isPlausibleLabel(speaker[1])) {
+    return { kind: "speaker", label: speaker[1].trim(), text: speaker[2] };
+  }
+  return { kind: "text" };
+}
+
+/**
+ * Vrai quand un libellé d'intervenant désigne cette personne : un de ses
+ * noms d'au moins trois lettres s'y retrouve, accents et casse ignorés.
+ */
+function labelNamesPerson(
+  label: string,
+  personName: string | null | undefined,
+): boolean {
+  if (!personName) return false;
+  const tokens = normalize(personName)
+    .split(/[\s,]+/)
+    .filter((t) => t.length >= 3);
+  if (tokens.length === 0) return false;
+  const normalizedLabel = normalize(label);
+  return tokens.some((t) => normalizedLabel.includes(t));
+}
+
+export function talkShareFromTranscript(
+  transcript: string,
+  names: TalkShareNames = {},
+): TalkShare | null {
   const lines = transcript.split(/\r?\n/);
   const wordsBySpeaker = new Map<string, number>();
   const labelBySpeaker = new Map<string, string>();
@@ -46,19 +135,17 @@ export function talkShareFromTranscript(transcript: string): TalkShare | null {
   let totalWords = 0;
 
   for (const line of lines) {
-    const words = countWords(line);
-    if (words === 0) continue;
-    const match = SPEAKER_LINE.exec(line);
-    /*
-      Le nom de l'intervenant n'est pas une parole : « Commercial : » ne
-      compte ni pour lui, ni dans le total.
-    */
-    totalWords += match ? countWords(match[2]) : words;
-    if (!match) {
+    const parsed = parseLine(line);
+    if (parsed.kind === "skip") continue;
+
+    if (parsed.kind === "text") {
       /*
         Une ligne sans intervenant prolonge la réplique précédente : un
-        transcript coupe souvent une prise de parole en plusieurs lignes.
+        transcript coupe souvent une prise de parole en plusieurs lignes, et
+        les exports de visioconférence mettent toujours la réplique sous le nom.
       */
+      const words = countWords(line);
+      totalWords += words;
       const last = runs[runs.length - 1];
       if (last) {
         last.words += words;
@@ -70,10 +157,15 @@ export function talkShareFromTranscript(transcript: string): TalkShare | null {
       }
       continue;
     }
-    const speaker = match[1].trim().toLowerCase();
-    const spoken = countWords(match[2]);
-    if (!labelBySpeaker.has(speaker))
-      labelBySpeaker.set(speaker, match[1].trim());
+
+    /*
+      Le nom de l'intervenant n'est pas une parole : « Commercial : » ne
+      compte ni pour lui, ni dans le total.
+    */
+    const speaker = parsed.label.toLowerCase();
+    const spoken = countWords(parsed.text);
+    totalWords += spoken;
+    if (!labelBySpeaker.has(speaker)) labelBySpeaker.set(speaker, parsed.label);
     wordsBySpeaker.set(speaker, (wordsBySpeaker.get(speaker) ?? 0) + spoken);
     attributedWords += spoken;
     const last = runs[runs.length - 1];
@@ -89,15 +181,31 @@ export function talkShareFromTranscript(transcript: string): TalkShare | null {
     .sort((a, b) => b[1] - a[1]);
   if (speakers.length < 2) return null;
 
+  const labelOf = (key: string) => labelBySpeaker.get(key) ?? key;
   const byRole = (pattern: RegExp) =>
-    speakers.find(([key]) => pattern.test(labelBySpeaker.get(key) ?? key));
-  const recognizedCommercial = byRole(COMMERCIAL_LABEL);
-  const recognizedProspect = byRole(PROSPECT_LABEL);
+    speakers.find(([key]) => pattern.test(labelOf(key)));
+  const byName = (personName: string | null | undefined) =>
+    speakers.find(([key]) => labelNamesPerson(labelOf(key), personName));
+
+  /*
+    Trois façons de reconnaître un rôle, de la plus sûre à la moins sûre : le
+    mot du rôle dans le libellé, le nom de la personne que la base connaît,
+    et enfin l'ordre de parole, où le premier à parler est tenu pour le
+    commercial parce que c'est lui qui ouvre un rendez-vous de vente.
+  */
+  const recognizedCommercial =
+    byRole(COMMERCIAL_LABEL) ?? byName(names.sellerName);
+  const recognizedProspect =
+    byRole(PROSPECT_LABEL) ?? byName(names.prospectName);
   const rolesRecognized = Boolean(recognizedCommercial || recognizedProspect);
 
   let commercial: [string, number];
   let prospect: [string, number];
-  if (recognizedCommercial && recognizedProspect) {
+  if (
+    recognizedCommercial &&
+    recognizedProspect &&
+    recognizedCommercial[0] !== recognizedProspect[0]
+  ) {
     commercial = recognizedCommercial;
     prospect = recognizedProspect;
   } else if (recognizedCommercial) {
@@ -109,10 +217,6 @@ export function talkShareFromTranscript(transcript: string): TalkShare | null {
     commercial =
       speakers.find(([k]) => k !== recognizedProspect[0]) ?? speakers[0];
   } else {
-    /*
-      Sans nom de rôle, le premier à parler est tenu pour le commercial :
-      c'est lui qui ouvre un rendez-vous de vente, presque toujours.
-    */
     const first = runs[0]?.speaker;
     commercial = speakers.find(([k]) => k === first) ?? speakers[0];
     prospect = speakers.find(([k]) => k !== commercial[0]) ?? speakers[1];
@@ -126,8 +230,8 @@ export function talkShareFromTranscript(transcript: string): TalkShare | null {
     .reduce((max, r) => Math.max(max, r.words), 0);
 
   return {
-    commercialLabel: labelBySpeaker.get(commercial[0]) ?? commercial[0],
-    prospectLabel: labelBySpeaker.get(prospect[0]) ?? prospect[0],
+    commercialLabel: labelOf(commercial[0]),
+    prospectLabel: labelOf(prospect[0]),
     commercialPct,
     prospectPct: 100 - commercialPct,
     longestCommercialRunWords: longest,

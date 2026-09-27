@@ -77,7 +77,12 @@ export function MeetingSynthesisSection({
           `/api/meetings/${encodeURIComponent(streamMeetingId)}/visit-report`,
           { method: "POST", signal: controller.signal },
         );
-        if (!response.ok) {
+        /*
+          Une page HTML servie à la place du flux est un échec, pas un compte
+          rendu : sans ce garde-fou, la fiche affichait le code d'une page.
+        */
+        const contentType = response.headers.get("content-type") ?? "";
+        if (!response.ok || !contentType.includes("text/plain")) {
           setStreamState("failed");
           return;
         }

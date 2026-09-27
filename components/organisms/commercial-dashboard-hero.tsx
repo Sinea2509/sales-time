@@ -7,6 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { rdvNotes } from "@/lib/accord-fr";
+import { salesScoreExplanation } from "@/lib/sales-score-explanation";
 import { plurielFr } from "@/lib/pluriel-fr";
 import { statsWindowLabel } from "@/lib/stats-window-labels";
 import { cn } from "@/lib/utils";
@@ -14,8 +15,7 @@ import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import type { SellerWeeklyChallenge } from "@/src/core/domain/seller-dashboard-focus";
 import { rankLabel, tierFromSalesScore } from "@/src/core/domain/team-ranking";
 
-const SALES_SCORE_HOW =
-  "Le SalesScore d'un rendez-vous est la moyenne des six leviers SONCAS entendus chez le prospect, de 0 à 100. Votre SalesScore est la moyenne de vos rendez-vous analysés sur la période. Paliers : Démarrage jusqu'à 40, Progression jusqu'à 60, Maîtrise jusqu'à 80, Excellence au-delà.";
+const EXPLANATION = salesScoreExplanation("commercial");
 
 /**
  * L'ouverture du tableau de bord du commercial, comme la maquette du 11
@@ -100,9 +100,13 @@ export function CommercialDashboardHero({
               <TooltipContent
                 side="bottom"
                 align="start"
-                className="max-w-sm text-left leading-relaxed"
+                className="max-w-sm space-y-2 text-left leading-relaxed"
               >
-                {SALES_SCORE_HOW}
+                {EXPLANATION.map((section) => (
+                  <p key={section.title}>
+                    <b>{section.title}</b> {section.text}
+                  </p>
+                ))}
               </TooltipContent>
             </Tooltip>
           </div>

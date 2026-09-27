@@ -91,7 +91,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       trois `count` de plus, lancés en parallèle sur exactement les mêmes
       lignes, donc incapables de se contredire. Ils se paient pour garder la
       redirection, que le chargeur ne fait pas : sans elle, un commercial arrivé
-      sur « 7 jours » sans rendez-vous y resterait devant des cartes vides,
+      sur « 60 jours » sans rendez-vous y resterait devant des cartes vides,
       alors que le reste de son portail le pose sur une période lisible.
     */
     const windowCounts = await getStatsWindowRdvsCounts(deps, {

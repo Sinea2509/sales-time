@@ -43,8 +43,8 @@ import {
  */
 
 /** Les comptes de RDV par période, lus par la redirection. */
-function comptes(sept: number, trente: number, quatreVingtDix: number) {
-  return { 7: sept, 30: trente, 90: quatreVingtDix } as Record<
+function comptes(trente: number, soixante: number, quatreVingtDix: number) {
+  return { 30: trente, 60: soixante, 90: quatreVingtDix } as Record<
     StatsWindowDays,
     number
   >;
@@ -64,7 +64,7 @@ describe("pathWithStatsWindow", () => {
   it("remplace la période sans toucher au reste de la requête", () => {
     const adresse = pathWithStatsWindow(
       "/company/equipe",
-      { jours: "7", equipePage: "3" },
+      { jours: "60", equipePage: "3" },
       90,
     );
     expect(adresse.split("?")[0]).toBe("/company/equipe");
@@ -103,10 +103,10 @@ describe("pathWithStatsWindow", () => {
     const adresse = pathWithStatsWindow(
       "/company/equipe",
       { tri: ["a", "b"] },
-      7,
+      60,
     );
     expect(valeursDeLAdresse(adresse)).toEqual({
-      jours: ["7"],
+      jours: ["60"],
       tri: ["a", "b"],
     });
   });
@@ -120,19 +120,19 @@ describe("ensureEligibleStatsWindowDays", () => {
   it("rend la période demandée sans rediriger quand elle a assez de RDV", () => {
     expect(
       ensureEligibleStatsWindowDays({
-        searchParams: { jours: "7", equipePage: "3" },
-        counts: comptes(12, 40, 90),
+        searchParams: { jours: "60", equipePage: "3" },
+        counts: comptes(40, 12, 90),
         redirectPath: "/company/equipe",
       }),
-    ).toBe(7);
+    ).toBe(60);
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it("emporte la page de liste quand il corrige une période trop courte", () => {
     expect(() =>
       ensureEligibleStatsWindowDays({
-        searchParams: { jours: "7", equipePage: "3" },
-        counts: comptes(1, 40, 90),
+        searchParams: { jours: "60", equipePage: "3" },
+        counts: comptes(40, 1, 90),
         redirectPath: "/company/equipe",
       }),
     ).toThrow("REDIRECT:");

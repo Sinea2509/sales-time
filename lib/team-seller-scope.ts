@@ -2,7 +2,7 @@ import { memberNameLine } from "@/src/core/domain/member-name-line";
 import type { OrganizationTeamRepositoryPort } from "@/src/core/ports/organization-team-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 
-const DEFAULT_TRIAL_LIMIT = 5;
+const DEFAULT_TRIAL_LIMIT = 15;
 
 export { DEFAULT_TRIAL_LIMIT };
 

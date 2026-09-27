@@ -213,7 +213,7 @@ model Organization {
   settings     OrganizationSettings?
   memberships  OrganizationMembership[]
   invitations  OrganizationInvitation[]
-  trialAnalysesLeft Int @default(5)
+  trialAnalysesLeft Int @default(15)
   /** Set when a plan upgrade request is converted: unlimited analyses, no trial UI. */
   planUnlockedAt DateTime?
 

@@ -3,6 +3,7 @@ import { InfoCard } from "@/components/molecules/info-card";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { DashboardAdminShell } from "@/components/organisms/dashboard-admin-shell";
 import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell";
+import { FirstMeetingWelcome } from "@/components/organisms/first-meeting-welcome";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
 import { disabledStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
@@ -142,10 +143,44 @@ export default async function DashboardHomePage({
   }
 
   const sellerId = actor.internalUserId!;
-  const windowCounts = await getStatsWindowRdvsCounts(deps, {
-    organizationId: actor.activeOrganizationId,
-    sellerUserIds: [sellerId],
-  });
+  const [windowCounts, everMeetings, orgSettingsForFirst] = await Promise.all([
+    getStatsWindowRdvsCounts(deps, {
+      organizationId: actor.activeOrganizationId,
+      sellerUserIds: [sellerId],
+    }),
+    deps.meetings.countMeetingsWithMeetingAtSince({
+      organizationId: actor.activeOrganizationId,
+      since: new Date(0),
+      sellerUserIds: [sellerId],
+    }),
+    deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
+  ]);
+
+  /*
+    Première connexion : rien n'a encore été analysé, et un tableau de bord
+    de cases vides ne dirait rien. Une seule page, avec le formulaire ouvert
+    et le dépôt de fichier en premier, pour analyser le premier rendez-vous.
+  */
+  if (everMeetings === 0) {
+    return (
+      <div className="space-y-6">
+        <PageHeaderSimple
+          title={
+            actor.firstName?.trim()
+              ? `Bonjour ${actor.firstName.trim()}`
+              : "Bienvenue"
+          }
+          description="Votre premier rendez-vous analysé ouvrira votre tableau de bord."
+        />
+        <FirstMeetingWelcome
+          meetingTypeOptions={
+            orgMeetingFormOptionsFromSettings(orgSettingsForFirst)
+              .meetingTypeOptions
+          }
+        />
+      </div>
+    );
+  }
   const statsWindowDays = ensureEligibleStatsWindowDays({
     searchParams: sp,
     counts: windowCounts,

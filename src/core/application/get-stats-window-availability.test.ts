@@ -64,7 +64,7 @@ describe("getStatsWindowRdvsCounts", () => {
       organizationId: "org_1",
     });
 
-    expect(counts).toEqual({ 7: 70, 30: 300, 90: 900 });
+    expect(counts).toEqual({ 30: 300, 60: 600, 90: 900 });
   });
 
   /*

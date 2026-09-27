@@ -4,6 +4,10 @@ import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import type { SoncasAnalysisResult } from "@/src/core/domain/analysis-result-zod";
 import { PROFILE_SCORE_UNPROVEN_MAX } from "@/src/core/domain/profile-score-scale";
+import {
+  joinSoncasNames,
+  soncasDominantKeys,
+} from "@/src/core/domain/soncas-dominants";
 
 type SoncasKey = keyof SoncasAnalysisResult["drivers"];
 
@@ -45,6 +49,12 @@ export function MeetingSoncasTab({
   const ordered = [...KEYS].sort(
     (a, b) => soncas.drivers[b].score - soncas.drivers[a].score,
   );
+  /*
+    Deux leviers à égalité en tête sont deux leviers principaux : le modèle
+    n'en nomme qu'un, mais rien dans le rendez-vous ne le place devant l'autre.
+  */
+  const dominants = soncasDominantKeys(soncas);
+  const dominantNames = joinSoncasNames(dominants.map((k) => SONCAS_NAMES[k]));
 
   return (
     <div className="space-y-4">
@@ -55,9 +65,11 @@ export function MeetingSoncasTab({
               SONCAS, les motivations d&apos;achat de {prospectName}
             </h2>
             <p className="text-muted-foreground mt-1 max-w-[64ch] text-xs leading-relaxed">
-              Le levier principal entendu est{" "}
-              <b>{SONCAS_NAMES[soncas.dominant]}</b>. Chaque levier est noté sur
-              100 d&apos;après ce qui s&apos;entend dans l&apos;échange, et
+              {dominants.length > 1
+                ? "Les leviers principaux entendus, à égalité, sont "
+                : "Le levier principal entendu est "}
+              <b>{dominantNames}</b>. Chaque levier est noté sur 100
+              d&apos;après ce qui s&apos;entend dans l&apos;échange, et
               au-dessus de {PROFILE_SCORE_UNPROVEN_MAX} il cite les mots du
               prospect.
             </p>
@@ -66,7 +78,7 @@ export function MeetingSoncasTab({
           <div className="grid gap-4 sm:grid-cols-2">
             {ordered.map((k) => {
               const lever = soncas.drivers[k];
-              const dominant = k === soncas.dominant;
+              const dominant = dominants.includes(k);
               const proofs = lever.evidence.filter((e) => e.trim());
               return (
                 <div

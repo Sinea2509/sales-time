@@ -85,6 +85,15 @@ export default function proxy(request: NextRequest) {
     }
   }
 
+  /*
+    Les routes d'API ne passent pas par le routage de langue. Réécrites vers
+    « /fr/api/… », elles rendaient une page HTML : la fiche affichait alors
+    le code d'une page à la place du compte rendu de visite.
+  */
+  if (pathForAuth === "/api" || pathForAuth.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   return intlMiddleware(request);
 }
 

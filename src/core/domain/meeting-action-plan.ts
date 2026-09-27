@@ -33,7 +33,7 @@ const dateShort = new Intl.DateTimeFormat("fr-FR", {
 
 /** Nettoie une puce collée par le coaching, quel que soit le tiret choisi. */
 function cleanBullet(text: string): string {
-  return text.replace(/^[\s\-–—•·]+\s*/, "").trim();
+  return text.replace(/^[\s\-\u2013\u2014\u2022\u00b7]+\s*/, "").trim();
 }
 
 /**

@@ -2,6 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
 import { PROFILE_SCORE_UNPROVEN_MAX } from "@/src/core/domain/profile-score-scale";
 import type { SoncasAnalysisResult } from "@/src/core/domain/analysis-result-zod";
+import {
+  joinSoncasNames,
+  soncasDominantKeys,
+} from "@/src/core/domain/soncas-dominants";
 
 const labels: Record<keyof SoncasAnalysisResult["drivers"], string> = {
   securite: "Sécurité",
@@ -24,12 +28,16 @@ const driverKeys: Array<keyof SoncasAnalysisResult["drivers"]> = [
 type Props = { result: SoncasAnalysisResult };
 
 export function SoncasResultView({ result }: Props) {
+  const dominants = soncasDominantKeys(result);
   return (
     <Card>
       <CardHeader>
         <CardTitle className={cardTitleClass}>SONCAS (prospect)</CardTitle>
         <p className="text-muted-foreground text-sm">
-          Levier principal détecté : <strong>{labels[result.dominant]}</strong>
+          {dominants.length > 1
+            ? "Leviers principaux détectés, à égalité : "
+            : "Levier principal détecté : "}
+          <strong>{joinSoncasNames(dominants.map((k) => labels[k]))}</strong>
         </p>
         {/*
           Seul le score sur 100 reste à côté de chaque levier. Les mots qui

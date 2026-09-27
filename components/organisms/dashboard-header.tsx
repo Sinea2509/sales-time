@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronDown, LogOut, Settings } from "lucide-react";
@@ -67,6 +67,8 @@ type DashboardHeaderProps = {
   unreadNotificationCount?: number;
   notifications?: NotificationItem[];
   showFeedbackWidget?: boolean;
+  /** L'action principale de l'espace : « Analyser un rendez-vous » pour un commercial. */
+  primaryAction?: ReactNode;
 };
 
 export function DashboardHeader({
@@ -81,6 +83,7 @@ export function DashboardHeader({
   unreadNotificationCount = 0,
   notifications = [],
   showFeedbackWidget = false,
+  primaryAction = null,
 }: DashboardHeaderProps) {
   const t = useTranslations("common");
   const router = useRouter();
@@ -113,6 +116,7 @@ export function DashboardHeader({
           <div className="flex-1" />
         )}
         <div className="flex items-center gap-2">
+          {primaryAction}
           {showFeedbackWidget ? <FeedbackWidget /> : null}
           {sessionUser && notifications.length >= 0 ? (
             <NotificationBell

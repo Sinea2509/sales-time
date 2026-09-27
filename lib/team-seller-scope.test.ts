@@ -369,7 +369,7 @@ describe("team-seller-scope", () => {
     expect(membresRetenus).toEqual(new Set(equipe));
   });
 
-  it("exports DEFAULT_TRIAL_LIMIT as 5", () => {
-    expect(DEFAULT_TRIAL_LIMIT).toBe(5);
+  it("exports DEFAULT_TRIAL_LIMIT as 15", () => {
+    expect(DEFAULT_TRIAL_LIMIT).toBe(15);
   });
 });

@@ -107,7 +107,7 @@ export async function loadTeamMemberPerformanceView(
     Le sélecteur de période de cette fiche compte les rendez-vous de ce
     commercial, et de lui seul : tout ce que la page affiche est à lui. Sans
     ces comptes, il annonçait les trois périodes également disponibles, et le
-    lecteur qui choisissait « 7 jours » sur quelqu'un qui n'y a rien tombait
+    lecteur qui choisissait « 60 jours » sur quelqu'un qui n'y a rien tombait
     sur des cartes vides sans explication.
 
     Griser, mais ne pas rediriger : `ensureEligibleStatsWindowDays` réécrirait

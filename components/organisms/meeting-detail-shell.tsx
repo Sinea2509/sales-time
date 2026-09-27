@@ -20,6 +20,7 @@ import { MeetingDiscTab } from "@/components/organisms/meeting-disc-tab";
 import { MeetingEditButton } from "@/components/organisms/meeting-edit-trigger";
 import { MeetingEmailTab } from "@/components/organisms/meeting-email-tab";
 import { MeetingKissTab } from "@/components/organisms/meeting-kiss-tab";
+import { MeetingClosingCards } from "@/components/organisms/meeting-closing-cards";
 import { MeetingObjectionsTab } from "@/components/organisms/meeting-objections-tab";
 import { MeetingSoncasTab } from "@/components/organisms/meeting-soncas-tab";
 import { MeetingSynthesisSection } from "@/components/organisms/meeting-synthesis-section";
@@ -149,17 +150,6 @@ export function MeetingDetailShell({
       ),
     },
     {
-      id: "objections",
-      label: "Objections",
-      panel: (
-        <MeetingObjectionsTab
-          objections={objectionsResult}
-          prospectName={meeting.prospectName}
-          pending={pending}
-        />
-      ),
-    },
-    {
       id: "soncas",
       label: "SONCAS",
       panel: (
@@ -185,13 +175,20 @@ export function MeetingDetailShell({
       id: "kiss",
       label: "KISS",
       panel: showSellerCoaching ? (
-        <MeetingKissTab
-          kiss={kissResult}
-          challenge={scorecardResult?.challenge ?? null}
-          pending={pending}
-        />
+        <MeetingKissTab kiss={kissResult} pending={pending} />
       ) : (
         <CoachingReserved what="Coaching KISS" />
+      ),
+    },
+    {
+      id: "objections",
+      label: "Objections",
+      panel: (
+        <MeetingObjectionsTab
+          objections={objectionsResult}
+          prospectName={meeting.prospectName}
+          pending={pending}
+        />
       ),
     },
     {
@@ -265,6 +262,17 @@ export function MeetingDetailShell({
             streamMeetingId={streamVisitReport ? meeting.id : null}
           />
           <MeetingDetailTabs tabs={tabs} />
+          {/*
+            La question en or et le défi ferment l'analyse, sous les onglets :
+            ils notent le commercial, et ne se montrent qu'à lui et à ses
+            managers, comme le coaching.
+          */}
+          {showSellerCoaching ? (
+            <MeetingClosingCards
+              goldenQuestion={kissResult?.goldenQuestion ?? null}
+              challenge={scorecardResult?.challenge ?? null}
+            />
+          ) : null}
         </div>
         <MeetingDetailRail {...rail} />
       </div>

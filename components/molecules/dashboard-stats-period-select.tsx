@@ -11,8 +11,8 @@ import {
 } from "@/src/core/domain/dashboard-stats-window";
 
 const LABELS: Record<StatsWindowDays, string> = {
-  7: "7 jours",
   30: "30 jours",
+  60: "60 jours",
   90: "90 jours",
 };
 

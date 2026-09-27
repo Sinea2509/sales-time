@@ -99,9 +99,9 @@ describe("essentielDuManager", () => {
   });
 
   it("mène chaque carte vers la fiche du membre, période comprise", () => {
-    const p = essentiel({ statsWindowDays: 7, equipePage: 2 });
-    expect(p.meneur?.href).toBe("/company/equipe/u1?jours=7&equipePage=2");
-    expect(p.aCoacher?.href).toBe("/company/equipe/u3?jours=7&equipePage=2");
+    const p = essentiel({ statsWindowDays: 60, equipePage: 2 });
+    expect(p.meneur?.href).toBe("/company/equipe/u1?jours=60&equipePage=2");
+    expect(p.aCoacher?.href).toBe("/company/equipe/u3?jours=60&equipePage=2");
   });
 
   it("dit l'égalité quand le premier rang est partagé", () => {
