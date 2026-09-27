@@ -28,6 +28,7 @@ export async function prepareBriefingAction(input: z.infer<typeof schema>) {
     ok: true as const,
     personName: result.person.displayName,
     hasHistory: result.hasHistory,
+    historyCount: result.historyCount,
     briefing: result.briefing,
   };
 }

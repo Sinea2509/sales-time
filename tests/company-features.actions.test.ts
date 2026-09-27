@@ -659,6 +659,7 @@ describe("prepare briefing action", () => {
       ok: true,
       personName: "Alice Prospect",
       hasHistory: false,
+      historyCount: 0,
       briefing: "Briefing markdown",
     });
   });

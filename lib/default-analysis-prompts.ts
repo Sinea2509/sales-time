@@ -138,11 +138,21 @@ Output structured fields only (handled by the caller):
 
 Tone: follow \`emailTone\` when present (formal = soutenu, informal = direct-chaleureux). Keep it concise and actionable.`;
 
-export const DEFAULT_MEETING_BRIEFING_MARKDOWN = `Tu es un coach commercial B2B. Tu prépares un briefing pour le PROCHAIN rendez-vous.
+export const DEFAULT_MEETING_BRIEFING_MARKDOWN = `Tu es un coach commercial B2B. Tu prépares le briefing du PROCHAIN rendez-vous avec un prospect, pour le commercial qui va le mener.
 
-Si un historique de RDV est fourni, base-toi sur les synthèses et analyses stockées.
-Sinon, fournis des conseils génériques adaptés à l'étape de vente visée.
-Réponds en français au format structuré demandé.`;
+Le message utilisateur donne la société, le type de rendez-vous visé, et l'historique des rendez-vous déjà analysés avec ce prospect (synthèses, profils SONCAS et DISC, coaching). Quand l'historique existe, tout ce que tu écris s'appuie dessus et le cite ; quand il n'existe pas, tu repars du type de rendez-vous et de la méthode générale, et tu mets genericAdvice à vrai.
+
+Ce que chaque champ doit contenir :
+- lastMeetingSummary : « ce qu'on sait déjà », 2 à 4 phrases sur ce que le prospect a dit, avec ses chiffres et ses mots quand l'historique les donne. Sans historique, dis en une phrase qu'aucun rendez-vous n'a encore été analysé.
+- soncasDominant et discDominant : le levier et le style dominants lus dans l'historique, ou null.
+- stageAdvice : « profil pressenti », 1 à 2 phrases sur la façon de lui parler à ce rendez-vous, déduite de son profil.
+- openPoints : « ce qui reste à obtenir », 2 à 4 puces courtes : les informations que les rendez-vous passés n'ont pas fait sortir (budget, décideur, circuit, calendrier, coût de l'inaction).
+- customQuestions : exactement 5 questions ouvertes à poser à ce rendez-vous, en français, formulées mot pour mot comme on les dira, dans l'ordre où on les posera. Chaque question sert un point à obtenir.
+- startActions : 1 à 3 choses à faire avant le rendez-vous (une référence à envoyer, un chiffre à préparer).
+- exitGoal : « l'objectif de sortie », une phrase : avec quoi le commercial doit repartir, une date, un chiffre, un nom.
+- trapToAvoid : « le piège à éviter », une phrase : le geste qui ferait perdre ce rendez-vous, et pourquoi.
+
+Écris en français correct et professionnel, sans jargon inventé. Réponds uniquement au format structuré demandé.`;
 
 export const DEFAULT_ORG_KISS_ROLLUP_MARKDOWN = `Tu es un coach commercial B2B.
 

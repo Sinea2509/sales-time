@@ -1,13 +1,14 @@
-import {
-  loadAnalysisPromptMarkdown,
-} from "@/lib/load-analysis-prompt";
+import { loadAnalysisPromptMarkdown } from "@/lib/load-analysis-prompt";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { ContactRepositoryPort } from "@/src/core/ports/contact-repository-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
-import { discResultSchema, soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
+import {
+  discResultSchema,
+  soncasResultSchema,
+} from "@/src/core/domain/analysis-result-zod";
 
 export async function prepareMeetingBriefing(
   deps: {
@@ -48,9 +49,11 @@ export async function prepareMeetingBriefing(
         meetingAt: m.meetingAt.toISOString(),
         stage: m.pipelineStage,
         summary: kissParsed?.success ? kissParsed.data.summary : null,
-        disc: disc ? discResultSchema.safeParse(disc.result).data ?? null : null,
+        disc: disc
+          ? (discResultSchema.safeParse(disc.result).data ?? null)
+          : null,
         soncas: soncas
-          ? soncasResultSchema.safeParse(soncas.result).data ?? null
+          ? (soncasResultSchema.safeParse(soncas.result).data ?? null)
           : null,
         customQuestions: kissParsed?.success
           ? kissParsed.data.start.slice(0, 4)
@@ -67,7 +70,10 @@ export async function prepareMeetingBriefing(
     deps.prompts,
     "MEETING_BRIEFING",
   );
-  const model = await resolvePromptGatewayModel(deps.prompts, "MEETING_BRIEFING");
+  const model = await resolvePromptGatewayModel(
+    deps.prompts,
+    "MEETING_BRIEFING",
+  );
   const { result } = await deps.analysis.prepareMeetingBriefing({
     systemMarkdown,
     model,
@@ -81,5 +87,6 @@ export async function prepareMeetingBriefing(
     person,
     briefing: result,
     hasHistory,
+    historyCount: enriched.length,
   };
 }

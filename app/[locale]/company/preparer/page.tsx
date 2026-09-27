@@ -3,8 +3,8 @@ import { PrepareMeetingBriefingForm } from "@/components/organisms/prepare-meeti
 import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getApplicationDeps } from "@/lib/application-deps";
-import { stringArrayFromOrgJson } from "@/lib/org-settings-json";
-import { DEFAULT_PIPELINE_STAGES } from "@/lib/onboarding-defaults";
+import { followUpMeetingTypes } from "@/lib/follow-up-meeting-types";
+import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 
 export const dynamic = "force-dynamic";
 
@@ -18,21 +18,22 @@ export default async function PreparerRdvPage() {
     await getApplicationDeps().organizationSettings.findByOrganizationId(
       actor.activeOrganizationId,
     );
-  // Le même repli que l'onboarding et les réglages : un commercial dont
-  // l'organisation n'a rien configuré doit voir le pipeline par défaut du
-  // produit, pas une liste d'étapes écrite ici et nulle part ailleurs.
-  const pipelineStageOptions = stringArrayFromOrgJson(
-    settings?.pipelineStages,
-    [...DEFAULT_PIPELINE_STAGES],
+  /*
+    Les types de rendez-vous de l'organisation, moins ceux d'un premier
+    contact : on prépare ici un rendez-vous de suivi avec un prospect déjà
+    rencontré.
+  */
+  const meetingTypeOptions = followUpMeetingTypes(
+    orgMeetingFormOptionsFromSettings(settings).meetingTypeOptions,
   );
 
   return (
     <div className="space-y-6">
       <PageHeaderSimple
-        title="Préparer un RDV"
-        description="Synthèse de l'historique prospect, profils DISC/SONCAS et conseils pour la prochaine étape."
+        title="Préparer un rendez-vous"
+        description="Le briefing reprend l'historique du prospect, les profils déjà connus, et le playbook de l'organisation."
       />
-      <PrepareMeetingBriefingForm pipelineStageOptions={pipelineStageOptions} />
+      <PrepareMeetingBriefingForm meetingTypeOptions={meetingTypeOptions} />
     </div>
   );
 }

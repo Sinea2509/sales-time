@@ -511,7 +511,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const system = withDataScopeSystemPrompt(input.systemMarkdown);
     const userContent = [
       `Société prospect : ${input.prospectCompany}`,
-      `Étape visée : ${input.targetStage}`,
+      `Type de rendez-vous visé : ${input.targetStage}`,
       `Historique disponible : ${input.hasHistory ? "oui" : "non"}`,
       "",
       "Historique (JSON) :",
@@ -522,7 +522,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       schema: meetingBriefingSchema,
       system,
       prompt: userContent,
-      maxOutputTokens: 900,
+      maxOutputTokens: 1_600,
     });
     return { result: object };
   }

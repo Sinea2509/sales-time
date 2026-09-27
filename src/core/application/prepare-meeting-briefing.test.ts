@@ -10,6 +10,8 @@ const briefingResult = {
   openPoints: ["Délai"],
   stageAdvice: "Focus ROI.",
   genericAdvice: false,
+  exitGoal: "Une date et un chiffre.",
+  trapToAvoid: "La démo improvisée.",
 };
 
 describe("prepareMeetingBriefing", () => {

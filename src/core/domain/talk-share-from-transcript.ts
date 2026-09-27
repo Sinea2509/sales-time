@@ -73,7 +73,7 @@ function countWords(text: string): number {
 }
 
 function normalize(text: string): string {
-  return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
 
 /** Un libellé d'intervenant plausible : des lettres, peu de mots, pas une phrase. */

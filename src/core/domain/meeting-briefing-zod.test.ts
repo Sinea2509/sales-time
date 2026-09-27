@@ -12,6 +12,8 @@ describe("meetingBriefingSchema", () => {
       openPoints: ["Pricing à clarifier"],
       stageAdvice: "Insister sur la preuve sociale.",
       genericAdvice: false,
+      exitGoal: "Repartir avec une date et le nom du décideur.",
+      trapToAvoid: "La démonstration improvisée.",
     });
 
     expect(parsed.success).toBe(true);
@@ -27,6 +29,8 @@ describe("meetingBriefingSchema", () => {
       openPoints: [],
       stageAdvice: "y",
       genericAdvice: true,
+      exitGoal: "z",
+      trapToAvoid: "w",
     });
 
     expect(parsed.success).toBe(false);
