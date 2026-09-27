@@ -35,6 +35,7 @@ export function AnalyseRecommandationsSection({
   sellerScoped = false,
   statsWindowDays,
   profileHistory,
+  showProfile = true,
 }: {
   salesProfile: SalesProfileScores | null;
   previousSalesProfile?: SalesProfileScores | null;
@@ -48,6 +49,8 @@ export function AnalyseRecommandationsSection({
   statsWindowDays?: StatsWindowDays;
   /** Trajectoire du profil global sur plusieurs périodes. Absente sur la fiche. */
   profileHistory?: SalesProfilePeriodPoint[];
+  /** Faux quand le radar est déjà dessiné plus haut sur la page : seules les deux cartes de puces restent. */
+  showProfile?: boolean;
 }) {
   const profileTitle = sellerScoped
     ? "Profil de vente du commercial"
@@ -116,51 +119,46 @@ export function AnalyseRecommandationsSection({
       className="grid gap-4 lg:grid-cols-2 lg:items-start"
       data-feedback-id="analyse-recommandations"
     >
-      <Card className="flex flex-col border-border shadow-sm dark:border-neutral-800">
-        <CardHeader>
-          <CardTitle className={cardTitleClass}>{profileTitle}</CardTitle>
-          {/*
-            « RDV » est un sigle, donc invariable : le pluriel se lit sur le
-            nombre et sur l'adjectif, jamais sur le sigle. Et sans profil il n'y
-            a rien à compter : « sur 0 rdv » sous un radar absent décrit le vide
-            une seconde fois, alors que le message de la carte dit déjà quoi
-            faire pour le remplir.
-          */}
-          {salesProfile ? (
-            <CardDescription>
-              moyenne sur {rdvCount} RDV {plurielFr(rdvCount, "analysé")}
-            </CardDescription>
-          ) : null}
-        </CardHeader>
-        <CardContent className="flex flex-1 flex-col justify-center">
-          {salesProfile ? (
-            <>
-              <SalesProfileRadar
-                scores={salesProfile}
-                previousScores={previousSalesProfile}
-              />
-              {profileHistory ? (
-                <SalesProfileTrajectory
-                  history={profileHistory}
+      {showProfile ? (
+        <Card className="flex flex-col border-border shadow-sm dark:border-neutral-800">
+          <CardHeader>
+            <CardTitle className={cardTitleClass}>{profileTitle}</CardTitle>
+            {salesProfile ? (
+              <CardDescription>
+                moyenne sur {rdvCount} RDV {plurielFr(rdvCount, "analysé")}
+              </CardDescription>
+            ) : null}
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col justify-center">
+            {salesProfile ? (
+              <>
+                <SalesProfileRadar
+                  scores={salesProfile}
+                  previousScores={previousSalesProfile}
+                />
+                {profileHistory ? (
+                  <SalesProfileTrajectory
+                    history={profileHistory}
+                    statsWindowDays={statsWindowDays}
+                  />
+                ) : null}
+                <SalesProfileEvolutionList
+                  scores={salesProfile}
+                  previousScores={previousSalesProfile}
+                  rdvCount={rdvCount}
                   statsWindowDays={statsWindowDays}
                 />
-              ) : null}
-              <SalesProfileEvolutionList
-                scores={salesProfile}
-                previousScores={previousSalesProfile}
-                rdvCount={rdvCount}
-                statsWindowDays={statsWindowDays}
-              />
-            </>
-          ) : (
-            <p className="text-muted-foreground mx-auto max-w-prose py-12 text-center text-sm">
-              {profileEmptyMessage}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+              </>
+            ) : (
+              <p className="text-muted-foreground mx-auto max-w-prose py-12 text-center text-sm">
+                {profileEmptyMessage}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
-      <div className="flex flex-col gap-4">
+      <div className={showProfile ? "flex flex-col gap-4" : "contents"}>
         <Card className="flex flex-col border-border shadow-sm dark:border-neutral-800">
           <IconCardHeader
             icon={LineChart}

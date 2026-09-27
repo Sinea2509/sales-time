@@ -1,5 +1,7 @@
 import { BadgePercent, Clock, Euro, Gauge, LayoutList } from "lucide-react";
 import { Sparkline } from "@/components/molecules/sparkline";
+import { TeamTierBadge } from "@/components/molecules/team-tier-badge";
+import { tierFromSalesScore } from "@/src/core/domain/team-ranking";
 import { KpiTile } from "@/components/molecules/kpi-tile";
 import { KpiVsPreviousBadge } from "@/components/molecules/trend-pill";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
@@ -39,6 +41,7 @@ export function DashboardKpiCards({
   pipeline = null,
   scoreSeries = [],
   sellersCount = null,
+  showSalesScore = false,
 }: {
   home: DashboardHomeFigures;
   audience?: "seller" | "team";
@@ -48,6 +51,8 @@ export function DashboardKpiCards({
   scoreSeries?: readonly number[];
   /** Effectif de l'équipe, pour le pied du temps administratif du manager. */
   sellersCount?: number | null;
+  /** Pour un commercial : sa tuile SalesScore moyen, avec son palier et sa courbe. */
+  showSalesScore?: boolean;
 }) {
   const trendCommon = {
     statsWindowDays: home.statsWindowDays,
@@ -82,10 +87,14 @@ export function DashboardKpiCards({
         {analyzed}
       </KpiTile>
 
-      {audience === "team" ? (
+      {audience === "team" || showSalesScore ? (
         <KpiTile
           icon={Gauge}
-          label="SalesScore équipe, sur 100"
+          label={
+            audience === "team"
+              ? "SalesScore équipe, sur 100"
+              : "SalesScore moyen, sur 100"
+          }
           labelTooltip={SALES_SCORE_HINT}
           footer={
             home.salesScoreTrendPoints == null
@@ -95,8 +104,14 @@ export function DashboardKpiCards({
                 : null
           }
           trend={
-            <span className="flex items-center gap-3">
-              <Sparkline values={scoreSeries} label="SalesScore équipe" />
+            <span className="flex flex-wrap items-center gap-3">
+              <Sparkline
+                values={scoreSeries}
+                label={audience === "team" ? "SalesScore équipe" : "SalesScore"}
+              />
+              {audience === "seller" && home.salesScoreAvg != null ? (
+                <TeamTierBadge tier={tierFromSalesScore(home.salesScoreAvg)} />
+              ) : null}
               <KpiVsPreviousBadge
                 delta={home.salesScoreTrendPoints}
                 mode="up-good"

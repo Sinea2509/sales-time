@@ -45,6 +45,7 @@ import {
 import { buildQualificationPotentialMatrixPoints } from "@/src/core/domain/meeting-analyse-matrices";
 import { memberNameLine } from "@/src/core/domain/member-name-line";
 import { aggregateTeamSalesProfileFromMeetings } from "@/src/core/domain/sales-profile-from-meetings";
+import { salesScoreSeries } from "@/src/core/domain/sales-score-series";
 import type { SellerRelationalAffinitySummary } from "@/src/core/ports/analysis-port";
 
 /**
@@ -366,6 +367,10 @@ export async function loadTeamMemberPerformanceView(
       progressBullets,
       improvementBullets,
       home,
+      scoreSeries: salesScoreSeries(meetings),
+      windowMeetings: [...meetings].sort(
+        (a, b) => b.meetingAt.getTime() - a.meetingAt.getTime(),
+      ),
     },
   };
 }

@@ -1,5 +1,4 @@
 import { ArrowLeft } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalysePagePeriodFallback } from "@/components/molecules/analyse-page-period-fallback";
 import { NavLinkButton } from "@/components/molecules/nav-link-button";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
@@ -9,12 +8,9 @@ import { AnalyseStatistiquesGlobalesSection } from "@/components/organisms/analy
 import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analyse-priority-opportunities-table";
 import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-quadrant-grid";
 import type { SalesProfileScores } from "@/components/organisms/sales-profile-radar";
-import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
-import {
-  GuideDeGrille,
-  GuideKiss,
-} from "@/components/molecules/reference-commerciale";
-import { GRILLE_DISC, GRILLE_SONCAS } from "@/lib/grilles-commerciales";
+import { GuideKiss } from "@/components/molecules/reference-commerciale";
+import { SellerAffinityCards } from "@/components/organisms/seller-affinity-cards";
+import { SellerPerformanceView } from "@/components/organisms/seller-performance-view";
 import { SkillSignatureBadges } from "@/components/molecules/seller-skill-signature-view";
 import { TeamMemberStanding } from "@/components/molecules/team-member-standing";
 import { TeamMemberPerformanceProfileCard } from "@/components/organisms/team-member-performance-profile-card";
@@ -28,34 +24,14 @@ import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-
 import type { QualificationPotentialMatrixPoint } from "@/src/core/domain/meeting-analyse-matrices";
 import type { SalesProfilePeriodPoint } from "@/src/core/domain/sales-profile-history";
 import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signature";
-import {
-  MIN_RDV_FOR_STATS,
-  type StatsWindowDays,
-} from "@/src/core/domain/dashboard-stats-window";
+import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
 import {
   cardProseBodyClass,
-  cardTitleClass,
   pageTitleClass,
   sectionHeadingClass,
 } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
-
-/**
- * Phrase d'attente d'un profil, avec les deux chiffres qui la justifient.
- *
- * « Pas assez de données » ne dit ni combien il en manque, ni quand cela
- * changera : le lecteur ne sait pas s'il doit attendre un rendez-vous ou dix,
- * et finit par croire que la fonctionnalité est cassée.
- */
-function profilEnAttente(analyses: number, minimum: number): string {
-  const compte =
-    analyses === 0
-      ? "Aucun rendez-vous analysé"
-      : analyses === 1
-        ? "1 rendez-vous analysé"
-        : `${analyses} rendez-vous analysés`;
-  return `${compte} sur la période : le profil s'affiche à partir de ${minimum}.`;
-}
 
 function statColumn({
   value,
@@ -213,9 +189,31 @@ export type TeamMemberPerformanceShellProps = {
   progressBullets: string[];
   improvementBullets: string[];
   home: OrgDashboardHome;
+  /** La courbe du SalesScore sur la période, un point par rendez-vous noté. */
+  scoreSeries?: number[];
+  /** Les rendez-vous de la période, du plus récent au plus ancien. */
+  windowMeetings?: RecentMeetingListRow[];
 };
 
-export function TeamMemberPerformanceShell({
+/**
+ * La fiche de performance, dans la voix de celui qui la lit.
+ *
+ * Le manager lit la fiche d'un membre de son équipe : sa place, ses compteurs
+ * et son accompagnement. Le commercial lit la sienne, comme la maquette du 11
+ * septembre la dessine : sans le bloc destiné au manager, avec son radar, sa
+ * progression et ses rendez-vous. Les chiffres sont les mêmes, chargés par le
+ * même chargeur.
+ */
+export function TeamMemberPerformanceShell(
+  props: TeamMemberPerformanceShellProps,
+) {
+  if (props.perspective === "commercial") {
+    return <SellerPerformanceView {...props} />;
+  }
+  return <ManagerMemberPerformanceShell {...props} />;
+}
+
+function ManagerMemberPerformanceShell({
   sellerUserId,
   perspective = "manager",
   backHref,
@@ -388,80 +386,15 @@ export function TeamMemberPerformanceShell({
         }}
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card
-          size="sm"
-          className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-        >
-          <CardHeader className="gap-2 pb-3">
-            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-              <CardTitle className={cardTitleClass}>
-                Affinité relationnelle par profil DISC
-              </CardTitle>
-              <GuideDeGrille grille={GRILLE_DISC} className="mt-0.5 shrink-0" />
-            </div>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Les styles de communication avec lesquels ce commercial obtient
-              ses meilleurs rendez-vous. Touchez un profil pour savoir comment
-              s&apos;y adapter.
-            </p>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {discAnalyzedMeetings >= MIN_RDV_FOR_STATS ? (
-              <ProfileAffinityHorizontalBars
-                items={discBarItems}
-                grilleCle="disc"
-              />
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                {profilEnAttente(discAnalyzedMeetings, MIN_RDV_FOR_STATS)}
-              </p>
-            )}
-            {discAffinityText?.trim() ? (
-              <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
-                {discAffinityText.trim()}
-              </p>
-            ) : null}
-          </CardContent>
-        </Card>
-        <Card
-          size="sm"
-          className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-        >
-          <CardHeader className="gap-2 pb-3">
-            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-              <CardTitle className={cardTitleClass}>
-                Affinité relationnelle par profil SONCAS
-              </CardTitle>
-              <GuideDeGrille
-                grille={GRILLE_SONCAS}
-                className="mt-0.5 shrink-0"
-              />
-            </div>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Les motivations d&apos;achat que ce commercial active le mieux.
-              Touchez un levier pour savoir comment l&apos;activer.
-            </p>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {soncasAnalyzedMeetings >= MIN_RDV_FOR_STATS ? (
-              <ProfileAffinityHorizontalBars
-                items={soncasBarItems}
-                grilleCle="soncas"
-              />
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                {profilEnAttente(soncasAnalyzedMeetings, MIN_RDV_FOR_STATS)}
-              </p>
-            )}
-            {soncasAffinityText?.trim() ? (
-              <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
-                {soncasAffinityText.trim()}
-              </p>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
+      <SellerAffinityCards
+        discBarItems={discBarItems}
+        soncasBarItems={soncasBarItems}
+        discAnalyzedMeetings={discAnalyzedMeetings}
+        soncasAnalyzedMeetings={soncasAnalyzedMeetings}
+        discAffinityText={discAffinityText}
+        soncasAffinityText={soncasAffinityText}
+        perspective="manager"
+      />
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
