@@ -34,7 +34,7 @@ export function KpiTile({
   const accentColors = accent ? statAccentStyles[accent] : null;
 
   const shellClass = cn(
-    "rounded-2xl border border-border/10 bg-card p-5 text-foreground shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50",
+    "rounded-xl border border-border bg-card p-[17px] text-foreground shadow-[var(--shadow-card)] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50",
     className,
   );
 

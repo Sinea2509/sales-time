@@ -20,7 +20,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { buttonVariants } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { prospectInitials } from "@/lib/prospect-initials";
 import {
   DashboardHeader,
   type SessionUserMenuInfo,
@@ -76,7 +76,6 @@ function navActive(pathname: string, item: OrgDashboardNavItem) {
 export function OrgDashboardShellFrame({
   children,
   workspaceBadgeLabel,
-  workspaceBadgeClassName,
   navGroups,
   showSuperAdminNav,
   isElevatedSuperAdmin,
@@ -106,6 +105,15 @@ export function OrgDashboardShellFrame({
     : [];
   const [showQuotaPopup, setShowQuotaPopup] = useState(false);
   const showTrialQuota = !planUnlocked;
+  const activeOrganizationName =
+    organizationSwitcherMemberships.find(
+      (m) => m.organizationId === activeOrganizationId,
+    )?.name ?? null;
+  const userName =
+    [sessionUser.firstName, sessionUser.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim() || sessionUser.email;
   const analysesUsed = Math.max(0, trialLimit - trialAnalysesLeft);
   const quotaReached = showTrialQuota && trialAnalysesLeft <= 0;
   const progressPercent = Math.min(
@@ -129,28 +137,29 @@ export function OrgDashboardShellFrame({
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar
-        collapsible="none"
-        side="left"
-        variant="sidebar"
-        className="border-t-2 border-t-[var(--org-shell-accent,transparent)]"
-      >
-        <SidebarHeader className="border-b border-sidebar-border">
-          <div className="space-y-2 px-2 py-1.5">
-            <OrgSwitcher
-              memberships={organizationSwitcherMemberships}
-              currentOrganizationId={activeOrganizationId}
-            />
-            <Badge
-              variant="outline"
-              className={cn(
-                "group-data-[collapsible=icon]:hidden w-fit font-medium",
-                workspaceBadgeClassName,
-              )}
+      <Sidebar collapsible="none" side="left" variant="sidebar">
+        <SidebarHeader className="gap-3 px-3 pt-4 pb-2">
+          {/*
+            La marque en tête, comme dans la maquette : la pastille dégradée
+            et le nom. L'organisation et le rôle descendent en bas de la
+            colonne, avec la personne connectée.
+          */}
+          <Link
+            href="/company"
+            className="flex items-center gap-2.5 px-1 text-[15.5px] font-extrabold tracking-[-0.015em]"
+          >
+            <span
+              aria-hidden
+              className="grid size-7 shrink-0 place-items-center rounded-[9px] bg-gradient-to-br from-[#8468ff] to-[#5a3fd9] text-[12px] font-extrabold text-white shadow-[0_2px_6px_rgba(108,77,255,0.32)]"
             >
-              {workspaceBadgeLabel}
-            </Badge>
-          </div>
+              ST
+            </span>
+            <span>Sales Time</span>
+          </Link>
+          <OrgSwitcher
+            memberships={organizationSwitcherMemberships}
+            currentOrganizationId={activeOrganizationId}
+          />
         </SidebarHeader>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -158,7 +167,9 @@ export function OrgDashboardShellFrame({
             {navGroups.map((group, index) => (
               <SidebarGroup key={group.label ?? `nav-group-${index}`}>
                 {group.label ? (
-                  <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                  <SidebarGroupLabel className="h-auto px-2.5 pt-2 pb-1.5 text-[10px] font-bold tracking-[0.09em] text-muted-foreground uppercase">
+                    {group.label}
+                  </SidebarGroupLabel>
                 ) : null}
                 <SidebarGroupContent>
                   <SidebarMenu>
@@ -170,6 +181,7 @@ export function OrgDashboardShellFrame({
                           <SidebarMenuButton
                             isActive={active}
                             render={<Link href={item.href} />}
+                            className="min-h-[35px] rounded-[9px] px-2.5 py-2 text-[13.2px] font-medium text-muted-foreground hover:text-foreground data-active:font-semibold"
                           >
                             <Icon />
                             <span>{item.label}</span>
@@ -203,6 +215,7 @@ export function OrgDashboardShellFrame({
                       <SidebarMenuButton
                         isActive={active}
                         render={<Link href={item.href} />}
+                        className="min-h-[35px] rounded-[9px] px-2.5 py-2 text-[13.2px] font-medium text-muted-foreground hover:text-foreground data-active:font-semibold"
                       >
                         <Icon />
                         <span>{item.label}</span>
@@ -220,36 +233,58 @@ export function OrgDashboardShellFrame({
                   footerNav.length > 0 ? "pt-1" : "pt-2",
                 )}
               >
-                <div className="rounded-xl border-border border bg-secondary p-3">
-                  <p className="text-sm font-semibold text-foreground">
-                    Essai gratuit
-                  </p>
-                  <p className="mt-1 text-muted-foreground text-xs leading-snug">
-                    {trialAnalysesLeft > 0
-                      ? `Plus que ${trialAnalysesLeft} analyse${trialAnalysesLeft > 1 ? "s" : ""}, passez au plan pour continuer`
-                      : "Quota épuisé, passez au plan pour continuer"}
-                  </p>
-                  <div className="mt-3">
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/15">
-                      <div
-                        className="h-full rounded-full bg-brand"
-                        style={{ width: `${progressPercent}%` }}
-                        aria-hidden
-                      />
-                    </div>
+                <div className="rounded-[13px] border-border border bg-muted/50 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[12.5px] font-bold text-foreground">
+                      Essai gratuit
+                    </p>
+                    <p className="text-muted-foreground text-[11.5px] tabular-nums">
+                      {analysesUsed} / {trialLimit}
+                    </p>
                   </div>
+                  <div className="mt-2.5 h-[5px] w-full overflow-hidden rounded-full bg-border">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#8468ff] to-[#6c4dff]"
+                      style={{ width: `${progressPercent}%` }}
+                      aria-hidden
+                    />
+                  </div>
+                  <p className="mt-2 text-muted-foreground text-[11.5px] leading-snug">
+                    {trialAnalysesLeft > 0
+                      ? `Plus que ${trialAnalysesLeft} analyse${trialAnalysesLeft > 1 ? "s" : ""} offerte${trialAnalysesLeft > 1 ? "s" : ""}.`
+                      : "Quota épuisé, passez au plan pour continuer."}
+                  </p>
                   <Link
                     href="/company/plan"
                     className={cn(
                       buttonVariants({ size: "sm" }),
-                      "mt-3 h-8 w-full rounded-md bg-brand px-3 text-xs text-brand-foreground hover:bg-brand-hover",
+                      "mt-2.5 h-8 w-full rounded-md bg-brand px-3 text-xs text-brand-foreground hover:bg-brand-hover",
                     )}
                   >
-                    Voir tous les plans
+                    Voir les plans
                   </Link>
                 </div>
               </div>
             ) : null}
+
+            {/*
+              Qui est connecté, et à quel titre : la personne, son rôle et
+              son organisation, en bas de la colonne, comme dans la maquette.
+            */}
+            <div className="border-sidebar-border flex items-center gap-2.5 border-t px-2 pt-3 pb-1 group-data-[collapsible=icon]:hidden">
+              <span className="bg-brand-soft text-brand-hover grid size-[31px] shrink-0 place-items-center rounded-full text-[11px] font-extrabold dark:text-brand-muted">
+                {prospectInitials(userName)}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[12.5px] font-semibold text-foreground">
+                  {userName}
+                </p>
+                <p className="text-muted-foreground truncate text-[11.5px]">
+                  {workspaceBadgeLabel}
+                  {activeOrganizationName ? `, ${activeOrganizationName}` : ""}
+                </p>
+              </div>
+            </div>
           </SidebarFooter>
         </div>
       </Sidebar>

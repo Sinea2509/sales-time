@@ -135,6 +135,13 @@
   --chart-grid: var(--border);
   --radius: 0.625rem;
   /*
+    L'ombre des cartes, celle de la maquette du 11 septembre : un filet net
+    au ras du bord et une ombre large et pâle en dessous. Les cartes portaient
+    une ombre moyenne uniforme qui les faisait flotter ; celle-ci les pose.
+  */
+  --shadow-card:
+    0 1px 2px rgba(12, 12, 20, 0.05), 0 6px 18px -12px rgba(12, 12, 20, 0.18);
+  /*
     La colonne de navigation est blanche, comme les cartes, séparée de la page
     par un filet. L'entrée active prend un fond de marque très clair et une
     encre de marque foncée, comme dans la maquette : c'est la seule couleur de

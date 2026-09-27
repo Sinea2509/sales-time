@@ -110,7 +110,7 @@ export function MeetingSynthesisSection({
   const long = text.length > 900;
 
   return (
-    <section className="overflow-hidden rounded-2xl border-[1.5px] border-brand/30 bg-card shadow-md">
+    <section className="overflow-hidden rounded-xl border-[1.5px] border-brand/30 bg-card shadow-[var(--shadow-card)]">
       <div className="flex flex-wrap items-center gap-3 border-b border-brand/30 bg-gradient-to-b from-brand-soft to-[#f7f4ff] px-5 py-4 dark:from-brand/15 dark:to-brand/5">
         <div className="min-w-0">
           <h2 className="text-[15.5px] font-bold tracking-tight">

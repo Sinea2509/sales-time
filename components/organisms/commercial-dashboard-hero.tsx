@@ -47,7 +47,7 @@ export function CommercialDashboardHero({
   const tier = tierFromSalesScore(salesScoreAvg);
 
   return (
-    <div className="border-border bg-card flex flex-col gap-6 rounded-2xl border px-5 py-5 shadow-sm lg:flex-row lg:items-center dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="border-border bg-card flex flex-col gap-6 rounded-xl border px-5 py-5 shadow-[var(--shadow-card)] lg:flex-row lg:items-center dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-center gap-6">
         <SalesScoreRing
           score={salesScoreAvg}

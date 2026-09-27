@@ -36,7 +36,7 @@ export function RecentMeetingsTable({
   emptyDescription?: string;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border-border border bg-card shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="overflow-hidden rounded-xl border-border border bg-card shadow-[var(--shadow-card)] dark:border-zinc-800 dark:bg-zinc-900">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[300px] text-left text-sm sm:min-w-[500px] md:min-w-[600px] lg:min-w-[720px]">
           <thead>

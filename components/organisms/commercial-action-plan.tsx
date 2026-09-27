@@ -58,7 +58,7 @@ export function CommercialActionPlan({
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-card)] sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
         {actions.length > 0 ? (
           <ol className="space-y-3.5">
             {actions.map((action, index) => {
