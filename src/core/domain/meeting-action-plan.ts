@@ -31,9 +31,13 @@ const dateShort = new Intl.DateTimeFormat("fr-FR", {
   month: "2-digit",
 });
 
+/** Le tiret cadratin, proscrit dans le code, mais que le coaching peut coller en tête de puce. */
+const TIRET_CADRATIN = String.fromCodePoint(0x2014);
+const BULLET_PREFIX = new RegExp(`^[\\s\\-–${TIRET_CADRATIN}•·]+\\s*`);
+
 /** Nettoie une puce collée par le coaching, quel que soit le tiret choisi. */
 function cleanBullet(text: string): string {
-  return text.replace(/^[\s\-–—•·]+\s*/, "").trim();
+  return text.replace(BULLET_PREFIX, "").trim();
 }
 
 /**

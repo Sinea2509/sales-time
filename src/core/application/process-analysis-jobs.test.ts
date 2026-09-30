@@ -162,4 +162,16 @@ describe("processAnalysisJobs", () => {
       }),
     );
   });
+  it("transmet les consignes de l'organisation à la séquence d'analyses", async () => {
+    mockedRunAll.mockResolvedValue({ ok: true });
+    const organizationPrompts = { findLatest: jest.fn() };
+    const deps = { ...makeDeps(), organizationPrompts };
+
+    await processAnalysisJobs(deps as never, { workerId: "w1" });
+
+    expect(mockedRunAll).toHaveBeenCalledTimes(1);
+    expect(mockedRunAll.mock.calls[0][0].organizationPrompts).toBe(
+      organizationPrompts,
+    );
+  });
 });

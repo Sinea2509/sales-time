@@ -261,7 +261,11 @@ export function AccountProfileForm({ profile }: { profile: AccountProfileInitial
               L&apos;adresse e-mail ne peut pas être modifiée ici.
             </p>
           </div>
-          <Button type="submit" disabled={pending}>
+          <Button
+            type="submit"
+            disabled={pending}
+            className="bg-brand text-brand-foreground hover:bg-brand-hover"
+          >
             Enregistrer le profil
           </Button>
         </form>
@@ -316,7 +320,11 @@ export function AccountProfileForm({ profile }: { profile: AccountProfileInitial
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </div>
-          <Button type="submit" disabled={pending}>
+          <Button
+            type="submit"
+            disabled={pending}
+            className="bg-brand text-brand-foreground hover:bg-brand-hover"
+          >
             Mettre à jour le mot de passe
           </Button>
         </form>

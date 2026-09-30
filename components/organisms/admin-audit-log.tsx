@@ -19,6 +19,7 @@ import {
   PLATFORM_AUDIT_ACTION_LABELS,
   resolveAuditOrganizationLabel,
 } from "@/src/core/domain/platform-audit-actions";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type AuditRow = {
   id: string;
@@ -126,6 +127,13 @@ export function AdminAuditLog({ logs }: Props) {
         />
         <Select
           value={actionFilter}
+          items={ACTION_OPTIONS.map((opt) => ({
+            value: opt,
+            label:
+              opt === "Tous"
+                ? "Tous les types"
+                : (PLATFORM_AUDIT_ACTION_LABELS[opt] ?? opt),
+          }))}
           onValueChange={(v: string | null) => {
             if (v) setActionFilter(v as ActionType);
           }}
@@ -188,6 +196,7 @@ export function AdminAuditLog({ logs }: Props) {
                     >
                       <td className="whitespace-nowrap px-4 py-3.5 text-muted-foreground">
                         {new Date(log.createdAt).toLocaleString("fr-FR", {
+                          timeZone: APP_TIME_ZONE,
                           day: "2-digit",
                           month: "2-digit",
                           year: "numeric",

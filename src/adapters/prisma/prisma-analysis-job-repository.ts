@@ -67,6 +67,7 @@ export class PrismaAnalysisJobRepository implements AnalysisJobRepositoryPort {
       WITH next_job AS (
         SELECT id FROM "AnalysisJob"
         WHERE status = 'QUEUED' AND "runAfter" <= NOW()
+          AND attempts < "maxAttempts"
         ORDER BY priority DESC, "runAfter" ASC
         FOR UPDATE SKIP LOCKED
         LIMIT 1
@@ -114,19 +115,66 @@ export class PrismaAnalysisJobRepository implements AnalysisJobRepositoryPort {
     });
   }
 
+  /**
+   * Remet en file les tâches restées verrouillées : leur fonction a été
+   * arrêtée (limite de durée dépassée, redéploiement) sans les terminer.
+   *
+   * Une tâche arrêtée de cette façon ne passe jamais par `markJobFailed`, qui
+   * compte les essais. Sans ce compte, une analyse trop longue repartait à
+   * chaque passage de la reprise, désormais toutes les 15 minutes, et la fiche
+   * restait « en cours » pour toujours. Une tâche qui a épuisé ses essais est
+   * donc abandonnée, et son rendez-vous passe en échec avec un message qui dit
+   * quoi faire.
+   */
   async releaseStaleProcessingJobs(staleBefore: Date): Promise<number> {
-    const result = await this.db.analysisJob.updateMany({
-      where: {
-        status: "PROCESSING",
-        lockedAt: { lt: staleBefore },
-      },
-      data: {
-        status: "QUEUED",
-        lockedAt: null,
-        lockedBy: null,
-      },
+    const stale: {
+      id: string;
+      meetingId: string;
+      attempts: number;
+      maxAttempts: number;
+    }[] = await this.db.analysisJob.findMany({
+      where: { status: "PROCESSING", lockedAt: { lt: staleBefore } },
+      select: { id: true, meetingId: true, attempts: true, maxAttempts: true },
     });
-    return result.count;
+    const exhausted = stale.filter((job) => job.attempts >= job.maxAttempts);
+    const retryable = stale.filter((job) => job.attempts < job.maxAttempts);
+
+    if (exhausted.length > 0) {
+      await this.db.analysisJob.updateMany({
+        where: { id: { in: exhausted.map((job) => job.id) } },
+        data: {
+          status: "DEAD",
+          lastError:
+            "Arrêtée avant la fin à chaque essai (durée maximale dépassée).",
+          lockedAt: null,
+          lockedBy: null,
+        },
+      });
+      await this.db.meeting.updateMany({
+        where: {
+          id: { in: exhausted.map((job) => job.meetingId) },
+          status: "PROCESSING",
+        },
+        data: {
+          status: "FAILED",
+          errorMessage:
+            "L'analyse a dépassé le temps imparti à chaque essai. Relancez-la ; si cela se reproduit, choisissez un modèle plus rapide dans le super admin.",
+        },
+      });
+    }
+
+    for (const job of retryable) {
+      await this.db.analysisJob.update({
+        where: { id: job.id },
+        data: {
+          status: "QUEUED",
+          lockedAt: null,
+          lockedBy: null,
+          runAfter: new Date(Date.now() + 60_000 * 2 ** job.attempts),
+        },
+      });
+    }
+    return stale.length;
   }
 
   async reconcileStuckProcessingMeetings(input: {

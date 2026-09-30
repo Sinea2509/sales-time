@@ -223,6 +223,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     meetingId: string;
     kind: MeetingAnalysisKind;
     promptVersionId: string;
+    organizationPromptVersionId?: string | null;
     model: string;
     result: unknown;
     rawText?: string | null;
@@ -232,6 +233,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
         meetingId: input.meetingId,
         kind: input.kind,
         promptVersionId: input.promptVersionId,
+        organizationPromptVersionId: input.organizationPromptVersionId ?? null,
         model: input.model,
         result: input.result as object,
         rawText: input.rawText ?? null,

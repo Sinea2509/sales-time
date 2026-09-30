@@ -24,6 +24,7 @@ import { createMeetingForOrg } from "@/src/core/application/create-meeting";
 import { updateMeetingForOrg } from "@/src/core/application/update-meeting-for-org";
 import { invalidateAiSummaryCacheForOrg } from "@/src/core/application/invalidate-ai-summary-cache-for-org";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
+import { parseWallClockInAppTimeZone } from "@/src/core/domain/app-time-zone";
 
 const meetingOutcomeSchema = z.enum([
   "WON",
@@ -42,7 +43,16 @@ const createMeetingSchema = z.object({
     z.union([z.null(), z.string().cuid()]),
   ),
   prospectName: z.string().trim().min(1).max(200),
-  meetingAt: z.coerce.date(),
+  /*
+    Le champ datetime-local envoie l'heure sans fuseau. Elle se lit en heure de
+    Paris, et non dans le fuseau du serveur (le temps universel sur Vercel) :
+    sinon chaque enregistrement décalait le rendez-vous de deux heures.
+  */
+  meetingAt: z.preprocess(
+    (v) =>
+      typeof v === "string" ? (parseWallClockInAppTimeZone(v) ?? v) : v,
+    z.coerce.date(),
+  ),
   durationMin: z
     .union([
       z.literal(""),
@@ -424,6 +434,18 @@ export async function updateMeetingAction(formData: FormData) {
           : ("NOT_FOUND" as const),
     };
   }
+
+  /*
+    Le compte rendu de visite reprend la fiche (contact, date, type, durée,
+    montant) et le transcript : après une modification, il ne dit plus la même
+    chose que la page. On l'efface pour qu'il soit réécrit, par la nouvelle
+    analyse si elle part, sinon à la prochaine ouverture de la fiche.
+  */
+  await actor.deps.meetings.updateMeetingVisitReportDraft({
+    id: parsedId.data,
+    organizationId: actor.organizationId,
+    visitReportDraft: null,
+  });
 
   const notesChanged =
     (parsed.data.notes ?? null) !==

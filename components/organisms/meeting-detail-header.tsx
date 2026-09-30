@@ -4,9 +4,11 @@ import { NavLinkButton } from "@/components/molecules/nav-link-button";
 import { formatPotentialEuro } from "@/lib/format-potential-euro";
 import { pageTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 import type { MeetingStatus } from "@/src/core/domain/meeting-status";
 
 const dateLongue = new Intl.DateTimeFormat("fr-FR", {
+  timeZone: APP_TIME_ZONE,
   weekday: "long",
   day: "numeric",
   month: "long",

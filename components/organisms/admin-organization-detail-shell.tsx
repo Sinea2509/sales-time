@@ -27,6 +27,7 @@ import type {
   AdminOrganizationDetail,
   AdminOrgAuditLogRow,
 } from "@/src/core/ports/backoffice-repository-port";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type AdminOrganizationDetailShellProps = {
   org: AdminOrganizationDetail;
@@ -59,7 +60,10 @@ export function AdminOrganizationDetailShell({
             ) : null}
             <span className="inline-flex items-center gap-1">
               <Clock className="size-3.5" />
-              Créée le {org.createdAt.toLocaleDateString("fr-FR")}
+              Créée le{" "}
+              {org.createdAt.toLocaleDateString("fr-FR", {
+                timeZone: APP_TIME_ZONE,
+              })}
             </span>
           </>
         }
@@ -157,7 +161,9 @@ export function AdminOrganizationDetailShell({
                           </Badge>
                         </td>
                         <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
-                          {m.createdAt.toLocaleDateString("fr-FR")}
+                          {m.createdAt.toLocaleDateString("fr-FR", {
+                            timeZone: APP_TIME_ZONE,
+                          })}
                         </td>
                       </tr>
                     ))
@@ -214,7 +220,9 @@ export function AdminOrganizationDetailShell({
                             {m.prospectName}
                           </td>
                           <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
-                            {m.meetingAt.toLocaleDateString("fr-FR")}
+                            {m.meetingAt.toLocaleDateString("fr-FR", {
+                              timeZone: APP_TIME_ZONE,
+                            })}
                           </td>
                           <td className="px-4 py-2.5">
                             <MeetingOutcomeBadge outcome={m.outcome} />
@@ -279,8 +287,11 @@ export function AdminOrganizationDetailShell({
                         className="hover:bg-muted/60 dark:hover:bg-zinc-800/40"
                       >
                         <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
-                          {log.createdAt.toLocaleDateString("fr-FR")}{" "}
+                          {log.createdAt.toLocaleDateString("fr-FR", {
+                            timeZone: APP_TIME_ZONE,
+                          })}{" "}
                           {log.createdAt.toLocaleTimeString("fr-FR", {
+                            timeZone: APP_TIME_ZONE,
                             hour: "2-digit",
                             minute: "2-digit",
                           })}

@@ -72,6 +72,17 @@ export function FeedbackElementPickerOverlay({ onSelect, onCancel }: Props) {
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
+        /*
+          Un clic dans la barre du bas (« Retour ») remonte jusqu'ici : sans
+          cette garde, il annulait puis sélectionnait l'élément de la page
+          situé dessous.
+        */
+        if (
+          event.target instanceof Element &&
+          event.target.closest("[data-feedback-toolbar]")
+        ) {
+          return;
+        }
         const target = pickElementAtPoint(event.clientX, event.clientY);
         if (!target) return;
         onSelect(captureTargetElementFromDom(target));
@@ -104,12 +115,21 @@ export function FeedbackElementPickerOverlay({ onSelect, onCancel }: Props) {
 
       <div
         data-feedback-overlay
+        data-feedback-toolbar
         className="pointer-events-auto fixed bottom-6 left-1/2 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur"
       >
         <p className="text-muted-foreground text-center text-sm">
           Survolez un élément puis cliquez pour le sélectionner
         </p>
-        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={(event) => {
+            event.stopPropagation();
+            onCancel();
+          }}
+        >
           Retour
         </Button>
       </div>

@@ -11,6 +11,11 @@ import { cn } from "@/lib/utils";
 import { coachListAddSecondaryButtonClass } from "@/lib/coach-list-add-button-class";
 import { mergeUniqueCoachPhrases } from "@/lib/coach-shared-phrases-merge";
 import { Link } from "@/i18n/navigation";
+import {
+  ORG_PITCH_MAX,
+  ORG_VOCABULARY_MAX,
+  orgCoachTextTooLongMessage,
+} from "@/lib/org-coach-text-limits";
 
 export type OrgCoachFormInitial = {
   companyPitch: string;
@@ -64,6 +69,14 @@ export function OrgSettingsCoachForm({
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canEdit) return;
+    const tooLong = orgCoachTextTooLongMessage({
+      companyPitch: companyPitch.trim(),
+      industryVocabulary: industryVocabulary.trim(),
+    });
+    if (tooLong) {
+      setMessage({ type: "err", text: tooLong });
+      return;
+    }
     setMessage(null);
     startTransition(async () => {
       const r = await updateOrganizationCoach({
@@ -100,14 +113,21 @@ export function OrgSettingsCoachForm({
       <div className="space-y-2">
         <div className="flex items-baseline justify-between gap-2">
           <Label htmlFor="org-pitch">Pitch entreprise</Label>
-          <span className="text-muted-foreground text-xs tabular-nums">
-            {companyPitch.length}/500
+          <span
+            className={cn(
+              "text-xs tabular-nums",
+              companyPitch.length > ORG_PITCH_MAX
+                ? "text-destructive"
+                : "text-muted-foreground",
+            )}
+          >
+            {companyPitch.length}/{ORG_PITCH_MAX}
           </span>
         </div>
         <Textarea
           id="org-pitch"
           value={companyPitch}
-          onChange={(e) => setCompanyPitch(e.target.value.slice(0, 500))}
+          onChange={(e) => setCompanyPitch(e.target.value)}
           rows={4}
           readOnly={!canEdit}
           disabled={!canEdit}
@@ -189,14 +209,21 @@ export function OrgSettingsCoachForm({
       <div className="space-y-2">
         <div className="flex items-baseline justify-between gap-2">
           <Label htmlFor="org-vocab">Vocabulaire métier</Label>
-          <span className="text-muted-foreground text-xs tabular-nums">
-            {industryVocabulary.length}/500
+          <span
+            className={cn(
+              "text-xs tabular-nums",
+              industryVocabulary.length > ORG_VOCABULARY_MAX
+                ? "text-destructive"
+                : "text-muted-foreground",
+            )}
+          >
+            {industryVocabulary.length}/{ORG_VOCABULARY_MAX}
           </span>
         </div>
         <Textarea
           id="org-vocab"
           value={industryVocabulary}
-          onChange={(e) => setIndustryVocabulary(e.target.value.slice(0, 500))}
+          onChange={(e) => setIndustryVocabulary(e.target.value)}
           rows={3}
           readOnly={!canEdit}
           disabled={!canEdit}
@@ -231,8 +258,8 @@ export function OrgSettingsCoachForm({
             kind="OBJECTION"
             open={objectionPickerOpen}
             onOpenChange={setObjectionPickerOpen}
-            title="Objections · collection partagée"
-            description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
+            title="Objections · suggestions"
+            description="Choisissez parmi les suggestions, ou ajoutez votre propre formulation : elle ne sera visible que par votre organisation."
             alreadyChosen={objections}
             onAddToList={(texts) =>
               setObjections((xs) => mergeUniqueCoachPhrases(xs, texts))
@@ -242,8 +269,8 @@ export function OrgSettingsCoachForm({
             kind="ARGUMENT"
             open={argumentPickerOpen}
             onOpenChange={setArgumentPickerOpen}
-            title="Arguments · collection partagée"
-            description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
+            title="Arguments · suggestions"
+            description="Choisissez parmi les suggestions, ou ajoutez votre propre formulation : elle ne sera visible que par votre organisation."
             alreadyChosen={keyArguments}
             onAddToList={(texts) =>
               setKeyArguments((xs) => mergeUniqueCoachPhrases(xs, texts))

@@ -28,6 +28,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 function dbStatusColor(ms: number, ok: boolean) {
   if (!ok) return "text-red-600 dark:text-red-400";
@@ -355,6 +356,7 @@ export function AdminHealthDashboard({
         <Clock className="mr-1 inline size-3" />
         Dernière vérification :{" "}
         {now.toLocaleString("fr-FR", {
+          timeZone: APP_TIME_ZONE,
           dateStyle: "medium",
           timeStyle: "medium",
         })}

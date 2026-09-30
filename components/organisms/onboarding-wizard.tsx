@@ -33,6 +33,11 @@ import {
 } from "@/components/molecules/process-string-list-section";
 import { cn } from "@/lib/utils";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
+import {
+  ORG_PITCH_MAX,
+  ORG_VOCABULARY_MAX,
+  orgCoachTextTooLongMessage,
+} from "@/lib/org-coach-text-limits";
 
 const STEPS = [
   {
@@ -223,6 +228,14 @@ export function OnboardingWizard({ initial }: Props) {
         return;
       }
       if (step === 2) {
+        const tooLong = orgCoachTextTooLongMessage({
+          companyPitch: companyPitch.trim(),
+          industryVocabulary: industryVocabulary.trim(),
+        });
+        if (tooLong) {
+          setError(tooLong);
+          return;
+        }
         const r = await submitOnboardingStep2({
           companyPitch: companyPitch || null,
           objections,
@@ -406,16 +419,21 @@ export function OnboardingWizard({ initial }: Props) {
                     <Label htmlFor="pitch" className="text-foreground">
                       Pitch de l&apos;entreprise
                     </Label>
-                    <span className="text-muted-foreground text-xs tabular-nums">
-                      {pitchLen}/500
+                    <span
+                      className={cn(
+                        "text-xs tabular-nums",
+                        pitchLen > ORG_PITCH_MAX
+                          ? "text-destructive"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {pitchLen}/{ORG_PITCH_MAX}
                     </span>
                   </div>
                   <Textarea
                     id="pitch"
                     value={companyPitch}
-                    onChange={(e) =>
-                      setCompanyPitch(e.target.value.slice(0, 500))
-                    }
+                    onChange={(e) => setCompanyPitch(e.target.value)}
                     rows={5}
                     placeholder="Décrivez en quelques lignes ce que vous vendez, à qui, et quel problème vous résolvez."
                   />
@@ -510,16 +528,21 @@ export function OnboardingWizard({ initial }: Props) {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <Label htmlFor="vocab">Vocabulaire métier</Label>
-                    <span className="text-muted-foreground text-xs tabular-nums">
-                      {vocabLen}/500
+                    <span
+                      className={cn(
+                        "text-xs tabular-nums",
+                        vocabLen > ORG_VOCABULARY_MAX
+                          ? "text-destructive"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {vocabLen}/{ORG_VOCABULARY_MAX}
                     </span>
                   </div>
                   <Textarea
                     id="vocab"
                     value={industryVocabulary}
-                    onChange={(e) =>
-                      setIndustryVocabulary(e.target.value.slice(0, 500))
-                    }
+                    onChange={(e) => setIndustryVocabulary(e.target.value)}
                     rows={3}
                     placeholder="RR, churn, TCO, ERP, POC…"
                   />
@@ -604,8 +627,8 @@ export function OnboardingWizard({ initial }: Props) {
             kind="OBJECTION"
             open={objectionPickerOpen}
             onOpenChange={setObjectionPickerOpen}
-            title="Objections · collection partagée"
-            description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
+            title="Objections · suggestions"
+            description="Choisissez parmi les suggestions, ou ajoutez votre propre formulation : elle ne sera visible que par votre organisation."
             alreadyChosen={objections}
             onAddToList={(texts) =>
               setObjections((xs) => mergeUniqueCoachPhrases(xs, texts))
@@ -615,8 +638,8 @@ export function OnboardingWizard({ initial }: Props) {
             kind="ARGUMENT"
             open={argumentPickerOpen}
             onOpenChange={setArgumentPickerOpen}
-            title="Arguments · collection partagée"
-            description="Choisissez des formulations existantes ou créez-en une nouvelle pour tout le monde."
+            title="Arguments · suggestions"
+            description="Choisissez parmi les suggestions, ou ajoutez votre propre formulation : elle ne sera visible que par votre organisation."
             alreadyChosen={keyArguments}
             onAddToList={(texts) =>
               setKeyArguments((xs) => mergeUniqueCoachPhrases(xs, texts))

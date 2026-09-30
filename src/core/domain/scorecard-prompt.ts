@@ -48,7 +48,7 @@ ${blocs}
 
 Level, criterion by criterion: **${SCORECARD_LEVEL_MAX}** obtained and probed until the answer is usable · **3** obtained but only partly probed · **2** raised and left there, or volunteered by the prospect with no follow-up · **1** barely touched, or a signal the prospect gave and the seller did not pick up · **0** absent from the meeting.
 
-Any level above 0 is earned by words that are in the transcript. Copy them into \`evidence\`, 1 to 3 excerpts, exactly as they were said and in the language of the transcript. Never rewrite a quote and never compose one. No quote means level 0, whatever your impression of the meeting was. When you hesitate between two levels, take the lower one.
+Any level above 0 is earned by words that are in the transcript. Copy them into \`evidence\`, 1 to 3 excerpts, exactly as they were said and in the language of the transcript. Never rewrite a quote and never compose one, and never quote the criterion itself: its definition is not something the prospect said. No quote means level 0, whatever your impression of the meeting was. The product checks every excerpt against the transcript: one it cannot find is removed, and a criterion left without evidence cannot stay above level 1. When you hesitate between two levels, take the lower one.
 
 Return one entry per criterion in \`criteria\`. Every key you write, there and in \`pointsLost\`, must be one of the keys above. Return no total, no block subtotal and no level name: the product adds your levels itself, on the weights written above, and names the level they reach. A criterion you leave out counts as 0, so leaving one out is a decision and not a shortcut.
 

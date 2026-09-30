@@ -1,113 +1,88 @@
 "use client";
 
+import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CopyTextButton } from "@/components/molecules/copy-text-button";
 import { Button } from "@/components/ui/button";
+import { isVisitReportHeading } from "@/src/core/domain/visit-report";
 import { cn } from "@/lib/utils";
 
-type StreamState = "idle" | "streaming" | "done" | "failed";
-
-/** Les intitulés de section imposés au compte rendu, mis en gras à l'écran. */
-const SECTION_LABELS = [
-  "Compte-rendu de visite",
-  "Compte rendu de visite",
-  "Contexte :",
-  "Sujets abordés :",
-  "Points clés :",
-  "Engagements / décisions :",
-  "Prochaines étapes :",
-];
-
-const FOLDED_HEIGHT = 320;
-
-function isSectionLine(line: string): boolean {
-  const trimmed = line.trim();
-  return SECTION_LABELS.some((label) => trimmed.startsWith(label));
-}
-
-/**
- * Lit la réponse texte morceau par morceau et rend chaque morceau au fur et
- * à mesure. Le compte rendu se compose sous les yeux du lecteur, au lieu
- * d'apparaître d'un bloc dix secondes plus tard.
- */
-async function readTextStream(
-  response: Response,
-  onChunk: (chunk: string) => void,
-): Promise<void> {
-  const reader = response.body?.getReader();
-  if (!reader) return;
-  const decoder = new TextDecoder();
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    onChunk(decoder.decode(value, { stream: true }));
-  }
-  const tail = decoder.decode();
-  if (tail) onChunk(tail);
-}
+type WritingState = "idle" | "writing" | "done" | "failed";
 
 /**
  * Le compte rendu de visite, pièce maîtresse de la fiche : il ouvre la page
- * dans un cadre de marque, avec « Copier » en bouton principal. Tout le
- * reste de la fiche est le détail qui l'explique.
+ * dans un cadre de marque, avec « Copier » en bouton principal.
+ *
+ * Le texte affiché est exactement le texte copié : les titres de rubrique sont
+ * écrits en capitales dans le texte même, et la fiche se contente de les
+ * mettre en valeur. Replié par défaut : le compte rendu complet fait une
+ * centaine de lignes, et la fiche a d'autres blocs à montrer.
+ *
+ * Quand le compte rendu manque sur un rendez-vous analysé, la fiche le demande
+ * à l'ouverture (`writeMeetingId`) : il s'écrit à ce moment-là, en une minute
+ * environ, et s'affiche dès qu'il est prêt, sans recharger la page.
  */
 export function MeetingSynthesisSection({
   meetingSynthesis,
   fromAi,
-  streamMeetingId = null,
+  writeMeetingId = null,
 }: {
   meetingSynthesis: string;
   fromAi: boolean;
-  /** Défini quand le compte rendu manque et doit s'écrire au fil de l'eau. */
-  streamMeetingId?: string | null;
+  /** Défini quand le compte rendu manque et doit s'écrire à l'ouverture. */
+  writeMeetingId?: string | null;
 }) {
-  const [streamed, setStreamed] = useState("");
-  const [streamState, setStreamState] = useState<StreamState>("idle");
+  const [written, setWritten] = useState("");
+  const [writingState, setWritingState] = useState<WritingState>("idle");
+  const [copied, setCopied] = useState(false);
   const [folded, setFolded] = useState(true);
 
   useEffect(() => {
-    if (!streamMeetingId) return;
+    if (!writeMeetingId) return;
     const controller = new AbortController();
-    let received = "";
 
     const run = async () => {
-      setStreamState("streaming");
+      setWritingState("writing");
       try {
         const response = await fetch(
-          `/api/meetings/${encodeURIComponent(streamMeetingId)}/visit-report`,
+          `/api/meetings/${encodeURIComponent(writeMeetingId)}/visit-report`,
           { method: "POST", signal: controller.signal },
         );
         if (!response.ok) {
-          setStreamState("failed");
+          setWritingState("failed");
           return;
         }
-        await readTextStream(response, (chunk) => {
-          received += chunk;
-          setStreamed(received);
-        });
-        setStreamState(received.trim() ? "done" : "failed");
+        const text = (await response.text()).trim();
+        setWritten(text);
+        setWritingState(text ? "done" : "failed");
       } catch (cause) {
         if (!controller.signal.aborted) {
-          console.error("visit report stream failed", cause);
-          setStreamState("failed");
+          console.error("visit report writing failed", cause);
+          setWritingState("failed");
         }
       }
     };
     void run();
     return () => controller.abort();
-  }, [streamMeetingId]);
+  }, [writeMeetingId]);
 
-  const showStreamed = streamMeetingId != null && streamState !== "failed";
-  const text = showStreamed && streamed ? streamed : meetingSynthesis;
-  const isAiText = fromAi || streamState === "done";
-  const streaming = showStreamed && streamState === "streaming";
+  const isAiText = fromAi || writingState === "done";
+  const writing = writingState === "writing";
+  const text = (writingState === "done" ? written : meetingSynthesis).trim();
+  const canCopy = isAiText && text.length > 0;
   const lines = text.split("\n");
-  const long = text.length > 900;
+  const foldable = isAiText && lines.length > 14;
+
+  async function copyReport() {
+    if (!canCopy) return;
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  }
 
   return (
     <section className="overflow-hidden rounded-2xl border-[1.5px] border-brand/30 bg-card shadow-md">
       <div className="flex flex-wrap items-center gap-3 border-b border-brand/30 bg-gradient-to-b from-brand-soft to-[#f7f4ff] px-5 py-4 dark:from-brand/15 dark:to-brand/5">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="text-[15.5px] font-bold tracking-tight">
             Compte rendu de visite
           </h2>
@@ -116,91 +91,99 @@ export function MeetingSynthesisSection({
             clic.
           </p>
         </div>
-        <span className="flex-1" />
-        <CopyTextButton
-          text={isAiText ? text : ""}
-          label="Copier le compte rendu"
-          variant="default"
-          size="default"
-        />
+        <Button
+          type="button"
+          disabled={!canCopy}
+          aria-label={copied ? "Compte rendu copié" : "Copier le compte rendu"}
+          onClick={() => void copyReport()}
+        >
+          {copied ? (
+            <Check className="size-4" aria-hidden />
+          ) : (
+            <Copy className="size-4" aria-hidden />
+          )}
+          {copied ? "Compte rendu copié" : "Copier le compte rendu"}
+        </Button>
       </div>
 
       <div
         className={cn(
-          "relative px-5 pt-1 pb-4",
-          folded && long && "overflow-hidden",
+          "relative px-5 pt-3 pb-4",
+          foldable && folded && "max-h-80 overflow-hidden",
         )}
-        style={folded && long ? { maxHeight: FOLDED_HEIGHT } : undefined}
       >
-        {streaming && !streamed ? (
+        {writing ? (
           <p
-            className="text-muted-foreground pt-4 text-[13px] leading-[1.75]"
+            className="text-muted-foreground text-[13px] leading-7"
             role="status"
             aria-live="polite"
           >
-            Rédaction du compte rendu…
+            <span
+              aria-hidden
+              className="bg-brand mr-2 inline-block size-2 animate-pulse rounded-full align-middle motion-reduce:animate-none"
+            />
+            Rédaction du compte rendu… Une minute environ, le temps de lire tout
+            le transcript.
           </p>
         ) : (
-          <pre
-            className="m-0 pt-4 font-sans text-[13px] leading-[1.75] break-words whitespace-pre-wrap"
-            aria-live={showStreamed ? "polite" : undefined}
+          <div
+            className="text-foreground text-[13px] leading-7 break-words whitespace-pre-wrap"
+            aria-live={writeMeetingId ? "polite" : undefined}
           >
-            {lines.map((line, i) =>
-              isAiText && isSectionLine(line) ? (
-                <b
-                  key={i}
-                  className="text-brand-hover block text-[11.4px] font-bold tracking-[.035em] uppercase dark:text-brand-muted"
+            {lines.map((line, index) =>
+              isAiText &&
+              isVisitReportHeading(
+                line,
+                index > 0 ? lines[index - 1] : undefined,
+              ) ? (
+                <p
+                  key={index}
+                  className="text-brand mt-3 text-[11.5px] font-bold tracking-wide first:mt-0"
                 >
                   {line}
-                </b>
+                </p>
               ) : (
-                <span key={i}>
+                <p key={index} className={line.trim() ? undefined : "h-3"}>
                   {line}
-                  {i < lines.length - 1 ? "\n" : null}
-                </span>
+                </p>
               ),
             )}
-            {streaming ? (
-              <span
-                aria-hidden
-                className="bg-brand ml-0.5 inline-block h-[1em] w-[2px] animate-pulse align-text-bottom motion-reduce:animate-none"
-              />
-            ) : null}
-          </pre>
+          </div>
         )}
-        {folded && long ? (
+        {foldable && folded ? (
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-card"
+            className="from-card/0 to-card pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b"
           />
         ) : null}
-        {!isAiText && !streaming ? (
+        {!isAiText && !writing ? (
           <p className="text-muted-foreground mt-3 text-xs">
-            {streamState === "failed"
+            {writingState === "failed"
               ? "Le compte rendu n'a pas pu être rédigé pour l'instant. Rechargez la page pour réessayer."
               : "Le compte rendu complet apparaîtra une fois l'analyse automatique terminée."}
           </p>
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-border bg-muted/40 px-5 py-2.5">
-        <span className="text-muted-foreground text-[11.5px]">
-          {isAiText
-            ? `${text.length.toLocaleString("fr-FR")} caractères, généré à partir du transcript, de la scorecard et des profils.`
-            : "Généré à partir du transcript, de la scorecard et des profils."}
-        </span>
-        <span className="flex-1" />
-        {long ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setFolded((v) => !v)}
-          >
-            {folded ? "Tout afficher" : "Replier"}
-          </Button>
-        ) : null}
-      </div>
+      {isAiText ? (
+        <div className="bg-muted/40 flex flex-wrap items-center gap-3 border-t px-5 py-2.5">
+          <span className="text-muted-foreground text-xs">
+            {text.length.toLocaleString("fr-FR")} caractères, générés à partir
+            du transcript, de la grille et des profils.
+          </span>
+          <span className="flex-1" />
+          {foldable ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setFolded((f) => !f)}
+            >
+              {folded ? "Tout afficher" : "Replier"}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

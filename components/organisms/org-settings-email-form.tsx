@@ -95,7 +95,7 @@ export function OrgSettingsEmailForm({
           onChange={(e) => setSig(e.target.value)}
           readOnly={!canEdit}
           disabled={!canEdit}
-          placeholder="Ex. Cordialement,\nJean Dupont\nAccount Executive"
+          placeholder={"Cordialement,\nPrénom Nom\nFonction, entreprise\nTéléphone"}
         />
       </div>
       {msg ? (

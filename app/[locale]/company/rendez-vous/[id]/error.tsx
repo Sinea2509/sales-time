@@ -29,7 +29,7 @@ export default function MeetingDetailError({
       <p className="text-muted-foreground text-sm">{detail}</p>
       {error.digest ? (
         <p className="text-muted-foreground font-mono text-xs">
-          digest: {error.digest}
+          Code de l&apos;erreur : {error.digest}
         </p>
       ) : null}
       <div className="flex flex-wrap justify-center gap-2">

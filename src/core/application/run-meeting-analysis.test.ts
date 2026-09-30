@@ -17,6 +17,13 @@ import {
   scorecardCriteria,
 } from "@/src/core/domain/scorecard-grid";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
+import { noOrganizationPrompts } from "./testing/in-memory-organization-prompts";
+
+/**
+ * Aucune consigne d'organisation dans ces tests : la consigne d'origine sert
+ * partout. Les consignes d'organisation ont leurs propres tests.
+ */
+const organizationPrompts = noOrganizationPrompts();
 
 describe("runMeetingAnalysis", () => {
   it("returns MEETING_NOT_FOUND when id missing for org", async () => {
@@ -35,7 +42,7 @@ describe("runMeetingAnalysis", () => {
     };
 
     const result = await runMeetingAnalysis(
-      { meetings, prompts, analysis } as never,
+      { meetings, prompts, organizationPrompts, analysis } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -70,7 +77,7 @@ describe("runMeetingAnalysis", () => {
     };
 
     const result = await runMeetingAnalysis(
-      { meetings, prompts, analysis } as never,
+      { meetings, prompts, organizationPrompts, analysis } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -135,7 +142,7 @@ describe("runMeetingAnalysis", () => {
     };
 
     const result = await runMeetingAnalysis(
-      { meetings, prompts, analysis } as never,
+      { meetings, prompts, organizationPrompts, analysis } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -216,7 +223,7 @@ describe("runMeetingAnalysis", () => {
     };
 
     const result = await runMeetingAnalysis(
-      { meetings, prompts, analysis } as never,
+      { meetings, prompts, organizationPrompts, analysis } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -264,7 +271,7 @@ describe("runMeetingAnalysis", () => {
     };
 
     const fail = await runMeetingAnalysis(
-      { meetings, prompts, analysis } as never,
+      { meetings, prompts, organizationPrompts, analysis } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -280,7 +287,7 @@ describe("runMeetingAnalysis", () => {
 
     analysis.analyzeKiss = jest.fn().mockResolvedValue({ result: { k: 1 } });
     const ok = await runMeetingAnalysis(
-      { meetings, prompts, analysis } as never,
+      { meetings, prompts, organizationPrompts, analysis } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -291,7 +298,7 @@ describe("runMeetingAnalysis", () => {
     expect(ok).toEqual({ ok: true, analysisId: "a-k" });
 
     const okNoAppendix = await runMeetingAnalysis(
-      { meetings, prompts, analysis } as never,
+      { meetings, prompts, organizationPrompts, analysis } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -301,7 +308,7 @@ describe("runMeetingAnalysis", () => {
     expect(okNoAppendix).toEqual({ ok: true, analysisId: "a-k" });
 
     const okBlankAppendix = await runMeetingAnalysis(
-      { meetings, prompts, analysis } as never,
+      { meetings, prompts, organizationPrompts, analysis } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -342,7 +349,7 @@ describe("runMeetingAnalysis", () => {
     };
 
     const result = await runMeetingAnalysis(
-      { meetings, prompts, analysis } as never,
+      { meetings, prompts, organizationPrompts, analysis } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -378,7 +385,7 @@ describe("runMeetingAnalysis", () => {
     };
 
     const result = await runMeetingAnalysis(
-      { meetings, prompts, analysis, aiLogs } as never,
+      { meetings, prompts, organizationPrompts, analysis, aiLogs } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -426,7 +433,7 @@ describe("runMeetingAnalysis", () => {
     };
 
     const result = await runMeetingAnalysis(
-      { meetings, prompts, analysis, aiLogs } as never,
+      { meetings, prompts, organizationPrompts, analysis, aiLogs } as never,
       {
         organizationId: "org_1",
         meetingId: "m1",
@@ -471,6 +478,7 @@ describe("runMeetingAnalysis", () => {
       {
         meetings,
         prompts,
+        organizationPrompts,
         analysis: {
           analyzeSoncas: jest.fn(),
           analyzeDisc: jest.fn(),
@@ -501,7 +509,9 @@ describe("runMeetingAnalysis : prompt système composé", () => {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue({
         id: "m1",
         organizationId: "org_1",
-        transcript: "t",
+        // Les preuves citées par les résultats simulés sont dans le transcript.
+        transcript:
+          "On l a entendu. Je veux que ça roule tout seul. C'est trop cher.",
         notes: null,
       }),
       createAnalysis: jest.fn().mockResolvedValue({
@@ -531,7 +541,7 @@ describe("runMeetingAnalysis : prompt système composé", () => {
       analyzeDisc: jest.fn().mockResolvedValue({ result: {} }),
       analyzeKiss: jest.fn().mockResolvedValue({ result: {} }),
     };
-    return { meetings, prompts, analysis };
+    return { meetings, prompts, organizationPrompts, analysis };
   }
 
   function systemMarkdownSentFor(
@@ -555,11 +565,14 @@ describe("runMeetingAnalysis : prompt système composé", () => {
         doit recevoir exactement le prompt d'avant le playbook.
       */
       const { meetings, prompts, analysis } = harness(kind);
-      await runMeetingAnalysis({ meetings, prompts, analysis } as never, {
-        organizationId: "org_1",
-        meetingId: "m1",
-        kind,
-      });
+      await runMeetingAnalysis(
+        { meetings, prompts, organizationPrompts, analysis } as never,
+        {
+          organizationId: "org_1",
+          meetingId: "m1",
+          kind,
+        },
+      );
       expect(systemMarkdownSentFor(analysis, kind)).toBe("base");
     },
   );
@@ -568,12 +581,15 @@ describe("runMeetingAnalysis : prompt système composé", () => {
     "colle le playbook au prompt %s",
     async (kind) => {
       const { meetings, prompts, analysis } = harness(kind);
-      await runMeetingAnalysis({ meetings, prompts, analysis } as never, {
-        organizationId: "org_1",
-        meetingId: "m1",
-        kind,
-        organizationPlaybookMarkdown: PLAYBOOK,
-      });
+      await runMeetingAnalysis(
+        { meetings, prompts, organizationPrompts, analysis } as never,
+        {
+          organizationId: "org_1",
+          meetingId: "m1",
+          kind,
+          organizationPlaybookMarkdown: PLAYBOOK,
+        },
+      );
       expect(systemMarkdownSentFor(analysis, kind)).toBe(
         `base\n\n---\n\n${PLAYBOOK}`,
       );
@@ -584,24 +600,30 @@ describe("runMeetingAnalysis : prompt système composé", () => {
     "ignore un playbook vide pour %s",
     async (kind) => {
       const { meetings, prompts, analysis } = harness(kind);
-      await runMeetingAnalysis({ meetings, prompts, analysis } as never, {
-        organizationId: "org_1",
-        meetingId: "m1",
-        kind,
-        organizationPlaybookMarkdown: "   \n\t ",
-      });
+      await runMeetingAnalysis(
+        { meetings, prompts, organizationPrompts, analysis } as never,
+        {
+          organizationId: "org_1",
+          meetingId: "m1",
+          kind,
+          organizationPlaybookMarkdown: "   \n\t ",
+        },
+      );
       expect(systemMarkdownSentFor(analysis, kind)).toBe("base");
     },
   );
 
   it("garde la forme historique du bloc KISS plateforme", async () => {
     const { meetings, prompts, analysis } = harness("KISS");
-    await runMeetingAnalysis({ meetings, prompts, analysis } as never, {
-      organizationId: "org_1",
-      meetingId: "m1",
-      kind: "KISS",
-      kissSystemMarkdownAppendix: "  consigne  ",
-    });
+    await runMeetingAnalysis(
+      { meetings, prompts, organizationPrompts, analysis } as never,
+      {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind: "KISS",
+        kissSystemMarkdownAppendix: "  consigne  ",
+      },
+    );
     expect(systemMarkdownSentFor(analysis, "KISS")).toBe(
       "base\n\n---\n\n## Consignes KISS (plateforme)\n\nconsigne",
     );
@@ -614,13 +636,16 @@ describe("runMeetingAnalysis : prompt système composé", () => {
       spécifique vient en dernier, au plus près de la tâche.
     */
     const { meetings, prompts, analysis } = harness("KISS");
-    await runMeetingAnalysis({ meetings, prompts, analysis } as never, {
-      organizationId: "org_1",
-      meetingId: "m1",
-      kind: "KISS",
-      kissSystemMarkdownAppendix: "consigne",
-      organizationPlaybookMarkdown: PLAYBOOK,
-    });
+    await runMeetingAnalysis(
+      { meetings, prompts, organizationPrompts, analysis } as never,
+      {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind: "KISS",
+        kissSystemMarkdownAppendix: "consigne",
+        organizationPlaybookMarkdown: PLAYBOOK,
+      },
+    );
     expect(systemMarkdownSentFor(analysis, "KISS")).toBe(
       `base\n\n---\n\n## Consignes KISS (plateforme)\n\nconsigne\n\n---\n\n${PLAYBOOK}`,
     );
@@ -629,12 +654,15 @@ describe("runMeetingAnalysis : prompt système composé", () => {
   it("journalise le prompt réellement composé", async () => {
     const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
     const { meetings, prompts, analysis } = harness("SONCAS");
-    await runMeetingAnalysis({ meetings, prompts, analysis, aiLogs } as never, {
-      organizationId: "org_1",
-      meetingId: "m1",
-      kind: "SONCAS",
-      organizationPlaybookMarkdown: PLAYBOOK,
-    });
+    await runMeetingAnalysis(
+      { meetings, prompts, organizationPrompts, analysis, aiLogs } as never,
+      {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind: "SONCAS",
+        organizationPlaybookMarkdown: PLAYBOOK,
+      },
+    );
     const logged = aiLogs.createLog.mock.calls[0][0] as {
       systemPrompt: string;
     };
@@ -651,12 +679,15 @@ describe("runMeetingAnalysis : prompt système composé", () => {
     */
     const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
     const { meetings, prompts, analysis } = harness("KISS");
-    await runMeetingAnalysis({ meetings, prompts, analysis, aiLogs } as never, {
-      organizationId: "org_1",
-      meetingId: "m1",
-      kind: "KISS",
-      organizationPlaybookMarkdown: PLAYBOOK,
-    });
+    await runMeetingAnalysis(
+      { meetings, prompts, organizationPrompts, analysis, aiLogs } as never,
+      {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind: "KISS",
+        organizationPlaybookMarkdown: PLAYBOOK,
+      },
+    );
     const logged = aiLogs.createLog.mock.calls[0][0] as {
       systemPrompt: string;
     };
@@ -677,12 +708,15 @@ describe("runMeetingAnalysis : prompt système composé", () => {
   it("journalise pour SONCAS le texte que l'adaptateur envoie vraiment", async () => {
     const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
     const { meetings, prompts, analysis } = harness("SONCAS");
-    await runMeetingAnalysis({ meetings, prompts, analysis, aiLogs } as never, {
-      organizationId: "org_1",
-      meetingId: "m1",
-      kind: "SONCAS",
-      organizationPlaybookMarkdown: PLAYBOOK,
-    });
+    await runMeetingAnalysis(
+      { meetings, prompts, organizationPrompts, analysis, aiLogs } as never,
+      {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind: "SONCAS",
+        organizationPlaybookMarkdown: PLAYBOOK,
+      },
+    );
     const logged = aiLogs.createLog.mock.calls[0][0] as {
       systemPrompt: string;
     };
@@ -696,12 +730,15 @@ describe("runMeetingAnalysis : prompt système composé", () => {
   it("journalise pour DISC le texte que l'adaptateur envoie vraiment", async () => {
     const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
     const { meetings, prompts, analysis } = harness("DISC");
-    await runMeetingAnalysis({ meetings, prompts, analysis, aiLogs } as never, {
-      organizationId: "org_1",
-      meetingId: "m1",
-      kind: "DISC",
-      organizationPlaybookMarkdown: PLAYBOOK,
-    });
+    await runMeetingAnalysis(
+      { meetings, prompts, organizationPrompts, analysis, aiLogs } as never,
+      {
+        organizationId: "org_1",
+        meetingId: "m1",
+        kind: "DISC",
+        organizationPlaybookMarkdown: PLAYBOOK,
+      },
+    );
     const logged = aiLogs.createLog.mock.calls[0][0] as {
       systemPrompt: string;
     };
@@ -748,7 +785,9 @@ describe("runMeetingAnalysis : verbatim obligatoire sur SONCAS", () => {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue({
         id: "m1",
         organizationId: "org_1",
-        transcript: "t",
+        // Les preuves citées par les résultats simulés sont dans le transcript.
+        transcript:
+          "On l a entendu. Je veux que ça roule tout seul. C'est trop cher.",
         notes: null,
       }),
       createAnalysis: jest.fn().mockResolvedValue({
@@ -780,7 +819,7 @@ describe("runMeetingAnalysis : verbatim obligatoire sur SONCAS", () => {
       analyzeObjections: jest.fn(),
     };
     const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
-    return { meetings, prompts, analysis, aiLogs };
+    return { meetings, prompts, organizationPrompts, analysis, aiLogs };
   }
 
   it("enregistre le levier sans preuve ramené au seuil", async () => {
@@ -903,7 +942,8 @@ describe("runMeetingAnalysis : scorecard", () => {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue({
         id: "m1",
         organizationId: "org_1",
-        transcript: "t",
+        // Le mot cité en preuve par les critères simulés est dans le transcript.
+        transcript: "Voici un extrait du rendez-vous.",
         notes: null,
         meetingType: options?.meetingType ?? "RDV découverte",
         pipelineStage: null,
@@ -943,7 +983,7 @@ describe("runMeetingAnalysis : scorecard", () => {
       analyzeScorecard,
     };
     const aiLogs = { createLog: jest.fn().mockResolvedValue(undefined) };
-    return { meetings, prompts, analysis, aiLogs };
+    return { meetings, prompts, organizationPrompts, analysis, aiLogs };
   }
 
   function lancer(deps: ReturnType<typeof harness>) {

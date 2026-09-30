@@ -30,6 +30,7 @@ import {
   type MeetingActionCategory,
   type MeetingActionInput,
 } from "@/src/core/domain/meeting-next-action";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 /**
  * Une ligne de la liste des rendez-vous.
@@ -99,6 +100,7 @@ function PastilleAFaire({
 }
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
+  timeZone: APP_TIME_ZONE,
   day: "2-digit",
   month: "2-digit",
   year: "numeric",

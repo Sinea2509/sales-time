@@ -28,6 +28,7 @@ import { sectionHeadingClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import { managerChoicesForMember } from "@/src/core/domain/manager-assignment";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 export type TeamMemberRow = {
   membershipId: string;
@@ -353,7 +354,9 @@ export function OrgSettingsTeamList({
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
-                    {new Date(m.joinedAt).toLocaleDateString("fr-FR")}
+                    {new Date(m.joinedAt).toLocaleDateString("fr-FR", {
+                      timeZone: APP_TIME_ZONE,
+                    })}
                   </TableCell>
                   <TableCell className="text-right">
                     {canManageTeam ? (
@@ -415,7 +418,9 @@ export function OrgSettingsTeamList({
                       {organizationMembershipRoleLabel(inv.role)}
                     </TableCell>
                     <TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
-                      {new Date(inv.expiresAt).toLocaleDateString("fr-FR")}
+                      {new Date(inv.expiresAt).toLocaleDateString("fr-FR", {
+                        timeZone: APP_TIME_ZONE,
+                      })}
                     </TableCell>
                     <TableCell className="text-right">
                       {canManageTeam ? (

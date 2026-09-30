@@ -1,9 +1,8 @@
-import { after } from "next/server";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { readSuperAdminOrgCookie } from "@/lib/read-super-admin-org-cookie";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { getCurrentActorContext } from "@/src/core/application/get-current-actor-context";
-import { streamMeetingVisitReport } from "@/src/core/application/stream-meeting-visit-report";
+import { writeMeetingVisitReportOnDemand } from "@/src/core/application/write-meeting-visit-report-on-demand";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -14,7 +13,7 @@ const textHeaders = {
 };
 
 /**
- * Le compte rendu de visite, en texte brut envoyé au fil de l'écriture.
+ * Le compte rendu de visite, en texte brut, écrit à la demande s'il manque.
  *
  * Le lecteur doit appartenir à l'organisation du rendez-vous : la même règle
  * que la fiche, qui n'ouvre un rendez-vous qu'avec `activeOrganizationId`.
@@ -37,13 +36,17 @@ export async function POST(
     return new Response("Non authentifié", { status: 401 });
   }
 
-  const result = await streamMeetingVisitReport(deps, {
+  const result = await writeMeetingVisitReportOnDemand(deps, {
     organizationId: actor.activeOrganizationId,
     meetingId: id,
+    actor: {
+      internalUserId: actor.internalUserId,
+      canManageOrganization: actor.canManageOrganization,
+    },
   });
 
   switch (result.kind) {
-    case "stored":
+    case "text":
       return new Response(result.text, { headers: textHeaders });
     case "not_found":
       return new Response("Rendez-vous introuvable", { status: 404 });
@@ -51,27 +54,7 @@ export async function POST(
       return new Response("Analyse en cours", { status: 409 });
     case "unavailable":
       return new Response(result.reason, { status: 503 });
-    case "stream": {
-      /*
-        L'enregistrement se fait une fois la réponse partie : le lecteur ne
-        doit pas attendre l'écriture en base pour voir le dernier mot.
-      */
-      after(result.persisted.catch(() => undefined));
-      const encoder = new TextEncoder();
-      const textStream = result.textStream;
-      const body = new ReadableStream<Uint8Array>({
-        async start(controller) {
-          try {
-            for await (const chunk of textStream) {
-              controller.enqueue(encoder.encode(chunk));
-            }
-            controller.close();
-          } catch (cause) {
-            controller.error(cause);
-          }
-        },
-      });
-      return new Response(body, { headers: textHeaders });
-    }
+    case "failed":
+      return new Response("Compte rendu indisponible", { status: 503 });
   }
 }

@@ -5,11 +5,20 @@ import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
 import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
+import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organization-prompt-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { GlobalKissCoachingPromptsRepositoryPort } from "@/src/core/ports/global-kiss-coaching-prompts-repository-port";
 
 const STALE_MINUTES = 10;
-const RECONCILE_MINUTES = 2;
+/*
+  Un rendez-vous « en cours » sans tâche vivante n'est remis en file qu'après
+  ce délai, plus long que la durée maximale d'une fonction (300 secondes).
+  Le bouton qui analyse un rendez-vous directement, sans tâche, laisse le
+  rendez-vous en cours pendant tout son travail : à 2 minutes, la reprise
+  lancée toutes les 15 minutes pouvait le prendre pour un orphelin et doubler
+  l'analyse.
+*/
+const RECONCILE_MINUTES = 6;
 const JOBS_PER_RUN = 3;
 
 export type ProcessAnalysisJobsResult = {
@@ -25,6 +34,7 @@ export async function processAnalysisJobs(
     analysisJobs: AnalysisJobRepositoryPort;
     meetings: MeetingRepositoryPort;
     prompts: PromptTemplateRepositoryPort;
+    organizationPrompts: OrganizationPromptRepositoryPort;
     analysis: AnalysisPort;
     aiLogs: AiRequestLogRepositoryPort;
     globalKissCoachingPrompts: GlobalKissCoachingPromptsRepositoryPort;
@@ -72,6 +82,7 @@ export async function processAnalysisJobs(
       {
         meetings: deps.meetings,
         prompts: deps.prompts,
+        organizationPrompts: deps.organizationPrompts,
         analysis: deps.analysis,
         aiLogs: deps.aiLogs,
         globalKissCoachingPrompts: deps.globalKissCoachingPrompts,

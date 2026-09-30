@@ -23,7 +23,12 @@ import {
 } from "@/src/core/domain/analysis-system-markdown";
 import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { computeScorecardScore } from "@/src/core/domain/scorecard-score";
-import { applySoncasEvidenceRule } from "@/src/core/domain/soncas-evidence-rule";
+import { applyScorecardEvidenceRule } from "@/src/core/domain/scorecard-evidence-rule";
+import { aiLogPromptVersionLabel } from "@/src/core/domain/organization-prompts";
+import {
+  applySoncasEvidenceRule,
+  keepSoncasEvidenceFoundIn,
+} from "@/src/core/domain/soncas-evidence-rule";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type {
   AiCallKind,
@@ -33,10 +38,12 @@ import type {
   MeetingAnalysisKind,
   MeetingRepositoryPort,
 } from "@/src/core/ports/meeting-repository-port";
-import type {
-  AnalysisKindSlug,
-  PromptTemplateRepositoryPort,
-} from "@/src/core/ports/prompt-template-repository-port";
+import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organization-prompt-repository-port";
+import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
+import {
+  resolveAnalysisPrompt,
+  type ResolvedAnalysisPrompt,
+} from "./resolve-analysis-prompt";
 
 export type RunMeetingAnalysisResult =
   | { ok: true; analysisId: string }
@@ -66,21 +73,16 @@ function aiLogKind(kind: AnalysisKindToRun): AiCallKind {
   return kind === "KISS" ? "COACHING" : kind;
 }
 
-async function resolvePromptVersion(
-  prompts: PromptTemplateRepositoryPort,
-  kind: AnalysisKindSlug,
-) {
-  const defaultMarkdown = DEFAULT_ANALYSIS_PROMPT_MARKDOWN[kind];
-  if (!defaultMarkdown?.trim()) {
-    return null;
-  }
-  return prompts.ensureCurrentVersion({ kind, defaultMarkdown });
-}
-
 export async function runMeetingAnalysis(
   deps: {
     meetings: MeetingRepositoryPort;
     prompts: PromptTemplateRepositoryPort;
+    /**
+     * Les consignes modifiées par l'organisation. Obligatoire : un appelant
+     * qui l'oublierait ferait analyser avec la consigne d'origine sans que
+     * personne le voie.
+     */
+    organizationPrompts: OrganizationPromptRepositoryPort;
     analysis: AnalysisPort;
     aiLogs?: AiRequestLogRepositoryPort;
   },
@@ -119,10 +121,25 @@ export async function runMeetingAnalysis(
     sourceBlobUrl: meeting.sourceBlobUrl,
     sourceType: meeting.sourceType,
   });
+  /** Ce que le modèle a lu, et donc où ses preuves doivent se retrouver. */
+  const evidenceSource = [transcriptForAnalysis, meeting.notes ?? ""].join(
+    "\n",
+  );
 
-  let promptVersion;
+  /*
+    La consigne de l'organisation si elle en a enregistré une, sinon celle du
+    super admin, sinon celle du code. La version du super admin est créée
+    au besoin : l'analyse enregistrée doit pointer vers elle.
+  */
+  let prompt: ResolvedAnalysisPrompt | null = null;
   try {
-    promptVersion = await resolvePromptVersion(deps.prompts, input.kind);
+    prompt = DEFAULT_ANALYSIS_PROMPT_MARKDOWN[input.kind]?.trim()
+      ? await resolveAnalysisPrompt(deps, {
+          kind: input.kind,
+          organizationId: input.organizationId,
+          ensureGlobalVersion: true,
+        })
+      : null;
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     if (deps.aiLogs) {
@@ -147,7 +164,8 @@ export async function runMeetingAnalysis(
     }
     return { ok: false, error: "PROMPT_NOT_CONFIGURED", message };
   }
-  if (!promptVersion) {
+  const promptVersion = prompt?.globalVersion;
+  if (!prompt || !promptVersion) {
     if (deps.aiLogs) {
       const model = await resolvePromptGatewayModel(deps.prompts, input.kind);
       await recordAiRequestError(
@@ -169,6 +187,12 @@ export async function runMeetingAnalysis(
   }
 
   const model = await resolvePromptGatewayModel(deps.prompts, input.kind);
+  const logPromptVersion = aiLogPromptVersionLabel({
+    globalVersion: promptVersion.version,
+    organizationPromptVersionId: prompt.organizationPromptVersionId,
+  });
+  /** La trace, sur l'analyse, de la consigne d'organisation qui l'a produite. */
+  const { organizationPromptVersionId } = prompt;
 
   try {
     if (
@@ -177,7 +201,7 @@ export async function runMeetingAnalysis(
       input.kind === "OBJECTIONS"
     ) {
       const profileSystemMarkdown = composeAnalysisSystemMarkdown(
-        promptVersion.markdown,
+        prompt.markdown,
         [input.organizationPlaybookMarkdown],
       );
       /*
@@ -204,7 +228,7 @@ export async function runMeetingAnalysis(
         jobId: input.jobId ?? null,
         kind: aiLogKind(input.kind),
         modelName: model,
-        promptVersion: String(promptVersion.version),
+        promptVersion: logPromptVersion,
         systemPrompt,
         userPrompt,
       };
@@ -237,12 +261,15 @@ export async function runMeetingAnalysis(
         });
         const result =
           input.kind === "SONCAS"
-            ? applySoncasEvidenceRule(out.result)
+            ? applySoncasEvidenceRule(
+                keepSoncasEvidenceFoundIn(out.result, evidenceSource),
+              )
             : out.result;
         const row = await deps.meetings.createAnalysis({
           meetingId: meeting.id,
           kind: input.kind,
           promptVersionId: promptVersion.id,
+          organizationPromptVersionId,
           model,
           result,
         });
@@ -273,7 +300,7 @@ export async function runMeetingAnalysis(
       }
 
       const scorecardSystemMarkdown = composeAnalysisSystemMarkdown(
-        promptVersion.markdown,
+        prompt.markdown,
         [input.organizationPlaybookMarkdown],
       );
       const systemPrompt = withScorecardSystemPrompt(
@@ -290,7 +317,7 @@ export async function runMeetingAnalysis(
         jobId: input.jobId ?? null,
         kind: aiLogKind(input.kind),
         modelName: model,
-        promptVersion: String(promptVersion.version),
+        promptVersion: logPromptVersion,
         systemPrompt,
         userPrompt,
       };
@@ -316,14 +343,21 @@ export async function runMeetingAnalysis(
           outputTokens: out.usage?.outputTokens ?? null,
           latencyMs: Date.now() - started,
         });
+        /*
+          Les preuves introuvables dans le transcript sont retirées, et un
+          critère resté sans preuve est plafonné, avant le calcul du score :
+          une grille notée 100 sur des définitions recopiées ne passe plus.
+        */
+        const checked = applyScorecardEvidenceRule(out.result, evidenceSource);
         const { blocks, overallScore } = computeScorecardScore(
           grid,
-          out.result.criteria,
+          checked.criteria,
         );
         const row = await deps.meetings.createAnalysis({
           meetingId: meeting.id,
           kind: input.kind,
           promptVersionId: promptVersion.id,
+          organizationPromptVersionId,
           model,
           /*
             La grille employée est enregistrée avec les niveaux. Une analyse
@@ -331,7 +365,7 @@ export async function runMeetingAnalysis(
             où elle a été produite, même si la grille a gagné un critère depuis.
           */
           result: {
-            ...out.result,
+            ...checked,
             gridId: grid.id,
             gridName: grid.name,
             overallScore,
@@ -379,16 +413,13 @@ export async function runMeetingAnalysis(
       }),
     ]);
 
-    const kissSystemMarkdown = composeAnalysisSystemMarkdown(
-      promptVersion.markdown,
-      [
-        analysisSystemBlock(
-          KISS_PLATFORM_BLOCK_HEADING,
-          input.kissSystemMarkdownAppendix,
-        ),
-        input.organizationPlaybookMarkdown,
-      ],
-    );
+    const kissSystemMarkdown = composeAnalysisSystemMarkdown(prompt.markdown, [
+      analysisSystemBlock(
+        KISS_PLATFORM_BLOCK_HEADING,
+        input.kissSystemMarkdownAppendix,
+      ),
+      input.organizationPlaybookMarkdown,
+    ]);
     /*
       Le même enrobage que celui appliqué par l'adaptateur, et non l'enrobage
       générique. Le modèle recevait déjà le bon texte ; c'est la ligne
@@ -409,7 +440,7 @@ export async function runMeetingAnalysis(
       jobId: input.jobId ?? null,
       kind: aiLogKind(input.kind),
       modelName: model,
-      promptVersion: String(promptVersion.version),
+      promptVersion: logPromptVersion,
       systemPrompt,
       userPrompt,
     };
@@ -434,6 +465,7 @@ export async function runMeetingAnalysis(
         meetingId: meeting.id,
         kind: input.kind,
         promptVersionId: promptVersion.id,
+        organizationPromptVersionId,
         model,
         result: out.result,
       });

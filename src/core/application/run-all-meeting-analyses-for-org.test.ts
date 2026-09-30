@@ -324,4 +324,29 @@ describe("runAllMeetingAnalysesForOrg", () => {
       expect(call[1].organizationPlaybookMarkdown).toBeNull();
     }
   });
+  /*
+    Chaque étage de la séquence recompose les dépendances qu'il transmet :
+    une consigne d'organisation oubliée en route ferait analyser avec la
+    consigne d'origine sans que rien ne le signale.
+  */
+  it("transmet les consignes de l'organisation aux cinq analyses", async () => {
+    runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
+    const organizationPrompts = { findLatest: jest.fn() };
+    const deps = { ...makeDeps(), organizationPrompts };
+    deps.meetings.findMeetingDetailWithAnalyses.mockResolvedValue({
+      id: "m1",
+      analyses: [],
+    });
+
+    await runAllMeetingAnalysesForOrg(deps as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    expect(runMeetingAnalysisMock).toHaveBeenCalledTimes(5);
+    for (const call of runMeetingAnalysisMock.mock.calls) {
+      expect(call[0].organizationPrompts).toBe(organizationPrompts);
+    }
+  });
 });

@@ -82,7 +82,7 @@ Sync credentials (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) are read
 
    Expect `{ "ok": true, ... }`, not `{ "error": "Unauthorized" }`.
 
-   RDV create/update/retry runs analysis **in-process** via Next.js `after()`. A **daily** cron (`0 4 * * *` in `vercel.json`) runs `/api/cron/process-analysis-jobs` as a reconciliation backup for stuck or orphaned jobs.
+   RDV create/update/retry runs analysis **in-process** via Next.js `after()`. A cron every 5 minutes (`*/5 * * * *` in `vercel.json`) runs `/api/cron/process-analysis-jobs` as a reconciliation backup for stuck or orphaned jobs.
 
 ## Rotate a secret
 

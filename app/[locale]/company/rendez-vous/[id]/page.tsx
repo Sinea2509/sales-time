@@ -3,9 +3,8 @@ import { MeetingDetailShell } from "@/components/organisms/meeting-detail-shell"
 import { getApplicationDeps } from "@/lib/application-deps";
 import { isAudioFilename } from "@/lib/audio-transcript";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
-import { checkAiGatewayConfigured } from "@/lib/env";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
-import { summarizeMeetingDetail } from "@/src/core/application/summarize-meeting-detail";
+import { meetingVisitReportForPage } from "@/src/core/application/summarize-meeting-detail";
 import {
   discResultSchema,
   soncasResultSchema,
@@ -28,6 +27,7 @@ import { scorecardCriteria } from "@/src/core/domain/scorecard-grid";
 import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
 import { talkShareFromTranscript } from "@/src/core/domain/talk-share-from-transcript";
+import { visitReportWithoutSellerCoaching } from "@/src/core/domain/visit-report";
 import { memberDisplayName } from "@/src/core/domain/weekly-manager-digest";
 
 export const dynamic = "force-dynamic";
@@ -143,25 +143,26 @@ export default async function RendezVousDetailPage({
   });
 
   /*
-    Le compte rendu ne s'écrit plus pendant le rendu de la page : la fiche
-    s'ouvre tout de suite, et le texte se compose sous les yeux du lecteur.
+    Le compte rendu ne s'écrit pas pendant le rendu de la page : la fiche
+    s'ouvre tout de suite. S'il manque sur un rendez-vous analysé, la fiche le
+    demande à l'ouverture (`streamVisitReport`) et l'affiche dès qu'il est écrit.
   */
-  const synthesis = await summarizeMeetingDetail(
-    { ...deps, meetings: deps.meetings },
-    {
-      meeting,
-      discResult: discParsed?.success ? discParsed.data : null,
-      soncasResult: soncasParsed?.success ? soncasParsed.data : null,
-      kissResult: kissParsed?.success ? kissParsed.data : null,
-      organizationId,
-      generateIfMissing: false,
-    },
-  );
-  const streamVisitReport =
-    !synthesis.fromAi &&
-    meeting.status === "READY" &&
-    meeting.transcript.trim().length > 0 &&
-    checkAiGatewayConfigured().ok;
+  const synthesis = meetingVisitReportForPage({
+    meeting,
+    discResult: discParsed?.success ? discParsed.data : null,
+    soncasResult: soncasParsed?.success ? soncasParsed.data : null,
+    kissResult: kissParsed?.success ? kissParsed.data : null,
+  });
+  const streamVisitReport = synthesis.needsWriting;
+  /*
+    La grille et le coaching ne se lisent que par le commercial assigné et les
+    managers. Le compte rendu en reprend une partie : pour les autres membres,
+    ces rubriques sont retirées ici, côté serveur, avant d'atteindre la page.
+  */
+  const meetingSynthesis =
+    synthesis.fromAi && !canViewSellerCoaching
+      ? visitReportWithoutSellerCoaching(synthesis.meetingSynthesis)
+      : synthesis.meetingSynthesis;
 
   const transcriptWords = countWords(meeting.transcript);
   const transcribedFromAudio =
@@ -234,7 +235,7 @@ export default async function RendezVousDetailPage({
         },
       }}
       analysisProgress={analysisProgress}
-      meetingSynthesis={synthesis.meetingSynthesis}
+      meetingSynthesis={meetingSynthesis}
       synthesisFromAi={synthesis.fromAi}
       streamVisitReport={streamVisitReport}
       soncasResult={soncasParsed?.success ? soncasParsed.data : null}

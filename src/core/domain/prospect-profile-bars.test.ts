@@ -2,8 +2,10 @@ import { discResultSchema, soncasResultSchema } from "./analysis-result-zod";
 import {
   discBarItemsForUi,
   discBarsFromResult,
+  discPrincipalForUi,
   soncasBarItemsForUi,
   soncasBarsFromResult,
+  soncasPrincipalForUi,
 } from "./prospect-profile-bars";
 
 const disc = discResultSchema.parse({
@@ -27,16 +29,22 @@ const soncas = soncasResultSchema.parse({
 });
 
 describe("prospect-profile-bars", () => {
-  it("orders DISC bars by descending score", () => {
+  it("orders DISC bars by descending score, and shows each score on 100", () => {
     const bars = discBarsFromResult(disc);
     expect(bars[0]?.key).toBe("C");
-    expect(bars[0]?.pct).toBe(50);
+    expect(bars.map((b) => b.pct)).toEqual([90, 40, 30, 20]);
+    expect(bars[0]?.label).toBe("Conformité");
   });
 
-  it("orders SONCAS bars by descending score", () => {
+  it("orders SONCAS bars by descending score, and shows each score on 100", () => {
     const bars = soncasBarsFromResult(soncas);
     expect(bars[0]?.key).toBe("securite");
-    expect(bars[0]?.pct).toBe(35);
+    expect(bars.map((b) => b.pct)).toEqual([80, 50, 40, 30, 20, 10]);
+  });
+
+  it("names the principal lever and style announced by the analysis", () => {
+    expect(soncasPrincipalForUi(soncas).label).toBe("Sécurité");
+    expect(discPrincipalForUi(disc).label).toBe("Conformité");
   });
 });
 

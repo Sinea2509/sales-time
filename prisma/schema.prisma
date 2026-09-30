@@ -171,6 +171,7 @@ model User {
   notifications                 Notification[]
   feedbacks                     Feedback[]
   planRequestsSubmitted         PlanRequest[]          @relation("PlanRequestRequester")
+  organizationPromptVersions    OrganizationPromptVersion[]
 
   @@index([managerId])
 }
@@ -225,6 +226,7 @@ model Organization {
   feedbacks    Feedback[]
   notifications Notification[]
   aiSummaryCaches AiSummaryCache[]
+  promptVersions OrganizationPromptVersion[]
 }
 
 model AiSummaryCache {
@@ -461,12 +463,17 @@ model MeetingAnalysis {
   kind            AnalysisKind
   promptVersionId String
   promptVersion   PromptTemplateVersion @relation(fields: [promptVersionId], references: [id], onDelete: Restrict)
+  /// La consigne de l'organisation qui a produit l'analyse ; null quand c'est
+  /// celle du super admin (ou du code) qui a servi.
+  organizationPromptVersionId String?
+  organizationPromptVersion   OrganizationPromptVersion? @relation(fields: [organizationPromptVersionId], references: [id], onDelete: SetNull)
   model           String
   result          Json
   rawText         String?               @db.Text
   createdAt       DateTime              @default(now())
 
   @@index([meetingId, kind])
+  @@index([organizationPromptVersionId])
 }
 
 model PromptTemplate {
@@ -492,6 +499,28 @@ model PromptTemplateVersion {
   analyses     MeetingAnalysis[]
 
   @@unique([templateId, version])
+}
+
+/// Les consignes d'une organisation (Paramètres, Coach IA), par type.
+///
+/// Rien ne se modifie ni ne s'efface : chaque enregistrement et chaque
+/// réinitialisation d'un manager ajoutent une ligne. La consigne en vigueur est
+/// la dernière ligne de l'organisation pour ce type ; un texte nul veut dire
+/// « consigne d'origine », celle du super admin.
+model OrganizationPromptVersion {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  kind           AnalysisKind
+  /// Le texte enregistré par le manager ; null quand il a réinitialisé.
+  markdown       String?      @db.Text
+  /// Null quand l'auteur a été supprimé par le super admin : la ligne reste.
+  authorUserId   String?
+  author         User?        @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  analyses       MeetingAnalysis[]
+
+  @@index([organizationId, kind, createdAt])
 }
 
 /// Singleton (id = `default`) : consignes KISS par quadrant, éditées en super admin.

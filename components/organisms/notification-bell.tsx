@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -56,7 +57,14 @@ export function NotificationBell({
         }
       />
       <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+        {/*
+          Le titre d'un menu Base UI doit vivre dans un groupe : placé seul, il
+          lève l'erreur n° 31 (MenuGroupContext is missing) au premier clic, et
+          la page entière tombait avec lui.
+        */}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         {localItems.length === 0 ? (
           <p className="text-muted-foreground px-2 py-3 text-sm">

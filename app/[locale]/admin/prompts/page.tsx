@@ -3,6 +3,7 @@ import { SuperAdminPromptsShell } from "@/components/organisms/super-admin-promp
 import { PageHeader } from "@/components/molecules/page-header";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { ALL_ANALYSIS_PROMPT_KINDS } from "@/lib/analysis-prompt-kinds";
+import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "@/lib/default-analysis-prompts";
 import {
   ANALYSIS_KIND_SLUGS,
   type AnalysisKindSlug,
@@ -38,12 +39,19 @@ async function loadPromptPanel(kind: AnalysisKindSlug) {
     }),
   );
 
-  const initialMarkdown =
-    current?.markdown ?? "(Aucun prompt : exécutez `npx prisma db seed`.)";
+  /*
+    Sans version publiée, l'éditeur s'ouvre sur la consigne d'origine, celle
+    que les analyses emploient déjà. Il s'ouvrait sur un texte de service
+    (« Aucun prompt : exécutez npx prisma db seed ») qu'une publication
+    distraite aurait installé comme consigne de toutes les organisations.
+  */
+  const defaultMarkdown = DEFAULT_ANALYSIS_PROMPT_MARKDOWN[kind];
+  const initialMarkdown = current?.markdown ?? defaultMarkdown;
 
   return {
     kind,
     initialMarkdown,
+    defaultMarkdown,
     initialModel,
     versionCount: versions.length,
     versions: versions.map((v) => ({

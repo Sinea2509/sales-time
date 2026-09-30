@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { updatePlanRequestStatusAction } from "@/app/[locale]/company/plan-actions";
 import type { PlanRequestRow } from "@/src/core/ports/plan-request-repository-port";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 export function AdminPlanRequestsTable({ rows }: { rows: PlanRequestRow[] }) {
   const [, startTransition] = useTransition();
@@ -25,7 +26,7 @@ export function AdminPlanRequestsTable({ rows }: { rows: PlanRequestRow[] }) {
           {rows.map((row) => (
             <tr key={row.id}>
               <td className="px-3 py-2 whitespace-nowrap">
-                {row.createdAt.toLocaleString("fr-FR")}
+                {row.createdAt.toLocaleString("fr-FR", { timeZone: APP_TIME_ZONE })}
               </td>
               <td className="px-3 py-2">{row.organizationName}</td>
               <td className="px-3 py-2">

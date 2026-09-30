@@ -85,6 +85,16 @@ export default function proxy(request: NextRequest) {
     }
   }
 
+  /*
+    Les routes /api n'ont pas de langue : passées au middleware next-intl,
+    elles étaient réécrites vers une page de langue qui n'existe pas, et
+    répondaient 404 (crons de rattrapage, compte rendu écrit à l'ouverture).
+    Elles ne passent ici que pour le contrôle de session, ci-dessus.
+  */
+  if (pathForAuth === "/api" || pathForAuth.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   return intlMiddleware(request);
 }
 

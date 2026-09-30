@@ -10,6 +10,7 @@ import {
   organizationPlaybookFullFormSchema,
   organizationPlaybookToJson,
 } from "@/src/core/domain/organization-playbook";
+import { ORG_PITCH_MAX, ORG_VOCABULARY_MAX } from "@/lib/org-coach-text-limits";
 
 async function requireOrgSettingsManagerOrganizationId(): Promise<string | null> {
   const actor = await loadOrgSettingsActor();
@@ -26,10 +27,10 @@ const orgContextSchema = z.object({
 });
 
 const orgCoachSchema = z.object({
-  companyPitch: z.string().max(500).optional().nullable(),
+  companyPitch: z.string().max(ORG_PITCH_MAX).optional().nullable(),
   objections: z.array(z.string().max(300)).max(30),
   keyArguments: z.array(z.string().max(400)).max(30),
-  industryVocabulary: z.string().max(500).optional().nullable(),
+  industryVocabulary: z.string().max(ORG_VOCABULARY_MAX).optional().nullable(),
 });
 
 const orgProcessSchema = z.object({

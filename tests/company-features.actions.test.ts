@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import { Prisma } from "@/lib/generated/prisma/client";
-import {
-  createCoachSharedPhrase,
-  listCoachSharedPhrases,
-} from "@/app/[locale]/company/coach-shared-phrases-actions";
+import { listCoachSharedPhrases } from "@/app/[locale]/company/coach-shared-phrases-actions";
 import {
   createContactInlineAction,
   createContactAction,
@@ -220,6 +217,7 @@ jest.mock("@/lib/application-deps", () => {
       findMeetingDetailWithAnalyses: jest.fn(),
       updateMeetingFollowUpDraft: jest.fn().mockResolvedValue(undefined),
       updateMeetingStatus: jest.fn().mockResolvedValue(undefined),
+      updateMeetingVisitReportDraft: jest.fn().mockResolvedValue(true),
     },
     organizationTeamMock: {
       listMembersAndPendingInvitations: jest
@@ -451,108 +449,21 @@ describe("coach shared phrases actions", () => {
     expect(result).toEqual({ ok: false, message: "Type invalide." });
   });
 
-  it("listCoachSharedPhrases returns builtins and community rows", async () => {
+  it("listCoachSharedPhrases ne propose que les suggestions intégrées, jamais les formulations d'une autre organisation", async () => {
     onboardingSharedPhrasesMock.listByKind.mockResolvedValue([
       {
         id: "phrase_1",
-        text: "Phrase communautaire unique",
-        normalizedText: "phrase communautaire unique",
+        text: "Phrase saisie par une autre organisation",
+        normalizedText: "phrase saisie par une autre organisation",
       },
     ]);
     const result = await listCoachSharedPhrases("OBJECTION");
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.phrases.some((p) => p.source === "builtin")).toBe(true);
-    expect(result.phrases.some((p) => p.id === "phrase_1")).toBe(true);
-  });
-
-  it("listCoachSharedPhrases skips community rows matching builtins", async () => {
-    onboardingSharedPhrasesMock.listByKind.mockResolvedValue([
-      {
-        id: "dup",
-        text: DEFAULT_OBJECTION_PHRASES[0],
-        normalizedText: DEFAULT_OBJECTION_PHRASES[0].trim().toLowerCase(),
-      },
-    ]);
-    const result = await listCoachSharedPhrases("OBJECTION");
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.phrases.some((p) => p.id === "dup")).toBe(false);
-  });
-
-  it("createCoachSharedPhrase redirects guests", async () => {
-    getAuthenticatedPrincipalMock.mockResolvedValue(null);
-    await expect(
-      createCoachSharedPhrase({ kind: "OBJECTION", text: "Nouvelle phrase" }),
-    ).rejects.toThrow("REDIRECT:/sign-in");
-  });
-
-  it("createCoachSharedPhrase validates input", async () => {
-    const result = await createCoachSharedPhrase({
-      kind: "OBJECTION",
-      text: "ab",
-    });
-    expect(result.ok).toBe(false);
-  });
-
-  it("createCoachSharedPhrase rejects missing user", async () => {
-    findByIdMock.mockResolvedValue(null);
-    const result = await createCoachSharedPhrase({
-      kind: "OBJECTION",
-      text: "Phrase communautaire valide",
-    });
-    expect(result).toEqual({ ok: false, message: "Utilisateur introuvable." });
-  });
-
-  it("createCoachSharedPhrase rejects builtin duplicate", async () => {
-    const result = await createCoachSharedPhrase({
-      kind: "OBJECTION",
-      text: DEFAULT_OBJECTION_PHRASES[0],
-    });
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.message).toContain("liste intégrée");
-  });
-
-  it("createCoachSharedPhrase creates community phrase", async () => {
-    onboardingSharedPhrasesMock.createPhrase.mockResolvedValue({
-      id: "new_phrase",
-      text: "Phrase communautaire valide",
-    });
-    const result = await createCoachSharedPhrase({
-      kind: "ARGUMENT",
-      text: "Phrase communautaire valide",
-    });
-    expect(result).toEqual({
-      ok: true,
-      phrase: {
-        id: "new_phrase",
-        text: "Phrase communautaire valide",
-        source: "community",
-      },
-    });
-  });
-
-  it("createCoachSharedPhrase maps duplicate db error", async () => {
-    onboardingSharedPhrasesMock.createPhrase.mockRejectedValue(
-      new Error("duplicate"),
-    );
-    const result = await createCoachSharedPhrase({
-      kind: "ARGUMENT",
-      text: "Autre phrase communautaire",
-    });
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.message).toContain("collection partagée");
-  });
-
-  it("createCoachSharedPhrase rejects phrase shorter than 3 chars after normalize", async () => {
-    normalizePhraseKeyMock.mockReturnValue("ab");
-    const result = await createCoachSharedPhrase({
-      kind: "ARGUMENT",
-      text: "valid length phrase",
-    });
-    expect(result).toEqual({ ok: false, message: "Phrase trop courte." });
+    expect(result.phrases.length).toBe(DEFAULT_OBJECTION_PHRASES.length);
+    expect(result.phrases.every((p) => p.source === "builtin")).toBe(true);
+    expect(result.phrases.some((p) => p.id === "phrase_1")).toBe(false);
+    expect(onboardingSharedPhrasesMock.listByKind).not.toHaveBeenCalled();
   });
 });
 
@@ -1025,6 +936,20 @@ describe("rendez-vous actions", () => {
     );
   });
 
+  it("createMeetingAction lit l'heure du formulaire en heure de Paris", async () => {
+    // Le champ datetime-local envoie l'heure sans fuseau : 16 h 30 à Paris.
+    const result = await createMeetingAction(
+      meetingFormData({ meetingAt: "2026-09-24T16:30" }),
+    );
+    expect(result.ok).toBe(true);
+    expect(createMeetingForOrgMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        meetingAt: new Date("2026-09-24T14:30:00.000Z"),
+      }),
+    );
+  });
+
   it("createMeetingAction rejects missing org", async () => {
     mockNoOrgPrincipal();
     const result = await createMeetingAction(meetingFormData());
@@ -1343,6 +1268,12 @@ describe("rendez-vous actions", () => {
     });
     expect(analysisJobsMock.enqueueMeetingAnalysis).toHaveBeenCalled();
     expect(scheduleAnalysisJobsAfterResponseMock).toHaveBeenCalled();
+    // Le compte rendu enregistré ne correspond plus à la fiche : il sera réécrit.
+    expect(meetingsMock.updateMeetingVisitReportDraft).toHaveBeenCalledWith({
+      id: MEETING_ID,
+      organizationId: expect.any(String),
+      visitReportDraft: null,
+    });
   });
 });
 

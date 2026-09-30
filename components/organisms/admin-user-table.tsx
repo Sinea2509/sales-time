@@ -41,6 +41,7 @@ import {
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
 import { AdminExportButton } from "@/components/molecules/admin-export-button";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type UserRow = {
   id: string;
@@ -192,6 +193,7 @@ export function AdminUserTable({ users, organizations }: Props) {
         </div>
         <Select
           value={statusFilter}
+          items={{ all: "Tous", ACTIVE: "Actifs", DISABLED: "Bloqués" }}
           onValueChange={(v: string | null) => {
             if (v) setStatusFilter(v as "all" | "ACTIVE" | "DISABLED");
           }}
@@ -388,7 +390,9 @@ export function AdminUserTable({ users, organizations }: Props) {
                       </span>
                     </td>
                     <td className="hidden whitespace-nowrap px-4 py-3.5 text-muted-foreground lg:table-cell">
-                      {new Date(user.createdAt).toLocaleDateString("fr-FR")}
+                      {new Date(user.createdAt).toLocaleDateString("fr-FR", {
+                        timeZone: APP_TIME_ZONE,
+                      })}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -618,6 +622,10 @@ export function AdminUserTable({ users, organizations }: Props) {
               <Label>Rôle</Label>
               <Select
                 value={inviteRole}
+                items={{
+                  MEMBER: organizationMembershipRoleLabel("MEMBER"),
+                  ADMIN: organizationMembershipRoleLabel("ADMIN"),
+                }}
                 onValueChange={(v: string | null) => {
                   if (v) setInviteRole(v as "ADMIN" | "MEMBER");
                 }}

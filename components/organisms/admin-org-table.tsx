@@ -32,6 +32,7 @@ import {
 } from "@/app/[locale]/admin/organizations/actions";
 import { AdminExportButton } from "@/components/molecules/admin-export-button";
 import { TableEmptyRow } from "@/components/atoms/table-empty-row";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type OrgRow = {
   id: string;
@@ -288,7 +289,9 @@ export function AdminOrgTable({ organizations }: Props) {
                       </span>
                     </td>
                     <td className="hidden whitespace-nowrap px-4 py-3.5 text-muted-foreground lg:table-cell">
-                      {new Date(org.createdAt).toLocaleDateString("fr-FR")}
+                      {new Date(org.createdAt).toLocaleDateString("fr-FR", {
+                        timeZone: APP_TIME_ZONE,
+                      })}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">

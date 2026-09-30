@@ -1,3 +1,5 @@
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
+
 type AdminRecentUserRow = {
   id: string;
   firstName: string | null;
@@ -60,7 +62,9 @@ export function AdminRecentActivitySection({
                   {u.status === "ACTIVE" ? "Actif" : "Bloqué"}
                 </span>
                 <span className="whitespace-nowrap text-xs text-muted-foreground">
-                  {u.createdAt.toLocaleDateString("fr-FR")}
+                  {u.createdAt.toLocaleDateString("fr-FR", {
+                    timeZone: APP_TIME_ZONE,
+                  })}
                 </span>
               </div>
             </div>
@@ -88,7 +92,9 @@ export function AdminRecentActivitySection({
                 </p>
               </div>
               <span className="whitespace-nowrap text-xs text-muted-foreground">
-                {org.createdAt.toLocaleDateString("fr-FR")}
+                {org.createdAt.toLocaleDateString("fr-FR", {
+                  timeZone: APP_TIME_ZONE,
+                })}
               </span>
             </div>
           ))}

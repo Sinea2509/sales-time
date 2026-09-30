@@ -8,6 +8,7 @@ import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { discResultSchema, soncasResultSchema } from "@/src/core/domain/analysis-result-zod";
+import { toAppTimeZoneDatetimeLocal } from "@/src/core/domain/app-time-zone";
 
 export async function prepareMeetingBriefing(
   deps: {
@@ -45,7 +46,7 @@ export async function prepareMeetingBriefing(
       const soncas = detail?.analyses.find((a) => a.kind === "SONCAS");
       const kissParsed = kiss ? kissResultSchema.safeParse(kiss.result) : null;
       return {
-        meetingAt: m.meetingAt.toISOString(),
+        meetingAt: toAppTimeZoneDatetimeLocal(m.meetingAt),
         stage: m.pipelineStage,
         summary: kissParsed?.success ? kissParsed.data.summary : null,
         disc: disc ? discResultSchema.safeParse(disc.result).data ?? null : null,

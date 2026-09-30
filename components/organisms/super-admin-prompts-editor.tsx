@@ -52,6 +52,7 @@ import { Separator } from "@/components/ui/separator";
 import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import { MarkdownPreview } from "@/components/atoms/markdown-preview";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type VersionRow = {
   id: string;
@@ -65,6 +66,8 @@ type VersionRow = {
 type Props = {
   kind: AnalysisKindSlug;
   initialMarkdown: string;
+  /** La consigne d'origine de Sales Time, que « Consigne d'origine » remet. */
+  defaultMarkdown: string;
   initialModel: string;
   versions: VersionRow[];
 };
@@ -189,6 +192,7 @@ function computeSideBySideDiff(
 export function SuperAdminPromptsEditor({
   kind,
   initialMarkdown,
+  defaultMarkdown,
   initialModel,
   versions,
 }: Props) {
@@ -387,25 +391,43 @@ export function SuperAdminPromptsEditor({
                 <Label htmlFor={`md-${kind}`} className="text-sm font-medium">
                   Markdown
                 </Label>
-                <Button
-                  type="button"
-                  variant={showPreview ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => setShowPreview((p) => !p)}
-                  className="shrink-0"
-                >
-                  {showPreview ? (
-                    <>
-                      <EyeOff className="mr-1.5 size-3.5" />
-                      Masquer l&apos;aperçu
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="mr-1.5 size-3.5" />
-                      Aperçu rendu
-                    </>
-                  )}
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={markdown === defaultMarkdown}
+                    onClick={() => setMarkdown(defaultMarkdown)}
+                    className="shrink-0"
+                    title={
+                      markdown === defaultMarkdown
+                        ? "Le brouillon est déjà la consigne d'origine de Sales Time"
+                        : "Remet dans le brouillon la consigne d'origine de Sales Time, sans la publier"
+                    }
+                  >
+                    <RotateCcw className="mr-1.5 size-3.5" />
+                    Consigne d&apos;origine
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={showPreview ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => setShowPreview((p) => !p)}
+                    className="shrink-0"
+                  >
+                    {showPreview ? (
+                      <>
+                        <EyeOff className="mr-1.5 size-3.5" />
+                        Masquer l&apos;aperçu
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="mr-1.5 size-3.5" />
+                        Aperçu rendu
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
               <Textarea
                 id={`md-${kind}`}
@@ -698,6 +720,7 @@ export function SuperAdminPromptsEditor({
                         dateTime={v.createdAt}
                       >
                         {new Date(v.createdAt).toLocaleString("fr-FR", {
+                          timeZone: APP_TIME_ZONE,
                           dateStyle: "short",
                           timeStyle: "short",
                         })}

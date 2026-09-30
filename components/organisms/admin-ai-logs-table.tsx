@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type { AiRequestLogRow } from "@/src/core/ports/ai-request-log-repository-port";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type AdminAiLogRow = Omit<AiRequestLogRow, "createdAt"> & {
   createdAt: Date | string;
@@ -56,7 +57,9 @@ export function AdminAiLogsTable({ rows }: { rows: AdminAiLogRow[] }) {
             {rows.map((row) => (
               <tr key={row.id} className="hover:bg-muted/30">
                 <td className="px-3 py-2 whitespace-nowrap">
-                  {new Date(row.createdAt).toLocaleString("fr-FR")}
+                  {new Date(row.createdAt).toLocaleString("fr-FR", {
+                    timeZone: APP_TIME_ZONE,
+                  })}
                 </td>
                 <td className="px-3 py-2">{row.kind}</td>
                 <td className="px-3 py-2">

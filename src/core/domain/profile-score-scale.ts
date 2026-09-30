@@ -122,7 +122,7 @@ ${blocDesTranches()}
 
 When you hesitate between two bands, take the lower one. An overstated driver is not a harmless rounding: the seller reads it as the lever to pull at the next meeting, and pulls a lever this prospect never asked for.
 
-No band above the first is free. Before placing a driver above ${PROFILE_SCORE_UNPROVEN_MAX}, find the prospect's own words that carry it and copy 1 to 3 of them into that driver's \`evidence\`, as they were said and in the language of the transcript. Never rewrite a quote and never compose one. A driver you cannot back with words stays in the first band, whatever the meeting felt like, and the product puts it back there if you place it higher with an empty \`evidence\`.
+No band above the first is free. Before placing a driver above ${PROFILE_SCORE_UNPROVEN_MAX}, find the prospect's own words that carry it and copy 1 to 3 of them into that driver's \`evidence\`, as they were said and in the language of the transcript. Never rewrite a quote and never compose one. A driver you cannot back with words stays in the first band, whatever the meeting felt like, and the product puts it back there if you place it higher with an empty \`evidence\`, after removing every quote it cannot find in the transcript.
 
 Score the prospect, never the seller. A seller who talks about price for an hour does not make \`argent\` a driver of a prospect who never picked it up.`;
 }

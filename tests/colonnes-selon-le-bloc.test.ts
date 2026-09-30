@@ -57,7 +57,12 @@ function seuils(texte: string, suffixe: string): number[] {
 
 function fichiersSources(dossier: string, liste: string[] = []): string[] {
   for (const nom of readdirSync(path.join(RACINE, dossier))) {
-    const relatif = path.join(dossier, nom);
+    /*
+      Chemin relatif écrit avec des barres obliques, quel que soit le système :
+      la liste se compare à des chemins écrits ainsi, et sous Windows
+      `path.join` aurait rendu des barres inverses qui ne leur ressemblent pas.
+    */
+    const relatif = path.posix.join(dossier, nom);
     if (statSync(path.join(RACINE, relatif)).isDirectory()) {
       fichiersSources(relatif, liste);
     } else if (relatif.endsWith(".tsx") || relatif.endsWith(".ts")) {

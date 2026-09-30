@@ -1,5 +1,6 @@
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
 import type { SellerCommercialMeetingDigestForSummary } from "@/src/core/ports/analysis-port";
+import { toAppTimeZoneDatetimeLocal } from "@/src/core/domain/app-time-zone";
 
 const MAX_MEETINGS_FOR_AI = 16;
 const MAX_TRANSCRIPT_CHARS = 2400;
@@ -12,7 +13,7 @@ export function buildMeetingDigestsForAiSummary(
   );
   return sorted.slice(0, MAX_MEETINGS_FOR_AI).map((m) => ({
     prospectName: m.prospectName,
-    meetingAt: m.meetingAt.toISOString(),
+    meetingAt: toAppTimeZoneDatetimeLocal(m.meetingAt),
     meetingType: m.meetingType,
     transcriptExcerpt:
       m.transcript.length > MAX_TRANSCRIPT_CHARS

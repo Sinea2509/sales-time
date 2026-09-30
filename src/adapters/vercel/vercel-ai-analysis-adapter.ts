@@ -1,4 +1,4 @@
-import { generateObject, generateText, streamText } from "ai";
+import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import {
   discAnalysisOutputSchema,
@@ -10,7 +10,7 @@ import { scorecardGeneratedResultSchema } from "@/src/core/domain/scorecard-resu
 import { objectionsResultSchema } from "@/src/core/domain/objections-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
-import { meetingDetailSynthesisSchema } from "@/src/core/domain/meeting-detail-synthesis-zod";
+import { visitReportExtractionSchema } from "@/src/core/domain/visit-report-zod";
 import { teamCoachingRecommendationsSchema } from "@/src/core/domain/team-coaching-recommendations-zod";
 import type {
   AnalysisPort,
@@ -399,7 +399,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     };
   }
 
-  async streamMeetingVisitReport(input: {
+  async extractVisitReport(input: {
     systemMarkdown: string;
     model: string;
     prospectName: string;
@@ -407,95 +407,41 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     meetingAt: string;
     outcome: string;
     meetingType: string | null;
-    pipelineStage: string | null;
-    transcriptExcerpt: string;
-    discResult: unknown;
-    soncasResult: unknown;
-    kissResult: unknown;
-  }) {
-    /*
-      Le même prompt que la synthèse structurée, mais il ne rend qu'un seul
-      des deux champs : le compte rendu, en texte brut, pour qu'il puisse
-      s'afficher lettre à lettre. Le profil de l'interlocuteur, lui, se lit
-      déjà dans les analyses DISC et SONCAS.
-    */
-    const system = withDataScopeSystemPrompt(
-      [
-        input.systemMarkdown,
-        "",
-        "Consigne de format pour cette réponse : rends uniquement le texte du champ meetingSynthesis, sans JSON, sans guillemets, sans le champ interlocutorProfile, sans commentaire.",
-      ].join("\n"),
-    );
-    const userContent = [
-      "Contexte rendez-vous (JSON) :",
-      JSON.stringify(
-        {
-          prospect: input.prospectName,
-          entreprise: input.prospectCompany,
-          dateRdv: input.meetingAt,
-          resultat: input.outcome,
-          typeRdv: input.meetingType,
-          etape: input.pipelineStage,
-          extraitTranscript: input.transcriptExcerpt,
-          discResult: input.discResult,
-          soncasResult: input.soncasResult,
-          kissResult: input.kissResult,
-        },
-        null,
-        2,
-      ),
-    ].join("\n");
-
-    const result = streamText({
-      model: input.model,
-      system,
-      prompt: userContent,
-      maxOutputTokens: 900,
-    });
-    return { textStream: result.textStream, text: result.text };
-  }
-
-  async summarizeMeetingDetail(input: {
-    systemMarkdown: string;
-    model: string;
-    prospectName: string;
-    prospectCompany: string | null;
-    meetingAt: string;
-    outcome: string;
-    meetingType: string | null;
-    pipelineStage: string | null;
-    transcriptExcerpt: string;
-    discResult: unknown;
-    soncasResult: unknown;
-    kissResult: unknown;
+    transcript: string;
+    notes: string | null;
+    soncasSummary: string | null;
+    discSummary: string | null;
   }) {
     const system = withDataScopeSystemPrompt(input.systemMarkdown);
-    const userContent = [
-      "Contexte rendez-vous (JSON) :",
-      JSON.stringify(
-        {
-          prospect: input.prospectName,
-          entreprise: input.prospectCompany,
-          dateRdv: input.meetingAt,
-          resultat: input.outcome,
-          typeRdv: input.meetingType,
-          etape: input.pipelineStage,
-          extraitTranscript: input.transcriptExcerpt,
-          discResult: input.discResult,
-          soncasResult: input.soncasResult,
-          kissResult: input.kissResult,
-        },
-        null,
-        2,
-      ),
+    const context = JSON.stringify(
+      {
+        prospect: input.prospectName,
+        entreprise: input.prospectCompany,
+        dateRdv: input.meetingAt,
+        typeRdv: input.meetingType,
+        resultat: input.outcome,
+        profilSoncas: input.soncasSummary,
+        profilDisc: input.discSummary,
+      },
+      null,
+      2,
+    );
+    const prompt = [
+      "Contexte du rendez-vous (JSON) :",
+      context,
+      "",
+      buildDelimitedMeetingUserContent({
+        transcript: input.transcript,
+        notes: input.notes,
+      }),
     ].join("\n");
 
     const { object } = await generateObject({
       model: input.model,
       system,
-      schema: meetingDetailSynthesisSchema,
-      prompt: userContent,
-      maxOutputTokens: 700,
+      schema: visitReportExtractionSchema,
+      prompt,
+      maxOutputTokens: 6000,
     });
     return object;
   }

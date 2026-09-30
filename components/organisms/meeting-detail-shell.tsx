@@ -262,7 +262,7 @@ export function MeetingDetailShell({
           <MeetingSynthesisSection
             meetingSynthesis={meetingSynthesis}
             fromAi={synthesisFromAi}
-            streamMeetingId={streamVisitReport ? meeting.id : null}
+            writeMeetingId={streamVisitReport ? meeting.id : null}
           />
           <MeetingDetailTabs tabs={tabs} />
         </div>

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { sectionHeadingClass } from "@/lib/page-typography";
 import type { ContactSummaryRow } from "@/src/core/ports/contact-repository-port";
+import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type ContactMeetingRow = {
   id: string;
@@ -64,6 +65,7 @@ export function ContactDetailShell({
                   <TableRow key={m.id}>
                     <TableCell>
                       {m.meetingAt.toLocaleString("fr-FR", {
+                        timeZone: APP_TIME_ZONE,
                         dateStyle: "medium",
                         timeStyle: "short",
                       })}

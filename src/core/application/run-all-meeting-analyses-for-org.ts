@@ -14,6 +14,7 @@ import type {
 } from "@/src/core/ports/meeting-repository-port";
 import type { NotificationRepositoryPort } from "@/src/core/ports/notification-repository-port";
 import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
+import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organization-prompt-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
@@ -31,6 +32,8 @@ export async function runAllMeetingAnalysesForOrg(
   deps: {
     meetings: MeetingRepositoryPort;
     prompts: PromptTemplateRepositoryPort;
+    /** Les consignes de l'organisation, pour les analyses et le compte rendu. */
+    organizationPrompts: OrganizationPromptRepositoryPort;
     analysis: AnalysisPort;
     aiLogs?: AiRequestLogRepositoryPort;
     globalKissCoachingPrompts?: GlobalKissCoachingPromptsRepositoryPort;
@@ -93,6 +96,7 @@ export async function runAllMeetingAnalysesForOrg(
       {
         meetings: deps.meetings,
         prompts: deps.prompts,
+        organizationPrompts: deps.organizationPrompts,
         analysis: deps.analysis,
         aiLogs: deps.aiLogs,
       },
