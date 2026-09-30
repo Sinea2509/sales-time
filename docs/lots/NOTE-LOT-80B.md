@@ -153,9 +153,67 @@ Une migration additive (20260924120000_organization_prompt_version) : une table 
 
 Vérifié : tsc 0, eslint 0, 1 607 tests verts, migration appliquée sur un Postgres réel sans dérive avec le schéma, typographie sans tiret cadratin. Recette : docs/lots/RECETTE-LOT-80B.md, sur le poste.
 
-À fusionner après les lots 80a et 80c, avec un commit de fusion.
+Fusion avec main du 30 septembre (lots 78 à 85, voir la section 7 de la note) : le compte rendu de visite garde la forme du lot 80a et s'écrit à la première ouverture de la fiche, comme le mécanisme du lot 80 de GitHub, avec un état d'attente ; la fiche à sept onglets, l'audio et les objections de main sont conservés. Correctif au passage : les routes /api (crons, compte rendu à l'ouverture) répondaient 404 derrière le middleware de langue. Après fusion : tsc 0, eslint 0, 1 684 tests verts, migrations à jour sur la branche dev.
+
+À fusionner avec un commit de fusion.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 https://claude.ai/code/session_01Usf46TR18tCNNZ6PMAL6qK
 ```
+
+## 7. Fusion avec main du 30 septembre
+
+Le lot 80b a été codé sur lot-77. Entre son envoi et son intégration, GitHub
+a reçu huit lots (78 à 85 : avancement de l'analyse, rattrapage toutes les
+cinq minutes, compte rendu qui s'écrit sous les yeux du lecteur, audio
+transcrit, fiche à sept onglets, onglet Objections, tableaux de bord, plan
+d'action). La branche `lot-80` de GitHub est un autre travail que le
+`lot-80` de ce lot : elle n'a pas été poussée, et les trois lots (80a, 80c,
+80b) arrivent par la seule branche `lot-80b`, avec un commit de fusion de
+`main` (`4b25015`).
+
+Ce que la fusion tranche :
+
+- **Le compte rendu de visite** est celui du lot 80a : rubriques imposées,
+  composées par le produit à partir de l'extraction et des analyses,
+  branchées sur la consigne de l'organisation. Il ne s'écrit plus à la fin
+  de l'analyse mais **à la première ouverture de la fiche**, comme le
+  prévoyait le lot 80 de GitHub : la fiche s'ouvre tout de suite, montre
+  « Rédaction du compte rendu… », et l'affiche d'un bloc dès qu'il est
+  écrit, sans recharger (route `POST /api/meetings/[id]/visit-report`,
+  cas d'usage `writeMeetingVisitReportOnDemand`). Le compte rendu diffusé
+  mot à mot de GitHub disparaît : deux comptes rendus pour une fiche
+  n'auraient pas de sens. Les rubriques de la grille restent retirées pour
+  un membre qui n'est ni le commercial ni un manager, dans la route comme
+  sur la page.
+- **La fiche** (en-tête, colonne de droite, sept onglets) est celle de
+  GitHub ; l'en-tête reprend le fuseau de Paris du lot 80c. Les composants
+  « interlocuteur » du lot 80c, que GitHub avait remplacés par les onglets
+  SONCAS et DISC, disparaissent avec eux.
+- **Les consignes d'origine** en français du lot 80a restent, et la
+  consigne des objections de GitHub s'y ajoute. Les cinq analyses
+  (SONCAS, DISC, KISS, grille, objections) lisent la consigne de
+  l'organisation.
+- **Le rattrapage** passe toutes les cinq minutes (GitHub), et la
+  documentation suit.
+- **Les routes `/api` répondaient 404**, en local comme en production :
+  `proxy.ts` les passait au middleware de langue, qui les réécrivait vers
+  une page de langue inexistante. Les crons de rattrapage et le compte rendu
+  à l'ouverture n'atteignaient donc jamais leur code. Corrigé (`d014f26`) :
+  ces chemins gardent le contrôle de session et évitent la réécriture.
+
+Vérifié après fusion : `tsc` 0 erreur, `eslint` 0, 1 684 tests verts
+(191 suites, dont 7 nouveaux sur l'écriture à l'ouverture), typographie
+sans tiret cadratin, `spellcheck` sans mot inconnu dans le dépôt (les
+identifiants et prénoms de GitHub sont ajoutés au dictionnaire), les deux
+migrations appliquées sur la branche Neon `dev` (`20260924120000` du lot,
+`20260926120000` de GitHub). Sur le poste, dans Chrome : la fiche fusionnée
+affiche le compte rendu enregistré avec ses titres ; un compte rendu vidé se
+réécrit à l'ouverture en une dizaine de secondes et reste enregistré ; Coach
+IA, Prompts IA et Logs IA sont en place ; `/api/health` et le cron
+répondent 200.
+
+À refaire après la mise en ligne, en plus de la section 7 de la recette :
+la case « cron toutes les cinq minutes » de la recette 80c, qui ne pouvait
+pas passer avant ce correctif.
