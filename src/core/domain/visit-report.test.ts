@@ -6,7 +6,10 @@ import type {
 import type { ScorecardAnalysisResult } from "./scorecard-result-zod";
 import {
   composeVisitReport,
+  isCurrentVisitReport,
   isVisitReportHeading,
+  shortPersonName,
+  withMomentsFromTranscript,
   VISIT_REPORT_METHOD_NOTE,
   VISIT_REPORT_TITLE,
   visitReportWithoutSellerCoaching,
@@ -46,10 +49,12 @@ const extraction: VisitReportExtraction = {
       citations: [
         {
           qui: "Claire Morel",
+          moment: "",
           texte: "Mes commerciaux accordent des remises trop vite.",
         },
         {
           qui: "Julien",
+          moment: "",
           texte: "Qu'est-ce qui vous fait dire que c'est la remise ?",
         },
       ],
@@ -68,6 +73,7 @@ const extraction: VisitReportExtraction = {
   objections: [
     {
       qui: "Claire Morel",
+      moment: "",
       objection:
         "Mes commerciaux ne peuvent pas quitter le terrain trois jours.",
       reponse: "Le programme se découpe en demi-journées sur site.",
@@ -282,7 +288,7 @@ describe("composeVisitReport", () => {
   it("met les thèmes en capitales et ne garde que les mots du prospect", () => {
     const text = composeVisitReport(input());
     expect(text).toContain(
-      "DÉCLENCHEUR ET BESOIN EXPRIMÉ\nLa marge brute recule de 34 % à 29 % en deux ans, faute de défendre le prix.\n\n  « Mes commerciaux accordent des remises trop vite. » (Claire Morel)",
+      "DÉCLENCHEUR ET BESOIN EXPRIMÉ\nLa marge brute recule de 34 % à 29 % en deux ans, faute de défendre le prix.\n\n  « Mes commerciaux accordent des remises trop vite. »  C. Morel",
     );
     expect(text).not.toContain("Qu'est-ce qui vous fait dire");
     expect(text).not.toContain("Un thème sans titre");
@@ -299,7 +305,7 @@ describe("composeVisitReport", () => {
   it("écrit chaque objection avec la réponse apportée et son effet", () => {
     const text = composeVisitReport(input());
     expect(text).toContain(
-      "- Objection soulevée par Claire Morel :\n  « Mes commerciaux ne peuvent pas quitter le terrain trois jours. »\n  Réponse apportée : Le programme se découpe en demi-journées sur site.\n  Effet : L'objection est levée sur le principe.",
+      "- Objection soulevée par C. Morel :\n  « Mes commerciaux ne peuvent pas quitter le terrain trois jours. »\n  Réponse apportée : Le programme se découpe en demi-journées sur site.\n  Effet : L'objection est levée sur le principe.",
     );
     const sans = composeVisitReport(
       input({ extraction: { ...extraction, objections: [] } }),
@@ -518,7 +524,7 @@ describe("les retours de la relecture du 24 septembre", () => {
   function quotesOf(text: string): string[] {
     return text
       .split("\n")
-      .filter((line) => line.startsWith("  « ") && line.endsWith(")"))
+      .filter((line) => line.startsWith("  « ") && line.includes("»  "))
       .map((line) => line.trim());
   }
 
@@ -540,11 +546,24 @@ describe("les retours de la relecture du 24 septembre", () => {
               titre: "Le besoin",
               texte: "Le besoin est posé.",
               citations: [
-                { qui: "Jeanne Martin", texte: "Nous perdons de la marge." },
-                { qui: "Jean-Pierre (DAF)", texte: "Le budget est serré." },
-                { qui: "Jean", texte: "Combien cela vous coûte-t-il ?" },
+                {
+                  qui: "Jeanne Martin",
+                  moment: "",
+                  texte: "Nous perdons de la marge.",
+                },
+                {
+                  qui: "Jean-Pierre (DAF)",
+                  moment: "",
+                  texte: "Le budget est serré.",
+                },
+                {
+                  qui: "Jean",
+                  moment: "",
+                  texte: "Combien cela vous coûte-t-il ?",
+                },
                 {
                   qui: "Jean Dupont, commercial",
+                  moment: "",
                   texte: "Je vous propose un essai.",
                 },
               ],
@@ -554,8 +573,8 @@ describe("les retours de la relecture du 24 septembre", () => {
       }),
     );
     expect(quotesOf(text)).toEqual([
-      "« Nous perdons de la marge. » (Jeanne Martin)",
-      "« Le budget est serré. » (Jean-Pierre (DAF))",
+      "« Nous perdons de la marge. »  J. Martin",
+      "« Le budget est serré. »  J.-P. (DAF)",
     ]);
   });
 
@@ -577,14 +596,18 @@ describe("les retours de la relecture du 24 septembre", () => {
               titre: "Le besoin",
               texte: "Le besoin est posé.",
               citations: [
-                { qui: "Julien", texte: "Nous voulons des chiffres." },
+                {
+                  qui: "Julien",
+                  moment: "",
+                  texte: "Nous voulons des chiffres.",
+                },
               ],
             },
           ],
         },
       }),
     );
-    expect(quotesOf(text)).toEqual(["« Nous voulons des chiffres. » (Julien)"]);
+    expect(quotesOf(text)).toEqual(["« Nous voulons des chiffres. »  Julien"]);
   });
 
   it("donne le nombre réel de rendez-vous antérieurs quand l'historique en montre une partie", () => {
@@ -689,5 +712,136 @@ describe("les retours de la relecture du 24 septembre", () => {
     expect(isVisitReportHeading("« CLÉ EN MAIN »", "")).toBe(true);
     expect(isVisitReportHeading("RAS.", "PÉRIMÈTRE ET VOLUMÉTRIE")).toBe(false);
     expect(isVisitReportHeading("- RAS", "")).toBe(false);
+  });
+});
+
+describe("shortPersonName", () => {
+  it("signe une citation comme la maquette : l'initiale du prénom et le nom", () => {
+    expect(shortPersonName("Hélène Vasseur")).toBe("H. Vasseur");
+    expect(shortPersonName("Jean-Pierre Martin")).toBe("J.-P. Martin");
+    expect(shortPersonName("Claire Morel, directrice")).toBe(
+      "C. Morel, directrice",
+    );
+  });
+
+  it("laisse tel quel un prénom seul, un titre ou une désignation", () => {
+    expect(shortPersonName("Julien")).toBe("Julien");
+    expect(shortPersonName("Mme Vasseur")).toBe("Mme Vasseur");
+    expect(shortPersonName("le prospect")).toBe("le prospect");
+    expect(shortPersonName("  ")).toBe("");
+  });
+});
+
+describe("l'en-tête et les moments, comme la maquette", () => {
+  it("écrit l'étape, le potentiel et la fiabilité sur la troisième ligne", () => {
+    const lines = composeVisitReport(
+      input({
+        meeting: {
+          ...input().meeting,
+          pipelineStage: "Qualifié",
+          analysisReliability: "bonne",
+        },
+      }),
+    ).split("\n");
+    expect(lines[2]).toBe(
+      "Étape : Qualifié · Potentiel estimé : 12 600 € · Fiabilité de l'analyse : bonne",
+    );
+  });
+
+  it("date une citation et une objection quand le transcript porte un horodatage", () => {
+    const text = composeVisitReport(
+      input({
+        extraction: {
+          ...extraction,
+          themes: [
+            {
+              titre: "Le besoin",
+              texte: "Le besoin est posé.",
+              citations: [
+                {
+                  qui: "Claire Morel",
+                  moment: "02'24",
+                  texte: "Nous perdons de la marge.",
+                },
+              ],
+            },
+          ],
+          objections: [
+            {
+              qui: "Claire Morel",
+              moment: "14'30",
+              objection: "Nous ne voulons pas d'un outil de plus.",
+              reponse: "Aucune ressaisie.",
+              effet: "Levée à moitié.",
+            },
+          ],
+        },
+      }),
+    );
+    expect(text).toContain("  « Nous perdons de la marge. »  C. Morel, 02'24");
+    expect(text).toContain("- Objection soulevée par C. Morel à 14'30 :");
+  });
+});
+
+describe("isCurrentVisitReport", () => {
+  it("reconnaît la forme d'aujourd'hui et rejette celle d'avant le lot 80a", () => {
+    expect(
+      isCurrentVisitReport("COMPTE RENDU DE VISITE\nMenuiseries Vermont"),
+    ).toBe(true);
+    expect(isCurrentVisitReport("  COMPTE RENDU DE VISITE")).toBe(true);
+    expect(
+      isCurrentVisitReport(
+        "Compte-rendu de visite · Claire Morel · 24/09/2026",
+      ),
+    ).toBe(false);
+    expect(isCurrentVisitReport("")).toBe(false);
+    expect(isCurrentVisitReport(null)).toBe(false);
+  });
+});
+
+describe("withMomentsFromTranscript", () => {
+  it("ne garde un moment que si le transcript le porte tel quel", () => {
+    const withMoments = {
+      ...extraction,
+      themes: [
+        {
+          titre: "Le besoin",
+          texte: "Le besoin est posé.",
+          citations: [
+            {
+              qui: "Claire Morel",
+              moment: "02'24",
+              texte: "Nous perdons de la marge.",
+            },
+            { qui: "Claire Morel", moment: "18'15", texte: "Le suivi manque." },
+          ],
+        },
+      ],
+      objections: [
+        {
+          qui: "Claire Morel",
+          moment: "14'30",
+          objection: "Pas un outil de plus.",
+          reponse: "Aucune ressaisie.",
+          effet: "Levée à moitié.",
+        },
+      ],
+    };
+    const kept = withMomentsFromTranscript(
+      withMoments,
+      "02'24 Claire : Nous perdons de la marge.\n14'30 Claire : Pas un outil de plus.",
+    );
+    expect(kept.themes[0].citations.map((q) => q.moment)).toEqual([
+      "02'24",
+      "",
+    ]);
+    expect(kept.objections[0].moment).toBe("14'30");
+
+    const none = withMomentsFromTranscript(
+      withMoments,
+      "Claire : Nous perdons de la marge.",
+    );
+    expect(none.themes[0].citations.map((q) => q.moment)).toEqual(["", ""]);
+    expect(none.objections[0].moment).toBe("");
   });
 });

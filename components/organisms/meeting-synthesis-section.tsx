@@ -168,8 +168,8 @@ export function MeetingSynthesisSection({
       {isAiText ? (
         <div className="bg-muted/40 flex flex-wrap items-center gap-3 border-t px-5 py-2.5">
           <span className="text-muted-foreground text-xs">
-            {text.length.toLocaleString("fr-FR")} caractères, générés à partir
-            du transcript, de la grille et des profils.
+            {text.length.toLocaleString("fr-FR")} caractères, généré à partir du
+            transcript, de la scorecard et des profils.
           </span>
           <span className="flex-1" />
           {foldable ? (

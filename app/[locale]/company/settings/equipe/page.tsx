@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
-import { PageHeaderSimple } from "@/components/molecules/page-header";
 import {
   OrgSettingsTeamList,
   type TeamInvitationRow,
@@ -43,8 +42,6 @@ export default async function OrganizationSettingsEquipePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeaderSimple title="Équipe & accès" />
-
       <OrgSettingsTeamList
         members={memberRows}
         invitations={invRows}

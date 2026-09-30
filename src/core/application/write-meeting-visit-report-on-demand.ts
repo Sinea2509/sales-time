@@ -5,7 +5,10 @@ import {
 } from "@/src/core/domain/analysis-result-zod";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
-import { visitReportWithoutSellerCoaching } from "@/src/core/domain/visit-report";
+import {
+  isCurrentVisitReport,
+  visitReportWithoutSellerCoaching,
+} from "@/src/core/domain/visit-report";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organization-prompt-repository-port";
@@ -66,8 +69,14 @@ export async function writeMeetingVisitReportOnDemand(
   const forReader = (text: string) =>
     canViewSellerCoaching ? text : visitReportWithoutSellerCoaching(text);
 
+  /*
+    Un compte rendu d'avant le lot 80a (quelques lignes de synthèse) vaut
+    « manquant » : il se réécrit ici, dans la forme complète.
+  */
   const stored = meeting.visitReportDraft?.trim();
-  if (stored) return { kind: "text", text: forReader(stored) };
+  if (stored && isCurrentVisitReport(stored)) {
+    return { kind: "text", text: forReader(stored) };
+  }
 
   if (meeting.status !== "READY") return { kind: "not_ready" };
   if (!getEnv().AI_GATEWAY_API_KEY) {

@@ -34,7 +34,7 @@ export const ORGANIZATION_PROMPT_DESCRIPTIONS: Record<
   MEETING_DETAIL_SYNTHESIS:
     "Le texte prêt à coller dans le CRM. Les sections sont imposées, et une rubrique sans information dans le transcript est signalée comme non abordée plutôt que complétée.",
   FOLLOW_UP_EMAIL:
-    "Rédigé pour le prospect, dans le ton et l'adresse choisis dans l'onglet E-mail de suivi.",
+    "Rédigé pour le prospect, dans le ton et l'adresse choisis dans l'onglet E-mail.",
 };
 
 /** Une carte prête à afficher : ses textes sont calculés côté serveur. */

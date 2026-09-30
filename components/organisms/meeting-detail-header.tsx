@@ -9,7 +9,6 @@ import type { MeetingStatus } from "@/src/core/domain/meeting-status";
 
 const dateLongue = new Intl.DateTimeFormat("fr-FR", {
   timeZone: APP_TIME_ZONE,
-  weekday: "long",
   day: "numeric",
   month: "long",
   year: "numeric",

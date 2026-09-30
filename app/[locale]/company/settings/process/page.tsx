@@ -4,7 +4,6 @@ import {
   DEFAULT_MEETING_TYPES,
   DEFAULT_PIPELINE_STAGES,
 } from "@/lib/onboarding-defaults";
-import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { OrgSettingsReadOnlyBanner } from "@/components/molecules/org-settings-read-only-banner";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
@@ -27,7 +26,6 @@ export default async function OrganizationSettingsProcessPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeaderSimple title="Process" />
       {!canEdit ? <OrgSettingsReadOnlyBanner /> : null}
       <OrgSettingsProcessForm
         canEdit={canEdit}
