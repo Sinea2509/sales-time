@@ -1,4 +1,5 @@
 import { getApplicationDeps } from "@/lib/application-deps";
+import { platformConfigChecks } from "@/lib/platform-config-status";
 import { AdminHealthDashboard } from "@/components/organisms/admin-health-dashboard";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function HealthPage() {
       dbHealth={dbHealth}
       counts={counts}
       pipeline={pipeline}
+      configChecks={platformConfigChecks(process.env)}
       now={now}
       region={process.env.VERCEL_REGION ?? "local"}
       nodeEnv={process.env.NODE_ENV ?? "unknown"}

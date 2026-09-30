@@ -32,7 +32,7 @@ Prefer reusing atoms/molecules before duplicating markup in organisms or `app/` 
 
 **Rule**: Dependencies point inward. Outer layers implement interfaces declared inward; never import adapters into domain.
 
-Delivery-only concerns (`after()`, `revalidatePath`, cron routes) stay in `app/` or delivery helpers, not in `src/core/application/`. Meeting analysis runs in-process via `after()` (`scheduleAnalysisJobsAfterResponse`) with a cron backup every 15 minutes at `/api/cron/process-analysis-jobs`.
+Delivery-only concerns (`after()`, `revalidatePath`, cron routes) stay in `app/` or delivery helpers, not in `src/core/application/`. Meeting analysis runs in-process via `after()` (`scheduleAnalysisJobsAfterResponse`) with a cron backup every 5 minutes at `/api/cron/process-analysis-jobs`.
 
 ## Authorization (IDOR)
 

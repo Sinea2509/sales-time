@@ -33,6 +33,9 @@ const meeting = {
   visitReportDraft: null,
   transcript: "Bonjour, nous parlons budget et sécurité.",
   notes: null,
+  durationMin: null,
+  sourceType: "TRANSCRIPT" as const,
+  sourceBlobUrl: null,
   updatedAt: new Date(),
   analyses: [],
 };

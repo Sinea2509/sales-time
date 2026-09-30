@@ -6,6 +6,15 @@ export const DEFAULT_ANALYSIS_GATEWAY_MODEL = "openai/gpt-4o-mini" as const;
 /** @deprecated Use DEFAULT_ANALYSIS_GATEWAY_MODEL; kept for existing imports. */
 export const ANALYSIS_GATEWAY_MODEL = DEFAULT_ANALYSIS_GATEWAY_MODEL;
 
+/**
+ * Le modèle qui transcrit un enregistrement audio en texte.
+ *
+ * Gemini lit l'audio en entrée sans service de transcription à part : la
+ * même passerelle, la même clé que les analyses. Un modèle qui n'accepte pas
+ * l'audio renverrait une erreur, pas un transcript approximatif.
+ */
+export const DEFAULT_TRANSCRIPTION_MODEL = "google/gemini-2.5-flash" as const;
+
 export type AnalysisGatewayModelOption = {
   id: string;
   label: string;

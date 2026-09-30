@@ -264,6 +264,7 @@ export async function summarizeMeetingDetail(
     ...input,
   });
 
+
   const canGenerateAi =
     input.forceAiGeneration === true || input.meeting.status === "READY";
 

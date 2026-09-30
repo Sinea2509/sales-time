@@ -1,19 +1,9 @@
 import { runAllMeetingAnalysesForOrg } from "./run-all-meeting-analyses-for-org";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
-import { generateAndPersistMeetingVisitReport } from "./summarize-meeting-detail";
 
 jest.mock("./run-meeting-analysis", () => ({
   runMeetingAnalysis: jest.fn(),
 }));
-
-jest.mock("./summarize-meeting-detail", () => ({
-  generateAndPersistMeetingVisitReport: jest.fn().mockResolvedValue(undefined),
-}));
-
-const visitReportMock =
-  generateAndPersistMeetingVisitReport as jest.MockedFunction<
-    typeof generateAndPersistMeetingVisitReport
-  >;
 
 const runMeetingAnalysisMock = runMeetingAnalysis as jest.MockedFunction<
   typeof runMeetingAnalysis
@@ -58,9 +48,9 @@ describe("runAllMeetingAnalysesForOrg", () => {
     L'ordre est vérifié, pas seulement le nombre. KISS relit les résultats SONCAS
     et DISC déjà enregistrés : les lancer dans le désordre lui ferait analyser un
     rendez-vous dont le profil d'interlocuteur n'existe pas encore. La scorecard
-    ferme la marche, elle ne nourrit aucune des autres.
+    part avec les deux profils, elle ne nourrit aucune des autres.
   */
-  it("runs SONCAS, DISC, KISS then SCORECARD and marks meeting READY", async () => {
+  it("runs SONCAS, DISC, SCORECARD and OBJECTIONS, then KISS, and marks meeting READY", async () => {
     runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
     const deps = makeDeps();
 
@@ -74,12 +64,49 @@ describe("runAllMeetingAnalysesForOrg", () => {
     expect(runMeetingAnalysisMock.mock.calls.map((c) => c[1].kind)).toEqual([
       "SONCAS",
       "DISC",
-      "KISS",
       "SCORECARD",
+      "OBJECTIONS",
+      "KISS",
     ]);
     expect(deps.meetings.updateMeetingStatus).toHaveBeenLastCalledWith(
       expect.objectContaining({ status: "READY" }),
     );
+  });
+
+  /*
+    Le contrat des deux vagues, tenu par le temps et non par l'ordre des
+    appels : KISS ne doit pas seulement être appelé après les trois autres, il
+    doit l'être une fois qu'ils ont tous rendu leur résultat. Un `await` oublié
+    devant la première vague garderait l'ordre des appels et casserait cela.
+  */
+  it("ne lance KISS qu'une fois SONCAS, DISC, la scorecard et les objections terminés", async () => {
+    const settled = new Set<string>();
+    let kindsSettledWhenKissStarted: string[] | null = null;
+
+    runMeetingAnalysisMock.mockImplementation(async (_deps, input) => {
+      if (input.kind === "KISS") {
+        kindsSettledWhenKissStarted = [...settled].sort();
+        return { ok: true, analysisId: "kiss" };
+      }
+      await new Promise((resolve) =>
+        setTimeout(resolve, input.kind === "DISC" ? 30 : 5),
+      );
+      settled.add(input.kind);
+      return { ok: true, analysisId: input.kind };
+    });
+
+    await runAllMeetingAnalysesForOrg(makeDeps() as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    expect(kindsSettledWhenKissStarted).toEqual([
+      "DISC",
+      "OBJECTIONS",
+      "SCORECARD",
+      "SONCAS",
+    ]);
   });
 
   /*
@@ -90,11 +117,11 @@ describe("runAllMeetingAnalysesForOrg", () => {
     leurs trois analyses viennent de réussir.
   */
   it("termine en READY quand le RDV n'a pas de grille de scorecard", async () => {
-    runMeetingAnalysisMock
-      .mockResolvedValueOnce({ ok: true, analysisId: "a1" })
-      .mockResolvedValueOnce({ ok: true, analysisId: "a2" })
-      .mockResolvedValueOnce({ ok: true, analysisId: "a3" })
-      .mockResolvedValueOnce({ ok: false, error: "NO_SCORECARD_GRID" });
+    runMeetingAnalysisMock.mockImplementation(async (_deps, input) =>
+      input.kind === "SCORECARD"
+        ? { ok: false, error: "NO_SCORECARD_GRID" }
+        : { ok: true, analysisId: input.kind },
+    );
     const deps = makeDeps();
 
     const result = await runAllMeetingAnalysesForOrg(deps as never, {
@@ -112,17 +139,18 @@ describe("runAllMeetingAnalysesForOrg", () => {
   /*
     Sauter une étape, et non arrêter la séquence.
 
-    La scorecard ferme la marche aujourd'hui : « passer à la suivante » et
-    « sortir de la boucle » y produisent le même résultat, et le test précédent
-    ne les distingue pas. Le cas est donc forcé depuis la première étape, seul
-    endroit d'où la différence se voit. Ce n'est pas un état que la production
-    produit, c'est le contrat de la boucle : il devra tenir le jour où une
-    deuxième grille, celle du closing, s'insérera avant la fin de la liste.
+    L'absence de grille arrive au milieu de la première vague, et non à sa
+    fin : « passer à la suivante » et « sortir de la boucle » n'y produisent pas
+    le même résultat. Le cas est donc forcé depuis la première étape, seul
+    endroit d'où la différence se voit sur les deux suivantes. Ce n'est pas un
+    état que la production produit, c'est le contrat du dépouillement.
   */
   it("saute l'étape sans grille sans arrêter les suivantes", async () => {
-    runMeetingAnalysisMock
-      .mockResolvedValueOnce({ ok: false, error: "NO_SCORECARD_GRID" })
-      .mockResolvedValue({ ok: true, analysisId: "a1" });
+    runMeetingAnalysisMock.mockImplementation(async (_deps, input) =>
+      input.kind === "SONCAS"
+        ? { ok: false, error: "NO_SCORECARD_GRID" }
+        : { ok: true, analysisId: input.kind },
+    );
     const deps = makeDeps();
 
     const result = await runAllMeetingAnalysesForOrg(deps as never, {
@@ -135,25 +163,28 @@ describe("runAllMeetingAnalysesForOrg", () => {
     expect(runMeetingAnalysisMock.mock.calls.map((c) => c[1].kind)).toEqual([
       "SONCAS",
       "DISC",
-      "KISS",
       "SCORECARD",
+      "OBJECTIONS",
+      "KISS",
     ]);
   });
 
   /*
     L'indulgence s'arrête là : une grille existe, le modèle a échoué. C'est un
-    incident, et il se dit comme les autres.
+    incident, et il se dit comme les autres. KISS n'est alors jamais lancé :
+    un coaching sur un rendez-vous marqué en échec serait un coaching que
+    personne ne lira.
   */
-  it("marque FAILED quand la scorecard échoue vraiment", async () => {
-    runMeetingAnalysisMock
-      .mockResolvedValueOnce({ ok: true, analysisId: "a1" })
-      .mockResolvedValueOnce({ ok: true, analysisId: "a2" })
-      .mockResolvedValueOnce({ ok: true, analysisId: "a3" })
-      .mockResolvedValueOnce({
-        ok: false,
-        error: "ANALYSIS_FAILED",
-        message: "grille notée à moitié",
-      });
+  it("marque FAILED quand la scorecard échoue vraiment, sans lancer KISS", async () => {
+    runMeetingAnalysisMock.mockImplementation(async (_deps, input) =>
+      input.kind === "SCORECARD"
+        ? {
+            ok: false,
+            error: "ANALYSIS_FAILED",
+            message: "grille notée à moitié",
+          }
+        : { ok: true, analysisId: input.kind },
+    );
     const deps = makeDeps();
 
     const result = await runAllMeetingAnalysesForOrg(deps as never, {
@@ -168,9 +199,38 @@ describe("runAllMeetingAnalysesForOrg", () => {
       message: "grille notée à moitié",
       failedKind: "SCORECARD",
     });
+    expect(
+      runMeetingAnalysisMock.mock.calls.map((c) => c[1].kind),
+    ).not.toContain("KISS");
     expect(deps.meetings.updateMeetingStatus).toHaveBeenLastCalledWith(
       expect.objectContaining({ status: "FAILED" }),
     );
+  });
+
+  /*
+    Deux échecs dans la même vague : le rendez-vous nomme celui qui vient en
+    premier dans la liste, toujours le même, pour que deux relances du même
+    incident racontent la même histoire.
+  */
+  it("nomme la première étape fautive de la liste quand deux échouent ensemble", async () => {
+    runMeetingAnalysisMock.mockImplementation(async (_deps, input) =>
+      input.kind === "SONCAS"
+        ? { ok: true, analysisId: "soncas" }
+        : { ok: false, error: "ANALYSIS_FAILED", message: `${input.kind} KO` },
+    );
+
+    const result = await runAllMeetingAnalysesForOrg(makeDeps() as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "ANALYSIS_FAILED",
+      message: "DISC KO",
+      failedKind: "DISC",
+    });
   });
 
   /*
@@ -199,13 +259,11 @@ describe("runAllMeetingAnalysesForOrg", () => {
   });
 
   it("marks meeting FAILED when an analysis step fails", async () => {
-    runMeetingAnalysisMock
-      .mockResolvedValueOnce({ ok: true, analysisId: "a1" })
-      .mockResolvedValueOnce({
-        ok: false,
-        error: "ANALYSIS_FAILED",
-        message: "boom",
-      });
+    runMeetingAnalysisMock.mockImplementation(async (_deps, input) =>
+      input.kind === "DISC"
+        ? { ok: false, error: "ANALYSIS_FAILED", message: "boom" }
+        : { ok: true, analysisId: input.kind },
+    );
     const deps = makeDeps();
 
     const result = await runAllMeetingAnalysesForOrg(deps as never, {
@@ -271,7 +329,7 @@ describe("runAllMeetingAnalysesForOrg", () => {
     une consigne d'organisation oubliée en route ferait analyser avec la
     consigne d'origine sans que rien ne le signale.
   */
-  it("transmet les consignes de l'organisation aux quatre analyses et au compte rendu", async () => {
+  it("transmet les consignes de l'organisation aux cinq analyses", async () => {
     runMeetingAnalysisMock.mockResolvedValue({ ok: true, analysisId: "a1" });
     const organizationPrompts = { findLatest: jest.fn() };
     const deps = { ...makeDeps(), organizationPrompts };
@@ -286,13 +344,9 @@ describe("runAllMeetingAnalysesForOrg", () => {
       notifyOnComplete: false,
     });
 
-    expect(runMeetingAnalysisMock).toHaveBeenCalledTimes(4);
+    expect(runMeetingAnalysisMock).toHaveBeenCalledTimes(5);
     for (const call of runMeetingAnalysisMock.mock.calls) {
       expect(call[0].organizationPrompts).toBe(organizationPrompts);
     }
-    expect(visitReportMock).toHaveBeenCalledTimes(1);
-    expect(visitReportMock.mock.calls[0][0].organizationPrompts).toBe(
-      organizationPrompts,
-    );
   });
 });

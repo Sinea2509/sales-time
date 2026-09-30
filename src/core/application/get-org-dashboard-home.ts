@@ -14,9 +14,20 @@ import type {
   RecentMeetingListRow,
 } from "@/src/core/ports/meeting-repository-port";
 import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
+import {
+  sellerDashboardFocus,
+  type SellerDashboardFocus,
+} from "@/src/core/domain/seller-dashboard-focus";
 
 export type OrgDashboardHome = DashboardHomeFigures & {
   recentMeetings: RecentMeetingListRow[];
+  /**
+   * Le défi, l'axe du mois, les points forts et le pipeline du commercial.
+   *
+   * Présent seulement quand l'appelant l'a demandé : la fiche d'un membre vue
+   * par son manager lit les mêmes chiffres de tête sans ces cartes.
+   */
+  sellerFocus?: SellerDashboardFocus;
 };
 
 const RECENT_LIMIT = 8;
@@ -46,6 +57,8 @@ export async function getOrgDashboardHome(
     statsWindowDays: StatsWindowDays;
     /** When set, KPIs and recent meetings are scoped to this seller (member role). */
     sellerUserId?: string | null;
+    /** Demande les analyses de la fenêtre pour calculer `sellerFocus`. */
+    withSellerFocus?: boolean;
   },
 ): Promise<OrgDashboardHome | null> {
   if (!input.organizationId) return null;
@@ -63,6 +76,8 @@ export async function getOrgDashboardHome(
       organizationId: input.organizationId,
       meetingAtSince: sinceCurrent,
       sellerUserId: seller,
+      includeLatestScorecardResult: input.withSellerFocus === true,
+      includeLatestKissResult: input.withSellerFocus === true,
     }),
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: input.organizationId,
@@ -84,5 +99,8 @@ export async function getOrgDashboardHome(
       previous,
     }),
     recentMeetings: current.slice(0, RECENT_LIMIT),
+    ...(input.withSellerFocus === true
+      ? { sellerFocus: sellerDashboardFocus(current) }
+      : {}),
   };
 }

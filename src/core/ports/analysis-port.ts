@@ -5,6 +5,7 @@ import type {
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
 import type { ScorecardGeneratedResult } from "@/src/core/domain/scorecard-result-zod";
+import type { ObjectionsAnalysisResult } from "@/src/core/domain/objections-result-zod";
 import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod";
 import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
 import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
@@ -104,6 +105,23 @@ export interface AnalysisPort {
     { result: ScorecardGeneratedResult; rawText?: string } & AiCallTrace
   >;
 
+  /**
+   * Les objections du prospect, avec la réponse apportée, son effet et une
+   * suggestion pour la suite.
+   *
+   * Comme la scorecard, elle ne lit que le transcript : un profil
+   * d'interlocuteur n'aide pas à retrouver ce qu'il a objecté, il aiderait
+   * seulement le modèle à excuser une objection laissée sans réponse.
+   */
+  analyzeObjections(input: {
+    systemMarkdown: string;
+    transcript: string;
+    notes: string | null;
+    model: string;
+  }): Promise<
+    { result: ObjectionsAnalysisResult; rawText?: string } & AiCallTrace
+  >;
+
   generateFollowUpEmail(input: {
     systemMarkdown: string;
     userContent: string;
@@ -162,6 +180,19 @@ export interface AnalysisPort {
     previousSalesProfile: SalesProfileScores | null;
     kissRollup: OrgKissRollupForSummary;
   }): Promise<TeamCoachingRecommendations>;
+
+  /**
+   * Le transcript d'un enregistrement audio, mot pour mot, un intervenant
+   * par ligne quand le modèle sait les distinguer.
+   */
+  transcribeAudio(input: {
+    audio: Uint8Array;
+    mediaType: string;
+    model: string;
+  }): Promise<{
+    text: string;
+    usage?: { inputTokens?: number; outputTokens?: number };
+  }>;
 
   /**
    * La matière du compte rendu de visite, lue dans le transcript.

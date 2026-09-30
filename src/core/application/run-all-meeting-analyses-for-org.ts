@@ -2,8 +2,6 @@ import {
   discResultSchema,
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
-import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
-import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
@@ -19,7 +17,6 @@ import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organi
 import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organization-prompt-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
-import { generateAndPersistMeetingVisitReport } from "./summarize-meeting-detail";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
 
 export type RunAllMeetingAnalysesResult =
@@ -94,20 +91,8 @@ export async function runAllMeetingAnalysesForOrg(
   let lastError = "";
   let failedKind: MeetingAnalysisKind | undefined;
 
-  /*
-    La scorecard passe en dernier, et cet ordre porte une décision.
-
-    Elle est la seule des quatre à pouvoir ne pas s'appliquer : tant qu'un type
-    de rendez-vous n'a pas de grille, il n'y a rien à noter. La placer après les
-    trois autres garantit qu'un rendez-vous dont la grille manque garde malgré
-    tout son analyse SONCAS, DISC et KISS, et arrive en READY comme avant.
-
-    C'est aussi la seule qui ne nourrit personne : KISS relit SONCAS et DISC, le
-    compte rendu de visite relit les trois. Un échec de la scorecard n'invalide
-    donc rien de ce qui précède, à la différence d'un échec de SONCAS.
-  */
-  for (const kind of ["SONCAS", "DISC", "KISS", "SCORECARD"] as const) {
-    const r = await runMeetingAnalysis(
+  const runKind = (kind: MeetingAnalysisKind) =>
+    runMeetingAnalysis(
       {
         meetings: deps.meetings,
         prompts: deps.prompts,
@@ -124,6 +109,27 @@ export async function runAllMeetingAnalysesForOrg(
         organizationPlaybookMarkdown: playbookMarkdown,
       },
     );
+
+  /*
+    Deux vagues, et non une file.
+
+    SONCAS, DISC, la scorecard et les objections ne lisent que le transcript :
+    rien ne justifie de les faire attendre l'une derrière l'autre, et le
+    commercial attendait quatre appels au modèle là où un seul suffit. KISS, lui, relit SONCAS et
+    DISC déjà enregistrés : il ne part qu'une fois la vague terminée, sans quoi
+    il jugerait un rendez-vous dont le profil d'interlocuteur n'existe pas
+    encore. Le compte rendu de visite, plus bas, relit tout.
+
+    Les résultats de la vague sont dépouillés dans l'ordre de la liste, pour
+    que le rendez-vous nomme toujours la même étape fautive quand deux échouent
+    ensemble.
+  */
+  const FIRST_WAVE = ["SONCAS", "DISC", "SCORECARD", "OBJECTIONS"] as const;
+  const firstWave = await Promise.all(FIRST_WAVE.map((kind) => runKind(kind)));
+
+  for (let i = 0; i < FIRST_WAVE.length; i += 1) {
+    const kind = FIRST_WAVE[i];
+    const r = firstWave[i];
     /*
       Absence de grille : ce n'est pas un incident, c'est un type de rendez-vous
       qu'on ne sait pas encore noter. Le compter comme un échec marquerait le
@@ -137,6 +143,14 @@ export async function runAllMeetingAnalysesForOrg(
       lastError = r.message ?? r.error;
       failedKind = kind;
       break;
+    }
+  }
+
+  if (!failedKind) {
+    const r = await runKind("KISS");
+    if (!r.ok) {
+      lastError = r.message ?? r.error;
+      failedKind = "KISS";
     }
   }
 
@@ -165,23 +179,9 @@ export async function runAllMeetingAnalysesForOrg(
     organizationId: input.organizationId,
     kind: "SONCAS",
   });
-  const kiss = await deps.meetings.findLatestAnalysisForMeeting({
-    meetingId: meeting.id,
-    organizationId: input.organizationId,
-    kind: "KISS",
-  });
-  const scorecard = await deps.meetings.findLatestAnalysisForMeeting({
-    meetingId: meeting.id,
-    organizationId: input.organizationId,
-    kind: "SCORECARD",
-  });
   const discParsed = disc ? discResultSchema.safeParse(disc.result) : null;
   const soncasParsed = soncas
     ? soncasResultSchema.safeParse(soncas.result)
-    : null;
-  const kissParsed = kiss ? kissResultSchema.safeParse(kiss.result) : null;
-  const scorecardParsed = scorecard
-    ? scorecardResultSchema.safeParse(scorecard.result)
     : null;
   if (discParsed?.success || soncasParsed?.success) {
     await deps.meetings.updatePersonProfileCache({
@@ -194,31 +194,12 @@ export async function runAllMeetingAnalysesForOrg(
     });
   }
 
-  const meetingDetail = await deps.meetings.findMeetingDetailWithAnalyses({
-    id: meeting.id,
-    organizationId: input.organizationId,
-  });
-  if (meetingDetail) {
-    await generateAndPersistMeetingVisitReport(
-      {
-        analysis: deps.analysis,
-        prompts: deps.prompts,
-        organizationPrompts: deps.organizationPrompts,
-        meetings: deps.meetings,
-        users: deps.users,
-        organizationSettings: deps.organizationSettings,
-      },
-      {
-        organizationId: input.organizationId,
-        meeting: meetingDetail,
-        discResult: discParsed?.success ? discParsed.data : null,
-        soncasResult: soncasParsed?.success ? soncasParsed.data : null,
-        kissResult: kissParsed?.success ? kissParsed.data : null,
-        scorecardResult: scorecardParsed?.success ? scorecardParsed.data : null,
-      },
-    ).catch(() => undefined);
-  }
-
+  /*
+    Le compte rendu de visite n'est plus écrit ici. Il l'est à la demande, au
+    fil de l'eau, la première fois qu'on ouvre la fiche : le rendez-vous est
+    prêt un appel au modèle plus tôt, et le commercial voit le texte se
+    composer au lieu d'attendre un paragraphe fini.
+  */
   await deps.meetings.updateMeetingStatus({
     id: meeting.id,
     organizationId: input.organizationId,

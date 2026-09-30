@@ -5,9 +5,17 @@ import { MonEquipeSection } from "@/components/organisms/mon-equipe-section";
 import { OrgAdminActionCards } from "@/components/organisms/org-admin-action-cards";
 import { OrgAdminDonutDistributionCard } from "@/components/organisms/org-admin-donut-distribution-card";
 import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-quadrant-grid";
+import { TeamBlockAxesCard } from "@/components/organisms/team-block-axes-card";
+import { TeamPodiumCard } from "@/components/organisms/team-podium-card";
+import { TeamSalesScoreBarsCard } from "@/components/organisms/team-sales-score-bars-card";
+import { TeamWrittenSynthesisCard } from "@/components/organisms/team-written-synthesis-card";
 import { GuideKiss } from "@/components/molecules/reference-commerciale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { sectionHeadingClass } from "@/lib/page-typography";
+import {
+  previousWindowLabel,
+  statsWindowLabel,
+} from "@/lib/stats-window-labels";
 import {
   essentielDuManager,
   essentielEstVide,
@@ -17,18 +25,14 @@ import type { OrgAdminDashboard } from "@/src/core/application/get-org-admin-das
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 
 /**
- * Le tableau de bord du manager, ordonné comme sa lecture : où agir d'abord,
- * l'état de l'équipe ensuite, l'activité et les répartitions à la fin.
+ * Le tableau de bord du manager, comme la maquette du 11 septembre le
+ * dessine : quatre tuiles en tête, puis deux colonnes. À gauche, le
+ * SalesScore de chaque commercial, les blocs de la grille en retrait et la
+ * synthèse écrite de l'équipe avec ses chiffres. À droite, qui accompagner
+ * en priorité et le podium de la période.
  *
- * La page ouvrait sur trois compteurs d'activité sous un intitulé
- * « Indicateurs détaillés » : un manager qui se connectait lisait des volumes
- * avant de savoir où on avait besoin de lui. Les trois cartes de priorités
- * répondent maintenant en premier, et les compteurs descendent sous l'équipe,
- * au rang de contexte.
- *
- * Quand aucune carte n'a rien à dire, l'équipe n'a encore aucune donnée : les
- * compteurs d'activité remontent alors en tête, seuls chiffres qui existent
- * déjà, plutôt que de laisser un titre au-dessus de rien.
+ * Le tableau nominatif « Mon équipe », les profils rencontrés et le coaching
+ * KISS suivent : ce sont les détails que les deux colonnes résument.
  */
 export function DashboardAdminShell({
   admin,
@@ -50,7 +54,8 @@ export function DashboardAdminShell({
    */
   comparisonGroup?: TeamScopeGroup;
 }) {
-  const { home, monEquipe, discPie, soncasPie, kissTeamRollup } = admin;
+  const { home, monEquipe, discPie, soncasPie, kissTeamRollup, teamReading } =
+    admin;
   const jours = admin.statsWindowDays;
   const essentiel = essentielDuManager({
     dispersion: monEquipe.collectif.dispersion,
@@ -59,17 +64,17 @@ export function DashboardAdminShell({
     statsWindowDays: jours,
     equipePage: monEquipe.page,
   });
-  const ouvreSurEssentiel = !essentielEstVide(essentiel);
+  const aDesPriorites = !essentielEstVide(essentiel);
 
   return (
     <div className="space-y-8">
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className={sectionHeadingClass}>
-            {ouvreSurEssentiel
-              ? "À accompagner en priorité"
-              : "Activité de la période"}
-          </h2>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            L&apos;activité des {statsWindowLabel(jours)}, comparée aux{" "}
+            {previousWindowLabel(jours)}. La période choisie s&apos;applique à
+            toutes les pages du manager.
+          </p>
           <Suspense
             fallback={
               <Skeleton className="h-9 w-36 shrink-0 self-start rounded-md sm:self-auto" />
@@ -81,12 +86,41 @@ export function DashboardAdminShell({
             />
           </Suspense>
         </div>
+        <DashboardKpiCards
+          home={home}
+          audience="team"
+          pipeline={teamReading.pipeline}
+          scoreSeries={teamReading.scoreSeries}
+          sellersCount={teamReading.sellersCount}
+        />
+      </div>
 
-        {ouvreSurEssentiel ? (
-          <OrgAdminActionCards essentiel={essentiel} />
-        ) : (
-          <DashboardKpiCards home={home} />
-        )}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.62fr)_minmax(300px,1fr)]">
+        <div className="grid gap-4">
+          <TeamSalesScoreBarsCard
+            bars={teamReading.scoreBars}
+            statsWindowDays={jours}
+            equipePage={monEquipe.page}
+          />
+          <TeamBlockAxesCard
+            axes={teamReading.blockAxes}
+            scorecards={teamReading.scorecards}
+          />
+          <TeamWrittenSynthesisCard synthesis={teamReading.synthesis} />
+        </div>
+        <div className="grid content-start gap-4">
+          {aDesPriorites ? (
+            <section className="space-y-3">
+              <h2 className={sectionHeadingClass}>À accompagner en priorité</h2>
+              <OrgAdminActionCards essentiel={essentiel} />
+            </section>
+          ) : null}
+          <TeamPodiumCard
+            podium={teamReading.podium}
+            statsWindowDays={jours}
+            equipePage={monEquipe.page}
+          />
+        </div>
       </div>
 
       <MonEquipeSection
@@ -96,13 +130,6 @@ export function DashboardAdminShell({
         listBasePath="/company"
         comparisonGroup={comparisonGroup}
       />
-
-      {ouvreSurEssentiel ? (
-        <section className="space-y-4">
-          <h2 className={sectionHeadingClass}>Activité de la période</h2>
-          <DashboardKpiCards home={home} />
-        </section>
-      ) : null}
 
       <section className="space-y-4">
         {/*

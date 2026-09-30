@@ -227,3 +227,17 @@
     stroke-width: 1.65;
   }
 }
+
+/*
+  Reflet qui traverse la barre d'avancement de l'analyse. La barre avance
+  par paliers ; sans ce mouvement continu, une étape longue ressemble à une
+  page figée.
+*/
+@keyframes st-progress-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}

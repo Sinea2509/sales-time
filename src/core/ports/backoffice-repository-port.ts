@@ -37,6 +37,15 @@ export type AdminDashboardBundle = {
   activeOrgs30d: number;
   newUsersThisMonth: number;
   newOrgsThisMonth: number;
+  /** Inscrits de la période qui ont analysé un rendez-vous, et en combien de temps. */
+  activation: {
+    signups: number;
+    activated: number;
+    activationRatePct: number | null;
+    medianHoursToFirstMeeting: number | null;
+  };
+  /** Organisations à zéro analyse d'essai, sans plan débloqué : à relancer. */
+  trialExhaustedOrgs: number;
   recentUsers: AdminDashboardRecentUser[];
   recentOrgs: AdminDashboardRecentOrg[];
   dailyActiveData: AdminDailyActivePoint[];

@@ -1,11 +1,18 @@
 "use client";
 
+import { upload } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   createMeetingAction,
+  getAudioUploadPathnameAction,
   updateMeetingAction,
 } from "@/app/[locale]/company/rendez-vous/actions";
+import {
+  AUDIO_ACCEPT,
+  AUDIO_MAX_BYTES,
+  audioMediaTypeFor,
+} from "@/lib/audio-transcript";
 import { ContactPicker } from "@/components/organisms/contact-picker";
 import { FileDropzone } from "@/components/molecules/file-dropzone";
 import { Button } from "@/components/ui/button";
@@ -22,6 +29,14 @@ import { nativeSelectClassName } from "@/components/ui/native-select-class";
 
 const TRANSCRIPT_ACCEPT = ".txt,.csv,.md,.vtt,.srt,.doc,.docx,.pdf,text/plain";
 const TRANSCRIPT_MAX_BYTES = 4 * 1024 * 1024;
+
+type SourceMode = "paste" | "file" | "audio";
+
+/** Où en est l'envoi d'un enregistrement : la seule attente qui se voit. */
+type AudioPhase =
+  | { kind: "idle" }
+  | { kind: "uploading"; percent: number }
+  | { kind: "transcribing" };
 
 const feelingLabels = [
   "Très insatisfait",
@@ -80,6 +95,18 @@ function mapSubmitError(
   if (res.error === "EXTRACTION_FAILED") {
     return "Impossible de lire le contenu du fichier. Vérifiez qu'il n'est pas protégé ou corrompu, ou collez le texte.";
   }
+  if (res.error === "AUDIO_TOO_LARGE") {
+    return "Enregistrement trop lourd (maximum 20 Mo, environ 45 minutes en m4a). Coupez-le ou compressez-le.";
+  }
+  if (res.error === "AUDIO_NOT_FOUND") {
+    return "L'enregistrement n'a pas été retrouvé. Réessayez l'envoi.";
+  }
+  if (res.error === "TRANSCRIPTION_FAILED") {
+    return "La transcription a échoué. Réessayez dans un instant, ou collez le transcript si vous l'avez.";
+  }
+  if (res.error === "AI_NOT_CONFIGURED") {
+    return "La transcription n'est pas disponible sur cette plateforme.";
+  }
   if (res.error === "FORBIDDEN" || res.error === "NOT_FOUND") {
     return isEditMode
       ? "Impossible de modifier ce rendez-vous."
@@ -100,10 +127,49 @@ export function MeetingCreateForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [feeling, setFeeling] = useState(initialValues?.feeling ?? 3);
-  const [useUpload, setUseUpload] = useState(false);
+  const [sourceMode, setSourceMode] = useState<SourceMode>("paste");
   const [file, setFile] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioPhase, setAudioPhase] = useState<AudioPhase>({ kind: "idle" });
   const isDialog = variant === "dialog";
   const isEdit = mode === "edit" && initialValues != null;
+  const useUpload = sourceMode === "file";
+  const useAudio = sourceMode === "audio" && !isEdit;
+
+  /*
+    L'enregistrement part directement du navigateur vers le stockage, puis
+    le serveur le transcrit : la barre montre l'envoi, le libellé du bouton
+    dit la transcription. Sans cela, une minute de silence après le clic
+    ressemble à une page plantée.
+  */
+  async function uploadAudio(next: File): Promise<{
+    url: string;
+    mediaType: string;
+  }> {
+    const target = await getAudioUploadPathnameAction(next.name);
+    if (!target.ok) throw new Error(target.error);
+    const mediaType = audioMediaTypeFor(next.name, next.type);
+    setAudioPhase({ kind: "uploading", percent: 0 });
+    const blob = await upload(target.pathname, next, {
+      access: "public",
+      handleUploadUrl: "/api/meetings/audio-upload",
+      contentType: mediaType,
+      onUploadProgress: (p) =>
+        setAudioPhase({ kind: "uploading", percent: Math.round(p.percentage) }),
+    });
+    setAudioPhase({ kind: "transcribing" });
+    return { url: blob.url, mediaType };
+  }
+
+  const submitLabel = pending
+    ? audioPhase.kind === "uploading"
+      ? `Envoi de l'enregistrement… ${audioPhase.percent} %`
+      : audioPhase.kind === "transcribing"
+        ? "Transcription puis analyse…"
+        : "Enregistrement et analyse…"
+    : isEdit
+      ? "Enregistrer les modifications"
+      : "Enregistrer le rendez-vous";
 
   return (
     <form
@@ -119,6 +185,15 @@ export function MeetingCreateForm({
         }
         startTransition(async () => {
           try {
+            if (useAudio) {
+              if (!audioFile) {
+                setError("Choisissez un enregistrement audio.");
+                return;
+              }
+              const uploaded = await uploadAudio(audioFile);
+              fd.set("audioBlobUrl", uploaded.url);
+              fd.set("audioMediaType", uploaded.mediaType);
+            }
             const res = isEdit
               ? await updateMeetingAction(fd)
               : await createMeetingAction(fd);
@@ -137,8 +212,12 @@ export function MeetingCreateForm({
             }
           } catch {
             setError(
-              "Échec de l'envoi. Si vous importez un fichier volumineux, réessayez avec un fichier plus léger.",
+              useAudio
+                ? "L'envoi de l'enregistrement a échoué. Vérifiez votre connexion et réessayez."
+                : "Échec de l'envoi. Si vous importez un fichier volumineux, réessayez avec un fichier plus léger.",
             );
+          } finally {
+            setAudioPhase({ kind: "idle" });
           }
         });
       }}
@@ -260,8 +339,8 @@ export function MeetingCreateForm({
             <input
               type="radio"
               name="sourceMode"
-              checked={!useUpload}
-              onChange={() => setUseUpload(false)}
+              checked={sourceMode === "paste"}
+              onChange={() => setSourceMode("paste")}
             />
             Coller le transcript
           </label>
@@ -269,13 +348,58 @@ export function MeetingCreateForm({
             <input
               type="radio"
               name="sourceMode"
-              checked={useUpload}
-              onChange={() => setUseUpload(true)}
+              checked={sourceMode === "file"}
+              onChange={() => setSourceMode("file")}
             />
             Importer un fichier (.txt, .csv, .doc, .docx, .pdf…)
           </label>
+          {!isEdit ? (
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="sourceMode"
+                checked={sourceMode === "audio"}
+                onChange={() => setSourceMode("audio")}
+              />
+              Importer un enregistrement audio
+            </label>
+          ) : null}
         </div>
-        {useUpload ? (
+        {useAudio ? (
+          <div className="space-y-2">
+            <Label htmlFor="audioFile">Enregistrement du rendez-vous</Label>
+            <FileDropzone
+              id="audioFile"
+              accept={AUDIO_ACCEPT}
+              maxBytes={AUDIO_MAX_BYTES}
+              file={audioFile}
+              onFileChange={setAudioFile}
+              disabled={pending}
+              hint="Formats acceptés : .mp3, .m4a, .aac, .wav, .webm, .ogg. Taille maximale : 20 Mo, soit environ 45 minutes en m4a. La transcription prend une à deux minutes."
+            />
+            {audioPhase.kind === "uploading" ? (
+              <div
+                role="progressbar"
+                aria-label="Envoi de l'enregistrement"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={audioPhase.percent}
+                className="h-2 w-full overflow-hidden rounded-full bg-muted"
+              >
+                <div
+                  className="bg-brand h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none"
+                  style={{ width: `${audioPhase.percent}%` }}
+                />
+              </div>
+            ) : null}
+            <Textarea
+              id="transcript"
+              name="transcript"
+              rows={3}
+              placeholder="Texte complémentaire (optionnel)"
+            />
+          </div>
+        ) : useUpload ? (
           <div className="space-y-2">
             <Label htmlFor="transcriptFile">Fichier transcript</Label>
             <FileDropzone
@@ -340,11 +464,7 @@ export function MeetingCreateForm({
             className="bg-brand text-brand-foreground hover:bg-brand-hover"
             data-feedback-id="meeting-create-submit"
           >
-            {pending
-              ? "Enregistrement et analyse…"
-              : isEdit
-                ? "Enregistrer les modifications"
-                : "Enregistrer le rendez-vous"}
+            {submitLabel}
           </Button>
         </DialogFooter>
       ) : (
@@ -354,11 +474,7 @@ export function MeetingCreateForm({
           className={cn("bg-brand text-brand-foreground hover:bg-brand-hover")}
           data-feedback-id="meeting-create-submit"
         >
-          {pending
-            ? "Enregistrement et analyse…"
-            : isEdit
-              ? "Enregistrer les modifications"
-              : "Enregistrer le rendez-vous"}
+          {submitLabel}
         </Button>
       )}
     </form>

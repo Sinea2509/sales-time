@@ -7,6 +7,7 @@ import {
 import { kissGeneratedResultSchema } from "@/src/core/domain/kiss-result-zod";
 import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
 import { scorecardGeneratedResultSchema } from "@/src/core/domain/scorecard-result-zod";
+import { objectionsResultSchema } from "@/src/core/domain/objections-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import { visitReportExtractionSchema } from "@/src/core/domain/visit-report-zod";
@@ -178,6 +179,36 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     };
   }
 
+  async analyzeObjections(input: {
+    systemMarkdown: string;
+    transcript: string;
+    notes: string | null;
+    model: string;
+  }) {
+    const userPrompt = buildDelimitedMeetingUserContent({
+      transcript: input.transcript,
+      notes: input.notes,
+    });
+    const systemPrompt = withDataScopeSystemPrompt(input.systemMarkdown);
+
+    const { object, usage } = await generateObject({
+      model: input.model,
+      schema: objectionsResultSchema,
+      system: systemPrompt,
+      prompt: userPrompt,
+    });
+
+    return {
+      result: object,
+      systemPrompt,
+      userPrompt,
+      usage: {
+        inputTokens: usage?.inputTokens,
+        outputTokens: usage?.outputTokens,
+      },
+    };
+  }
+
   async generateFollowUpEmail(input: {
     systemMarkdown: string;
     userContent: string;
@@ -325,6 +356,46 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     return {
       progressBullets: object.progressBullets.map((s) => s.trim()),
       improvementBullets: object.improvementBullets.map((s) => s.trim()),
+    };
+  }
+
+  async transcribeAudio(input: {
+    audio: Uint8Array;
+    mediaType: string;
+    model: string;
+  }) {
+    /*
+      L'enregistrement part en pièce jointe du message, pas en lien : la
+      passerelle n'a alors rien à télécharger, et le fichier ne quitte le
+      stockage que vers le modèle. La consigne interdit le résumé : un
+      transcript raccourci fausserait ensuite SONCAS, DISC et le coaching.
+    */
+    const { text, usage } = await generateText({
+      model: input.model,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: [
+                "Transcris intégralement cet enregistrement d'un rendez-vous commercial, en français, mot pour mot.",
+                "Ne résume pas, ne reformule pas, n'omets rien. Écris une réplique par ligne, et fais commencer chaque ligne par celui qui parle : « Commercial : » pour la personne qui présente l'offre et pose les questions de découverte, « Prospect : » pour celle qui répond (ou « Intervenant 1 : », « Intervenant 2 : » si leur rôle n'est vraiment pas clair). Ces étiquettes servent à mesurer la répartition de la parole : ne les omets sur aucune ligne.",
+                "Ne mets ni titre, ni commentaire, ni horodatage : uniquement le transcript.",
+              ].join(" "),
+            },
+            { type: "file", data: input.audio, mediaType: input.mediaType },
+          ],
+        },
+      ],
+      maxOutputTokens: 32_000,
+    });
+    return {
+      text: text.trim(),
+      usage: {
+        inputTokens: usage?.inputTokens,
+        outputTokens: usage?.outputTokens,
+      },
     };
   }
 

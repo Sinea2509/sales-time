@@ -1,60 +1,38 @@
 import { notFound, redirect } from "next/navigation";
-import { after } from "next/server";
 import { MeetingDetailShell } from "@/components/organisms/meeting-detail-shell";
+import { getApplicationDeps } from "@/lib/application-deps";
+import { isAudioFilename } from "@/lib/audio-transcript";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
+import { meetingVisitReportForPage } from "@/src/core/application/summarize-meeting-detail";
 import {
   discResultSchema,
   soncasResultSchema,
 } from "@/src/core/domain/analysis-result-zod";
-import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
-import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
-import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
-import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
 import {
-  generateAndPersistMeetingVisitReport,
-  meetingVisitReportForPage,
-} from "@/src/core/application/summarize-meeting-detail";
-import { visitReportWithoutSellerCoaching } from "@/src/core/domain/visit-report";
-import { getApplicationDeps } from "@/lib/application-deps";
+  analysisReliabilityFromWords,
+  countWords,
+} from "@/src/core/domain/analysis-reliability";
+import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
+import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
+import { meetingActionPlan } from "@/src/core/domain/meeting-action-plan";
+import { meetingAnalysisProgress } from "@/src/core/domain/meeting-analysis-progress";
 import {
   isMeetingAnalysisSlow,
   isMeetingAnalysisStuck,
 } from "@/src/core/domain/meeting-analysis-stuck";
+import { salesScoreAverage } from "@/src/core/domain/note-globale-on5";
+import { objectionsResultSchema } from "@/src/core/domain/objections-result-zod";
+import { scorecardCriteria } from "@/src/core/domain/scorecard-grid";
+import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
+import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
+import { talkShareFromTranscript } from "@/src/core/domain/talk-share-from-transcript";
+import { visitReportWithoutSellerCoaching } from "@/src/core/domain/visit-report";
+import { memberDisplayName } from "@/src/core/domain/weekly-manager-digest";
 
 export const dynamic = "force-dynamic";
 
-async function previousSalesScoreForMeeting(
-  deps: ReturnType<typeof getApplicationDeps>,
-  input: {
-    organizationId: string;
-    personId: string;
-    meetingId: string;
-    meetingAt: Date;
-  },
-): Promise<number | null> {
-  const personMeetings = await deps.meetings.listMeetingsForPersonInOrg({
-    organizationId: input.organizationId,
-    personId: input.personId,
-  });
-  const previousMeeting = personMeetings
-    .filter(
-      (m) =>
-        m.id !== input.meetingId &&
-        m.meetingAt.getTime() < input.meetingAt.getTime(),
-    )
-    .sort((a, b) => b.meetingAt.getTime() - a.meetingAt.getTime())[0];
-  if (!previousMeeting) return null;
-
-  const previousSoncas = await deps.meetings.findLatestAnalysisForMeeting({
-    meetingId: previousMeeting.id,
-    organizationId: input.organizationId,
-    kind: "SONCAS",
-  });
-  return previousSoncas
-    ? salesScoreFromSoncasResult(previousSoncas.result)
-    : null;
-}
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export default async function RendezVousDetailPage({
   params,
@@ -75,15 +53,11 @@ export default async function RendezVousDetailPage({
   const deps = getApplicationDeps();
 
   let meeting;
-  let settings;
   try {
-    [meeting, settings] = await Promise.all([
-      deps.meetings.findMeetingDetailWithAnalyses({
-        id,
-        organizationId,
-      }),
-      deps.organizationSettings.findByOrganizationId(organizationId),
-    ]);
+    meeting = await deps.meetings.findMeetingDetailWithAnalyses({
+      id,
+      organizationId,
+    });
   } catch (cause) {
     console.error("rendez-vous detail load failed", {
       meetingId: id,
@@ -95,10 +69,40 @@ export default async function RendezVousDetailPage({
 
   if (!meeting) notFound();
 
+  const isSeller =
+    actor.internalUserId != null &&
+    meeting.sellerUserId === actor.internalUserId;
+  const canEdit = isSeller || actor.canManageOrganization;
+  const canViewSellerCoaching = isSeller || actor.canManageOrganization;
+
+  const since = new Date(new Date().getTime() - THIRTY_DAYS_MS);
+  const [contact, sellerMembership, sellerMeetings30d, teamMeetings30d] =
+    await Promise.all([
+      deps.contacts.findById({ id: meeting.personId, organizationId }),
+      actor.canManageOrganization && !isSeller
+        ? deps.organizationTeam.findMembershipForManagerView(
+            organizationId,
+            meeting.sellerUserId,
+          )
+        : Promise.resolve(null),
+      deps.meetings.listRecentMeetingsForDashboard({
+        organizationId,
+        sellerUserId: meeting.sellerUserId,
+        meetingAtSince: since,
+        limit: 200,
+      }),
+      deps.meetings.listRecentMeetingsForDashboard({
+        organizationId,
+        meetingAtSince: since,
+        limit: 1000,
+      }),
+    ]);
+
   const soncas = meeting.analyses.find((a) => a.kind === "SONCAS");
   const disc = meeting.analyses.find((a) => a.kind === "DISC");
   const kiss = meeting.analyses.find((a) => a.kind === "KISS");
   const scorecard = meeting.analyses.find((a) => a.kind === "SCORECARD");
+  const objections = meeting.analyses.find((a) => a.kind === "OBJECTIONS");
   const soncasParsed = soncas
     ? soncasResultSchema.safeParse(soncas.result)
     : null;
@@ -106,73 +110,50 @@ export default async function RendezVousDetailPage({
   const kissParsed = kiss ? kissResultSchema.safeParse(kiss.result) : null;
   /*
     Une ligne illisible se comporte comme une ligne absente : la section
-    disparaît, le reste de la fiche s'affiche. Le rendez-vous garde ses trois
-    autres analyses, et le commercial n'a pas une page en erreur pour une
-    scorecard écrite par une version du schéma qui n'est plus la nôtre.
+    disparaît, le reste de la fiche s'affiche.
   */
   const scorecardParsed = scorecard
     ? scorecardResultSchema.safeParse(scorecard.result)
     : null;
+  const objectionsParsed = objections
+    ? objectionsResultSchema.safeParse(objections.result)
+    : null;
 
   const salesScore = soncas ? salesScoreFromSoncasResult(soncas.result) : null;
-  const previousSalesScore = await previousSalesScoreForMeeting(deps, {
-    organizationId,
-    personId: meeting.personId,
-    meetingId: meeting.id,
-    meetingAt: meeting.meetingAt,
+  const scoresOf = (rows: typeof sellerMeetings30d) =>
+    rows
+      .filter((m) => m.id !== meeting.id)
+      .map((m) => m.salesScore)
+      .filter((s): s is number => typeof s === "number");
+
+  const grid = scorecardGridForMeeting({
+    meetingType: meeting.meetingType,
+    pipelineStage: meeting.pipelineStage,
   });
-  const salesScoreDelta =
-    salesScore != null && previousSalesScore != null
-      ? salesScore - previousSalesScore
-      : null;
-  const tamMinutesPerRdv = tamMinutesSavedPerMeetingFromSettings(settings);
+  const gridAssumed =
+    grid != null &&
+    !meeting.meetingType?.trim() &&
+    !meeting.pipelineStage?.trim();
 
-  const isSeller =
-    actor.internalUserId != null &&
-    meeting.sellerUserId === actor.internalUserId;
-  const canEdit = isSeller || actor.canManageOrganization;
-
-  const processingLooksSlow = isMeetingAnalysisSlow({
+  const analysisProgress = meetingAnalysisProgress({
     status: meeting.status,
     updatedAt: meeting.updatedAt,
-  });
-  const processingLooksStuck = isMeetingAnalysisStuck({
-    status: meeting.status,
-    updatedAt: meeting.updatedAt,
+    analyses: meeting.analyses,
+    scorecardApplicable: grid != null,
   });
 
-  const analysesForReport = {
+  /*
+    Le compte rendu ne s'écrit pas pendant le rendu de la page : la fiche
+    s'ouvre tout de suite. S'il manque sur un rendez-vous analysé, la fiche le
+    demande à l'ouverture (`streamVisitReport`) et l'affiche dès qu'il est écrit.
+  */
+  const synthesis = meetingVisitReportForPage({
+    meeting,
     discResult: discParsed?.success ? discParsed.data : null,
     soncasResult: soncasParsed?.success ? soncasParsed.data : null,
     kissResult: kissParsed?.success ? kissParsed.data : null,
-    scorecardResult: scorecardParsed?.success ? scorecardParsed.data : null,
-  };
-  const synthesis = meetingVisitReportForPage({
-    meeting,
-    ...analysesForReport,
   });
-  if (synthesis.needsWriting) {
-    /*
-      Le compte rendu manque sur un rendez-vous analysé : il s'écrit après la
-      réponse, pour que la fiche s'affiche tout de suite. Le commercial le
-      trouve en rechargeant la page.
-    */
-    after(() =>
-      generateAndPersistMeetingVisitReport(
-        {
-          analysis: deps.analysis,
-          prompts: deps.prompts,
-          organizationPrompts: deps.organizationPrompts,
-          meetings: deps.meetings,
-          users: deps.users,
-          organizationSettings: deps.organizationSettings,
-        },
-        { organizationId, meeting, ...analysesForReport },
-      ).catch(() => undefined),
-    );
-  }
-
-  const canViewSellerCoaching = isSeller || actor.canManageOrganization;
+  const streamVisitReport = synthesis.needsWriting;
   /*
     La grille et le coaching ne se lisent que par le commercial assigné et les
     managers. Le compte rendu en reprend une partie : pour les autres membres,
@@ -183,39 +164,106 @@ export default async function RendezVousDetailPage({
       ? visitReportWithoutSellerCoaching(synthesis.meetingSynthesis)
       : synthesis.meetingSynthesis;
 
+  const transcriptWords = countWords(meeting.transcript);
+  const transcribedFromAudio =
+    meeting.sourceType === "UPLOAD" &&
+    isAudioFilename(meeting.sourceBlobUrl ?? "");
+
+  const kissData = kissParsed?.success ? kissParsed.data : null;
+  const sellerName = sellerMembership
+    ? memberDisplayName({
+        firstName: sellerMembership.user.firstName,
+        lastName: sellerMembership.user.lastName,
+        email: sellerMembership.user.email,
+      })
+    : isSeller
+      ? [actor.firstName, actor.lastName].filter(Boolean).join(" ").trim() ||
+        null
+      : null;
+  /*
+    Le plan d'action se déduit de la scorecard d'abord, du coaching ensuite :
+    le premier nomme le critère à couvrir et la phrase à dire, le second le
+    geste à prendre. Le responsable est le commercial du rendez-vous.
+  */
+  const planActions = meetingActionPlan({
+    scorecard: scorecardParsed?.success ? scorecardParsed.data : null,
+    kiss: kissData,
+    sellerName,
+  });
+
   return (
     <MeetingDetailShell
       meeting={{
         id: meeting.id,
         prospectName: meeting.prospectName,
-        prospectCompany: meeting.prospectCompany,
         status: meeting.status,
-        feeling: meeting.feeling,
-        meetingAt: meeting.meetingAt,
-        outcome: meeting.outcome,
-        meetingType: meeting.meetingType,
-        pipelineStage: meeting.pipelineStage,
-        potentialAmount: meeting.potentialAmount,
         transcript: meeting.transcript,
         notes: meeting.notes,
         followUpEmailDraft: meeting.followUpEmailDraft,
         errorMessage: meeting.errorMessage,
+        meetingType: meeting.meetingType,
+        pipelineStage: meeting.pipelineStage,
       }}
-      tamMinutesPerRdv={tamMinutesPerRdv}
-      salesScore={salesScore}
-      salesScoreDelta={salesScoreDelta}
+      header={{
+        prospectName: meeting.prospectName,
+        prospectCompany: meeting.prospectCompany,
+        prospectJobTitle: contact?.jobTitle ?? null,
+        meetingAt: meeting.meetingAt,
+        durationMin: meeting.durationMin,
+        meetingType: meeting.meetingType,
+        pipelineStage: meeting.pipelineStage,
+        potentialAmount: meeting.potentialAmount,
+        sellerName: sellerMembership ? sellerName : null,
+        backHref: "/company/rendez-vous",
+      }}
+      rail={{
+        salesScore,
+        scorePending: meeting.status === "PROCESSING" && salesScore == null,
+        gridName: grid?.name ?? null,
+        sellerAverage30d: salesScoreAverage(scoresOf(sellerMeetings30d)),
+        teamAverage30d: salesScoreAverage(scoresOf(teamMeetings30d)),
+        talkShare: talkShareFromTranscript(meeting.transcript),
+        planActions,
+        provenance: {
+          gridName: grid?.name ?? null,
+          criteriaCount: grid ? scorecardCriteria(grid).length : null,
+          reliability: analysisReliabilityFromWords(transcriptWords),
+          transcriptWords,
+          transcribedFromAudio,
+          durationMin: meeting.durationMin,
+          computedAt: soncas?.createdAt ?? null,
+        },
+      }}
+      analysisProgress={analysisProgress}
       meetingSynthesis={meetingSynthesis}
       synthesisFromAi={synthesis.fromAi}
-      synthesisWriting={synthesis.needsWriting}
-      interlocutorProfile={synthesis.interlocutorProfile}
+      streamVisitReport={streamVisitReport}
       soncasResult={soncasParsed?.success ? soncasParsed.data : null}
       discResult={discParsed?.success ? discParsed.data : null}
-      kissResult={kissParsed?.success ? kissParsed.data : null}
+      kissResult={kissData}
       scorecardResult={scorecardParsed?.success ? scorecardParsed.data : null}
+      scorecardGridIntent={grid?.intent ?? null}
+      scorecardGridAssumed={gridAssumed}
+      objectionsResult={
+        objectionsParsed?.success ? objectionsParsed.data : null
+      }
+      transcriptSourceLabel={
+        transcribedFromAudio
+          ? "Transcrit automatiquement depuis un enregistrement audio, un intervenant par ligne."
+          : meeting.sourceType === "UPLOAD"
+            ? "Lu depuis le fichier importé."
+            : null
+      }
       showSellerCoaching={canViewSellerCoaching}
       canEdit={canEdit}
-      processingLooksSlow={processingLooksSlow}
-      processingLooksStuck={processingLooksStuck}
+      processingLooksSlow={isMeetingAnalysisSlow({
+        status: meeting.status,
+        updatedAt: meeting.updatedAt,
+      })}
+      processingLooksStuck={isMeetingAnalysisStuck({
+        status: meeting.status,
+        updatedAt: meeting.updatedAt,
+      })}
     />
   );
 }

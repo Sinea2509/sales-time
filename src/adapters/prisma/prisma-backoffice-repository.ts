@@ -18,6 +18,7 @@ import {
   GLOBAL_AUDIT_ORG_ID,
   SYSTEM_AUDIT_ORG_ID,
 } from "@/src/core/domain/platform-audit-actions";
+import { activationMetrics } from "@/src/core/domain/activation-metrics";
 import type { OrganizationMembershipRole } from "@/src/core/domain/organization-membership-role";
 
 function mapMembershipRole(r: string): OrganizationMembershipRole {
@@ -60,6 +61,8 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
       activeOrgs30d,
       newUsersThisMonth,
       newOrgsThisMonth,
+      signupsInRange,
+      trialExhaustedOrgs,
       recentUsers,
       recentOrgs,
       dailyActiveData,
@@ -105,6 +108,13 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
         .then((r) => r.length),
       this.db.user.count({ where: { createdAt: { gte: monthAgo } } }),
       this.db.organization.count({ where: { createdAt: { gte: monthAgo } } }),
+      this.db.user.findMany({
+        where: { createdAt: { gte: monthAgo } },
+        select: { id: true, createdAt: true },
+      }),
+      this.db.organization.count({
+        where: { trialAnalysesLeft: { lte: 0 }, planUnlockedAt: null },
+      }),
       this.db.user.findMany({
         take: 5,
         orderBy: { createdAt: "desc" },
@@ -164,6 +174,31 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
       ),
     ]);
 
+    /*
+      Le premier rendez-vous de chaque inscrit de la période, en une requête
+      groupée plutôt qu'une par inscrit : la page d'administration ne doit pas
+      ralentir à mesure que les inscriptions augmentent.
+    */
+    const firstMeetings =
+      signupsInRange.length > 0
+        ? await this.db.meeting.groupBy({
+            by: ["sellerUserId"],
+            where: { sellerUserId: { in: signupsInRange.map((u) => u.id) } },
+            _min: { createdAt: true },
+          })
+        : [];
+    const activation = activationMetrics({
+      signups: signupsInRange.map((u) => ({
+        userId: u.id,
+        createdAt: u.createdAt,
+      })),
+      firstMeetings: firstMeetings.flatMap((m) =>
+        m._min.createdAt
+          ? [{ userId: m.sellerUserId, at: m._min.createdAt }]
+          : [],
+      ),
+    });
+
     return {
       totalUsers,
       totalOrgs,
@@ -180,6 +215,8 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
       activeOrgs30d,
       newUsersThisMonth,
       newOrgsThisMonth,
+      activation,
+      trialExhaustedOrgs,
       recentUsers: recentUsers.map((u) => ({
         id: u.id,
         email: u.email,

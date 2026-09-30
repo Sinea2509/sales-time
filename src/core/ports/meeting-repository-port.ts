@@ -5,7 +5,12 @@ import type {
 } from "@/src/core/domain/meeting-status";
 
 /** Analysis kinds persisted on \`MeetingAnalysis\`. */
-export type MeetingAnalysisKind = "SONCAS" | "DISC" | "KISS" | "SCORECARD";
+export type MeetingAnalysisKind =
+  | "SONCAS"
+  | "DISC"
+  | "KISS"
+  | "SCORECARD"
+  | "OBJECTIONS";
 
 export type MeetingRow = {
   id: string;
@@ -75,6 +80,8 @@ export type RecentMeetingListRow = MeetingRow & {
   latestDiscResult?: unknown | null;
   /** Dernier résultat KISS brut (agrégations coaching équipe). */
   latestKissResult?: unknown | null;
+  /** Dernière scorecard brute (axes de la grille sur les tableaux de bord). */
+  latestScorecardResult?: unknown | null;
 };
 
 /** Per-person rollup for outreach / Person360 lists. */
@@ -107,11 +114,19 @@ export type MeetingDetailWithAnalyses = {
   visitReportDraft: string | null;
   transcript: string;
   notes: string | null;
+  durationMin: number | null;
+  sourceType: MeetingSourceType;
+  sourceBlobUrl: string | null;
   updatedAt: Date;
   analyses: Array<{
     kind: MeetingAnalysisKind;
     model: string;
     result: unknown;
+    /**
+     * Date d'écriture de l'analyse. La fiche s'en sert pendant une relance
+     * pour ne cocher que les analyses nées après le début du traitement.
+     */
+    createdAt: Date;
   }>;
 };
 
@@ -200,6 +215,8 @@ export interface MeetingRepositoryPort {
     includeLatestDiscResult?: boolean;
     /** Inclut `latestKissResult` (coaching KISS agrégé). */
     includeLatestKissResult?: boolean;
+    /** Inclut `latestScorecardResult` (axes de la grille, défi de la semaine). */
+    includeLatestScorecardResult?: boolean;
     /** Scope to one seller (member role). */
     sellerUserId?: string;
   }): Promise<RecentMeetingListRow[]>;

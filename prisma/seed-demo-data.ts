@@ -14,9 +14,23 @@ export type DemoPromptVersionIds = {
   kiss: string;
 };
 
-const DEMO_ORG_SLUG = "acme-demo";
-const DEMO_ORG_NAME = "Acme Solutions";
-const DEMO_PASSWORD_DEFAULT = "DemoOrg2026!";
+export const DEMO_ORG_SLUG = "acme-demo";
+export const DEMO_ORG_NAME = "Acme Solutions";
+export const DEMO_PASSWORD_DEFAULT = "DemoOrg2026!";
+
+/**
+ * Ce que l'appelant décide, à la place des variables d'environnement.
+ *
+ * Le script de seed lit toujours `SEED_DEMO_*` ; l'espace super admin, lui,
+ * appelle la même fonction avec des choix explicites, sans dépendre d'un
+ * environnement que Vercel ne lui laisse pas modifier à la volée. La remise à
+ * neuf (`SEED_DEMO_RESET`) reste réservée au script : elle efface des données.
+ */
+export type DemoTenantOptions = {
+  slug?: string;
+  name?: string;
+  password?: string;
+};
 
 type DemoUserSpec = {
   email: string;
@@ -418,12 +432,30 @@ function buildSoncasResult(
 function soncasDrivers(avg: number) {
   return {
     drivers: {
-      securite: { score: driverScore(avg, -8), evidence: ["Conformité RGPD évoquée"] },
-      orgueil: { score: driverScore(avg, 4), evidence: ["Image de marque importante"] },
-      nouveaute: { score: driverScore(avg, -2), evidence: ["Intérêt pour l’innovation"] },
-      confort: { score: driverScore(avg, -5), evidence: ["Process existant à préserver"] },
-      argent: { score: driverScore(avg, 6), evidence: ["ROI discuté en détail"] },
-      sympathie: { score: driverScore(avg, 2), evidence: ["Bonne relation établie"] },
+      securite: {
+        score: driverScore(avg, -8),
+        evidence: ["Conformité RGPD évoquée"],
+      },
+      orgueil: {
+        score: driverScore(avg, 4),
+        evidence: ["Image de marque importante"],
+      },
+      nouveaute: {
+        score: driverScore(avg, -2),
+        evidence: ["Intérêt pour l’innovation"],
+      },
+      confort: {
+        score: driverScore(avg, -5),
+        evidence: ["Process existant à préserver"],
+      },
+      argent: {
+        score: driverScore(avg, 6),
+        evidence: ["ROI discuté en détail"],
+      },
+      sympathie: {
+        score: driverScore(avg, 2),
+        evidence: ["Bonne relation établie"],
+      },
     },
   };
 }
@@ -435,7 +467,9 @@ function dominantSoncas(avg: number): "argent" | "sympathie" | "securite" {
 }
 
 function buildDiscResult(scores: DemoMeetingSpec["disc"]) {
-  const entries = Object.entries(scores) as Array<["D" | "I" | "S" | "C", number]>;
+  const entries = Object.entries(scores) as Array<
+    ["D" | "I" | "S" | "C", number]
+  >;
   const dominant = entries.reduce((best, cur) =>
     cur[1] > best[1] ? cur : best,
   )[0];
@@ -462,9 +496,11 @@ function buildKissResult(score: number) {
       "Envoyer un suivi personnalisé sous 24 h avec réponses aux questions précises.",
       "Préparer des supports adaptés par interlocuteur (CTO, CEO, CFO).",
     ],
-    goldenQuestion: "Qu’est-ce qui vous ferait dire oui d’ici la fin du trimestre ?",
+    goldenQuestion:
+      "Qu’est-ce qui vous ferait dire oui d’ici la fin du trimestre ?",
     coachingScore: score,
-    coachingScoreJustification: "Score seed aligné sur la qualité perçue du rendez-vous.",
+    coachingScoreJustification:
+      "Score seed aligné sur la qualité perçue du rendez-vous.",
     summary:
       "Synthèse KISS seed, alimente les cartes Progrès et Axes d’amélioration.",
   };
@@ -496,7 +532,8 @@ async function ensureDemoUser(
         firstName: spec.firstName,
         lastName: spec.lastName,
         profileRole: spec.profileRole,
-        registerProfileCompletedAt: user.registerProfileCompletedAt ?? new Date(),
+        registerProfileCompletedAt:
+          user.registerProfileCompletedAt ?? new Date(),
       },
     });
   }
@@ -568,16 +605,28 @@ async function clearDemoTransactionalData(
 export async function ensureDemoTenant(
   prisma: PrismaClient,
   promptVersions: DemoPromptVersionIds,
-) {
+  options: DemoTenantOptions = {},
+): Promise<void> {
   const orgSlug =
-    process.env.SEED_DEMO_ORG_SLUG?.trim().toLowerCase() ?? DEMO_ORG_SLUG;
-  const orgName = process.env.SEED_DEMO_ORG_NAME?.trim() ?? DEMO_ORG_NAME;
+    options.slug?.trim().toLowerCase() ||
+    process.env.SEED_DEMO_ORG_SLUG?.trim().toLowerCase() ||
+    DEMO_ORG_SLUG;
+  const orgName =
+    options.name?.trim() ||
+    process.env.SEED_DEMO_ORG_NAME?.trim() ||
+    DEMO_ORG_NAME;
   const password =
-    process.env.SEED_DEMO_PASSWORD?.trim() ?? DEMO_PASSWORD_DEFAULT;
+    options.password?.trim() ||
+    process.env.SEED_DEMO_PASSWORD?.trim() ||
+    DEMO_PASSWORD_DEFAULT;
 
   const org = await prisma.organization.upsert({
     where: { slug: orgSlug },
-    create: { slug: orgSlug, name: orgName, websiteNormalized: "acme-demo.test" },
+    create: {
+      slug: orgSlug,
+      name: orgName,
+      websiteNormalized: "acme-demo.test",
+    },
     update: { name: orgName },
   });
 
@@ -682,10 +731,19 @@ export async function ensureDemoTenant(
     });
 
     if (spec.soncasAvg > 0) {
-      await createAnalysis(prisma, meeting.id, "SONCAS", promptVersions.soncas, {
-        result: buildSoncasResult(spec.soncasAvg, dominantSoncas(spec.soncasAvg)),
-        model: "seed/soncas",
-      });
+      await createAnalysis(
+        prisma,
+        meeting.id,
+        "SONCAS",
+        promptVersions.soncas,
+        {
+          result: buildSoncasResult(
+            spec.soncasAvg,
+            dominantSoncas(spec.soncasAvg),
+          ),
+          model: "seed/soncas",
+        },
+      );
       await createAnalysis(prisma, meeting.id, "DISC", promptVersions.disc, {
         result: buildDiscResult(spec.disc),
         model: "seed/disc",

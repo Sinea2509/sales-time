@@ -9,6 +9,9 @@ import {
   Zap,
   DollarSign,
   AlertTriangle,
+  Hourglass,
+  Target,
+  UserPlus,
 } from "lucide-react";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getPlatformAiKpis } from "@/src/core/application/get-platform-ai-kpis";
@@ -58,11 +61,18 @@ export default async function AdminDashboardPage(props: {
     activeOrgs30d,
     newUsersThisMonth,
     newOrgsThisMonth,
+    activation,
+    trialExhaustedOrgs,
     recentUsers,
     recentOrgs,
     dailyActiveData,
     orgGrowthData,
   } = bundle;
+
+  function formatHoursFr(hours: number): string {
+    if (hours < 48) return `${hours} h`;
+    return `${Math.round(hours / 24)} j`;
+  }
 
   function trendPercent(current: number, previous: number): number | null {
     if (previous === 0) return current > 0 ? 100 : null;
@@ -137,6 +147,53 @@ export default async function AdminDashboardPage(props: {
           }
           footer={`${aiKpis.failedMeetings} échecs / ${aiKpis.readyMeetings} OK`}
           accent="violet"
+        />
+      </div>
+
+      {/*
+        L'activation avant l'engagement : un inscrit qui n'a jamais analysé n'a
+        jamais vu le produit, et aucun chiffre d'usage ne le rattrapera.
+      */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <AdminKpiCard
+          icon={UserPlus}
+          label={`Inscrits (${rangeDays}j)`}
+          value={activation.signups}
+          footer={`${activation.activated} ont analysé au moins un RDV`}
+          accent="blue"
+        />
+        <AdminKpiCard
+          icon={Target}
+          label="Taux d'activation"
+          value={
+            activation.activationRatePct != null
+              ? `${activation.activationRatePct}%`
+              : VALEUR_NON_CALCULABLE
+          }
+          footer={
+            activation.activationRatePct != null
+              ? "Inscrits avec un premier RDV analysé"
+              : "Aucun inscrit sur la période"
+          }
+          accent="emerald"
+        />
+        <AdminKpiCard
+          icon={Hourglass}
+          label="Délai médian du 1er RDV"
+          value={
+            activation.medianHoursToFirstMeeting != null
+              ? formatHoursFr(activation.medianHoursToFirstMeeting)
+              : VALEUR_NON_CALCULABLE
+          }
+          footer="Entre l'inscription et le premier rendez-vous enregistré"
+          accent="violet"
+        />
+        <AdminKpiCard
+          icon={AlertTriangle}
+          label="Essais épuisés"
+          value={trialExhaustedOrgs}
+          footer="Organisations à 0 analyse restante, sans plan : à relancer"
+          accent="amber"
         />
       </div>
 

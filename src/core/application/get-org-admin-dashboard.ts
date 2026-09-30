@@ -37,6 +37,22 @@ import {
   type SellerSkillSignature,
 } from "@/src/core/domain/seller-skill-signature";
 import { kissCoachingBulletsFromMeetings } from "@/src/core/domain/kiss-coaching-bullets-from-meetings";
+import {
+  pipelineInProgress,
+  type PipelineInProgress,
+} from "@/src/core/domain/pipeline-in-progress";
+import { salesScoreSeries } from "@/src/core/domain/sales-score-series";
+import {
+  parseScorecards,
+  scorecardBlockAverages,
+  scorecardCriterionShares,
+  type ScorecardBlockAverage,
+} from "@/src/core/domain/scorecard-team-axes";
+import {
+  teamWrittenSynthesis,
+  type TeamWrittenSynthesis,
+} from "@/src/core/domain/team-written-synthesis";
+import type { RankingTier } from "@/src/core/domain/team-ranking";
 import type { SoncasDriverAverages } from "@/src/core/domain/org-soncas-team-aggregate";
 import type {
   MeetingRepositoryPort,
@@ -193,6 +209,45 @@ export type OrgAdminKissTeamRollup = {
   startBullets: string[];
 };
 
+/** Un commercial sur la barre des SalesScores moyens. */
+export type OrgAdminScoreBar = {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  salesScoreAvg: number;
+  scoredMeetings: number;
+};
+
+/** Une marche du podium : les trois premiers du classement. */
+export type OrgAdminPodiumStep = {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  rank: number;
+  noteOn5: number;
+  tier: RankingTier | null;
+};
+
+/**
+ * Ce que le tableau de bord du manager lit de son équipe au-delà des lignes :
+ * les SalesScores par commercial, les blocs de la grille en retrait, la
+ * synthèse écrite, le podium, le pipeline et la courbe d'équipe.
+ */
+export type OrgAdminTeamReading = {
+  scoreBars: OrgAdminScoreBar[];
+  blockAxes: ScorecardBlockAverage[];
+  /** Scorecards lues pour les axes. */
+  scorecards: number;
+  synthesis: TeamWrittenSynthesis | null;
+  podium: OrgAdminPodiumStep[];
+  pipeline: PipelineInProgress;
+  scoreSeries: number[];
+  /** Commerciaux de l'équipe cadrée. */
+  sellersCount: number;
+};
+
 export type OrgAdminDashboard = {
   statsWindowDays: StatsWindowDays;
   /**
@@ -206,6 +261,7 @@ export type OrgAdminDashboard = {
   discPie: OrgAdminDistributionPie;
   soncasPie: OrgAdminDistributionPie;
   kissTeamRollup: OrgAdminKissTeamRollup;
+  teamReading: OrgAdminTeamReading;
   /** Fingerprint of scoped meetings in the stats window (AI summary cache key). */
   meetingsFingerprint: string;
 };
@@ -694,6 +750,108 @@ export function buildOrgAdminImprovementBullets(
   );
 }
 
+/** Prénom, ou nom complet, ou adresse : ce par quoi on désigne un collègue. */
+function shortNameOf(row: {
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+}): string {
+  const prenom = row.firstName?.trim();
+  if (prenom) return prenom;
+  const nom = row.lastName?.trim();
+  return nom || row.email;
+}
+
+const ENGAGEMENT_BLOCK_KEY = "D";
+
+/**
+ * La lecture d'équipe du manager, depuis l'équipe classée et ses rendez-vous.
+ *
+ * Exportée pour ses tests : elle ne lit rien, elle compose. Les barres et le
+ * podium reprennent les lignes du classement, si bien qu'un commercial ne
+ * peut pas apparaître premier au podium et troisième sur les barres.
+ */
+export function buildOrgAdminTeamReading(input: {
+  rows: readonly OrgAdminMonEquipeRankedRow[];
+  meetings: readonly RecentMeetingListRow[];
+}): OrgAdminTeamReading {
+  const scoreBars: OrgAdminScoreBar[] = input.rows
+    .flatMap((r) =>
+      r.salesScoreAvg == null
+        ? []
+        : [
+            {
+              userId: r.userId,
+              firstName: r.firstName,
+              lastName: r.lastName,
+              email: r.email,
+              salesScoreAvg: r.salesScoreAvg,
+              scoredMeetings: r.scoredMeetings,
+            },
+          ],
+    )
+    .sort((a, b) => b.salesScoreAvg - a.salesScoreAvg);
+
+  const scorecards = parseScorecards(
+    input.meetings.map((m) => m.latestScorecardResult),
+  );
+  const blockAxes = scorecardBlockAverages(scorecards);
+  const criterionShares = scorecardCriterionShares(scorecards);
+
+  const engagementBySeller = new Map<string, number | null>();
+  for (const row of input.rows) {
+    const own = parseScorecards(
+      input.meetings
+        .filter((m) => m.sellerUserId === row.userId)
+        .map((m) => m.latestScorecardResult),
+    );
+    const block = scorecardBlockAverages(own).find(
+      (b) => b.key === ENGAGEMENT_BLOCK_KEY,
+    );
+    engagementBySeller.set(row.userId, block?.avgPercent ?? null);
+  }
+
+  const synthesis = teamWrittenSynthesis({
+    analyzedMeetings: input.meetings.filter((m) => m.salesScore != null).length,
+    scorecards: scorecards.length,
+    sellers: input.rows.map((r) => ({
+      name:
+        [r.firstName, r.lastName].filter(Boolean).join(" ").trim() || r.email,
+      shortName: shortNameOf(r),
+      salesScore: r.salesScoreAvg,
+      scoredMeetings: r.scoredMeetings,
+      engagementPct: engagementBySeller.get(r.userId) ?? null,
+    })),
+    blockAverages: blockAxes,
+    criterionShares,
+    engagementBlockKey: ENGAGEMENT_BLOCK_KEY,
+  });
+
+  const podium: OrgAdminPodiumStep[] = input.rows
+    .filter((r) => r.rank != null && r.rank <= 3 && r.noteGlobaleOn5 != null)
+    .sort((a, b) => a.rank! - b.rank!)
+    .map((r) => ({
+      userId: r.userId,
+      firstName: r.firstName,
+      lastName: r.lastName,
+      email: r.email,
+      rank: r.rank!,
+      noteOn5: r.noteGlobaleOn5!,
+      tier: r.tier,
+    }));
+
+  return {
+    scoreBars,
+    blockAxes,
+    scorecards: scorecards.length,
+    synthesis,
+    podium,
+    pipeline: pipelineInProgress(input.meetings),
+    scoreSeries: salesScoreSeries(input.meetings),
+    sellersCount: input.rows.length,
+  };
+}
+
 export async function getOrgAdminDashboard(
   deps: {
     meetings: MeetingRepositoryPort;
@@ -722,6 +880,7 @@ export async function getOrgAdminDashboard(
       includeLatestSoncasResult: true,
       includeLatestDiscResult: true,
       includeLatestKissResult: true,
+      includeLatestScorecardResult: true,
     }),
     // La fenêtre précédente ne sert qu'aux variations, qui ne lisent que la
     // durée et le SalesScore : ses analyses détaillées ne sont pas demandées.
@@ -769,6 +928,16 @@ export async function getOrgAdminDashboard(
     meetings: scopedMeetings,
     page: input.monEquipePage ?? 1,
   });
+  /*
+    La lecture d'équipe se prend sur l'équipe entière classée, jamais sur la
+    page affichée : un podium tiré des dix premiers d'une page 2 couronnerait
+    le onzième.
+  */
+  const teamReading = buildOrgAdminTeamReading({
+    rows: buildRankedTeam({ members: scopedMembers, meetings: scopedMeetings })
+      .rows,
+    meetings: scopedMeetings,
+  });
 
   const discPie = buildDiscPie(scopedMeetings);
   const soncasPie = buildSoncasPie(scopedMeetings);
@@ -781,6 +950,7 @@ export async function getOrgAdminDashboard(
     discPie,
     soncasPie,
     kissTeamRollup,
+    teamReading,
     meetingsFingerprint: teamMemberMeetingsFingerprint(scopedMeetings),
   };
 }
