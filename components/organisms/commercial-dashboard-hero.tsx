@@ -15,7 +15,7 @@ import type { SellerWeeklyChallenge } from "@/src/core/domain/seller-dashboard-f
 import { rankLabel, tierFromSalesScore } from "@/src/core/domain/team-ranking";
 
 const SALES_SCORE_HOW =
-  "Le SalesScore d'un rendez-vous est la moyenne des six leviers SONCAS entendus chez le prospect, de 0 à 100. Votre SalesScore est la moyenne de vos rendez-vous analysés sur la période. Paliers : Démarrage jusqu'à 40, Progression jusqu'à 60, Maîtrise jusqu'à 80, Excellence au-delà.";
+  "Le SalesScore d'un rendez-vous est la note de sa grille, sur 100 : 25 critères en 5 blocs, chacun prouvé par les mots du prospect. Sans grille pour ce type de rendez-vous, c'est la moyenne des six leviers SONCAS. Votre SalesScore est la moyenne de vos rendez-vous analysés sur la période. Paliers : Démarrage jusqu'à 40, Progression jusqu'à 60, Maîtrise jusqu'à 80, Excellence au-delà.";
 
 /**
  * L'ouverture du tableau de bord du commercial, comme la maquette du 11

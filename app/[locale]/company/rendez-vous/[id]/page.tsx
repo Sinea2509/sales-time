@@ -13,7 +13,7 @@ import {
   analysisReliabilityFromWords,
   countWords,
 } from "@/src/core/domain/analysis-reliability";
-import { salesScoreFromSoncasResult } from "@/src/core/domain/dashboard-sales-score";
+import { salesScoreForMeeting } from "@/src/core/domain/dashboard-sales-score";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
 import { meetingActionPlan } from "@/src/core/domain/meeting-action-plan";
 import { meetingAnalysisProgress } from "@/src/core/domain/meeting-analysis-progress";
@@ -119,7 +119,10 @@ export default async function RendezVousDetailPage({
     ? objectionsResultSchema.safeParse(objections.result)
     : null;
 
-  const salesScore = soncas ? salesScoreFromSoncasResult(soncas.result) : null;
+  const salesScore = salesScoreForMeeting({
+    scorecardResult: scorecard?.result ?? null,
+    soncasResult: soncas?.result ?? null,
+  });
   const scoresOf = (rows: typeof sellerMeetings30d) =>
     rows
       .filter((m) => m.id !== meeting.id)
