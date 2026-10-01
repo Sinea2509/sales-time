@@ -117,7 +117,7 @@ describe("summarizeMeetingDetail", () => {
         organizationId: "org_1",
         meeting: {
           ...meeting,
-          visitReportDraft: "Compte-rendu CRM stocké.",
+          visitReportDraft: "COMPTE RENDU DE VISITE\nCompte-rendu CRM stocké.",
         },
         discResult: null,
         soncasResult: null,
@@ -125,7 +125,34 @@ describe("summarizeMeetingDetail", () => {
       },
     );
     expect(result.fromAi).toBe(true);
-    expect(result.meetingSynthesis).toBe("Compte-rendu CRM stocké.");
+    expect(result.meetingSynthesis).toBe(
+      "COMPTE RENDU DE VISITE\nCompte-rendu CRM stocké.",
+    );
+  });
+
+  it("ne rend pas un compte rendu enregistré dans l'ancienne forme : il est à réécrire", async () => {
+    const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
+    getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: undefined });
+    const result = await summarizeMeetingDetail(
+      {
+        analysis: { extractVisitReport: jest.fn() } as never,
+        prompts: {} as never,
+        organizationPrompts: noOrganizationPrompts(),
+      },
+      {
+        organizationId: "org_1",
+        meeting: {
+          ...meeting,
+          visitReportDraft:
+            "Compte-rendu de visite · Claire Morel · 24/09/2026\n\nContexte : …",
+        },
+        discResult: null,
+        soncasResult: null,
+        kissResult: null,
+      },
+    );
+    expect(result.fromAi).toBe(false);
+    expect(result.meetingSynthesis).not.toContain("Contexte :");
   });
 
   it("returns fallback when AI is not configured", async () => {

@@ -3,7 +3,6 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
 import { orgSettingsCanEdit } from "@/lib/org-settings-can-edit";
 import { OrgSettingsEmailForm } from "@/components/organisms/org-settings-email-form";
-import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { loadResolvedFollowUpEmailPreferences } from "@/src/core/application/load-resolved-follow-up-email-preferences";
 import { resolveFollowUpEmailPreferences } from "@/src/core/domain/follow-up-email-preferences";
 
@@ -35,10 +34,6 @@ export default async function OrgSettingsEmailPage() {
 
     return (
       <div className="space-y-6">
-        <PageHeaderSimple
-          title="E-mail de suivi"
-          description="Paramètres organisation utilisés pour la génération du mail de relance (ton, vouvoiement, signature)."
-        />
         <OrgSettingsEmailForm
           mode="organization"
           canEdit
@@ -61,10 +56,6 @@ export default async function OrgSettingsEmailPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeaderSimple
-        title="E-mail de suivi"
-        description="Personnalisez le ton, le vouvoiement et la signature de vos mails de relance."
-      />
       <OrgSettingsEmailForm
         mode="personal"
         canEdit

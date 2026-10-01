@@ -1,10 +1,12 @@
+import { OrgSettingsCoachForm } from "@/components/organisms/org-settings-coach-form";
 import { OrgSettingsPlaybookForm } from "@/components/organisms/org-settings-playbook-form";
-import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { OrgSettingsReadOnlyBanner } from "@/components/molecules/org-settings-read-only-banner";
+import { asStringArray } from "@/lib/as-string-array";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { orgSettingsCanEdit } from "@/lib/org-settings-can-edit";
+import { sectionHeadingClass } from "@/lib/page-typography";
 import { organizationPlaybookFromJson } from "@/src/core/domain/organization-playbook";
 import { redirect } from "next/navigation";
 
@@ -27,16 +29,29 @@ export default async function OrganizationSettingsPlaybookPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeaderSimple
-        title="Playbook"
-        description="Ce que vend votre organisation, à qui, comment, et ce qui ne se négocie pas."
-      />
       {!canEdit ? <OrgSettingsReadOnlyBanner /> : null}
       <OrgSettingsPlaybookForm
         canEdit={canEdit}
         initial={organizationPlaybookFromJson(row?.playbook)}
         promptPreview={promptPreview}
       />
+      {/*
+        L'argumentaire (pitch, objections, arguments clés, vocabulaire) vit avec
+        le playbook : la maquette ne le montre pas sous les consignes du coach,
+        et il raconte, lui aussi, comment l'organisation vend.
+      */}
+      <section className="space-y-4 pt-4">
+        <h2 className={sectionHeadingClass}>Votre argumentaire</h2>
+        <OrgSettingsCoachForm
+          canEdit={canEdit}
+          initial={{
+            companyPitch: row?.companyPitch ?? "",
+            objections: asStringArray(row?.objections),
+            keyArguments: asStringArray(row?.keyArguments),
+            industryVocabulary: row?.industryVocabulary ?? "",
+          }}
+        />
+      </section>
     </div>
   );
 }

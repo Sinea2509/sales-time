@@ -85,7 +85,7 @@ describe("ORGANIZATION_PROMPT_DESCRIPTIONS", () => {
 
   it("renvoie à l'onglet tel qu'il s'appelle", () => {
     expect(ORGANIZATION_PROMPT_DESCRIPTIONS.FOLLOW_UP_EMAIL).toContain(
-      "l'onglet E-mail de suivi",
+      "l'onglet E-mail.",
     );
   });
 });

@@ -11,7 +11,13 @@ import {
   type ScorecardAnalysisResult,
 } from "@/src/core/domain/scorecard-result-zod";
 import {
+  analysisReliabilityFromWords,
+  countWords,
+} from "@/src/core/domain/analysis-reliability";
+import {
   composeVisitReport,
+  isCurrentVisitReport,
+  withMomentsFromTranscript,
   type VisitReportHistoryEntry,
 } from "@/src/core/domain/visit-report";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
@@ -41,6 +47,17 @@ export type MeetingVisitReportForPage = MeetingDetailSynthesisContent & {
    */
   needsWriting: boolean;
 };
+
+/**
+ * Le compte rendu enregistré, s'il a la forme d'aujourd'hui. Un compte rendu
+ * écrit avant le lot 80a (quelques lignes de synthèse) vaut « manquant » : il
+ * se réécrit à la première ouverture de la fiche, pour que chaque rendez-vous
+ * ait le compte rendu complet.
+ */
+function currentStoredReport(draft: string | null | undefined): string | null {
+  const text = draft?.trim();
+  return text && isCurrentVisitReport(text) ? text : null;
+}
 
 const PROCESSING_REPORT_MESSAGE =
   "Compte-rendu en cours de génération, disponible à la fin de l'analyse automatique.";
@@ -250,7 +267,7 @@ export async function summarizeMeetingDetail(
     organizationId: string;
   },
 ): Promise<MeetingDetailSynthesisContent> {
-  const storedReport = input.meeting.visitReportDraft?.trim();
+  const storedReport = currentStoredReport(input.meeting.visitReportDraft);
   if (storedReport) {
     return {
       meetingSynthesis: storedReport,
@@ -263,7 +280,6 @@ export async function summarizeMeetingDetail(
     status: input.meeting.status,
     ...input,
   });
-
 
   const canGenerateAi =
     input.forceAiGeneration === true || input.meeting.status === "READY";
@@ -288,7 +304,7 @@ export async function summarizeMeetingDetail(
         organizationId: input.organizationId,
       }),
     ]);
-    const extraction = await deps.analysis.extractVisitReport({
+    const extracted = await deps.analysis.extractVisitReport({
       systemMarkdown: prompt.markdown,
       model,
       prospectName: input.meeting.prospectName,
@@ -305,6 +321,11 @@ export async function summarizeMeetingDetail(
       soncasSummary: input.soncasResult?.summary?.trim() || null,
       discSummary: input.discResult?.summary?.trim() || null,
     });
+    // Un moment que le transcript ne porte pas a été estimé : il ne s'écrit pas.
+    const extraction = withMomentsFromTranscript(
+      extracted,
+      input.meeting.transcript,
+    );
 
     const meetingSynthesis = composeVisitReport({
       meeting: {
@@ -314,6 +335,10 @@ export async function summarizeMeetingDetail(
         meetingType: input.meeting.meetingType,
         durationMin: context.durationMin,
         potentialAmount: input.meeting.potentialAmount,
+        pipelineStage: input.meeting.pipelineStage,
+        analysisReliability: analysisReliabilityFromWords(
+          countWords(input.meeting.transcript),
+        ).level,
       },
       organizationName: context.organizationName,
       sellerName: context.sellerName,
@@ -363,7 +388,7 @@ export function meetingVisitReportForPage(input: {
   soncasResult: SoncasAnalysisResult | null;
   kissResult: KissAnalysisResult | null;
 }): MeetingVisitReportForPage {
-  const storedReport = input.meeting.visitReportDraft?.trim();
+  const storedReport = currentStoredReport(input.meeting.visitReportDraft);
   if (storedReport) {
     return {
       meetingSynthesis: storedReport,

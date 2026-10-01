@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { OrgSettingsShell } from "@/components/templates/org-settings-shell";
+import { getApplicationDeps } from "@/lib/application-deps";
 import { loadOrgSettingsAccess } from "@/lib/load-org-settings-access";
 
 export default async function OrganizationSettingsLayout({
@@ -12,5 +13,14 @@ export default async function OrganizationSettingsLayout({
     redirect("/company");
   }
 
-  return <OrgSettingsShell>{children}</OrgSettingsShell>;
+  const orgId = access.actor.activeOrganizationId!;
+  const row = await getApplicationDeps()
+    .organizationSettings.findByOrganizationId(orgId)
+    .catch(() => null);
+
+  return (
+    <OrgSettingsShell organizationName={row?.companyName ?? null}>
+      {children}
+    </OrgSettingsShell>
+  );
 }

@@ -25,10 +25,12 @@ import { z } from "zod";
  * texte qui s'emballe.
  */
 
-/** Des mots prononcés, et par qui. */
+/** Des mots prononcés, par qui, et à quel moment quand le transcript le dit. */
 export const visitReportQuoteSchema = z.object({
   qui: z.string().max(200),
   texte: z.string().max(1000),
+  /** L'horodatage tel que le transcript le porte (« 14'30 »), vide sinon. */
+  moment: z.string().max(40),
 });
 
 /** Une personne présente, ou citée sans être là. */
@@ -53,6 +55,8 @@ export const visitReportBlockSchema = z.object({
 
 export const visitReportObjectionSchema = z.object({
   qui: z.string().max(200),
+  /** L'horodatage tel que le transcript le porte (« 14'30 »), vide sinon. */
+  moment: z.string().max(40),
   /** Les mots du prospect, tels qu'il les a dits. */
   objection: z.string().max(1000),
   reponse: z.string().max(1200),

@@ -53,6 +53,10 @@ export type VisitReportInput = {
     readonly meetingType: string | null;
     readonly durationMin: number | null;
     readonly potentialAmount: number | null;
+    /** L'étape du pipeline, pour la ligne « Étape : … » de l'en-tête. */
+    readonly pipelineStage?: string | null;
+    /** La fiabilité de l'analyse (« bonne », « correcte », …), pour l'en-tête. */
+    readonly analysisReliability?: string | null;
   };
   /** Le nom de l'organisation du commercial, pour la ligne « Côté … ». */
   readonly organizationName: string | null;
@@ -158,11 +162,58 @@ function sectionTitle(title: string): string {
   return title.toLocaleUpperCase("fr-FR");
 }
 
+/** Les mots qui ne sont pas un prénom : un titre, un article, ou « le prospect ». */
+const NOT_A_FIRST_NAME = new Set([
+  "m.",
+  "mme",
+  "mlle",
+  "monsieur",
+  "madame",
+  "mademoiselle",
+  "dr",
+  "le",
+  "la",
+  "les",
+  "un",
+  "une",
+  "notre",
+  "votre",
+]);
+
+/**
+ * Un nom tel que la maquette le signe après une citation : « H. Vasseur » pour
+ * Hélène Vasseur. Un prénom seul, un titre (« Mme Vasseur ») ou une désignation
+ * (« le prospect ») restent tels quels.
+ */
+export function shortPersonName(name: string): string {
+  const words = clean(name).split(" ").filter(Boolean);
+  if (words.length < 2) return words.join(" ");
+  const first = words[0];
+  if (NOT_A_FIRST_NAME.has(first.toLocaleLowerCase("fr-FR")))
+    return words.join(" ");
+  if (!/^\p{Lu}/u.test(first)) return words.join(" ");
+  const initial = first.includes("-")
+    ? first
+        .split("-")
+        .map((part) => `${part.charAt(0)}.`)
+        .join("-")
+    : `${first.charAt(0)}.`;
+  return `${initial} ${words.slice(1).join(" ")}`;
+}
+
+/** Une citation comme la maquette l'écrit : les mots, puis qui les a dits et quand. */
 function quoteLine(quote: VisitReportQuote): string | null {
   const text = clean(quote.texte).replace(/^«\s*|\s*»$/g, "");
   if (!text) return null;
-  const who = clean(quote.qui);
-  return who ? `  « ${text} » (${who})` : `  « ${text} »`;
+  const who = shortPersonName(quote.qui);
+  const moment = clean(quote.moment ?? "");
+  const signature = [who, moment].filter(Boolean).join(", ");
+  return signature ? `  « ${text} »  ${signature}` : `  « ${text} »`;
+}
+
+/** Vrai quand un compte rendu enregistré a la forme d'aujourd'hui, et non celle d'avant le lot 80a. */
+export function isCurrentVisitReport(text: string | null | undefined): boolean {
+  return (text ?? "").trimStart().startsWith(VISIT_REPORT_TITLE);
 }
 
 function participantLine(p: VisitReportParticipant): string | null {
@@ -267,9 +318,22 @@ function header(out: Lines, input: VisitReportInput): void {
     m.durationMin ? `${m.durationMin} min` : "",
   ].filter(Boolean);
   out.push(parts.join(" · "));
-  if (m.potentialAmount != null && m.potentialAmount > 0) {
-    out.push(`Potentiel estimé : ${formatEuro(m.potentialAmount)}`);
-  }
+  /*
+    La troisième ligne de la maquette : l'étape, le potentiel et la fiabilité,
+    séparés par des points médians, chacun seulement s'il est connu.
+  */
+  const details = [
+    clean(m.pipelineStage ?? "")
+      ? `Étape : ${clean(m.pipelineStage ?? "")}`
+      : "",
+    m.potentialAmount != null && m.potentialAmount > 0
+      ? `Potentiel estimé : ${formatEuro(m.potentialAmount)}`
+      : "",
+    clean(m.analysisReliability ?? "")
+      ? `Fiabilité de l'analyse : ${clean(m.analysisReliability ?? "")}`
+      : "",
+  ].filter(Boolean);
+  if (details.length > 0) out.push(details.join(" · "));
 }
 
 function participants(out: Lines, input: VisitReportInput): void {
@@ -378,8 +442,11 @@ function objections(out: Lines, input: VisitReportInput): void {
     return;
   }
   for (const o of items) {
-    const qui = clean(o.qui);
-    out.push(`- Objection soulevée${qui ? ` par ${qui}` : ""} :`);
+    const qui = shortPersonName(o.qui);
+    const moment = clean(o.moment ?? "");
+    out.push(
+      `- Objection soulevée${qui ? ` par ${qui}` : ""}${moment ? ` à ${moment}` : ""} :`,
+    );
     out.push(`  « ${clean(o.objection).replace(/^«\s*|\s*»$/g, "")} »`);
     out.push(
       `  Réponse apportée : ${clean(o.reponse) || "aucune réponse pendant le rendez-vous."}`,
@@ -698,4 +765,45 @@ export function visitReportWithoutSellerCoaching(report: string): string {
     kept.push(withoutScore);
   });
   return kept.join("\n").trim();
+}
+
+/**
+ * Ne garde un moment (« 14'30 ») que si le transcript le porte tel quel.
+ *
+ * Un transcript sans horodatage ne donne aucun moment : un modèle qui en
+ * écrit un l'a estimé, et un compte rendu ne cite pas un moment inventé.
+ */
+export function withMomentsFromTranscript(
+  extraction: VisitReportExtraction,
+  transcript: string,
+): VisitReportExtraction {
+  const keep = (moment: string | undefined): string => {
+    const m = clean(moment ?? "");
+    return m && transcript.includes(m) ? m : "";
+  };
+  const quotes = (list: readonly VisitReportQuote[]) =>
+    list.map((q) => ({ ...q, moment: keep(q.moment) }));
+  return {
+    ...extraction,
+    themes: extraction.themes.map((t) => ({
+      ...t,
+      citations: quotes(t.citations),
+    })),
+    perimetre: {
+      ...extraction.perimetre,
+      citations: quotes(extraction.perimetre.citations),
+    },
+    concurrence: {
+      ...extraction.concurrence,
+      citations: quotes(extraction.concurrence.citations),
+    },
+    objections: extraction.objections.map((o) => ({
+      ...o,
+      moment: keep(o.moment),
+    })),
+    engagements: {
+      ...extraction.engagements,
+      citations: quotes(extraction.engagements.citations),
+    },
+  };
 }
