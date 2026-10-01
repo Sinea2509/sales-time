@@ -30,6 +30,21 @@ export function MeetingKissTab({
 
   return (
     <div className="space-y-4">
+      {kiss.summary.trim() ? (
+        <Card className="border-brand/30 bg-brand-soft shadow-none dark:bg-brand/10">
+          <CardContent className="space-y-2 pt-6">
+            <h2 className={cardTitleClass}>Le brief du coach</h2>
+            <p className="text-muted-foreground text-xs">
+              La situation, la relation, la direction du prochain rendez-vous et
+              le risque principal, en un paragraphe à relire avant le prochain
+              contact.
+            </p>
+            <p className="text-[13.5px] leading-relaxed whitespace-pre-line">
+              {kiss.summary.trim()}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
       <Card>
         <CardContent className="space-y-4 pt-6">
           <div>

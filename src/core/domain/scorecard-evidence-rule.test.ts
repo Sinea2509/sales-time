@@ -1,8 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   applyScorecardEvidenceRule,
+  keepKnownScorecardKeys,
   SCORECARD_UNPROVEN_LEVEL_MAX,
 } from "./scorecard-evidence-rule";
+import { scorecardGridForMeeting } from "./scorecard-grid-for-meeting";
 import type { ScorecardGeneratedResult } from "./scorecard-result-zod";
 
 const TRANSCRIPT = `Claire : Le chiffre d'affaires tient, mais la marge baisse. Nous sommes passés de 34 % de marge brute à 29 % en deux ans.
@@ -82,5 +84,36 @@ describe("applyScorecardEvidenceRule", () => {
       `${TRANSCRIPT}\nNotes : relance prévue le 7 octobre`,
     );
     expect(checked.criteria[0]?.level).toBe(4);
+  });
+});
+
+describe("keepKnownScorecardKeys", () => {
+  const grid = scorecardGridForMeeting({
+    meetingType: "Découverte",
+    pipelineStage: null,
+  })!;
+
+  it("retire les clés inventées, dans les critères comme dans les points perdus", () => {
+    const base = result([
+      { key: "A1", level: 4, evidence: ["Nous sommes neuf commerciaux"] },
+      { key: "A6", level: 0, evidence: [] },
+    ]);
+    const kept = keepKnownScorecardKeys(
+      {
+        ...base,
+        pointsLost: [
+          { key: "A6", evidence: "rien", whatToSayInstead: "demander" },
+          { key: "B6", evidence: "rien", whatToSayInstead: "demander" },
+        ],
+      },
+      grid,
+    );
+    expect(kept.criteria.map((c) => c.key)).toEqual(["A1"]);
+    expect(kept.pointsLost.map((p) => p.key)).toEqual(["B6"]);
+  });
+
+  it("rend le même objet quand toutes les clés sont connues", () => {
+    const base = result([{ key: "A1", level: 2, evidence: [] }]);
+    expect(keepKnownScorecardKeys(base, grid)).toBe(base);
   });
 });

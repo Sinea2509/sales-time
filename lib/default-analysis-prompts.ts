@@ -93,12 +93,12 @@ export const DEFAULT_KISS_MARKDOWN =
 ## La méthode
 - **keep** : les comportements, habitudes ou arguments que le commercial a intérêt à **conserver** (appuyés sur le transcript).
 - **improve** : les points à affiner (clarté, structure, écoute, découverte, conclusion), chacun avec une suggestion concrète.
-- **stop** : les habitudes qui desservent la vente (trop parler, découverte trop courte, conclusion forcée, etc.). Laisse la liste vide plutôt que d'en inventer une.
+- **stop** : les habitudes qui desservent la vente (trop parler, découverte trop courte, conclusion forcée, etc.). En premier, s'il y en a, les phrases du commercial qui le décrédibilisent : une excuse, un aveu de retard, une dévalorisation de son offre ou de lui-même, citées mot pour mot, avec pourquoi c'est grave et ce qu'il aurait fallu dire. Présenter son entreprise et sa plaquette fait partie d'un premier rendez-vous et n'est pas un stop ; c'en est un seulement si le pitch arrive avant la découverte ou n'est pas accordé au contexte du prospect. Laisse la liste vide plutôt que d'en inventer une.
 - **start** : les habitudes ou les questions nouvelles à essayer au **prochain** rendez-vous.
 - **goldenQuestion** : une question ouverte que le commercial pourrait poser à ce prospect la prochaine fois, écrite exactement comme il la dirait à voix haute.
 - **coachingScore** : un entier de 0 à 10 pour la conduite du rendez-vous par le commercial (méthode, résultat obtenu, relation), **pas** pour la qualité du produit. Les tranches qui donnent son sens à chaque chiffre sont ajoutées à cette consigne au moment de l'analyse et ne se modifient pas ici, car le produit lit cette note sur la même échelle que les niveaux qu'il affiche.
 - **coachingScoreJustification** : 2 à 5 phrases qui expliquent la note en s'appuyant sur le transcript.
-- **summary** : 2 à 4 phrases avec l'enseignement principal du rendez-vous.
+- **summary** : le brief de coach, un seul paragraphe de 5 à 8 phrases, sans puces, que le commercial relira trois mois plus tard : la situation du rendez-vous, l'état de la relation (chaude, tiède ou froide, avec le signe du transcript qui le dit), la direction pour le prochain rendez-vous, le risque principal, et une consigne claire pour le prochain contact.
 - **sellerSkills** : six notes de 0 à 100 sur le comportement du commercial lui-même. Une section qui les définit est ajoutée à cette consigne au moment de l'analyse et ne se modifie pas ici, car le format de réponse exige ces six notes quoi que dise cette consigne.
 
 ## Du concret (non négociable)
@@ -125,7 +125,7 @@ Le travail du COMMERCIAL dans CE rendez-vous. Pas le prospect, pas ce qui est ve
 - **pointsLost** : les critères où ce rendez-vous a perdu le plus de points, du plus coûteux au moins coûteux, 3 à 5. Le commercial les lit sous le titre « Où gagner des points » : écris-les comme une marge de progrès, pas comme des fautes. Chacun porte la clé du critère (\`key\`), \`evidence\` (ce que le transcript montre à ce moment précis, cité ou décrit simplement, y compris quand le commercial passe à autre chose) et \`whatToSayInstead\` : notre suggestion pour la prochaine fois, affichée après « Notre suggestion : ». C'est une proposition, jamais la correction d'une erreur : la phrase ou la question que le commercial pourrait employer, écrite comme il la dirait à voix haute à ce prospect. « Creuser le budget » n'est pas une phrase à dire. « Pour vous proposer une solution à la bonne taille, j'ai besoin de situer votre budget : sur ce type de projet, il va de X à Y, où vous situez-vous ? » en est une : elle dit pourquoi la question est posée, puis la pose.
 - **keep** : 1 à 4 choses qui ont marché et qui méritent d'être gardées au prochain rendez-vous.
 - **improve** : 1 à 4 gestes présents mais encore courts, chacun avec notre suggestion pour gagner un niveau.
-- **stop** : 0 à 3 habitudes qui lui ont coûté des points dans ce rendez-vous. Laisse la liste vide plutôt que d'en inventer une.
+- **stop** : 0 à 3 habitudes qui lui ont coûté des points dans ce rendez-vous. En premier, s'il y en a, les phrases du commercial qui le décrédibilisent : une excuse, un aveu de retard, une dévalorisation de son offre ou de lui-même, citées mot pour mot, avec ce qu'il aurait fallu dire à la place. Laisse la liste vide plutôt que d'en inventer une.
 - **goldenQuestion** : la question ouverte qui aurait le plus changé ce rendez-vous, écrite exactement comme le commercial la dirait à ce prospect.
 - **challenge** : un exercice pour la suite, assez petit pour être essayé dès le prochain rendez-vous, assez précis pour être vérifié ensuite.
 - **summary** : 3 à 5 phrases. Ce que ce rendez-vous a obtenu, ce qu'il a laissé sur la table, et la première chose que nous suggérons de travailler. Ne répète pas la note : le commercial la lit juste à côté de ce texte.
@@ -172,6 +172,15 @@ Réponds uniquement avec les champs structurés demandés :
 - **proposedSolutions** : comment l'offre répond à ces enjeux, décrite avec ce que le commercial en a dit pendant le rendez-vous. Ne promets aucun résultat, aucune garantie ni aucune fonction qu'il n'a pas annoncés, et garde au conditionnel ce qui reste une proposition.
 - **nextSteps** : toutes les prochaines étapes convenues pendant le rendez-vous, sans en oublier : les envois promis, les rendez-vous fixés, les échanges demandés pour préparer la suite, les personnes à rencontrer. Chaque étape garde la personne qui s'y est engagée. Quand le prospect a proposé de faire lui-même une démarche, comme une mise en relation, le mail la lui rappelle et la lui demande : le commercial ne la reprend pas à son compte. Une étape que le prospect a acceptée s'écrit comme acquise, pas au conditionnel.
 - **closing** : la formule de politesse, puis la signature fournie dans les réglages. Si aucune signature n'est fournie, termine par la formule de politesse seule, sans aucun nom, même si le transcript donne celui du commercial : il ajoutera sa signature lui-même.
+
+La forme :
+- Douze lignes au plus pour tout le corps, formule d'appel et formule de politesse comprises. Un mail de suivi se lit en trente secondes.
+- L'objet nomme le projet ou l'enjeu du prospect, jamais un objet passe-partout.
+- Au moins un élément propre à ce rendez-vous, repris avec les mots du prospect : un mail qui pourrait être envoyé à un autre prospect est à réécrire.
+- Jamais « je reste à votre disposition », « n'hésitez pas », ni aucune formule creuse, ni émoji.
+- Un document n'est annoncé que s'il a été promis pendant le rendez-vous ou s'il répond à une demande précise du prospect, et le mail dit en quoi.
+- Le mail nomme l'objectif du prochain rendez-vous quand il y en a un.
+- Deux postures selon la suite convenue. Quand une prochaine étape est datée ou qu'une décision est proche, le mail accélère : il confirme la date, dit ce que chacun prépare, et ce que le prochain échange doit trancher. Quand rien n'est fixé, le mail cultive : plus court, une seule question ouverte qui laisse une porte, sans pression.
 
 Les dates :
 - Reprends chaque date exactement comme le transcript la donne, en toutes lettres, comme dans un courrier, avec toutes ses précisions, moment de la journée compris. Si le transcript dit « d'ici vendredi », écris « d'ici vendredi », sans ajouter de quantième ni de mois. S'il donne un jour et un mois, écris-les en lettres, et l'heure aussi quand il la donne (« à 10 heures » plutôt que « 10h »).

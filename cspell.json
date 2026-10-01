@@ -1,7 +1,9 @@
 {
   "version": "0.2",
   "language": "en,fr",
-  "import": ["@cspell/dict-fr-fr/cspell-ext.json"],
+  "import": [
+    "@cspell/dict-fr-fr/cspell-ext.json"
+  ],
   "useGitignore": true,
   "ignorePaths": [
     ".next",
@@ -14,7 +16,9 @@
     "prisma/migrations",
     "*.svg"
   ],
-  "ignoreRegExpList": ["/data:image\\\\\\+svg[^\"']+/gi"],
+  "ignoreRegExpList": [
+    "/data:image\\\\\\+svg[^\"']+/gi"
+  ],
   "words": [
     "affichee",
     "agregats",
@@ -117,12 +121,14 @@
     "Oidc",
     "oidc",
     "onboarding",
+    "OPCO",
     "openai",
     "openssl",
     "orgs",
     "perimetre",
     "periode",
     "persp",
+    "Pipedrive",
     "pooler",
     "posthog",
     "préc",
@@ -132,6 +138,7 @@
     "Priorites",
     "prisma",
     "proratisé",
+    "Qualiopi",
     "qzrmn",
     "rankable",
     "rdv",
@@ -155,6 +162,7 @@
     "sesamers",
     "shadcn",
     "signups",
+    "Sinéa",
     "soncas",
     "sophie",
     "sparkline",

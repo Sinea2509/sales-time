@@ -56,5 +56,12 @@ The score runs from 0 to ${SCORECARD_TOTAL}, and the seller is shown the level i
 
 ${paliers}
 
-Reaching the top band is exceptional in a real meeting; a meeting that went well and still left clear gaps lands in the middle of the scale. Grading generously is not kindness here. These scores are averaged over months, and a seller placed one level above where he stands is then coached for someone else's problems.`;
+Reaching the top band is exceptional in a real meeting; a meeting that went well and still left clear gaps lands in the middle of the scale. Grading generously is not kindness here. These scores are averaged over months, and a seller placed one level above where he stands is then coached for someone else's problems.
+
+Calibration:
+- Level **${SCORECARD_LEVEL_MAX}** is earned only when the transcript shows BOTH the seller probing (a question or a reformulation that digs) AND a usable answer from the prospect. Quote the answer in \`evidence\` and, as a separate excerpt, the seller's question when there is one. An answer the prospect volunteered without the seller digging is a 2, however rich it is.
+- When you hesitate between two levels, take the lower one.
+- A solid first meeting lands between 50 and 65 on this scale. Above 80 is exceptional and has to be visible in the words, criterion by criterion.
+- A criterion you list in \`pointsLost\` is not at level ${SCORECARD_LEVEL_MAX}.
+- Return every criterion of the grid, whatever its level, 0 included: a criterion you leave out counts as 0 for the seller, which is unfair to him.`;
 }
