@@ -49,7 +49,7 @@ L'application ne calcule pas cette marge ; elle n'écrit donc rien de tel.
 ## 4. Avant de fusionner
 
 Aucune migration, aucune dépendance, aucune variable d'environnement. Les
-notes affichées changent dès la mise en ligne, sans recalcul en base : le
+notes affichées changent dès la mise en ligne, sans nouveau calcul en base : le
 score se lit dans les analyses déjà enregistrées.
 
 ## 5. Texte de la pull request
@@ -65,7 +65,7 @@ Description :
 ```
 Le SalesScore d'un rendez-vous est désormais la note de sa grille, sur 100, comme l'annonce la maquette du 11 septembre ; la moyenne des six leviers SONCAS ne sert plus que de repli pour un rendez-vous sans grille. Une seule fonction, salesScoreForMeeting, aux deux endroits qui produisent un score (fiche, lignes de rendez-vous) ; tableaux de bord, classement, paliers et bilan du lundi suivent. Les textes disent la nouvelle règle.
 
-Les notes de tous les commerciaux changent dès la mise en ligne, sans migration ni recalcul.
+Les notes de tous les commerciaux changent dès la mise en ligne, sans migration ni nouveau calcul.
 
 Vérifié : tsc 0, eslint 0, 1 694 tests verts, spellcheck 0, recette sur le poste (docs/lots/NOTE-LOT-80E.md, section 3).
 
