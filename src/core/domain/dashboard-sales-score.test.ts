@@ -1,5 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
-import { salesScoreFromSoncasResult } from "./dashboard-sales-score";
+import {
+  salesScoreForMeeting,
+  salesScoreFromSoncasResult,
+} from "./dashboard-sales-score";
 
 const validSoncas = {
   drivers: {
@@ -23,5 +26,49 @@ describe("salesScoreFromSoncasResult", () => {
     expect(salesScoreFromSoncasResult(validSoncas)).toBe(
       Math.round((10 + 20 + 30 + 40 + 50 + 60) / 6),
     );
+  });
+});
+
+const grille = {
+  gridId: "DECOUVERTE",
+  gridName: "Rendez-vous de découverte",
+  overallScore: 59,
+  blocks: [],
+  criteria: [],
+  pointsLost: [],
+  keep: [],
+  improve: [],
+  stop: [],
+  goldenQuestion: "Q",
+  challenge: "C",
+  summary: "S",
+};
+
+describe("salesScoreForMeeting", () => {
+  it("prend la note de la grille, sur 100, quand elle est lisible", () => {
+    expect(
+      salesScoreForMeeting({
+        scorecardResult: grille,
+        soncasResult: validSoncas,
+      }),
+    ).toBe(59);
+  });
+
+  it("se replie sur la moyenne des six leviers SONCAS sans grille", () => {
+    expect(
+      salesScoreForMeeting({
+        scorecardResult: null,
+        soncasResult: validSoncas,
+      }),
+    ).toBe(35);
+    expect(
+      salesScoreForMeeting({ scorecardResult: {}, soncasResult: validSoncas }),
+    ).toBe(35);
+  });
+
+  it("rend null sans grille ni SONCAS lisible", () => {
+    expect(
+      salesScoreForMeeting({ scorecardResult: {}, soncasResult: {} }),
+    ).toBeNull();
   });
 });
