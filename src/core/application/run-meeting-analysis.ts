@@ -23,7 +23,10 @@ import {
 } from "@/src/core/domain/analysis-system-markdown";
 import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { computeScorecardScore } from "@/src/core/domain/scorecard-score";
-import { applyScorecardEvidenceRule } from "@/src/core/domain/scorecard-evidence-rule";
+import {
+  applyScorecardEvidenceRule,
+  keepKnownScorecardKeys,
+} from "@/src/core/domain/scorecard-evidence-rule";
 import { aiLogPromptVersionLabel } from "@/src/core/domain/organization-prompts";
 import {
   applySoncasEvidenceRule,
@@ -348,7 +351,10 @@ export async function runMeetingAnalysis(
           critère resté sans preuve est plafonné, avant le calcul du score :
           une grille notée 100 sur des définitions recopiées ne passe plus.
         */
-        const checked = applyScorecardEvidenceRule(out.result, evidenceSource);
+        const checked = keepKnownScorecardKeys(
+          applyScorecardEvidenceRule(out.result, evidenceSource),
+          grid,
+        );
         const { blocks, overallScore } = computeScorecardScore(
           grid,
           checked.criteria,

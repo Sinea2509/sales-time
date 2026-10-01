@@ -1,3 +1,4 @@
+import type { ScorecardGrid } from "./scorecard-grid";
 import type { ScorecardGeneratedResult } from "./scorecard-result-zod";
 import { evidenceWords, isExcerptInSource } from "./transcript-evidence";
 
@@ -51,4 +52,30 @@ export function applyScorecardEvidenceRule<T extends ScorecardGeneratedResult>(
     return { ...criterion, evidence, level };
   });
   return changed ? { ...result, criteria } : result;
+}
+
+/**
+ * Ne garde que les clés de la grille.
+ *
+ * Le modèle invente parfois une clé (« A6 » pour un critère qu'il range mal) :
+ * le calcul du score l'ignore déjà, mais « Où gagner des points » l'affichait
+ * telle quelle. Une entrée sur une clé inconnue ne dit rien au commercial ; elle
+ * disparaît, dans `criteria` comme dans `pointsLost`.
+ */
+export function keepKnownScorecardKeys<T extends ScorecardGeneratedResult>(
+  result: T,
+  grid: ScorecardGrid,
+): T {
+  const known = new Set(
+    grid.blocks.flatMap((block) => block.criteria.map((c) => c.key)),
+  );
+  const criteria = result.criteria.filter((c) => known.has(c.key));
+  const pointsLost = result.pointsLost.filter((p) => known.has(p.key));
+  if (
+    criteria.length === result.criteria.length &&
+    pointsLost.length === result.pointsLost.length
+  ) {
+    return result;
+  }
+  return { ...result, criteria, pointsLost };
 }
