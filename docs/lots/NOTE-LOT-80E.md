@@ -7,7 +7,7 @@ septembre l'annonce (« sur 100, grille rendez-vous de découverte »).
 ## 1. Ce que la branche change
 
 - **Le SalesScore d'un rendez-vous est la note de sa grille**, sur 100
-  (`overallScore` de l'analyse SCORECARD), là où il était la moyenne des six
+  (la note globale de l'analyse SCORECARD), là où il était la moyenne des six
   leviers SONCAS. La règle vit dans une seule fonction,
   `salesScoreForMeeting`, appelée aux deux endroits qui produisent un score :
   la fiche du rendez-vous et les lignes de rendez-vous de l'adaptateur Prisma
