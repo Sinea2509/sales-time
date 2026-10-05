@@ -17,7 +17,9 @@ import {
 import {
   composeVisitReport,
   isCurrentVisitReport,
+  withDatesFromTranscript,
   withMomentsFromTranscript,
+  withQuotesFromTranscript,
   type VisitReportHistoryEntry,
 } from "@/src/core/domain/visit-report";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
@@ -322,8 +324,11 @@ export async function summarizeMeetingDetail(
       discSummary: input.discResult?.summary?.trim() || null,
     });
     // Un moment que le transcript ne porte pas a été estimé : il ne s'écrit pas.
-    const extraction = withMomentsFromTranscript(
-      extracted,
+    const extraction = withDatesFromTranscript(
+      withQuotesFromTranscript(
+        withMomentsFromTranscript(extracted, input.meeting.transcript),
+        input.meeting.transcript,
+      ),
       input.meeting.transcript,
     );
 

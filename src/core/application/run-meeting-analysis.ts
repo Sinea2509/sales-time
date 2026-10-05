@@ -29,6 +29,12 @@ import {
 } from "@/src/core/domain/scorecard-evidence-rule";
 import { aiLogPromptVersionLabel } from "@/src/core/domain/organization-prompts";
 import {
+  LISTENING_CRITERION_KEY,
+  listeningLevelFromTalkShare,
+  talkShareFromTranscript,
+  talkShareInstruction,
+} from "@/src/core/domain/talk-share-from-transcript";
+import {
   applySoncasEvidenceRule,
   keepSoncasEvidenceFoundIn,
 } from "@/src/core/domain/soncas-evidence-rule";
@@ -302,9 +308,20 @@ export async function runMeetingAnalysis(
         return { ok: false, error: "NO_SCORECARD_GRID" };
       }
 
+      /*
+        La répartition de la parole se mesure, elle ne se devine pas : le
+        modèle la reçoit chiffrée, et le critère d'écoute est plafonné sur
+        elle après sa réponse.
+      */
+      const talkShare = talkShareFromTranscript(transcriptForAnalysis, {
+        prospectNames: [meeting.prospectName],
+      });
       const scorecardSystemMarkdown = composeAnalysisSystemMarkdown(
         prompt.markdown,
-        [input.organizationPlaybookMarkdown],
+        [
+          input.organizationPlaybookMarkdown,
+          talkShare ? talkShareInstruction(talkShare) : null,
+        ],
       );
       const systemPrompt = withScorecardSystemPrompt(
         scorecardSystemMarkdown,
@@ -351,10 +368,24 @@ export async function runMeetingAnalysis(
           critère resté sans preuve est plafonné, avant le calcul du score :
           une grille notée 100 sur des définitions recopiées ne passe plus.
         */
-        const checked = keepKnownScorecardKeys(
+        const evidenced = keepKnownScorecardKeys(
           applyScorecardEvidenceRule(out.result, evidenceSource),
           grid,
         );
+        const listeningCap = talkShare
+          ? listeningLevelFromTalkShare(talkShare.commercialPct)
+          : null;
+        const checked =
+          listeningCap == null
+            ? evidenced
+            : {
+                ...evidenced,
+                criteria: evidenced.criteria.map((c) =>
+                  c.key === LISTENING_CRITERION_KEY && c.level > listeningCap
+                    ? { ...c, level: listeningCap }
+                    : c,
+                ),
+              };
         const { blocks, overallScore } = computeScorecardScore(
           grid,
           checked.criteria,

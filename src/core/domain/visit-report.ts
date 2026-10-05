@@ -3,6 +3,7 @@ import type {
   SoncasAnalysisResult,
 } from "./analysis-result-zod";
 import { APP_TIME_ZONE } from "./app-time-zone";
+import { evidenceWords, isExcerptInSource } from "./transcript-evidence";
 import { scorecardGridById, scorecardCriteria } from "./scorecard-grid";
 import type { ScorecardAnalysisResult } from "./scorecard-result-zod";
 import { scorecardResultView } from "./scorecard-result-view";
@@ -447,7 +448,16 @@ function objections(out: Lines, input: VisitReportInput): void {
     out.push(
       `- Objection soulevée${qui ? ` par ${qui}` : ""}${moment ? ` à ${moment}` : ""} :`,
     );
-    out.push(`  « ${clean(o.objection).replace(/^«\s*|\s*»$/g, "")} »`);
+    const words = clean(o.objection).replace(/^«\s*|\s*»$/g, "");
+    /*
+      Une objection que le transcript ne contient pas mot pour mot a été
+      reformulée : elle reste, sans guillemets (`withQuotesFromTranscript`).
+    */
+    out.push(
+      (o as { verbatim?: boolean }).verbatim === false
+        ? `  En substance : ${words}`
+        : `  « ${words} »`,
+    );
     out.push(
       `  Réponse apportée : ${clean(o.reponse) || "aucune réponse pendant le rendez-vous."}`,
     );
@@ -806,4 +816,97 @@ export function withMomentsFromTranscript(
       citations: quotes(extraction.engagements.citations),
     },
   };
+}
+
+/**
+ * Ne garde comme citation que des mots réellement prononcés.
+ *
+ * Le compte rendu met des guillemets : ce qui est entre guillemets doit se
+ * retrouver dans le transcript, à quelques fautes près, comme pour la grille
+ * (`transcript-evidence.ts`). Une citation reformulée par le modèle disparaît ;
+ * une objection reformulée reste, mais s'écrit « En substance : » et sans
+ * guillemets, pour que le lecteur ne la prenne pas pour les mots du prospect.
+ */
+export function withQuotesFromTranscript(
+  extraction: VisitReportExtraction,
+  transcript: string,
+): VisitReportExtraction {
+  const words = evidenceWords(transcript);
+  const found = (text: string) => isExcerptInSource(clean(text), words);
+  const quotes = (list: readonly VisitReportQuote[]) =>
+    list.filter((q) => found(q.texte));
+  return {
+    ...extraction,
+    themes: extraction.themes.map((t) => ({
+      ...t,
+      citations: quotes(t.citations),
+    })),
+    perimetre: {
+      ...extraction.perimetre,
+      citations: quotes(extraction.perimetre.citations),
+    },
+    concurrence: {
+      ...extraction.concurrence,
+      citations: quotes(extraction.concurrence.citations),
+    },
+    objections: extraction.objections.map((o) => ({
+      ...o,
+      verbatim: found(o.objection),
+    })),
+    engagements: {
+      ...extraction.engagements,
+      citations: quotes(extraction.engagements.citations),
+    },
+  };
+}
+
+const MONTHS =
+  "janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre";
+const DAY_AND_MONTH = new RegExp(
+  String.raw`(?<![\p{L}\d])(\d{1,2})(?:er)?\s+(${MONTHS})(?![\p{L}])`,
+  "giu",
+);
+
+/** « À fixer » : ce que le compte rendu écrit quand aucune date n'a été convenue. */
+export const VISIT_REPORT_DATE_TO_FIX =
+  "À fixer : aucune date ferme n'a été convenue pendant le rendez-vous.";
+
+/**
+ * Une date du compte rendu (« le 2 novembre ») doit figurer telle quelle dans
+ * le transcript. Le modèle a écrit « lundi 2 novembre à 14h00 » pour un
+ * prospect qui avait dit du 2 « c'est mon anniversaire, je ne serai pas
+ * disponible » : une date qui n'est pas dans le transcript ne s'écrit pas
+ * comme convenue.
+ */
+export function withDatesFromTranscript(
+  extraction: VisitReportExtraction,
+  transcript: string,
+): VisitReportExtraction {
+  const said = normalizedForDates(transcript);
+  const allSaid = (text: string) =>
+    [...text.matchAll(DAY_AND_MONTH)].every((m) =>
+      said.includes(`${Number(m[1])} ${normalizedForDates(m[2])}`),
+    );
+  const next = extraction.prochainRendezVous;
+  return {
+    ...extraction,
+    prochainRendezVous:
+      clean(next.quand) && !allSaid(next.quand)
+        ? { ...next, quand: VISIT_REPORT_DATE_TO_FIX }
+        : next,
+    prochainesEtapes: extraction.prochainesEtapes.map((s) =>
+      clean(s.echeance) && !allSaid(s.echeance)
+        ? { ...s, echeance: "à fixer" }
+        : s,
+    ),
+  };
+}
+
+function normalizedForDates(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLocaleLowerCase("fr-FR")
+    .replace(/(\d{1,2})er\b/g, "$1")
+    .replace(/\s+/g, " ");
 }

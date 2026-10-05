@@ -60,3 +60,92 @@ describe("talkShareFromTranscript", () => {
     expect(share).toBeNull();
   });
 });
+
+describe("talkShareFromTranscript, transcripts réels", () => {
+  const teams = [
+    "RDV Formations-20260929_150945-Transcription de la réunion",
+    "29 septembre 2026, 01:09PM",
+    "54min 42sec",
+    "",
+    "Cédric Laigneau a commencé la transcription",
+    "",
+    "Lisa ANDROLUS   0:03",
+    "Je suis dans.",
+    "",
+    "Cédric Laigneau   0:04",
+    "Ok, super. Pouvez-vous me décrire votre équipe ?",
+    "",
+    "Lisa ANDROLUS   0:06",
+    "Je suis plutôt en charge de la partie plan de développement des compétences.",
+    "",
+    "Cédric Laigneau   1:10",
+    "Combien de managers sont concernés ? Et sur quels sites ?",
+    "Il y a 2 options : soit un parcours, soit des sessions.",
+    "",
+    "Lisa ANDROLUS   1:30",
+    "Une quarantaine.",
+    "",
+    "Cédric Laigneau   1:34",
+    "D'accord.",
+  ].join("\n");
+
+  it("lit le format Teams : le nom et l'horodatage, puis la réplique en dessous", () => {
+    const share = talkShareFromTranscript(teams);
+    expect(share).not.toBeNull();
+    expect(share?.commercialLabel).toBe("Cédric Laigneau");
+    expect(share?.prospectLabel).toBe("Lisa ANDROLUS");
+    expect(share?.rolesBasis).toBe("organizer");
+    /* 31 mots pour Cédric (dont la ligne « 2 options : »), 18 pour Lisa. */
+    expect(share?.commercialPct).toBe(64);
+  });
+
+  it("ne prend ni l'horodatage pour un nom, ni « 2 options : » pour un intervenant", () => {
+    const share = talkShareFromTranscript(teams);
+    expect(share?.commercialLabel).not.toMatch(/\d/);
+    expect(share?.prospectLabel).not.toMatch(/\d|options/);
+  });
+
+  it("reconnaît le commercial à son nom quand le produit le connaît", () => {
+    const share = talkShareFromTranscript(
+      teams.replace("Cédric Laigneau a commencé la transcription", ""),
+      { sellerName: "Cédric Laigneau" },
+    );
+    expect(share?.commercialLabel).toBe("Cédric Laigneau");
+    expect(share?.rolesBasis).toBe("names");
+  });
+
+  it("ignore une ligne « Participants : » et retrouve le commercial par le nom du prospect", () => {
+    const share = talkShareFromTranscript(
+      [
+        "Transcript fictif, pour tester Sales Time.",
+        "Participants : Julien Arnaud (commercial), Claire Morel (directrice commerciale).",
+        "",
+        "Julien : Bonjour Claire, merci de me recevoir.",
+        "Claire : Oui, allons-y. Je n'ai pas beaucoup de temps.",
+        "Julien : Pouvez-vous me décrire votre équipe commerciale ?",
+        "Claire : Nous sommes neuf commerciaux terrain sur quatre secteurs.",
+      ].join("\n"),
+      { prospectNames: ["Claire Morel"] },
+    );
+    expect(share?.commercialLabel).toBe("Julien");
+    expect(share?.prospectLabel).toBe("Claire");
+    expect(share?.rolesBasis).toBe("names");
+  });
+
+  it("compte tout le côté client quand plusieurs personnes y parlent", () => {
+    const share = talkShareFromTranscript(
+      [
+        "Commercial : bonjour à vous deux",
+        "Lisa : bonjour",
+        "Sandrine : bonjour",
+        "Commercial : on commence",
+        "Lisa : oui",
+        "Sandrine : allons-y",
+      ].join("\n"),
+    );
+    expect(share?.commercialLabel).toBe("Commercial");
+    expect(share?.prospectLabel).toMatch(/et 1 autre$/);
+    /* 6 mots pour le commercial, 4 pour les deux autres. */
+    expect(share?.commercialPct).toBe(60);
+  });
+});

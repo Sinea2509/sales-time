@@ -180,9 +180,11 @@ function TalkShareCard({ share }: { share: TalkShare | null }) {
               )}{" "}
               La plus longue prise de parole d&apos;affilée du commercial fait{" "}
               {share.longestCommercialRunWords.toLocaleString("fr-FR")} mots.
-              {share.rolesRecognized
-                ? ""
-                : " Les rôles ont été déduits de l'ordre de parole."}
+              {share.rolesBasis === "questions"
+                ? " Le commercial a été reconnu à ses questions, faute de nom ou de rôle dans le transcript."
+                : share.rolesBasis === "order"
+                  ? " Les rôles ont été déduits de l'ordre de parole."
+                  : ""}
             </p>
           </>
         ) : (
