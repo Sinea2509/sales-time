@@ -1,98 +1,88 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import { rememberStatsWindow } from "@/lib/remember-stats-window";
+import { statsWindowShortLabel } from "@/lib/stats-window-labels";
+import { cn } from "@/lib/utils";
 import {
-  areAllStatsWindowsDisabled,
   MIN_RDV_FOR_STATS,
   STATS_WINDOW_DAYS_OPTIONS,
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
 
-const LABELS: Record<StatsWindowDays, string> = {
-  7: "7 jours",
-  30: "30 jours",
-  90: "90 jours",
-};
-
+/**
+ * Le sélecteur de période de la maquette du 11 septembre : trois boutons,
+ * 30 jours, 90 jours, 12 mois, toujours visibles.
+ *
+ * Il n'était affiché qu'à partir de cinq rendez-vous par période, si bien
+ * qu'un compte jeune ne le voyait jamais. Toute période se choisit désormais ;
+ * quand celle qui est affichée compte peu de rendez-vous, une pastille « peu
+ * de données » le dit, comme la maquette le fait pour le classement.
+ *
+ * Le choix est écrit dans l'adresse et dans un cookie : il s'applique ainsi à
+ * toutes les pages du manager, et pas seulement à celle où il a été fait.
+ */
 export function DashboardStatsPeriodSelect(props: {
   value: StatsWindowDays;
-  /** Fenêtres sans assez de RDV : options grisées dans le sélecteur. */
+  /** Périodes qui comptent moins de rendez-vous que le seuil. */
   disabledDays?: StatsWindowDays[];
 }) {
-  const disabledDays = props.disabledDays ?? [];
-  const disabledSet = new Set(disabledDays);
+  const lowData = new Set(props.disabledDays ?? []);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
 
-  /*
-    Sur un compte jeune, aucune fenêtre n'atteint le seuil : les trois options
-    étaient grisées, chacune suivie du même « (données insuffisantes) », et
-    l'option affichée était elle-même désactivée. Le commercial ouvrait une
-    liste dans laquelle rien ne pouvait être choisi, sans jamais apprendre ce
-    qu'il fallait pour l'ouvrir.
-
-    Un sélecteur qui n'offre aucun choix n'est plus un sélecteur : la période en
-    vigueur s'écrit alors en toutes lettres, avec la règle qui la fige.
-  */
-  if (areAllStatsWindowsDisabled(disabledDays)) {
-    return (
-      <div className="text-sm text-muted-foreground sm:max-w-[17rem] sm:text-right">
-        <p className="text-foreground">
-          <span className="sr-only">Période des statistiques : </span>
-          {LABELS[props.value]}
-        </p>
-        <p className="mt-0.5 text-xs text-pretty">
-          Choisir la période demande au moins {MIN_RDV_FOR_STATS} RDV
-          enregistrés.
-        </p>
-      </div>
-    );
+  function choose(days: StatsWindowDays) {
+    if (days === props.value) return;
+    rememberStatsWindow(days);
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("jours", String(days));
+    startTransition(() => {
+      router.replace(`${pathname}?${next.toString()}`);
+    });
   }
 
   return (
-    <div className="relative inline-flex items-center text-sm whitespace-nowrap text-muted-foreground">
-      {/*
-        « outline-none » sans rien en échange rendait cette commande muette au
-        clavier : on tabulait dessus et rien ne bougeait à l'écran. C'est
-        pourtant elle qui commande la période de tous les chiffres de la page.
-
-        Un anneau plein plutôt que la bordure teintée des champs bordés : ce
-        sélecteur n'a aucune bordure à repeindre, et lui en poser une
-        déplacerait le chevron de deux pixels au repos. La marque à pleine
-        force, et non voilée, parce qu'elle se détache sur le blanc de la page
-        (rapport 5,1) là où la même teinte à 30 % tomberait à 2,3.
-      */}
-      <select
-        aria-label="Période des statistiques (jours glissants)"
-        className="h-8 appearance-none rounded-md bg-transparent pr-5 pl-1 text-sm font-normal text-foreground outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
-        value={String(props.value)}
-        disabled={pending}
-        onChange={(e) => {
-          const jours = e.target.value;
-          const next = new URLSearchParams(searchParams.toString());
-          next.set("jours", jours);
-          startTransition(() => {
-            router.replace(`${pathname}?${next.toString()}`);
-          });
-        }}
+    <div className="flex flex-wrap items-center gap-2">
+      {lowData.has(props.value) ? (
+        <span
+          className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11.5px] font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
+          title={`Moins de ${MIN_RDV_FOR_STATS} rendez-vous analysés sur la période : les chiffres sont indicatifs.`}
+        >
+          peu de données
+        </span>
+      ) : null}
+      <div
+        role="group"
+        aria-label="Période affichée"
+        className={cn(
+          "inline-flex rounded-lg border border-border bg-muted/40 p-0.5",
+          pending && "opacity-70",
+        )}
       >
-        {STATS_WINDOW_DAYS_OPTIONS.map((d) => (
-          <option key={d} value={String(d)} disabled={disabledSet.has(d)}>
-            {LABELS[d]}
-            {/*
-              « données insuffisantes » énonçait le verdict du système. Le fait
-              qui le produit se lit mieux, et se vérifie : cette fenêtre compte
-              moins de RDV que le seuil.
-            */}
-            {disabledSet.has(d) ? ` (moins de ${MIN_RDV_FOR_STATS} RDV)` : ""}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-0 size-4 text-muted-foreground" />
+        {STATS_WINDOW_DAYS_OPTIONS.map((days) => {
+          const selected = days === props.value;
+          return (
+            <button
+              key={days}
+              type="button"
+              aria-pressed={selected}
+              disabled={pending}
+              onClick={() => choose(days)}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-[13px] font-semibold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none",
+                selected
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {statsWindowShortLabel(days)}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

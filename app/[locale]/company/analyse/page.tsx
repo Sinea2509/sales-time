@@ -98,7 +98,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       organizationId: actor.activeOrganizationId,
       sellerUserIds: [sellerId],
     });
-    const statsWindowDays = ensureEligibleStatsWindowDays({
+    const statsWindowDays = await ensureEligibleStatsWindowDays({
       searchParams: sp,
       counts: windowCounts,
       redirectPath: "/company/analyse",
@@ -168,7 +168,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     organizationId: actor.activeOrganizationId,
     sellerUserIds: teamUserIds,
   });
-  const statsWindowDays = ensureEligibleStatsWindowDays({
+  const statsWindowDays = await ensureEligibleStatsWindowDays({
     searchParams: sp,
     counts: windowCounts,
     redirectPath: "/company/analyse",

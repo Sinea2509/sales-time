@@ -14,6 +14,17 @@ jest.mock("next/navigation", () => {
   };
 });
 
+// eslint-disable-next-line no-var
+var cookieValue: string | undefined;
+jest.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: (name: string) =>
+      name === "st_periode" && cookieValue != null
+        ? { name, value: cookieValue }
+        : undefined,
+  }),
+}));
+
 import {
   ensureEligibleStatsWindowDays,
   pathWithStatsWindow,
@@ -43,8 +54,8 @@ import {
  */
 
 /** Les comptes de RDV par période, lus par la redirection. */
-function comptes(sept: number, trente: number, quatreVingtDix: number) {
-  return { 7: sept, 30: trente, 90: quatreVingtDix } as Record<
+function comptes(trente: number, quatreVingtDix: number, douzeMois: number) {
+  return { 30: trente, 90: quatreVingtDix, 365: douzeMois } as Record<
     StatsWindowDays,
     number
   >;
@@ -103,10 +114,10 @@ describe("pathWithStatsWindow", () => {
     const adresse = pathWithStatsWindow(
       "/company/equipe",
       { tri: ["a", "b"] },
-      7,
+      365,
     );
     expect(valeursDeLAdresse(adresse)).toEqual({
-      jours: ["7"],
+      jours: ["365"],
       tri: ["a", "b"],
     });
   });
@@ -114,36 +125,49 @@ describe("pathWithStatsWindow", () => {
 
 describe("ensureEligibleStatsWindowDays", () => {
   beforeEach(() => {
-    redirectMock.mockClear();
+    redirectMock?.mockClear();
+    cookieValue = undefined;
   });
 
-  it("rend la période demandée sans rediriger quand elle a assez de RDV", () => {
-    expect(
+  it("rend la période demandée, sans rediriger, même quand elle compte peu de RDV", async () => {
+    await expect(
       ensureEligibleStatsWindowDays({
-        searchParams: { jours: "7", equipePage: "3" },
+        searchParams: { jours: "90", equipePage: "3" },
+        counts: comptes(1, 2, 40),
+        redirectPath: "/company/equipe",
+      }),
+    ).resolves.toBe(90);
+    expect(redirectMock?.mock.calls.length ?? 0).toBe(0);
+  });
+
+  it("reprend la période choisie sur une autre page quand l'adresse n'en nomme pas", async () => {
+    cookieValue = "365";
+    await expect(
+      ensureEligibleStatsWindowDays({
+        searchParams: { equipePage: "3" },
         counts: comptes(12, 40, 90),
         redirectPath: "/company/equipe",
       }),
-    ).toBe(7);
-    expect(redirectMock).not.toHaveBeenCalled();
+    ).resolves.toBe(365);
   });
 
-  it("emporte la page de liste quand il corrige une période trop courte", () => {
-    expect(() =>
+  it("préfère l'adresse au cookie, et 30 jours sans l'un ni l'autre", async () => {
+    cookieValue = "365";
+    await expect(
       ensureEligibleStatsWindowDays({
-        searchParams: { jours: "7", equipePage: "3" },
-        counts: comptes(1, 40, 90),
+        searchParams: { jours: "30" },
+        counts: comptes(12, 40, 90),
         redirectPath: "/company/equipe",
       }),
-    ).toThrow("REDIRECT:");
-
-    expect(redirectMock).toHaveBeenCalledTimes(1);
-    const adresse = String(redirectMock.mock.calls[0]![0]);
-    expect(adresse.split("?")[0]).toBe("/company/equipe");
-    expect(valeursDeLAdresse(adresse)).toEqual({
-      jours: ["30"],
-      equipePage: ["3"],
-    });
+    ).resolves.toBe(30);
+    cookieValue = undefined;
+    await expect(
+      ensureEligibleStatsWindowDays({
+        searchParams: {},
+        counts: comptes(12, 40, 90),
+        redirectPath: "/company/equipe",
+      }),
+    ).resolves.toBe(DEFAULT_STATS_WINDOW_DAYS);
   });
 });
 

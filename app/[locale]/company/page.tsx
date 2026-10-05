@@ -74,7 +74,7 @@ export default async function DashboardHomePage({
       organizationId: actor.activeOrganizationId,
       sellerUserIds: teamUserIds,
     });
-    const statsWindowDays = ensureEligibleStatsWindowDays({
+    const statsWindowDays = await ensureEligibleStatsWindowDays({
       searchParams: sp,
       counts: windowCounts,
       redirectPath: "/company",
@@ -146,7 +146,7 @@ export default async function DashboardHomePage({
     organizationId: actor.activeOrganizationId,
     sellerUserIds: [sellerId],
   });
-  const statsWindowDays = ensureEligibleStatsWindowDays({
+  const statsWindowDays = await ensureEligibleStatsWindowDays({
     searchParams: sp,
     counts: windowCounts,
     redirectPath: "/company",

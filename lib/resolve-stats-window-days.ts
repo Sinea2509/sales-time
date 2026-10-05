@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import {
   parseStatsWindowDays,
-  resolveEligibleStatsWindowDays,
+  STATS_WINDOW_COOKIE_NAME,
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
 import type { StatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
@@ -37,18 +37,32 @@ export function pathWithStatsWindow(
   return query === "" ? path : `${path}?${query}`;
 }
 
-/** Redirects when URL `jours` points at a window with insufficient RDV data. */
-export function ensureEligibleStatsWindowDays(input: {
+/**
+ * La période demandée : celle de l'adresse (`?jours=`), sinon celle que le
+ * manager a choisie en dernier sur une autre page (cookie), sinon 30 jours.
+ */
+export async function requestedStatsWindowDays(
+  searchParams: PageSearchParams,
+): Promise<StatsWindowDays> {
+  if (searchParams.jours != null) {
+    return parseStatsWindowDays(searchParams.jours);
+  }
+  const fromCookie = (await cookies()).get(STATS_WINDOW_COOKIE_NAME)?.value;
+  return parseStatsWindowDays(fromCookie);
+}
+
+/**
+ * La période affichée par une page de statistiques.
+ *
+ * Comme la maquette du 11 septembre, toute période se choisit, même quand
+ * elle compte peu de rendez-vous : le sélecteur le signale (« peu de
+ * données ») au lieu de griser l'option ou de renvoyer ailleurs. Les comptes
+ * restent passés, pour les pages qui les affichent.
+ */
+export async function ensureEligibleStatsWindowDays(input: {
   searchParams: PageSearchParams;
   counts: StatsWindowRdvsCounts;
   redirectPath: string;
-}): StatsWindowDays {
-  const requested = parseStatsWindowDays(input.searchParams.jours);
-  const resolved = resolveEligibleStatsWindowDays(requested, input.counts);
-  if (resolved !== requested) {
-    redirect(
-      pathWithStatsWindow(input.redirectPath, input.searchParams, resolved),
-    );
-  }
-  return resolved;
+}): Promise<StatsWindowDays> {
+  return requestedStatsWindowDays(input.searchParams);
 }

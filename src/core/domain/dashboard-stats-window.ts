@@ -1,4 +1,8 @@
-export const STATS_WINDOW_DAYS_OPTIONS = [7, 30, 90] as const;
+/**
+ * Les périodes de la maquette du 11 septembre : 30 jours, 90 jours, 12 mois.
+ * Douze mois s'écrivent 365 jours : toutes les fenêtres se comptent en jours.
+ */
+export const STATS_WINDOW_DAYS_OPTIONS = [30, 90, 365] as const;
 
 export type StatsWindowDays = (typeof STATS_WINDOW_DAYS_OPTIONS)[number];
 
@@ -41,7 +45,7 @@ export function areAllStatsWindowsDisabled(
   return STATS_WINDOW_DAYS_OPTIONS.every((d) => disabled.has(d));
 }
 
-/** Choisit la première fenêtre éligible (7 → 30 → 90) si la demande est insuffisante. */
+/** Choisit la première fenêtre éligible (30 → 90 → 12 mois) si la demande est insuffisante. */
 export function resolveEligibleStatsWindowDays(
   requested: StatsWindowDays,
   counts: Record<StatsWindowDays, number>,
@@ -58,7 +62,7 @@ export function parseStatsWindowDays(
 ): StatsWindowDays {
   const v = Array.isArray(raw) ? raw[0] : raw;
   const s = v != null ? String(v) : "";
-  if (s === "7" || s === "30" || s === "90") {
+  if (s === "30" || s === "90" || s === "365") {
     return Number(s) as StatsWindowDays;
   }
   return DEFAULT_STATS_WINDOW_DAYS;
@@ -96,3 +100,10 @@ export function partitionMeetingsByStatsWindow<T extends { meetingAt: Date }>(
     ),
   };
 }
+
+/**
+ * Le cookie qui garde la période choisie d'une page à l'autre : la maquette
+ * dit « La période choisie s'applique à toutes les pages du manager ».
+ * L'adresse (`?jours=`) l'emporte quand elle en nomme une.
+ */
+export const STATS_WINDOW_COOKIE_NAME = "st_periode";

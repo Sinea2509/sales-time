@@ -4,11 +4,11 @@ import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { loadTeamMemberPerformanceView } from "@/lib/team-member-performance-view";
 import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
+import { DEFAULT_STATS_WINDOW_DAYS } from "@/src/core/domain/dashboard-stats-window";
 import {
-  DEFAULT_STATS_WINDOW_DAYS,
-  parseStatsWindowDays,
-} from "@/src/core/domain/dashboard-stats-window";
-import { pathWithStatsWindow } from "@/lib/resolve-stats-window-days";
+  pathWithStatsWindow,
+  requestedStatsWindowDays,
+} from "@/lib/resolve-stats-window-days";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,7 @@ export default async function ManagerCommercialViewPage({
     // l'adresse suffisait à perdre la page de liste.
     redirect(pathWithStatsWindow(`/company/equipe/${userId}`, sp, null));
   }
-  const statsWindowDays = parseStatsWindowDays(sp.jours);
+  const statsWindowDays = await requestedStatsWindowDays(sp);
   const retourEquipeHref = pathWithStatsWindow(
     "/company/equipe",
     { equipePage: sp.equipePage },
