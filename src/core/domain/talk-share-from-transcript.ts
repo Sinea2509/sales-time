@@ -144,10 +144,48 @@ function sameName(label: string, known: string | null | undefined): boolean {
   return parts.some((p) => words.has(p));
 }
 
+/** Ce que le découpage par intervenant établit, avant d'en tirer une répartition. */
+type SpeakerReading = {
+  share: TalkShare;
+  commercialKey: string;
+  textBySpeaker: ReadonlyMap<string, string>;
+};
+
 export function talkShareFromTranscript(
   transcript: string,
   hints: TalkShareHints = {},
 ): TalkShare | null {
+  return readSpeakers(transcript, hints)?.share ?? null;
+}
+
+/**
+ * Le transcript coupé en deux : ce qu'a dit le commercial, ce qu'a dit le
+ * client. Rend `null` quand le transcript ne distingue pas ses intervenants.
+ *
+ * Sert à vérifier qui a dit une citation : un levier SONCAS ou une réponse du
+ * prospect ne se prouvent pas avec les mots du commercial.
+ */
+export function transcriptSides(
+  transcript: string,
+  hints: TalkShareHints = {},
+): { seller: string; prospect: string; rolesRecognized: boolean } | null {
+  const reading = readSpeakers(transcript, hints);
+  if (!reading) return null;
+  const prospect: string[] = [];
+  for (const [key, text] of reading.textBySpeaker) {
+    if (key !== reading.commercialKey) prospect.push(text);
+  }
+  return {
+    seller: reading.textBySpeaker.get(reading.commercialKey) ?? "",
+    prospect: prospect.join("\n"),
+    rolesRecognized: reading.share.rolesRecognized,
+  };
+}
+
+function readSpeakers(
+  transcript: string,
+  hints: TalkShareHints,
+): SpeakerReading | null {
   const lines = transcript.split(/\r?\n/);
 
   /*
@@ -172,6 +210,7 @@ export function talkShareFromTranscript(
   const wordsBySpeaker = new Map<string, number>();
   const questionsBySpeaker = new Map<string, number>();
   const labelBySpeaker = new Map<string, string>();
+  const textParts = new Map<string, string[]>();
   const turns: Array<{ speaker: string; words: number }> = [];
   let attributedWords = 0;
   let totalWords = 0;
@@ -182,6 +221,9 @@ export function talkShareFromTranscript(
   const add = (speaker: string, text: string) => {
     const w = countWords(text);
     if (w === 0) return;
+    const parts = textParts.get(speaker) ?? [];
+    parts.push(text.trim());
+    textParts.set(speaker, parts);
     wordsBySpeaker.set(speaker, (wordsBySpeaker.get(speaker) ?? 0) + w);
     questionsBySpeaker.set(
       speaker,
@@ -310,7 +352,11 @@ export function talkShareFromTranscript(
     .filter((t) => t.speaker === commercialKey)
     .reduce((max, t) => Math.max(max, t.words), 0);
 
-  return {
+  const textBySpeaker = new Map<string, string>();
+  for (const [key, parts] of textParts)
+    textBySpeaker.set(key, parts.join("\n"));
+
+  const share: TalkShare = {
     commercialLabel: labelOf(commercialKey),
     prospectLabel,
     commercialPct,
@@ -320,6 +366,7 @@ export function talkShareFromTranscript(
       basis === "labels" || basis === "names" || basis === "organizer",
     rolesBasis: basis,
   };
+  return { share, commercialKey, textBySpeaker };
 }
 
 /** Le critère de la grille qui note l'écoute. */
@@ -345,6 +392,23 @@ export function talkShareInstruction(share: TalkShare): string {
   return [
     "## Faits mesurés par le produit",
     `Dans ce transcript, le commercial (${share.commercialLabel}) a parlé ${share.commercialPct} % du temps de parole et ${share.prospectLabel} ${share.prospectPct} %, compté en mots. Sa plus longue prise de parole d'affilée fait ${share.longestCommercialRunWords} mots.`,
-    `Le critère ${LISTENING_CRITERION_KEY} (écoute) se note sur ce chiffre et ne dépasse pas le niveau ${level} : 4 jusqu'à 40 % de parole pour le commercial, 3 jusqu'à 50 %, 2 jusqu'à 60 %, 1 au-delà. Ne déduis jamais la répartition de la parole de ta lecture : elle est mesurée ici.`,
+    `Le critère ${LISTENING_CRITERION_KEY} (écoute) est fixé par le produit au niveau ${level} sur cette mesure : 4 jusqu'à 40 % de parole pour le commercial, 3 jusqu'à 50 %, 2 jusqu'à 60 %, 1 au-delà. Ne déduis jamais la répartition de la parole de ta lecture. Quand le commercial dépasse 50 %, dis-le dans le coaching : c'est un point à travailler.`,
   ].join("\n");
+}
+
+/** Le relevé du critère d'écoute, tel que le produit l'écrit lui-même. */
+export function listeningMeasure(share: TalkShare): {
+  level: number;
+  learned: string;
+  missing: string;
+} {
+  const level = listeningLevelFromTalkShare(share.commercialPct);
+  return {
+    level,
+    learned: `Le commercial a parlé ${share.commercialPct} % du temps, ${share.prospectLabel} ${share.prospectPct} %. Sa plus longue prise de parole fait ${share.longestCommercialRunWords} mots.`,
+    missing:
+      level >= 4
+        ? ""
+        : `Laisser davantage parler le prospect : le niveau 4 demande 40 % de parole au plus pour le commercial.`,
+  };
 }

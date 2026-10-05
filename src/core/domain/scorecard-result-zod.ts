@@ -4,21 +4,59 @@ import { SCORECARD_LEVEL_MAX, SCORECARD_TOTAL } from "./scorecard-grid";
 /**
  * Le contrat de sortie d'une scorecard de rendez-vous.
  *
- * Deux schémas, comme pour KISS, mais la frontière ne passe pas au même
- * endroit. Le premier décrit ce que le modèle a le droit de produire : des
- * niveaux et des preuves, jamais un total. Le second décrit ce que le produit
- * enregistre et relit : les niveaux du modèle, plus les scores que le produit a
- * calculés lui-même. Un chiffre qui n'apparaît pas dans le premier schéma est
- * un chiffre que le modèle ne peut pas se tromper en écrivant.
+ * Trois schémas, parce que trois mains touchent à une note.
+ *
+ * Le modèle fait un relevé, critère par critère : ce que le commercial a
+ * cherché à savoir (`explored`), ce qu'il a obtenu (`obtained`), en une phrase
+ * chacun, avec les mots du transcript. Il ne donne aucun niveau : la revue du
+ * 5 octobre a montré qu'un même transcript recevait 38 puis 22, parce qu'un
+ * niveau de 0 à 4 se décidait d'un bloc et au jugé.
+ *
+ * Le produit vérifie les citations, en déduit le niveau par une table fixe
+ * (`scorecardLevelFromCoverage`), puis additionne les points. Il enregistre
+ * enfin le relevé, le niveau et le score.
  */
 
-/** Un critère noté : la clé de la grille, le niveau, et de quoi le prouver. */
-export const scorecardCriterionSchema = z.object({
+/** Ce que le commercial a fait du thème. */
+export const SCORECARD_EXPLORED = ["non", "aborde", "creuse"] as const;
+/** Ce qu'il en a obtenu. */
+export const SCORECARD_OBTAINED = ["rien", "partiel", "exploitable"] as const;
+
+export type ScorecardExplored = (typeof SCORECARD_EXPLORED)[number];
+export type ScorecardObtained = (typeof SCORECARD_OBTAINED)[number];
+
+/** Une citation et la personne qui l'a dite. */
+export const scorecardProofSchema = z.object({
+  who: z.enum(["commercial", "prospect"]),
+  quote: z.string().min(1).max(400),
+});
+
+/** Le relevé d'un critère, tel que le modèle le rend. */
+export const scorecardObservationSchema = z.object({
   /** Clé du critère dans la grille : « A1 », « B3 ». */
   key: z.string().min(1).max(4),
+  explored: z.enum(SCORECARD_EXPLORED),
+  obtained: z.enum(SCORECARD_OBTAINED),
+  /** Ce que le commercial sait maintenant sur ce thème, avec les faits. */
+  learned: z.string().max(500),
+  /** Ce qui manque pour atteindre le niveau 4. */
+  missing: z.string().max(500),
+  evidence: z.array(scorecardProofSchema).max(3),
+});
+
+/** Un critère noté, tel que le produit l'enregistre. */
+export const scorecardCriterionSchema = z.object({
+  key: z.string().min(1).max(4),
+  /** Calculé par le produit depuis le relevé ; écrit par le modèle avant octobre 2026. */
   level: z.number().int().min(0).max(SCORECARD_LEVEL_MAX),
-  /** Extraits recopiés du transcript. Vide quand le niveau est 0. */
+  /** Extraits retrouvés dans le transcript. */
   evidence: z.array(z.string()).max(3),
+  explored: z.enum(SCORECARD_EXPLORED).optional(),
+  obtained: z.enum(SCORECARD_OBTAINED).optional(),
+  learned: z.string().max(500).optional(),
+  missing: z.string().max(500).optional(),
+  /** Vrai quand le relevé annonçait plus, mais qu'aucune citation n'a été retrouvée : le niveau est resté à 1. */
+  unproven: z.boolean().optional(),
 });
 
 /** Un point perdu prioritaire : le manque, et la phrase qui le comblait. */
@@ -30,18 +68,7 @@ export const scorecardPointLostSchema = z.object({
   whatToSayInstead: z.string().min(1).max(600),
 });
 
-/**
- * Ce que le modèle doit produire.
- *
- * Ni `overallScore`, ni sous-total de bloc, ni palier. Le score se déduit des
- * niveaux par une addition que le produit fait lui-même, et le palier se déduit
- * du score par la règle qui décide déjà de tous les paliers affichés. Laisser
- * le modèle nommer son palier aurait installé un cinquième vocabulaire à côté
- * des quatre paliers du produit, et deux mots différents auraient fini par
- * désigner le même rendez-vous sur le même écran.
- */
-export const scorecardGeneratedResultSchema = z.object({
-  criteria: z.array(scorecardCriterionSchema).max(40),
+const scorecardCoachingFields = {
   pointsLost: z.array(scorecardPointLostSchema).max(8),
   keep: z.array(z.string()).max(8),
   improve: z.array(z.string()).max(8),
@@ -49,6 +76,22 @@ export const scorecardGeneratedResultSchema = z.object({
   goldenQuestion: z.string().min(1).max(500),
   challenge: z.string().min(1).max(500),
   summary: z.string().min(1).max(4000),
+};
+
+/**
+ * Ce que le modèle doit produire : un relevé par critère et le coaching.
+ *
+ * Ni niveau, ni total, ni palier : le produit les déduit du relevé.
+ */
+export const scorecardGeneratedResultSchema = z.object({
+  criteria: z.array(scorecardObservationSchema).max(40),
+  ...scorecardCoachingFields,
+});
+
+/** Le résultat une fois les niveaux posés par le produit, avant le score. */
+export const scorecardLeveledResultSchema = z.object({
+  criteria: z.array(scorecardCriterionSchema).max(40),
+  ...scorecardCoachingFields,
 });
 
 /** Le score d'un bloc, tel que le produit l'a calculé et enregistré. */
@@ -68,16 +111,55 @@ export const scorecardBlockScoreSchema = z.object({
  * niveaux dans la grille du jour et afficherait un score que personne n'a
  * jamais obtenu.
  */
-export const scorecardResultSchema = scorecardGeneratedResultSchema.extend({
+export const scorecardResultSchema = scorecardLeveledResultSchema.extend({
   gridId: z.string().min(1).max(40),
   gridName: z.string().min(1).max(120),
   overallScore: z.number().int().min(0).max(SCORECARD_TOTAL),
   blocks: z.array(scorecardBlockScoreSchema).max(12),
 });
 
+export type ScorecardProof = z.infer<typeof scorecardProofSchema>;
+export type ScorecardObservation = z.infer<typeof scorecardObservationSchema>;
 export type ScorecardCriterionResult = z.infer<typeof scorecardCriterionSchema>;
 export type ScorecardPointLost = z.infer<typeof scorecardPointLostSchema>;
 export type ScorecardGeneratedResult = z.infer<
   typeof scorecardGeneratedResultSchema
 >;
+export type ScorecardLeveledResult = z.infer<
+  typeof scorecardLeveledResultSchema
+>;
 export type ScorecardAnalysisResult = z.infer<typeof scorecardResultSchema>;
+
+/** Le relevé d'un critère sans sa clé : la clé est le nom du champ. */
+const scorecardObservationBodySchema = scorecardObservationSchema.omit({
+  key: true,
+});
+
+/**
+ * Le format imposé au modèle pour une grille donnée : un champ obligatoire
+ * par critère, dans l'ordre de la grille.
+ *
+ * Avec une simple liste, le modèle rendait 8 critères sur 25 sur un
+ * transcript d'une heure, et les 17 autres comptaient 0 (essai du
+ * 5 octobre 2026 : 15 sur 100). Un champ par critère ne peut pas être omis.
+ */
+export function scorecardGeneratedSchemaForGrid(keys: readonly string[]) {
+  return z.object({
+    criteria: z.object(
+      Object.fromEntries(
+        keys.map((key) => [key, scorecardObservationBodySchema]),
+      ),
+    ),
+    ...scorecardCoachingFields,
+  });
+}
+
+/** Le relevé par champ, remis en liste. */
+export function scorecardObservationsFromFields(
+  fields: Record<string, z.infer<typeof scorecardObservationBodySchema>>,
+  keys: readonly string[],
+): ScorecardObservation[] {
+  return keys
+    .filter((key) => fields[key] != null)
+    .map((key) => ({ key, ...fields[key] }));
+}

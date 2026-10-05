@@ -48,7 +48,7 @@ const LIBELLES_DE_GRILLE: readonly {
   readonly libelles: readonly string[];
 }[] = [
   {
-    gridId: "DECOUVERTE",
+    gridId: "DECOUVERTE_V2",
     libelles: [
       "decouverte",
       "discovery",

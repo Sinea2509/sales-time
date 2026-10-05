@@ -132,63 +132,70 @@ export function OrgAdminActionCards({
   essentiel: EssentielDuManager;
 }) {
   const { meneur, premierRangPartage, aCoacher, aFaireAnalyser } = essentiel;
+  /*
+    Les colonnes suivent la place que la page donne aux cartes, pas la largeur
+    de l'écran : posées dans la colonne étroite du tableau de bord, trois
+    cartes côte à côte se chevauchaient (revue du 5 octobre 2026).
+  */
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {meneur ? (
-        <CarteDeMembre
-          membre={meneur}
-          precisionDeRang={premierRangPartage}
-          etiquette={
-            <EtiquetteDeCarte
-              icon={Trophy}
-              teinteTexte="text-emerald-700 dark:text-emerald-400"
-              teintePastille="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-            >
-              En tête
-            </EtiquetteDeCarte>
-          }
-        />
-      ) : null}
-      {aCoacher ? (
-        <CarteDeMembre
-          membre={aCoacher}
-          precisionDeRang={null}
-          etiquette={
-            <EtiquetteDeCarte
-              icon={Target}
-              teinteTexte="text-amber-700 dark:text-amber-400"
-              teintePastille="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-            >
-              À accompagner en priorité
-            </EtiquetteDeCarte>
-          }
-        />
-      ) : null}
-      {aFaireAnalyser.length > 0 ? (
-        <div className={CARTE}>
-          <EtiquetteDeCarte
-            icon={Mic}
-            teinteTexte="text-sky-700 dark:text-sky-400"
-            teintePastille="bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400"
-          >
-            À faire analyser
-          </EtiquetteDeCarte>
-          <ul className="mt-3 space-y-1.5">
-            {aFaireAnalyser.map((ligne) => (
-              <li
-                key={ligne}
-                className="text-sm text-foreground dark:text-zinc-300"
+    <div className="@container">
+      <div className="grid gap-4 @lg:grid-cols-2 @4xl:grid-cols-3">
+        {meneur ? (
+          <CarteDeMembre
+            membre={meneur}
+            precisionDeRang={premierRangPartage}
+            etiquette={
+              <EtiquetteDeCarte
+                icon={Trophy}
+                teinteTexte="text-emerald-700 dark:text-emerald-400"
+                teintePastille="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
               >
-                {ligne}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-2.5 border-t border-border pt-2.5 text-xs text-muted-foreground dark:border-zinc-800 dark:text-zinc-400">
-            Les analyses de rendez-vous nourrissent la note, le classement et le
-            coaching.
-          </p>
-        </div>
-      ) : null}
+                En tête
+              </EtiquetteDeCarte>
+            }
+          />
+        ) : null}
+        {aCoacher ? (
+          <CarteDeMembre
+            membre={aCoacher}
+            precisionDeRang={null}
+            etiquette={
+              <EtiquetteDeCarte
+                icon={Target}
+                teinteTexte="text-amber-700 dark:text-amber-400"
+                teintePastille="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
+              >
+                À accompagner en priorité
+              </EtiquetteDeCarte>
+            }
+          />
+        ) : null}
+        {aFaireAnalyser.length > 0 ? (
+          <div className={CARTE}>
+            <EtiquetteDeCarte
+              icon={Mic}
+              teinteTexte="text-sky-700 dark:text-sky-400"
+              teintePastille="bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400"
+            >
+              À faire analyser
+            </EtiquetteDeCarte>
+            <ul className="mt-3 space-y-1.5">
+              {aFaireAnalyser.map((ligne) => (
+                <li
+                  key={ligne}
+                  className="text-sm text-foreground dark:text-zinc-300"
+                >
+                  {ligne}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2.5 border-t border-border pt-2.5 text-xs text-muted-foreground dark:border-zinc-800 dark:text-zinc-400">
+              Les analyses de rendez-vous nourrissent la note, le classement et
+              le coaching.
+            </p>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

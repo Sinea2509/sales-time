@@ -67,7 +67,7 @@ describe("scorecard-team-axes", () => {
       ]),
     );
     const budget = shares.find((s) => s.key === "C3");
-    expect(budget?.label).toBe("Budget");
+    expect(budget?.label).toBe("Budget et prix");
     expect(budget?.blockKey).toBe("C");
     expect(budget?.lowSharePct).toBe(67);
     expect(budget?.avgLevel).toBe(1.7);

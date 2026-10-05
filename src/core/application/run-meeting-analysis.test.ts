@@ -1,4 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
+import { meetingAnalysisContext } from "@/src/core/domain/meeting-analysis-context";
 import {
   KISS_SELLER_SKILLS_INSTRUCTION,
   withDiscSystemPrompt,
@@ -503,6 +504,16 @@ describe("runMeetingAnalysis", () => {
 
 describe("runMeetingAnalysis : prompt système composé", () => {
   const PLAYBOOK = "## Playbook de l'organisation\n\n### Offre\n\nDu conseil.";
+  /*
+    Le bloc « Ce rendez-vous » suit toujours la consigne : un rendez-vous sans
+    type est lu comme une découverte, sur la grille par défaut.
+  */
+  const CONTEXTE = meetingAnalysisContext({
+    meetingType: null,
+    pipelineStage: null,
+    grid: DEFAULT_SCORECARD_GRID,
+    talkShare: null,
+  });
 
   function harness(kind: "SONCAS" | "DISC" | "KISS") {
     const meetings = {
@@ -573,7 +584,9 @@ describe("runMeetingAnalysis : prompt système composé", () => {
           kind,
         },
       );
-      expect(systemMarkdownSentFor(analysis, kind)).toBe("base");
+      expect(systemMarkdownSentFor(analysis, kind)).toBe(
+        `base\n\n---\n\n${CONTEXTE}`,
+      );
     },
   );
 
@@ -591,7 +604,7 @@ describe("runMeetingAnalysis : prompt système composé", () => {
         },
       );
       expect(systemMarkdownSentFor(analysis, kind)).toBe(
-        `base\n\n---\n\n${PLAYBOOK}`,
+        `base\n\n---\n\n${PLAYBOOK}\n\n---\n\n${CONTEXTE}`,
       );
     },
   );
@@ -609,7 +622,9 @@ describe("runMeetingAnalysis : prompt système composé", () => {
           organizationPlaybookMarkdown: "   \n\t ",
         },
       );
-      expect(systemMarkdownSentFor(analysis, kind)).toBe("base");
+      expect(systemMarkdownSentFor(analysis, kind)).toBe(
+        `base\n\n---\n\n${CONTEXTE}`,
+      );
     },
   );
 
@@ -625,7 +640,7 @@ describe("runMeetingAnalysis : prompt système composé", () => {
       },
     );
     expect(systemMarkdownSentFor(analysis, "KISS")).toBe(
-      "base\n\n---\n\n## Consignes KISS (plateforme)\n\nconsigne",
+      `base\n\n---\n\n## Consignes KISS (plateforme)\n\nconsigne\n\n---\n\n${CONTEXTE}`,
     );
   });
 
@@ -647,7 +662,7 @@ describe("runMeetingAnalysis : prompt système composé", () => {
       },
     );
     expect(systemMarkdownSentFor(analysis, "KISS")).toBe(
-      `base\n\n---\n\n## Consignes KISS (plateforme)\n\nconsigne\n\n---\n\n${PLAYBOOK}`,
+      `base\n\n---\n\n## Consignes KISS (plateforme)\n\nconsigne\n\n---\n\n${PLAYBOOK}\n\n---\n\n${CONTEXTE}`,
     );
   });
 
@@ -904,12 +919,26 @@ describe("runMeetingAnalysis : verbatim obligatoire sur SONCAS", () => {
 });
 
 describe("runMeetingAnalysis : scorecard", () => {
-  /** Tous les critères au niveau 2, ce que le modèle rendrait. */
+  /**
+   * Le relevé que le modèle rendrait pour que chaque critère tombe au niveau
+   * voulu dans la table du produit.
+   */
   function niveauxUniformes(level: number) {
+    const releve: Record<number, [string, string]> = {
+      0: ["non", "rien"],
+      1: ["aborde", "rien"],
+      2: ["aborde", "partiel"],
+      3: ["creuse", "partiel"],
+      4: ["creuse", "exploitable"],
+    };
+    const [explored, obtained] = releve[level];
     return scorecardCriteria(DEFAULT_SCORECARD_GRID).map((criterion) => ({
       key: criterion.key,
-      level,
-      evidence: ["extrait"],
+      explored,
+      obtained,
+      learned: "",
+      missing: "",
+      evidence: [{ who: "prospect", quote: "extrait" }],
     }));
   }
 
@@ -1274,8 +1303,18 @@ describe("runMeetingAnalysis : objections", () => {
     expect(analysis.analyzeObjections).toHaveBeenCalledTimes(1);
     expect(analysis.analyzeSoncas).not.toHaveBeenCalled();
     expect(analysis.analyzeDisc).not.toHaveBeenCalled();
+    /*
+      La phrase n'est pas dans le transcript simulé : le produit la marque
+      « en substance », sans rien changer d'autre.
+    */
     expect(meetings.createAnalysis).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: "OBJECTIONS", result }),
+      expect.objectContaining({
+        kind: "OBJECTIONS",
+        result: {
+          ...result,
+          objections: result.objections.map((o) => ({ ...o, verbatim: false })),
+        },
+      }),
     );
   });
 });

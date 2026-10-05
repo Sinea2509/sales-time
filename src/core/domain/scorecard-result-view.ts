@@ -9,6 +9,10 @@ import {
   scorecardNormalizedLevel,
 } from "./scorecard-score";
 import { tierFromSalesScore, type RankingTier } from "./team-ranking";
+import {
+  SCORECARD_EXPLORED_LABEL,
+  SCORECARD_OBTAINED_LABEL,
+} from "./scorecard-coverage";
 
 /**
  * Ce que la fiche RDV affiche d'une scorecard, préparé hors de React.
@@ -33,6 +37,12 @@ export type ScorecardCriterionView = {
   /** Le niveau qui a compté dans le score, pas celui qu'on préférerait. */
   readonly level: number;
   readonly evidence: readonly string[];
+  /** Pourquoi ce niveau : « sujet creusé avec relance, information partielle ». Vide sur une analyse d'avant le relevé. */
+  readonly coverage: string;
+  /** Ce que le commercial sait maintenant sur ce thème. */
+  readonly learned: string;
+  /** Ce qui manque pour atteindre le niveau 4. */
+  readonly missing: string;
 };
 
 export type ScorecardBlockView = {
@@ -100,15 +110,22 @@ function libellesParCle(grid: ScorecardGrid | null): Map<string, string> {
 function preuvesParCle(
   criteria: readonly ScorecardCriterionResult[],
   niveaux: ReadonlyMap<string, number>,
-): Map<string, readonly string[]> {
-  const parCle = new Map<string, readonly string[]>();
+): Map<string, ScorecardCriterionResult> {
+  const parCle = new Map<string, ScorecardCriterionResult>();
   for (const entry of criteria) {
     const cle = cleComparable(entry.key);
     if (!cle || parCle.has(cle)) continue;
     if (scorecardNormalizedLevel(entry.level) !== niveaux.get(cle)) continue;
-    parCle.set(cle, entry.evidence);
+    parCle.set(cle, entry);
   }
   return parCle;
+}
+
+/** « Sujet creusé avec relance, information partielle » : le relevé en mots. */
+function couverture(entry: ScorecardCriterionResult | undefined): string {
+  if (!entry?.explored || !entry.obtained) return "";
+  const texte = `${SCORECARD_EXPLORED_LABEL[entry.explored]}, ${SCORECARD_OBTAINED_LABEL[entry.obtained]}${entry.unproven ? " ; aucune citation retrouvée dans le transcript, le niveau reste à 1" : ""}`;
+  return texte.charAt(0).toUpperCase() + texte.slice(1);
 }
 
 /**
@@ -138,7 +155,7 @@ function detailDuBloc(
   grid: ScorecardGrid | null,
   blockKey: string,
   niveaux: ReadonlyMap<string, number>,
-  preuves: ReadonlyMap<string, readonly string[]>,
+  preuves: ReadonlyMap<string, ScorecardCriterionResult>,
 ): readonly ScorecardCriterionView[] {
   const bloc = grid?.blocks.find(
     (candidat) => cleComparable(candidat.key) === cleComparable(blockKey),
@@ -146,11 +163,15 @@ function detailDuBloc(
   if (!bloc) return [];
   return bloc.criteria.map((criterion) => {
     const cle = cleComparable(criterion.key);
+    const entry = preuves.get(cle);
     return {
       key: criterion.key,
       label: criterion.label,
       level: niveaux.get(cle) ?? 0,
-      evidence: preuves.get(cle) ?? [],
+      evidence: entry?.evidence ?? [],
+      coverage: couverture(entry),
+      learned: entry?.learned?.trim() ?? "",
+      missing: entry?.missing?.trim() ?? "",
     };
   });
 }

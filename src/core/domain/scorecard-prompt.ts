@@ -1,67 +1,89 @@
-import { libelleTranche, scoreBands } from "./score-bands";
 import {
-  SCORECARD_LEVEL_MAX,
-  SCORECARD_TOTAL,
-  type ScorecardGrid,
-} from "./scorecard-grid";
+  SCORECARD_EXPLORED_LABEL,
+  SCORECARD_OBTAINED_LABEL,
+  scorecardLevelFromCoverage,
+} from "./scorecard-coverage";
+import { SCORECARD_LEVEL_MAX, type ScorecardGrid } from "./scorecard-grid";
+import { SCORECARD_EXPLORED, SCORECARD_OBTAINED } from "./scorecard-result-zod";
 
 /**
  * La partie non modifiable de la consigne scorecard, écrite depuis la grille.
  *
- * Le super-admin édite le rôle, le ton et la description des champs de sortie.
- * Il n'édite pas ce bloc, et c'est voulu : il porte la liste exacte des clés que
- * le schéma attend, l'échelle des niveaux, l'interdiction de rendre un total et
- * les paliers du produit. Une consigne réécrite qui aurait perdu la liste des
- * critères produirait des clés inventées, que le calcul jetterait sans bruit ;
- * une consigne qui aurait gardé une ancienne liste noterait des critères
- * disparus de la grille. Le texte se fabrique donc à partir de la donnée, à
- * chaque appel, et ne peut pas la contredire.
+ * Le super-admin édite le rôle, le ton et la description des champs de
+ * coaching. Il n'édite pas ce bloc : il porte la liste exacte des clés que le
+ * schéma attend, ce que chaque critère cherche, et la façon de faire le relevé
+ * dont le produit tire les niveaux. Le texte se fabrique à partir de la
+ * grille, à chaque appel, et ne peut donc pas la contredire.
  *
- * Les paliers ne sont pas écrits non plus : ils viennent de ceux du produit,
- * ramenés sur l'échelle du score. Le modèle les lit pour savoir ce qu'il
- * décide, sans qu'il lui soit demandé de les nommer, puisque le palier affiché
- * au commercial se calcule sur son score.
+ * Depuis la revue du 5 octobre 2026, le modèle ne note plus : il relève, pour
+ * chaque critère, si le commercial a exploré le thème et ce qu'il a obtenu.
+ * Le produit en déduit le niveau par une table fixe.
  */
 export function scorecardGridInstruction(grid: ScorecardGrid): string {
   const blocs = grid.blocks
     .map((block) => {
       const lignes = block.criteria
-        .map(
-          (criterion) =>
-            `- **${criterion.key}** ${criterion.label}. Niveau ${SCORECARD_LEVEL_MAX} : ${criterion.expected}`,
-        )
+        .map((criterion) => {
+          const parts = [
+            `- **${criterion.key}** ${criterion.label}.`,
+            criterion.lookFor ? `  Ce qui compte : ${criterion.lookFor}` : null,
+            `  Niveau ${SCORECARD_LEVEL_MAX} : ${criterion.expected}`,
+            criterion.examples?.length
+              ? `  Formulations possibles, parmi d'autres : ${criterion.examples
+                  .map((e) => `« ${e} »`)
+                  .join(" ; ")}`
+              : null,
+            criterion.measuredByProduct
+              ? "  Mesuré par le produit : renseigne seulement `learned` et `missing` à partir de la mesure donnée plus bas."
+              : null,
+          ];
+          return parts.filter(Boolean).join("\n");
+        })
         .join("\n");
       return `### ${block.key}. ${block.name} (${block.weight} points)\n${lignes}`;
     })
     .join("\n\n");
 
-  const paliers = scoreBands({ max: SCORECARD_TOTAL, pointsParUnite: 1 })
-    .map((band) => `- ${libelleTranche(band)}: ${band.tier.nom}`)
-    .join("\n");
+  const table = SCORECARD_OBTAINED.map(
+    (obtained) =>
+      `| ${obtained} | ${SCORECARD_EXPLORED.map((explored) =>
+        scorecardLevelFromCoverage(explored, obtained),
+      ).join(" | ")} |`,
+  ).join("\n");
 
-  return `## Scorecard : ${grid.name}
+  return `## Grille : ${grid.name}
 ${grid.intent}
+${grid.notExpected ? `\n${grid.notExpected}\n` : ""}
+## Ta tâche sur la grille : un relevé, pas une note
+Tu ne donnes aucun niveau ni aucun score. Pour chaque critère ci-dessous, tu relèves ce qui s'est passé dans le rendez-vous. Le produit en déduit le niveau, toujours de la même façon.
 
-Rate how well the SELLER covered each criterion in THIS meeting. You rate his work, not the quality of what he sells and not the prospect. The list below is the whole grid: use these keys, all of them, and no others.
+**Le thème compte, pas la formulation.** Une question posée avec d'autres mots que les exemples compte pleinement. Une information obtenue à n'importe quel moment compte, même si elle arrive en réponse à une autre question ou si le prospect la donne de lui-même. Lis le transcript en entier avant de répondre : les informations décisives arrivent souvent dans la deuxième moitié du rendez-vous (prix, décision, prochaine étape).
+
+Pour chaque critère :
+- **explored**, ce que le commercial a fait du thème :
+  - \`non\` : ${SCORECARD_EXPLORED_LABEL.non} ; il n'a ni posé de question ni rebondi dessus.
+  - \`aborde\` : ${SCORECARD_EXPLORED_LABEL.aborde} ; il a amené le sujet ou rebondi une fois, sans aller plus loin.
+  - \`creuse\` : ${SCORECARD_EXPLORED_LABEL.creuse} ; il est revenu dessus, a relancé, reformulé ou demandé un exemple, un chiffre, un nom.
+- **obtained**, ce que le prospect a donné sur ce thème, que le commercial l'ait demandé ou non :
+  - \`rien\` : ${SCORECARD_OBTAINED_LABEL.rien}.
+  - \`partiel\` : une information générale, vague ou incomplète.
+  - \`exploitable\` : une information assez précise pour préparer la suite : un nom, un chiffre, une étape, une date, un exemple vécu.
+- **learned** : une phrase qui dit ce que le commercial sait maintenant sur ce thème, avec les faits du transcript (noms, chiffres, dates). Vide si rien.
+- **missing** : une phrase qui dit ce qui manque encore pour atteindre le niveau ${SCORECARD_LEVEL_MAX}. Vide si rien ne manque.
+- **evidence** : 1 à 3 extraits recopiés mot pour mot, chacun avec \`who\` : \`commercial\` ou \`prospect\`, selon la personne qui l'a dit. Donne de préférence la question ou la relance du commercial ET la réponse du prospect. Un extrait est une phrase entière, ou un morceau de phrase qui a du sens seul : ne le coupe jamais au milieu d'une idée. Aucun extrait quand le thème est absent.
+
+Le produit vérifie chaque extrait dans le transcript et qui l'a dit. Un extrait introuvable est retiré. Une information « obtenue » sans parole du prospect retrouvée baisse d'un cran ; un sujet « creusé » sans parole du commercial retrouvée devient « abordé ». Un critère sans aucun extrait ne dépasse pas le niveau 1.
+
+Le niveau que le produit en tire (colonnes : ${SCORECARD_EXPLORED.join(", ")}) :
+
+| obtained | ${SCORECARD_EXPLORED.join(" | ")} |
+|---|---|---|---|
+${table}
+
+Dans \`criteria\`, chaque critère a son propre champ, nommé par sa clé : remplis-les tous, un par un, en relisant le transcript pour chacun. Un thème absent du rendez-vous se relève \`non\` et \`rien\`, sans extrait ; il n'est jamais laissé de côté.
 
 ${blocs}
 
-Level, criterion by criterion: **${SCORECARD_LEVEL_MAX}** obtained and probed until the answer is usable · **3** obtained but only partly probed · **2** raised and left there, or volunteered by the prospect with no follow-up · **1** barely touched, or a signal the prospect gave and the seller did not pick up · **0** absent from the meeting.
-
-Any level above 0 is earned by words that are in the transcript. Copy them into \`evidence\`, 1 to 3 excerpts, exactly as they were said and in the language of the transcript. Never rewrite a quote and never compose one, and never quote the criterion itself: its definition is not something the prospect said. No quote means level 0, whatever your impression of the meeting was. The product checks every excerpt against the transcript: one it cannot find is removed, and a criterion left without evidence cannot stay above level 1. When you hesitate between two levels, take the lower one.
-
-Return one entry per criterion in \`criteria\`. Every key you write, there and in \`pointsLost\`, must be one of the keys above. Return no total, no block subtotal and no level name: the product adds your levels itself, on the weights written above, and names the level they reach. A criterion you leave out counts as 0, so leaving one out is a decision and not a shortcut.
-
-The score runs from 0 to ${SCORECARD_TOTAL}, and the seller is shown the level it reaches:
-
-${paliers}
-
-Reaching the top band is exceptional in a real meeting; a meeting that went well and still left clear gaps lands in the middle of the scale. Grading generously is not kindness here. These scores are averaged over months, and a seller placed one level above where he stands is then coached for someone else's problems.
-
-Calibration:
-- Level **${SCORECARD_LEVEL_MAX}** is earned only when the transcript shows BOTH the seller probing (a question or a reformulation that digs) AND a usable answer from the prospect. Quote the answer in \`evidence\` and, as a separate excerpt, the seller's question when there is one. An answer the prospect volunteered without the seller digging is a 2, however rich it is.
-- When you hesitate between two levels, take the lower one.
-- A solid first meeting lands between 50 and 65 on this scale. Above 80 is exceptional and has to be visible in the words, criterion by criterion.
-- A criterion you list in \`pointsLost\` is not at level ${SCORECARD_LEVEL_MAX}.
-- Return every criterion of the grid, whatever its level, 0 included: a criterion you leave out counts as 0 for the seller, which is unfair to him.`;
+## Les points perdus
+Dans \`pointsLost\`, choisis 3 à 5 critères où le rendez-vous laisse le plus de marge, parmi ceux qui ne sont pas à \`creuse\` + \`exploitable\`, en commençant par ceux qui comptent le plus pour la suite de cette affaire. Pour chacun, \`evidence\` dit ce que le transcript montre à cet endroit, et \`whatToSayInstead\` donne la phrase que le commercial pourrait dire, en français correct et naturel, écrite comme il la dirait à voix haute à ce prospect. Ne suggère jamais ce que le relevé montre déjà fait.`;
 }

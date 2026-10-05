@@ -42,11 +42,57 @@ rendez-vous étaient fausses.
 - **La date du rendez-vous** se saisit sans heure, et se remplit seule depuis
   l'en-tête d'un transcript collé, avec la durée.
 
-## 3. À faire après la fusion
+## 3. La notation refondue (revue de Thomas et Cédric, 5 octobre 2026)
 
-- Publier la nouvelle consigne d'origine du compte rendu (Super admin,
-  Prompts IA, « Compte-rendu fiche RDV »). La consigne propre à Sinéa est une
-  copie modifiée : y reporter les trois règles sur les dates et le décideur.
-- Ce que le code ne corrige pas : un modèle d'analyse plus solide que
-  `openai/gpt-4o-mini` réduirait encore les inventions et l'instabilité du
-  profil DISC. C'est un choix de coût.
+La revue a relevé : un même transcript noté 38 puis 22, des critères à 0 sur
+des sujets traités avec d'autres mots, une note en tout ou rien, des leviers
+SONCAS appuyés sur des phrases du commercial, un KISS qui contredisait la
+grille et suggérait ce qui avait été fait.
+
+- **La même note pour le même transcript.** Chaque appel se fait à
+  température nulle avec une graine fixe. Surtout, le produit garde la
+  réponse d'un appel et la rend à l'identique quand le même transcript
+  revient avec la même consigne et le même modèle. Une consigne modifiée
+  produit une nouvelle analyse.
+- **Un relevé, plus une note au jugé.** Pour chaque critère, le modèle
+  relève si le commercial a abordé ou creusé le thème, et ce qu'il a obtenu
+  (rien, partiel, exploitable), en une phrase chacun, avec des citations
+  attribuées au commercial ou au prospect. Le produit en tire le niveau par
+  une table fixe : un thème seulement abordé rapporte déjà 1 ou 2 points, un
+  thème creusé avec une réponse précise en rapporte 4.
+- **Le thème compte, pas la formulation.** Chaque critère dit ce qu'il faut
+  chercher dans tout le rendez-vous et donne des formulations en exemple,
+  jamais exigées. Une grille dit aussi ce qui n'est pas attendu dans un
+  rendez-vous de découverte (programme détaillé, proposition chiffrée).
+- **La grille de découverte, deuxième version** : « Cadrage et prise de
+  lead » entre dans la posture ; « Bénéfice attendu » rejoint « Objectifs et
+  critères de succès ». Les analyses déjà faites gardent leur ancienne
+  grille.
+- **Qui a dit quoi.** Le produit sépare les paroles du commercial et celles du
+  prospect. Une citation est rendue à la personne qui l'a dite, une
+  information sans parole du prospect baisse d'un cran, et les leviers SONCAS
+  ne se prouvent plus qu'avec les mots du prospect.
+- **Des analyses cohérentes entre elles.** SONCAS, DISC, les objections et
+  KISS reçoivent le type de rendez-vous et la parole mesurée ; KISS reçoit en
+  plus le relevé de la grille, et ne doit ni le contredire ni suggérer un
+  geste déjà fait. « À arrêter » dit la parole mesurée quand le commercial
+  dépasse 50 %.
+- **Une note lisible.** Chaque critère affiche pourquoi ce niveau (« sujet
+  creusé avec relance, information partielle »), ce qui a été obtenu et ce
+  qui manque, et la fiche explique le calcul.
+- **Le compte rendu** part des faits : chiffres, existant, circuit de
+  décision nommé, prix dits par chacun et réaction, prestataires essayés,
+  suite exacte avec ses conditions. Le transcript n'est plus coupé à
+  60 000 caractères, ce qui écartait la fin d'un rendez-vous Teams d'une
+  heure.
+- Les cartes « À accompagner en priorité » ne se chevauchent plus.
+
+## 4. À faire après la fusion
+
+- Publier les nouvelles consignes d'origine dans Super admin, Prompts IA :
+  grille, objections, compte rendu. Les règles fixes (relevé, qui a dit quoi,
+  cohérence) s'appliquent dès la fusion, même avant la republication.
+- La consigne de compte rendu propre à Sinéa est une copie modifiée : la
+  remplacer par la nouvelle, ou y reporter les règles.
+- Le modèle reste un choix de coût : `openai/gpt-4o-mini` lit moins finement
+  un transcript d'une heure qu'un modèle plus solide.

@@ -1,3 +1,4 @@
+import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 import { runAllMeetingAnalysesForOrg } from "./run-all-meeting-analyses-for-org";
 import type { AnalysisJobRepositoryPort } from "@/src/core/ports/analysis-job-repository-port";
 import type { AiRequestLogRepositoryPort } from "@/src/core/ports/ai-request-log-repository-port";
@@ -37,6 +38,7 @@ export async function processAnalysisJobs(
     organizationPrompts: OrganizationPromptRepositoryPort;
     analysis: AnalysisPort;
     aiLogs: AiRequestLogRepositoryPort;
+    aiSummaryCache?: AiSummaryCacheRepositoryPort;
     globalKissCoachingPrompts: GlobalKissCoachingPromptsRepositoryPort;
     organizationSettings: OrganizationSettingsRepositoryPort;
     notifications: NotificationRepositoryPort;
@@ -45,9 +47,8 @@ export async function processAnalysisJobs(
   input: { workerId: string },
 ): Promise<ProcessAnalysisJobsResult> {
   const staleBefore = new Date(Date.now() - STALE_MINUTES * 60_000);
-  const releasedStale = await deps.analysisJobs.releaseStaleProcessingJobs(
-    staleBefore,
-  );
+  const releasedStale =
+    await deps.analysisJobs.releaseStaleProcessingJobs(staleBefore);
   const reconcileBefore = new Date(Date.now() - RECONCILE_MINUTES * 60_000);
   const reconciledMeetings =
     await deps.analysisJobs.reconcileStuckProcessingMeetings({
@@ -85,6 +86,7 @@ export async function processAnalysisJobs(
         organizationPrompts: deps.organizationPrompts,
         analysis: deps.analysis,
         aiLogs: deps.aiLogs,
+        aiSummaryCache: deps.aiSummaryCache,
         globalKissCoachingPrompts: deps.globalKissCoachingPrompts,
         organizationSettings: deps.organizationSettings,
         notifications: deps.notifications,

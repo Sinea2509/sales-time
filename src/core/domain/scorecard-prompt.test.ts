@@ -1,122 +1,103 @@
-import { libelleTranche, scoreBands } from "./score-bands";
 import {
-  DECOUVERTE_GRID,
+  DECOUVERTE_V2_GRID,
   SCORECARD_GRIDS,
   SCORECARD_LEVEL_MAX,
-  SCORECARD_TOTAL,
   scorecardCriteria,
+  type ScorecardGrid,
 } from "./scorecard-grid";
+import { scorecardLevelFromCoverage } from "./scorecard-coverage";
 import { scorecardGridInstruction } from "./scorecard-prompt";
-import { RANKING_TIERS } from "./team-ranking";
 
 const TIRET_CADRATIN = String.fromCodePoint(0x2014);
 
-const CONSIGNE = scorecardGridInstruction(DECOUVERTE_GRID);
+const CONSIGNE = scorecardGridInstruction(DECOUVERTE_V2_GRID);
 
 describe("scorecardGridInstruction", () => {
-  it("nomme la grille et ce qu'elle attend du rendez-vous", () => {
-    expect(CONSIGNE).toContain(DECOUVERTE_GRID.name);
-    expect(CONSIGNE).toContain(DECOUVERTE_GRID.intent);
+  it("nomme la grille, ce qu'elle attend et ce qu'elle n'attend pas", () => {
+    expect(CONSIGNE).toContain(DECOUVERTE_V2_GRID.name);
+    expect(CONSIGNE).toContain(DECOUVERTE_V2_GRID.intent);
+    expect(CONSIGNE).toContain(DECOUVERTE_V2_GRID.notExpected!);
   });
 
   it("écrit chaque bloc avec son nom et son poids", () => {
-    for (const block of DECOUVERTE_GRID.blocks) {
+    for (const block of DECOUVERTE_V2_GRID.blocks) {
       expect(CONSIGNE).toContain(
         `### ${block.key}. ${block.name} (${block.weight} points)`,
       );
     }
   });
 
-  it("écrit chaque critère avec son intitulé et son attendu", () => {
-    for (const criterion of scorecardCriteria(DECOUVERTE_GRID)) {
+  it("écrit chaque critère avec ce qui compte, son niveau 4 et ses exemples", () => {
+    for (const criterion of scorecardCriteria(DECOUVERTE_V2_GRID)) {
+      expect(CONSIGNE).toContain(`- **${criterion.key}** ${criterion.label}.`);
       expect(CONSIGNE).toContain(
-        `- **${criterion.key}** ${criterion.label}. Niveau ${SCORECARD_LEVEL_MAX} : ${criterion.expected}`,
+        `Niveau ${SCORECARD_LEVEL_MAX} : ${criterion.expected}`,
       );
+      if (criterion.lookFor) {
+        expect(CONSIGNE).toContain(`Ce qui compte : ${criterion.lookFor}`);
+      }
+      for (const example of criterion.examples ?? []) {
+        expect(CONSIGNE).toContain(`« ${example} »`);
+      }
     }
   });
 
   it("ne cite aucune clé que la grille ne porte pas", () => {
-    const clefs = [...CONSIGNE.matchAll(/^- \*\*([^*]+)\*\*/gm)].map(
+    const clefs = [...CONSIGNE.matchAll(/^- \*\*([A-Z]\d+)\*\*/gm)].map(
       (found) => found[1],
     );
-    expect(clefs).toStrictEqual(
-      scorecardCriteria(DECOUVERTE_GRID).map((criterion) => criterion.key),
+    expect(clefs).toEqual(
+      scorecardCriteria(DECOUVERTE_V2_GRID).map((c) => c.key),
     );
   });
 
-  it("rend les paliers du produit, ramenés sur le score", () => {
-    for (const band of scoreBands({
-      max: SCORECARD_TOTAL,
-      pointsParUnite: 1,
-    })) {
-      expect(CONSIGNE).toContain(`- ${libelleTranche(band)}: ${band.tier.nom}`);
-    }
-    for (const tier of RANKING_TIERS) expect(CONSIGNE).toContain(tier.nom);
+  it("demande un relevé et non une note, et dit que la formulation ne compte pas", () => {
+    expect(CONSIGNE).toContain("un relevé, pas une note");
+    expect(CONSIGNE).toContain("Tu ne donnes aucun niveau ni aucun score");
+    expect(CONSIGNE).toContain("Le thème compte, pas la formulation.");
   });
 
-  it("interdit de rendre un total ou un nom de palier", () => {
+  it("recopie la table du produit telle que le calcul l'applique", () => {
     expect(CONSIGNE).toContain(
-      "Return no total, no block subtotal and no level name",
+      `| exploitable | ${scorecardLevelFromCoverage("non", "exploitable")} | ${scorecardLevelFromCoverage("aborde", "exploitable")} | ${scorecardLevelFromCoverage("creuse", "exploitable")} |`,
     );
+    expect(CONSIGNE).toContain("| rien | 0 | 1 | 2 |");
   });
 
-  it("exige une citation du transcript et tranche vers le bas sans elle", () => {
-    expect(CONSIGNE).toContain("No quote means level 0");
-    expect(CONSIGNE).toContain(
-      "When you hesitate between two levels, take the lower one",
-    );
-    expect(CONSIGNE).toContain("Never rewrite a quote and never compose one");
-    expect(CONSIGNE).toContain("never quote the criterion itself");
-    expect(CONSIGNE).toContain(
-      "a criterion left without evidence cannot stay above level 1",
-    );
+  it("annonce la vérification des citations et de leur auteur", () => {
+    expect(CONSIGNE).toContain("Le produit vérifie chaque extrait");
+    expect(CONSIGNE).toContain("`who`");
   });
 
-  it("dit que le commercial est noté, et non ce qu'il vend", () => {
-    expect(CONSIGNE).toContain(
-      "You rate his work, not the quality of what he sells and not the prospect",
-    );
-  });
-
-  it("annonce que la liste des critères est complète", () => {
-    expect(CONSIGNE).toContain("use these keys, all of them, and no others");
-  });
-
-  it("dit qu'un critère laissé de côté vaut zéro", () => {
-    expect(CONSIGNE).toContain("A criterion you leave out counts as 0");
-  });
-
-  it("n'emploie aucun tiret cadratin", () => {
-    for (const grid of SCORECARD_GRIDS) {
-      expect(scorecardGridInstruction(grid)).not.toContain(TIRET_CADRATIN);
-    }
+  it("dit que l'écoute est mesurée par le produit", () => {
+    expect(CONSIGNE).toContain("Mesuré par le produit");
   });
 
   it("suit la grille qu'on lui donne, sans rien écrire en dur", () => {
-    const consigne = scorecardGridInstruction({
-      ...DECOUVERTE_GRID,
+    const grille: ScorecardGrid = {
+      id: "DECOUVERTE_V2",
       name: "Grille de contrôle",
-      intent: "Une intention de contrôle.",
+      intent: "Contrôler.",
       blocks: [
         {
           key: "Z",
           name: "Bloc unique",
           weight: 100,
           criteria: [
-            {
-              key: "Z1",
-              label: "Un seul critère",
-              expected: "Un seul attendu.",
-            },
+            { key: "Z1", label: "Un seul critère", expected: "Un seul attendu." },
           ],
         },
       ],
-    });
-    expect(consigne).toContain("### Z. Bloc unique (100 points)");
-    expect(consigne).toContain(
-      `- **Z1** Un seul critère. Niveau ${SCORECARD_LEVEL_MAX} : Un seul attendu.`,
-    );
-    expect(consigne).not.toContain("### A.");
-    expect(consigne).not.toContain("**A1**");
+    };
+    const consigne = scorecardGridInstruction(grille);
+    expect(consigne).toContain("- **Z1** Un seul critère.");
+    expect(consigne).toContain("Niveau 4 : Un seul attendu.");
+    expect(consigne).not.toContain("A1");
+  });
+
+  it("n'écrit aucun tiret cadratin, dans aucune grille livrée", () => {
+    for (const grid of SCORECARD_GRIDS) {
+      expect(scorecardGridInstruction(grid)).not.toContain(TIRET_CADRATIN);
+    }
   });
 });

@@ -5,15 +5,15 @@ import {
   SCORECARD_UNPROVEN_LEVEL_MAX,
 } from "./scorecard-evidence-rule";
 import { scorecardGridForMeeting } from "./scorecard-grid-for-meeting";
-import type { ScorecardGeneratedResult } from "./scorecard-result-zod";
+import type { ScorecardLeveledResult } from "./scorecard-result-zod";
 
 const TRANSCRIPT = `Claire : Le chiffre d'affaires tient, mais la marge baisse. Nous sommes passés de 34 % de marge brute à 29 % en deux ans.
 Claire : Marc Vermont, le directeur général. C'est lui qui signe.
 Julien : Merci Claire, merci de me recevoir.`;
 
 function result(
-  criteria: ScorecardGeneratedResult["criteria"],
-): ScorecardGeneratedResult {
+  criteria: ScorecardLeveledResult["criteria"],
+): ScorecardLeveledResult {
   return {
     criteria,
     pointsLost: [],

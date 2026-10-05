@@ -3,6 +3,7 @@ import { SuperAdminPromptsShell } from "@/components/organisms/super-admin-promp
 import { PageHeader } from "@/components/molecules/page-header";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { ALL_ANALYSIS_PROMPT_KINDS } from "@/lib/analysis-prompt-kinds";
+import { fixedPromptPart } from "@/lib/fixed-prompt-parts";
 import { DEFAULT_ANALYSIS_PROMPT_MARKDOWN } from "@/lib/default-analysis-prompts";
 import {
   ANALYSIS_KIND_SLUGS,
@@ -52,6 +53,7 @@ async function loadPromptPanel(kind: AnalysisKindSlug) {
     kind,
     initialMarkdown,
     defaultMarkdown,
+    fixedMarkdown: fixedPromptPart(kind),
     initialModel,
     versionCount: versions.length,
     versions: versions.map((v) => ({

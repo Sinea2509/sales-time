@@ -49,8 +49,11 @@ function scorecardResult() {
   return {
     criteria: scorecardCriteria(DEFAULT_SCORECARD_GRID).map((criterion) => ({
       key: criterion.key,
-      level: 2,
-      evidence: ["on en parle"],
+      explored: "aborde",
+      obtained: "partiel",
+      learned: "",
+      missing: "",
+      evidence: [{ who: "prospect", quote: "on en parle" }],
     })),
     pointsLost: [],
     keep: [],

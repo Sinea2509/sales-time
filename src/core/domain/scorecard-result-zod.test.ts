@@ -27,6 +27,29 @@ const SORTIE = {
   summary: "Un rendez-vous correct sur le contexte, muet sur la décision.",
 };
 
+/** Ce que le modèle rend désormais : un relevé, sans niveau. */
+const RELEVE = {
+  ...SORTIE,
+  criteria: [
+    {
+      key: "A1",
+      explored: "creuse",
+      obtained: "partiel",
+      learned: "Le siège compte trente-deux personnes.",
+      missing: "Les effectifs des sites restent inconnus.",
+      evidence: [{ who: "prospect", quote: "On est trente-deux au siège." }],
+    },
+    {
+      key: "A2",
+      explored: "non",
+      obtained: "rien",
+      learned: "",
+      missing: "Qui intervient sur le sujet.",
+      evidence: [],
+    },
+  ],
+};
+
 describe("scorecardCriterionSchema", () => {
   it("borne le niveau sur l'échelle de la grille", () => {
     expect([
@@ -84,13 +107,28 @@ describe("scorecardPointLostSchema", () => {
 });
 
 describe("scorecardGeneratedResultSchema", () => {
-  it("accepte une sortie complète", () => {
-    expect(scorecardGeneratedResultSchema.safeParse(SORTIE).success).toBe(true);
+  it("accepte un relevé complet", () => {
+    expect(scorecardGeneratedResultSchema.safeParse(RELEVE).success).toBe(true);
+  });
+
+  it("refuse un niveau rendu à la place du relevé", () => {
+    expect(scorecardGeneratedResultSchema.safeParse(SORTIE).success).toBe(
+      false,
+    );
+  });
+
+  it("refuse une citation sans son auteur", () => {
+    expect(
+      scorecardGeneratedResultSchema.safeParse({
+        ...RELEVE,
+        criteria: [{ ...RELEVE.criteria[0], evidence: ["On est trente-deux."] }],
+      }).success,
+    ).toBe(false);
   });
 
   it("ne laisse passer aucun total rendu par le modèle", () => {
     const analyse = scorecardGeneratedResultSchema.parse({
-      ...SORTIE,
+      ...RELEVE,
       overallScore: 87,
       blocks: [{ key: "A", name: "Contexte", score: 18, max: 20 }],
       tier: "Excellence",
@@ -111,7 +149,7 @@ describe("scorecardGeneratedResultSchema", () => {
       "challenge",
       "summary",
     ]) {
-      const partiel: Record<string, unknown> = { ...SORTIE };
+      const partiel: Record<string, unknown> = { ...RELEVE };
       delete partiel[champ];
       expect(scorecardGeneratedResultSchema.safeParse(partiel).success).toBe(
         false,
@@ -122,12 +160,12 @@ describe("scorecardGeneratedResultSchema", () => {
   it("refuse une question ou une synthèse vide", () => {
     expect(
       scorecardGeneratedResultSchema.safeParse({
-        ...SORTIE,
+        ...RELEVE,
         goldenQuestion: "",
       }).success,
     ).toBe(false);
     expect(
-      scorecardGeneratedResultSchema.safeParse({ ...SORTIE, summary: "" })
+      scorecardGeneratedResultSchema.safeParse({ ...RELEVE, summary: "" })
         .success,
     ).toBe(false);
   });
@@ -135,11 +173,14 @@ describe("scorecardGeneratedResultSchema", () => {
   it("accepte une grille entièrement notée sans buter sur une borne", () => {
     expect(
       scorecardGeneratedResultSchema.safeParse({
-        ...SORTIE,
-        criteria: Array.from({ length: 25 }, (_, index) => ({
+        ...RELEVE,
+        criteria: Array.from({ length: 26 }, (_, index) => ({
           key: `A${index}`,
-          level: SCORECARD_LEVEL_MAX,
-          evidence: ["Une citation."],
+          explored: "creuse",
+          obtained: "exploitable",
+          learned: "Un fait.",
+          missing: "",
+          evidence: [{ who: "prospect", quote: "Une citation." }],
         })),
       }).success,
     ).toBe(true);
@@ -191,6 +232,33 @@ describe("scorecardResultSchema", () => {
 
   it("accepte une analyse enregistrée", () => {
     expect(scorecardResultSchema.safeParse(ENREGISTRE).success).toBe(true);
+  });
+
+  it("relit une analyse d'avant le relevé, qui ne porte que des niveaux", () => {
+    expect(
+      scorecardResultSchema.safeParse({
+        ...ENREGISTRE,
+        criteria: [{ key: "A1", level: 3, evidence: ["Un extrait."] }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("garde le relevé avec le niveau calculé", () => {
+    const analyse = scorecardResultSchema.parse({
+      ...ENREGISTRE,
+      criteria: [
+        {
+          key: "A1",
+          level: 3,
+          evidence: ["On est trente-deux au siège."],
+          explored: "creuse",
+          obtained: "partiel",
+          learned: "Trente-deux au siège.",
+          missing: "Les sites.",
+        },
+      ],
+    });
+    expect(analyse.criteria[0].learned).toBe("Trente-deux au siège.");
   });
 
   it("garde tous les champs produits par le modèle", () => {

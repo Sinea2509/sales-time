@@ -1,4 +1,7 @@
-import { DECOUVERTE_GRID, DEFAULT_SCORECARD_GRID } from "./scorecard-grid";
+import {
+  DECOUVERTE_V2_GRID as DECOUVERTE_GRID,
+  DEFAULT_SCORECARD_GRID,
+} from "./scorecard-grid";
 import {
   normalizeMeetingLabel,
   scorecardGridForMeeting,

@@ -111,9 +111,18 @@ export function MeetingObjectionsTab({
                 className="border-border bg-card rounded-lg border px-3.5 py-3"
               >
                 <blockquote className="border-brand bg-brand-soft/70 rounded-r-lg border-l-[3px] px-3 py-2 dark:bg-brand/10">
-                  <p className="text-[13.5px] leading-relaxed italic">
-                    « {o.objection} »
-                  </p>
+                  {o.verbatim === false ? (
+                    <p className="text-[13.5px] leading-relaxed">
+                      <span className="font-semibold not-italic">
+                        En substance :{" "}
+                      </span>
+                      {o.objection.replace(/^«\s*|\s*»$/g, "")}
+                    </p>
+                  ) : (
+                    <p className="text-[13.5px] leading-relaxed italic">
+                      « {o.objection} »
+                    </p>
+                  )}
                   <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-[11.5px] not-italic">
                     <span>{o.who}</span>
                     {o.moment ? (
