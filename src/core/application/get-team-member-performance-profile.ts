@@ -7,7 +7,9 @@ import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-
 import {
   parseStatsWindowDays,
   partitionMeetingsByStatsWindow,
-  previousMeetingAtWindowStart,
+  statsWindowBounds,
+  statsWindowFromRange,
+  type StatsWindowRange,
 } from "@/src/core/domain/dashboard-stats-window";
 import type { SellerCommercialPerformanceSummary } from "@/src/core/ports/analysis-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
@@ -40,12 +42,22 @@ export async function getTeamMemberPerformanceProfile(
     sellerUserId: string;
     sellerDisplayName: string;
     statsWindowDays?: number;
+    /** Les dates de la période quand elle a été choisie au calendrier. */
+    statsWindowRange?: StatsWindowRange | null;
   },
 ): Promise<TeamMemberPerformanceProfile> {
-  const statsWindowDays = parseStatsWindowDays(
-    input.statsWindowDays != null ? String(input.statsWindowDays) : undefined,
-  );
-  const sincePreviousWindow = previousMeetingAtWindowStart(statsWindowDays);
+  const statsWindowRange = input.statsWindowRange ?? null;
+  const statsWindowDays = statsWindowRange
+    ? statsWindowFromRange(statsWindowRange).days
+    : parseStatsWindowDays(
+        input.statsWindowDays != null
+          ? String(input.statsWindowDays)
+          : undefined,
+      );
+  const { previousSince: sincePreviousWindow } = statsWindowBounds({
+    days: statsWindowDays,
+    range: statsWindowRange,
+  });
   const meetingsForWindow = await deps.meetings.listRecentMeetingsForDashboard({
     organizationId: input.organizationId,
     limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
@@ -59,6 +71,8 @@ export async function getTeamMemberPerformanceProfile(
   const { currentWindow: meetings } = partitionMeetingsByStatsWindow(
     meetingsForWindow,
     statsWindowDays,
+    new Date(),
+    statsWindowRange,
   );
 
   const meetingDigests = buildMeetingDigestsForAiSummary(meetings);

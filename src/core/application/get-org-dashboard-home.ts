@@ -5,9 +5,9 @@ import {
   type DashboardHomeFigures,
 } from "@/src/core/domain/dashboard-home-from-meetings";
 import {
-  meetingAtSinceForStatsWindow,
-  previousMeetingAtWindowStart,
+  statsWindowBounds,
   type StatsWindowDays,
+  type StatsWindowRange,
 } from "@/src/core/domain/dashboard-stats-window";
 import type {
   MeetingRepositoryPort,
@@ -55,6 +55,8 @@ export async function getOrgDashboardHome(
   input: {
     organizationId: string | null;
     statsWindowDays: StatsWindowDays;
+    /** Les dates de la période quand elle a été choisie au calendrier. */
+    statsWindowRange?: StatsWindowRange | null;
     /** When set, KPIs and recent meetings are scoped to this seller (member role). */
     sellerUserId?: string | null;
     /** Demande les analyses de la fenêtre pour calculer `sellerFocus`. */
@@ -63,8 +65,14 @@ export async function getOrgDashboardHome(
 ): Promise<OrgDashboardHome | null> {
   if (!input.organizationId) return null;
 
-  const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
-  const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays);
+  const {
+    since: sinceCurrent,
+    before,
+    previousSince: sincePrev,
+  } = statsWindowBounds({
+    days: input.statsWindowDays,
+    range: input.statsWindowRange ?? null,
+  });
   const seller =
     input.sellerUserId != null && input.sellerUserId !== ""
       ? input.sellerUserId
@@ -75,6 +83,7 @@ export async function getOrgDashboardHome(
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: input.organizationId,
       meetingAtSince: sinceCurrent,
+      ...(before ? { meetingAtBefore: before } : {}),
       sellerUserId: seller,
       includeLatestScorecardResult: input.withSellerFocus === true,
       includeLatestKissResult: input.withSellerFocus === true,
@@ -90,6 +99,7 @@ export async function getOrgDashboardHome(
   return {
     ...dashboardHomeFromMeetings({
       statsWindowDays: input.statsWindowDays,
+      statsWindowRange: input.statsWindowRange ?? null,
       tamMinutesPerRdv: tamMinutesSavedPerMeetingFromSettings(orgSettings),
       prospectingMinutes: prospectingMinutesForStatsWindow(
         orgSettings?.tamObjectiveMinutesPerMonth ?? 180,

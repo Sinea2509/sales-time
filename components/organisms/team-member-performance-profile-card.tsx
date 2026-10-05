@@ -27,11 +27,13 @@ type PerformanceState = {
 export function TeamMemberPerformanceProfileCard({
   sellerUserId,
   statsWindowDays,
+  statsWindowRange = null,
   initialFingerprint,
   initialPerformance,
 }: {
   sellerUserId: string;
   statsWindowDays: number;
+  statsWindowRange?: { from: string; to: string } | null;
   initialFingerprint: string;
   initialPerformance: PerformanceState;
 }) {
@@ -44,6 +46,7 @@ export function TeamMemberPerformanceProfileCard({
       const fp = await getTeamMemberPerformanceFingerprintAction(
         sellerUserId,
         statsWindowDays,
+        statsWindowRange,
       );
       if (!fp.ok) return;
       if (fp.fingerprint === fingerprintRef.current) return;
@@ -51,6 +54,7 @@ export function TeamMemberPerformanceProfileCard({
       const res = await refreshTeamMemberPerformanceAction(
         sellerUserId,
         statsWindowDays,
+        statsWindowRange,
       );
       if (!res.ok) return;
 
@@ -61,7 +65,7 @@ export function TeamMemberPerformanceProfileCard({
         performanceStop: res.profile.performanceStop,
       });
     });
-  }, [sellerUserId, statsWindowDays]);
+  }, [sellerUserId, statsWindowDays, statsWindowRange]);
 
   useEffect(() => {
     function onMeetingMutated(event: Event) {

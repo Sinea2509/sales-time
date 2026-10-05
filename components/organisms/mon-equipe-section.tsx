@@ -12,6 +12,7 @@ import { avertissementDeCadrage } from "@/lib/avertissement-de-cadrage";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { formatNoteOn5 } from "@/lib/format-note-on5";
 import { ficheMembreHref, monEquipeListHref } from "@/lib/liens-mon-equipe";
+import type { StatsWindowRange } from "@/src/core/domain/dashboard-stats-window";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { SALES_SCORE_LABEL } from "@/lib/sales-score-color";
 import {
@@ -68,6 +69,7 @@ function TitreDeCarte({
 export function MonEquipeSection({
   monEquipe,
   statsWindowDays,
+  statsWindowRange = null,
   currentUserEmail,
   listBasePath = "/company/equipe",
   showHeading = true,
@@ -76,6 +78,8 @@ export function MonEquipeSection({
 }: {
   monEquipe: OrgAdminMonEquipePage;
   statsWindowDays: number;
+  /** Les dates de la période quand elle a été choisie au calendrier : les liens les emportent. */
+  statsWindowRange?: StatsWindowRange | null;
   currentUserEmail: string;
   /** Base path for pagination links (default: dedicated team page). */
   listBasePath?: string;
@@ -328,7 +332,7 @@ export function MonEquipeSection({
                         <Link
                           href={ficheMembreHref(
                             row.userId,
-                            statsWindowDays,
+                            { days: statsWindowDays, range: statsWindowRange },
                             monEquipe.page,
                           )}
                           className="group flex min-w-0 items-center gap-3 rounded-lg py-0.5 pr-2 outline-none transition-colors hover:bg-violet-100/70 focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:hover:bg-zinc-800/60 dark:focus-visible:ring-zinc-500/40"
@@ -487,7 +491,7 @@ export function MonEquipeSection({
               <Link
                 href={monEquipeListHref(
                   listBasePath,
-                  statsWindowDays,
+                  { days: statsWindowDays, range: statsWindowRange },
                   monEquipe.page - 1,
                 )}
                 className={cn(
@@ -502,7 +506,7 @@ export function MonEquipeSection({
               <Link
                 href={monEquipeListHref(
                   listBasePath,
-                  statsWindowDays,
+                  { days: statsWindowDays, range: statsWindowRange },
                   monEquipe.page + 1,
                 )}
                 className={cn(

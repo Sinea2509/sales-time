@@ -14,6 +14,7 @@ import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-p
 function baseHome(over: Partial<OrgDashboardHome> = {}): OrgDashboardHome {
   return {
     statsWindowDays: 30,
+    statsWindowRange: null,
     tamMinutesPerRdv: 50,
     avgDurationMin: 12,
     usefulConversationMinutes: 120,

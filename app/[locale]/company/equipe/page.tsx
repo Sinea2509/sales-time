@@ -15,7 +15,7 @@ import {
 import { getOrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
 import { disabledStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
-import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
+import { ensureEligibleStatsWindow } from "@/lib/resolve-stats-window-days";
 
 export const dynamic = "force-dynamic";
 
@@ -68,16 +68,18 @@ export default async function MonEquipePage({ searchParams }: Props) {
   // La requête entière, et pas seulement `jours` : si cette période n'a pas
   // assez de RDV, la redirection qui suit doit ramener le lecteur sur la page
   // de liste où il était, et non sur la première.
-  const statsWindowDays = await ensureEligibleStatsWindowDays({
-    searchParams: sp,
-    counts: windowCounts,
-    redirectPath: "/company/equipe",
-  });
+  const { days: statsWindowDays, range: statsWindowRange } =
+    await ensureEligibleStatsWindow({
+      searchParams: sp,
+      counts: windowCounts,
+      redirectPath: "/company/equipe",
+    });
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
 
   const admin = await getOrgAdminDashboard(deps, {
     organizationId: actor.activeOrganizationId,
     statsWindowDays,
+    statsWindowRange,
     monEquipePage,
     teamUserIds,
   });
@@ -119,6 +121,7 @@ export default async function MonEquipePage({ searchParams }: Props) {
           >
             <DashboardStatsPeriodSelect
               value={statsWindowDays}
+              range={statsWindowRange}
               disabledDays={disabledStatsDays}
             />
           </Suspense>
@@ -132,6 +135,7 @@ export default async function MonEquipePage({ searchParams }: Props) {
       <MonEquipeSection
         monEquipe={admin.monEquipe}
         statsWindowDays={statsWindowDays}
+        statsWindowRange={statsWindowRange}
         currentUserEmail={actor.email}
         showHeading={false}
         showInvite={false}

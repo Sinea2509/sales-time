@@ -1,4 +1,8 @@
 import { ficheMembreHref } from "@/lib/liens-mon-equipe";
+import type {
+  StatsWindow,
+  StatsWindowDays,
+} from "@/src/core/domain/dashboard-stats-window";
 import { membres, membresClasses } from "@/lib/accord-fr";
 import { libelleATravailler, libellePointFort } from "@/lib/competence-focus";
 import { plurielFr } from "@/lib/pluriel-fr";
@@ -101,7 +105,7 @@ function membreMisEnAvant(
   membre: MembreClasseDeLaDispersion,
   ranking: ResumeDuClassement,
   competence: string | null,
-  statsWindowDays: number,
+  statsWindowDays: StatsWindow | StatsWindowDays,
   equipePage: number,
 ): MembreMisEnAvant {
   const affichage = teamMemberDisplayName(membre);
@@ -131,7 +135,7 @@ export function essentielDuManager(input: {
   /** La page de lignes chargée, où chercher une signature de compétences. */
   rows: readonly LigneAvecSignature[];
   ranking: ResumeDuClassement;
-  statsWindowDays: number;
+  statsWindowDays: StatsWindow | StatsWindowDays;
   equipePage: number;
 }): EssentielDuManager {
   const { dispersion, rows, ranking } = input;

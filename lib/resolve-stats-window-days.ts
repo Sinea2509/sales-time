@@ -1,13 +1,21 @@
 import { cookies } from "next/headers";
 import {
+  parseStatsWindowCookie,
   parseStatsWindowDays,
+  parseStatsWindowRange,
   STATS_WINDOW_COOKIE_NAME,
+  statsWindowFromRange,
+  type StatsWindow,
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
+import { setStatsWindowParams } from "@/lib/stats-window-params";
 import type { StatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
 
 /** La requête d'une adresse, telle que Next la remet à une page. */
 export type PageSearchParams = Record<string, string | string[] | undefined>;
+
+/** Les paramètres d'adresse qui nomment une période. */
+const PERIOD_PARAMS = new Set(["jours", "du", "au"]);
 
 /**
  * Une adresse qui garde la requête reçue, la période remplacée.
@@ -23,12 +31,12 @@ export type PageSearchParams = Record<string, string | string[] | undefined>;
 export function pathWithStatsWindow(
   path: string,
   searchParams: PageSearchParams,
-  jours: StatsWindowDays | null,
+  period: StatsWindow | StatsWindowDays | null,
 ): string {
   const q = new URLSearchParams();
-  if (jours != null) q.set("jours", String(jours));
+  if (period != null) setStatsWindowParams(q, period);
   for (const [key, value] of Object.entries(searchParams)) {
-    if (key === "jours" || value == null) continue;
+    if (PERIOD_PARAMS.has(key) || value == null) continue;
     for (const item of Array.isArray(value) ? value : [value]) {
       q.append(key, item);
     }
@@ -38,17 +46,20 @@ export function pathWithStatsWindow(
 }
 
 /**
- * La période demandée : celle de l'adresse (`?jours=`), sinon celle que le
- * manager a choisie en dernier sur une autre page (cookie), sinon 30 jours.
+ * La période demandée : celle de l'adresse (`?du=…&au=…` choisie au
+ * calendrier, ou `?jours=`), sinon celle que le manager a choisie en dernier
+ * sur une autre page (cookie), sinon 30 jours.
  */
-export async function requestedStatsWindowDays(
+export async function requestedStatsWindow(
   searchParams: PageSearchParams,
-): Promise<StatsWindowDays> {
+): Promise<StatsWindow> {
+  const range = parseStatsWindowRange(searchParams.du, searchParams.au);
+  if (range) return statsWindowFromRange(range);
   if (searchParams.jours != null) {
-    return parseStatsWindowDays(searchParams.jours);
+    return { days: parseStatsWindowDays(searchParams.jours), range: null };
   }
   const fromCookie = (await cookies()).get(STATS_WINDOW_COOKIE_NAME)?.value;
-  return parseStatsWindowDays(fromCookie);
+  return parseStatsWindowCookie(fromCookie);
 }
 
 /**
@@ -59,10 +70,10 @@ export async function requestedStatsWindowDays(
  * données ») au lieu de griser l'option ou de renvoyer ailleurs. Les comptes
  * restent passés, pour les pages qui les affichent.
  */
-export async function ensureEligibleStatsWindowDays(input: {
+export async function ensureEligibleStatsWindow(input: {
   searchParams: PageSearchParams;
   counts: StatsWindowRdvsCounts;
   redirectPath: string;
-}): Promise<StatsWindowDays> {
-  return requestedStatsWindowDays(input.searchParams);
+}): Promise<StatsWindow> {
+  return requestedStatsWindow(input.searchParams);
 }

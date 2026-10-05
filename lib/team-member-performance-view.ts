@@ -35,7 +35,9 @@ import {
 import {
   disabledStatsWindowDays,
   partitionMeetingsByStatsWindow,
+  statsWindowBounds,
   type StatsWindowDays,
+  type StatsWindowRange,
 } from "@/src/core/domain/dashboard-stats-window";
 import {
   meetingAtSinceForWindows,
@@ -91,6 +93,8 @@ export async function loadTeamMemberPerformanceView(
     organizationId: string;
     sellerUserId: string;
     statsWindowDays: StatsWindowDays;
+    /** Les dates de la période quand elle a été choisie au calendrier. */
+    statsWindowRange?: StatsWindowRange | null;
     teamUserIds: string[] | undefined;
     audience: "manager" | "commercial";
   },
@@ -101,6 +105,15 @@ export async function loadTeamMemberPerformanceView(
     statsWindowDays,
     audience,
   } = input;
+  const statsWindowRange = input.statsWindowRange ?? null;
+  /*
+    Une période choisie au calendrier se termine à sa date de fin : la
+    trajectoire et la comparaison se comptent depuis elle, pas depuis
+    aujourd'hui.
+  */
+  const statsWindowEnd =
+    statsWindowBounds({ days: statsWindowDays, range: statsWindowRange })
+      .before ?? new Date();
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
 
   /*
@@ -127,6 +140,7 @@ export async function loadTeamMemberPerformanceView(
         {
           organizationId: orgId,
           statsWindowDays,
+          statsWindowRange,
           sellerUserId,
         },
       ),
@@ -153,6 +167,7 @@ export async function loadTeamMemberPerformanceView(
   const sinceProfileHistory = meetingAtSinceForWindows(
     statsWindowDays,
     SALES_PROFILE_HISTORY_PERIODS,
+    statsWindowEnd,
   );
   const meetingsForWindow = await deps.meetings.listRecentMeetingsForDashboard({
     organizationId: orgId,
@@ -165,7 +180,12 @@ export async function loadTeamMemberPerformanceView(
   });
 
   const { currentWindow: meetings, previousWindow: previousMeetings } =
-    partitionMeetingsByStatsWindow(meetingsForWindow, statsWindowDays);
+    partitionMeetingsByStatsWindow(
+      meetingsForWindow,
+      statsWindowDays,
+      new Date(),
+      statsWindowRange,
+    );
 
   /*
     La trajectoire se calcule sur l'ensemble chargé, pas sur la fenêtre courante :
@@ -175,11 +195,13 @@ export async function loadTeamMemberPerformanceView(
     meetingsForWindow,
     statsWindowDays,
     SALES_PROFILE_HISTORY_PERIODS,
+    statsWindowEnd,
   );
 
   const standing = await getTeamMemberStanding(deps, {
     organizationId: orgId,
     statsWindowDays,
+    statsWindowRange,
     sellerUserId,
     teamUserIds: input.teamUserIds,
   });
@@ -259,6 +281,7 @@ export async function loadTeamMemberPerformanceView(
     sellerUserId,
     sellerDisplayName: nameLine,
     statsWindowDays,
+    statsWindowRange,
   });
   let relationalAffinity: SellerRelationalAffinitySummary | null = null;
   if (aiEnabled && meetingDigests.length > 0) {
@@ -306,6 +329,7 @@ export async function loadTeamMemberPerformanceView(
     view: {
       sellerUserId,
       statsWindowDays,
+      statsWindowRange,
       disabledStatsDays,
       performanceFingerprint: performanceProfile.fingerprint,
       nameLine,

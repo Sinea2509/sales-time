@@ -8,7 +8,10 @@ import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-
 import {
   parseStatsWindowDays,
   partitionMeetingsByStatsWindow,
-  previousMeetingAtWindowStart,
+  parseStatsWindowRange,
+  statsWindowBounds,
+  statsWindowFromRange,
+  type StatsWindow,
 } from "@/src/core/domain/dashboard-stats-window";
 import { memberNameLine } from "@/src/core/domain/member-name-line";
 
@@ -58,15 +61,27 @@ async function assertCanViewSellerPerformance(userId: string) {
   };
 }
 
+/** La période que le client renvoie : des dates de calendrier relues ici, jamais crues. */
+function statsWindowFromClient(
+  statsWindowDays: number,
+  range: { from: string; to: string } | null | undefined,
+): StatsWindow {
+  const parsed = range ? parseStatsWindowRange(range.from, range.to) : null;
+  if (parsed) return statsWindowFromRange(parsed);
+  return { days: parseStatsWindowDays(String(statsWindowDays)), range: null };
+}
+
 export async function getTeamMemberPerformanceFingerprintAction(
   userId: string,
   statsWindowDays: number,
+  statsWindowRange?: { from: string; to: string } | null,
 ) {
   const access = await assertCanViewSellerPerformance(userId);
   if (!access.ok) return access;
 
-  const windowDays = parseStatsWindowDays(String(statsWindowDays));
-  const sincePreviousWindow = previousMeetingAtWindowStart(windowDays);
+  const window = statsWindowFromClient(statsWindowDays, statsWindowRange);
+  const windowDays = window.days;
+  const { previousSince: sincePreviousWindow } = statsWindowBounds(window);
   const meetingsForWindow =
     await access.deps.meetings.listRecentMeetingsForDashboard({
       organizationId: access.organizationId,
@@ -80,6 +95,8 @@ export async function getTeamMemberPerformanceFingerprintAction(
   const { currentWindow: meetings } = partitionMeetingsByStatsWindow(
     meetingsForWindow,
     windowDays,
+    new Date(),
+    window.range,
   );
 
   return {
@@ -92,15 +109,18 @@ export async function getTeamMemberPerformanceFingerprintAction(
 export async function refreshTeamMemberPerformanceAction(
   userId: string,
   statsWindowDays: number,
+  statsWindowRange?: { from: string; to: string } | null,
 ) {
   const access = await assertCanViewSellerPerformance(userId);
   if (!access.ok) return access;
+  const window = statsWindowFromClient(statsWindowDays, statsWindowRange);
 
   const profile = await getTeamMemberPerformanceProfile(access.deps, {
     organizationId: access.organizationId,
     sellerUserId: access.userId,
     sellerDisplayName: access.sellerDisplayName,
-    statsWindowDays: parseStatsWindowDays(String(statsWindowDays)),
+    statsWindowDays: window.days,
+    statsWindowRange: window.range,
   });
 
   return { ok: true as const, profile };

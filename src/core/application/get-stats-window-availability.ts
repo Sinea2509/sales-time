@@ -1,11 +1,11 @@
 import {
   meetingAtSinceForStatsWindow,
   STATS_WINDOW_DAYS_OPTIONS,
-  type StatsWindowDays,
+  type StatsWindowPreset,
 } from "@/src/core/domain/dashboard-stats-window";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 
-export type StatsWindowRdvsCounts = Record<StatsWindowDays, number>;
+export type StatsWindowRdvsCounts = Record<StatsWindowPreset, number>;
 
 /**
  * Combien de rendez-vous chaque période propose, pour un écran donné.

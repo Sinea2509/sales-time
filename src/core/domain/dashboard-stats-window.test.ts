@@ -9,6 +9,12 @@ import {
   previousMeetingAtWindowStart,
   resolveEligibleStatsWindowDays,
   STATS_WINDOW_DAYS_OPTIONS,
+  parseStatsWindowCookie,
+  parseStatsWindowRange,
+  statsWindowBounds,
+  statsWindowCookieValue,
+  statsWindowFromRange,
+  statsWindowRangeDays,
 } from "./dashboard-stats-window";
 
 describe("parseStatsWindowDays", () => {
@@ -152,5 +158,63 @@ describe("resolveEligibleStatsWindowDays", () => {
     expect(resolveEligibleStatsWindowDays(30, { 30: 0, 90: 0, 365: 0 })).toBe(
       30,
     );
+  });
+});
+
+describe("période choisie au calendrier", () => {
+  it("lit deux dates, les remet dans l'ordre, et compte les jours bornes comprises", () => {
+    expect(parseStatsWindowRange("2026-09-30", "2026-07-01")).toEqual({
+      from: "2026-07-01",
+      to: "2026-09-30",
+    });
+    expect(statsWindowRangeDays({ from: "2026-07-01", to: "2026-09-30" })).toBe(
+      92,
+    );
+    expect(statsWindowRangeDays({ from: "2026-10-05", to: "2026-10-05" })).toBe(
+      1,
+    );
+  });
+
+  it("refuse une date qui n'existe pas, une date manquante ou plus de trois ans", () => {
+    expect(parseStatsWindowRange("2026-02-31", "2026-03-10")).toBeNull();
+    expect(parseStatsWindowRange("2026-02-01", undefined)).toBeNull();
+    expect(parseStatsWindowRange("2020-01-01", "2026-01-01")).toBeNull();
+  });
+
+  it("borne la période à minuit, heure de Paris, et la compare à la période de même durée qui la précède", () => {
+    const { since, before, previousSince } = statsWindowBounds(
+      statsWindowFromRange({ from: "2026-07-01", to: "2026-07-31" }),
+    );
+    expect(since.toISOString()).toBe("2026-06-30T22:00:00.000Z");
+    expect(before?.toISOString()).toBe("2026-07-31T22:00:00.000Z");
+    // 31 jours avant le 1er juillet : le 31 mai à minuit, heure de Paris.
+    expect(previousSince.toISOString()).toBe("2026-05-30T22:00:00.000Z");
+  });
+
+  it("garde dans la période le dernier jour entier, et rien après", () => {
+    const at = (iso: string) => ({ meetingAt: new Date(iso) });
+    const { currentWindow, previousWindow } = partitionMeetingsByStatsWindow(
+      [
+        at("2026-07-31T21:30:00.000Z"),
+        at("2026-07-31T22:00:00.000Z"),
+        at("2026-06-30T21:59:00.000Z"),
+      ],
+      31,
+      new Date("2026-10-05T10:00:00.000Z"),
+      { from: "2026-07-01", to: "2026-07-31" },
+    );
+    expect(currentWindow).toHaveLength(1);
+    expect(previousWindow).toHaveLength(1);
+  });
+
+  it("passe par le cookie dans les deux sens", () => {
+    const w = statsWindowFromRange({ from: "2026-01-01", to: "2026-03-31" });
+    expect(statsWindowCookieValue(w)).toBe("2026-01-01_2026-03-31");
+    expect(parseStatsWindowCookie("2026-01-01_2026-03-31")).toEqual(w);
+    expect(parseStatsWindowCookie("90")).toEqual({ days: 90, range: null });
+    expect(parseStatsWindowCookie("n'importe quoi")).toEqual({
+      days: 30,
+      range: null,
+    });
   });
 });
