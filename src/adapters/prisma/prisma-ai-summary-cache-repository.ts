@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
+import { ANALYSIS_REUSE_SCOPE_PREFIX } from "@/src/core/domain/analysis-reuse-key";
 import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 
 export class PrismaAiSummaryCacheRepository implements AiSummaryCacheRepositoryPort {
@@ -48,9 +49,17 @@ export class PrismaAiSummaryCacheRepository implements AiSummaryCacheRepositoryP
     });
   }
 
+  /**
+   * Vide les synthèses de l'organisation, sauf les analyses de rendez-vous
+   * gardées pour être rendues à l'identique : elles ne dépendent que de leur
+   * transcript et de leur consigne, qu'aucun nouveau rendez-vous ne change.
+   */
   async invalidateForOrganization(organizationId: string): Promise<void> {
     await this.db.aiSummaryCache.deleteMany({
-      where: { organizationId },
+      where: {
+        organizationId,
+        NOT: { scopeKey: { startsWith: ANALYSIS_REUSE_SCOPE_PREFIX } },
+      },
     });
   }
 }

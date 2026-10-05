@@ -2,7 +2,7 @@
 
 import { upload } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
   createMeetingAction,
   getAudioUploadPathnameAction,
@@ -24,6 +24,7 @@ import { dispatchMeetingMutation } from "@/lib/meeting-mutation-event";
 import { MEETING_OUTCOME_OPTIONS } from "@/lib/meeting-outcome-display";
 import type { MeetingOutcome } from "@/src/core/domain/meeting-outcome";
 import { toDatetimeLocalValue } from "@/lib/datetime-local-value";
+import { transcriptHeaderFacts } from "@/src/core/domain/transcript-header";
 import { cn } from "@/lib/utils";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
 
@@ -131,6 +132,26 @@ export function MeetingCreateForm({
   const [file, setFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioPhase, setAudioPhase] = useState<AudioPhase>({ kind: "idle" });
+  const meetingAtRef = useRef<HTMLInputElement>(null);
+  const durationRef = useRef<HTMLInputElement>(null);
+
+  /*
+    Une transcription Teams commence par sa date et sa durée : elles
+    remplissent les champs encore vides, sans jamais écraser une saisie.
+  */
+  function fillFromTranscriptHeader(text: string) {
+    const facts = transcriptHeaderFacts(text);
+    if (facts.date && meetingAtRef.current && !meetingAtRef.current.value) {
+      meetingAtRef.current.value = facts.date;
+    }
+    if (
+      facts.durationMin != null &&
+      durationRef.current &&
+      !durationRef.current.value
+    ) {
+      durationRef.current.value = String(facts.durationMin);
+    }
+  }
   const isDialog = variant === "dialog";
   const isEdit = mode === "edit" && initialValues != null;
   const useUpload = sourceMode === "file";
@@ -231,14 +252,21 @@ export function MeetingCreateForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="meetingAt">Date du rendez-vous</Label>
+          {/*
+            La date seule, sans heure : un rendez-vous analysé se date au jour.
+            Collée depuis Teams, la transcription la remplit d'elle-même.
+          */}
           <Input
+            ref={meetingAtRef}
             id="meetingAt"
             name="meetingAt"
-            type="datetime-local"
+            type="date"
             required
             defaultValue={
               initialValues
-                ? toDatetimeLocalValue(new Date(initialValues.meetingAtIso))
+                ? toDatetimeLocalValue(
+                    new Date(initialValues.meetingAtIso),
+                  ).slice(0, 10)
                 : undefined
             }
           />
@@ -246,6 +274,7 @@ export function MeetingCreateForm({
         <div className="space-y-2">
           <Label htmlFor="durationMin">Durée (minutes)</Label>
           <Input
+            ref={durationRef}
             id="durationMin"
             name="durationMin"
             type="number"
@@ -425,6 +454,7 @@ export function MeetingCreateForm({
             <Textarea
               id="transcript"
               name="transcript"
+              onChange={(e) => fillFromTranscriptHeader(e.target.value)}
               required={!isEdit}
               rows={8}
               placeholder="Collez ou saisissez le transcript de l'échange…"

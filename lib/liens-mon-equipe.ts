@@ -1,4 +1,9 @@
-import { DEFAULT_STATS_WINDOW_DAYS } from "@/src/core/domain/dashboard-stats-window";
+import { setStatsWindowParams } from "@/lib/stats-window-params";
+import {
+  DEFAULT_STATS_WINDOW_DAYS,
+  type StatsWindow,
+  type StatsWindowDays,
+} from "@/src/core/domain/dashboard-stats-window";
 
 /**
  * Les adresses que la page « Mon équipe » écrit vers elle-même et vers ses
@@ -9,16 +14,23 @@ import { DEFAULT_STATS_WINDOW_DAYS } from "@/src/core/domain/dashboard-stats-win
  * relire. Deux règles écrites à deux endroits finissaient par diverger sans que
  * rien ne casse, et le manager retombait page 1 sans qu'aucun écran ne le lui
  * ait annoncé.
+ *
+ * La période est un nombre de jours, ou une période de calendrier, qui voyage
+ * alors sous la forme `du=…&au=…`.
  */
+
+function asWindow(period: StatsWindow | StatsWindowDays): StatsWindow {
+  return typeof period === "number" ? { days: period, range: null } : period;
+}
 
 /** La liste elle-même, à une page donnée. */
 export function monEquipeListHref(
   basePath: string,
-  jours: number,
+  period: StatsWindow | StatsWindowDays,
   equipePage: number,
 ): string {
   const q = new URLSearchParams();
-  q.set("jours", String(jours));
+  setStatsWindowParams(q, asWindow(period));
   if (equipePage > 1) {
     q.set("equipePage", String(equipePage));
   }
@@ -38,11 +50,14 @@ export function monEquipeListHref(
  */
 export function ficheMembreHref(
   userId: string,
-  jours: number,
+  period: StatsWindow | StatsWindowDays,
   equipePage: number,
 ): string {
+  const window = asWindow(period);
   const q = new URLSearchParams();
-  if (jours !== DEFAULT_STATS_WINDOW_DAYS) q.set("jours", String(jours));
+  if (window.range || window.days !== DEFAULT_STATS_WINDOW_DAYS) {
+    setStatsWindowParams(q, window);
+  }
   if (equipePage > 1) q.set("equipePage", String(equipePage));
   const query = q.toString();
   return `/company/equipe/${userId}${query === "" ? "" : `?${query}`}`;

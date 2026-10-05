@@ -9,17 +9,27 @@ import {
   previousMeetingAtWindowStart,
   resolveEligibleStatsWindowDays,
   STATS_WINDOW_DAYS_OPTIONS,
+  parseStatsWindowCookie,
+  parseStatsWindowRange,
+  statsWindowBounds,
+  statsWindowCookieValue,
+  statsWindowFromRange,
+  statsWindowRangeDays,
 } from "./dashboard-stats-window";
 
 describe("parseStatsWindowDays", () => {
-  it("accepts 7, 30, 90 as strings", () => {
-    expect(parseStatsWindowDays("7")).toBe(7);
+  it("accepte 30, 90 et 365 (douze mois), comme la maquette", () => {
     expect(parseStatsWindowDays("30")).toBe(30);
     expect(parseStatsWindowDays("90")).toBe(90);
+    expect(parseStatsWindowDays("365")).toBe(365);
+  });
+
+  it("ramène l'ancienne période de 7 jours à 30 jours", () => {
+    expect(parseStatsWindowDays("7")).toBe(30);
   });
 
   it("uses first element when raw is an array", () => {
-    expect(parseStatsWindowDays(["90", "7"])).toBe(90);
+    expect(parseStatsWindowDays(["90", "365"])).toBe(90);
   });
 
   it("defaults to 30 for undefined, empty, or invalid", () => {
@@ -45,10 +55,10 @@ describe("meetingAtSinceForStatsWindow / previousMeetingAtWindowStart", () => {
     jest.useFakeTimers();
     jest.setSystemTime(now);
     try {
-      const since = meetingAtSinceForStatsWindow(7);
-      expect(since.getTime()).toBe(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const prev = previousMeetingAtWindowStart(7);
-      expect(prev.getTime()).toBe(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+      const since = meetingAtSinceForStatsWindow(365);
+      expect(since.getTime()).toBe(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      const prev = previousMeetingAtWindowStart(365);
+      expect(prev.getTime()).toBe(now.getTime() - 730 * 24 * 60 * 60 * 1000);
     } finally {
       jest.useRealTimers();
     }
@@ -76,15 +86,15 @@ describe("partitionMeetingsByStatsWindow", () => {
 describe("disabledStatsWindowDays", () => {
   it("closes a window that has fewer meetings than the threshold", () => {
     const counts = {
-      7: MIN_RDV_FOR_STATS - 1,
-      30: MIN_RDV_FOR_STATS,
-      90: MIN_RDV_FOR_STATS + 40,
+      30: MIN_RDV_FOR_STATS - 1,
+      90: MIN_RDV_FOR_STATS,
+      365: MIN_RDV_FOR_STATS + 40,
     } as const;
-    expect(disabledStatsWindowDays(counts)).toEqual([7]);
+    expect(disabledStatsWindowDays(counts)).toEqual([30]);
   });
 
   it("closes every window on a brand new account", () => {
-    expect(disabledStatsWindowDays({ 7: 0, 30: 0, 90: 0 })).toEqual([
+    expect(disabledStatsWindowDays({ 30: 0, 90: 0, 365: 0 })).toEqual([
       ...STATS_WINDOW_DAYS_OPTIONS,
     ]);
   });
@@ -92,7 +102,7 @@ describe("disabledStatsWindowDays", () => {
 
 describe("areAllStatsWindowsDisabled", () => {
   it("says no as soon as one window can still be chosen", () => {
-    expect(areAllStatsWindowsDisabled([7, 30])).toBe(false);
+    expect(areAllStatsWindowsDisabled([30, 90])).toBe(false);
     expect(areAllStatsWindowsDisabled([])).toBe(false);
   });
 
@@ -105,15 +115,15 @@ describe("areAllStatsWindowsDisabled", () => {
   it("is not fooled by a repeated window", () => {
     // Une liste de longueur 3 qui ne contient que deux fenêtres distinctes :
     // comparer les longueurs répondrait « plus rien à choisir », à tort.
-    expect(areAllStatsWindowsDisabled([7, 7, 30])).toBe(false);
+    expect(areAllStatsWindowsDisabled([30, 30, 90])).toBe(false);
   });
 
   it("agrees with the counts it comes from", () => {
-    const vide = { 7: 0, 30: 0, 90: 0 } as const;
+    const vide = { 30: 0, 90: 0, 365: 0 } as const;
     expect(areAllStatsWindowsDisabled(disabledStatsWindowDays(vide))).toBe(
       true,
     );
-    const actif = { 7: 0, 30: 0, 90: MIN_RDV_FOR_STATS } as const;
+    const actif = { 30: 0, 90: 0, 365: MIN_RDV_FOR_STATS } as const;
     expect(areAllStatsWindowsDisabled(disabledStatsWindowDays(actif))).toBe(
       false,
     );
@@ -123,18 +133,88 @@ describe("areAllStatsWindowsDisabled", () => {
 describe("resolveEligibleStatsWindowDays", () => {
   it("keeps the requested window when it has enough meetings", () => {
     expect(
-      resolveEligibleStatsWindowDays(7, { 7: MIN_RDV_FOR_STATS, 30: 0, 90: 0 }),
-    ).toBe(7);
+      resolveEligibleStatsWindowDays(30, {
+        30: MIN_RDV_FOR_STATS,
+        90: 0,
+        365: 0,
+      }),
+    ).toBe(30);
   });
 
   it("falls back to the first window that has enough", () => {
     expect(
-      resolveEligibleStatsWindowDays(7, { 7: 1, 30: 2, 90: MIN_RDV_FOR_STATS }),
-    ).toBe(90);
+      resolveEligibleStatsWindowDays(30, {
+        30: 1,
+        90: 2,
+        365: MIN_RDV_FOR_STATS,
+      }),
+    ).toBe(365);
   });
 
   it("returns the requested window when none has enough, so no redirect loops", () => {
-    expect(resolveEligibleStatsWindowDays(7, { 7: 0, 30: 0, 90: 0 })).toBe(7);
-    expect(resolveEligibleStatsWindowDays(30, { 7: 0, 30: 0, 90: 0 })).toBe(30);
+    expect(resolveEligibleStatsWindowDays(90, { 30: 0, 90: 0, 365: 0 })).toBe(
+      90,
+    );
+    expect(resolveEligibleStatsWindowDays(30, { 30: 0, 90: 0, 365: 0 })).toBe(
+      30,
+    );
+  });
+});
+
+describe("période choisie au calendrier", () => {
+  it("lit deux dates, les remet dans l'ordre, et compte les jours bornes comprises", () => {
+    expect(parseStatsWindowRange("2026-09-30", "2026-07-01")).toEqual({
+      from: "2026-07-01",
+      to: "2026-09-30",
+    });
+    expect(statsWindowRangeDays({ from: "2026-07-01", to: "2026-09-30" })).toBe(
+      92,
+    );
+    expect(statsWindowRangeDays({ from: "2026-10-05", to: "2026-10-05" })).toBe(
+      1,
+    );
+  });
+
+  it("refuse une date qui n'existe pas, une date manquante ou plus de trois ans", () => {
+    expect(parseStatsWindowRange("2026-02-31", "2026-03-10")).toBeNull();
+    expect(parseStatsWindowRange("2026-02-01", undefined)).toBeNull();
+    expect(parseStatsWindowRange("2020-01-01", "2026-01-01")).toBeNull();
+  });
+
+  it("borne la période à minuit, heure de Paris, et la compare à la période de même durée qui la précède", () => {
+    const { since, before, previousSince } = statsWindowBounds(
+      statsWindowFromRange({ from: "2026-07-01", to: "2026-07-31" }),
+    );
+    expect(since.toISOString()).toBe("2026-06-30T22:00:00.000Z");
+    expect(before?.toISOString()).toBe("2026-07-31T22:00:00.000Z");
+    // 31 jours avant le 1er juillet : le 31 mai à minuit, heure de Paris.
+    expect(previousSince.toISOString()).toBe("2026-05-30T22:00:00.000Z");
+  });
+
+  it("garde dans la période le dernier jour entier, et rien après", () => {
+    const at = (iso: string) => ({ meetingAt: new Date(iso) });
+    const { currentWindow, previousWindow } = partitionMeetingsByStatsWindow(
+      [
+        at("2026-07-31T21:30:00.000Z"),
+        at("2026-07-31T22:00:00.000Z"),
+        at("2026-06-30T21:59:00.000Z"),
+      ],
+      31,
+      new Date("2026-10-05T10:00:00.000Z"),
+      { from: "2026-07-01", to: "2026-07-31" },
+    );
+    expect(currentWindow).toHaveLength(1);
+    expect(previousWindow).toHaveLength(1);
+  });
+
+  it("passe par le cookie dans les deux sens", () => {
+    const w = statsWindowFromRange({ from: "2026-01-01", to: "2026-03-31" });
+    expect(statsWindowCookieValue(w)).toBe("2026-01-01_2026-03-31");
+    expect(parseStatsWindowCookie("2026-01-01_2026-03-31")).toEqual(w);
+    expect(parseStatsWindowCookie("90")).toEqual({ days: 90, range: null });
+    expect(parseStatsWindowCookie("n'importe quoi")).toEqual({
+      days: 30,
+      range: null,
+    });
   });
 });

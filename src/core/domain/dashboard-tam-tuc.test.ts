@@ -31,7 +31,8 @@ describe("dashboard-tam-tuc", () => {
 
   it("prospectingMinutesForStatsWindow prorates monthly objective", () => {
     expect(prospectingMinutesForStatsWindow(180, 30)).toBe(180);
-    expect(prospectingMinutesForStatsWindow(180, 7)).toBe(42);
+    expect(prospectingMinutesForStatsWindow(180, 90)).toBe(540);
+    expect(prospectingMinutesForStatsWindow(180, 365)).toBe(2190);
   });
 
   it("tucOptimisePercent caps at 100", () => {

@@ -25,6 +25,7 @@ import { updateMeetingForOrg } from "@/src/core/application/update-meeting-for-o
 import { invalidateAiSummaryCacheForOrg } from "@/src/core/application/invalidate-ai-summary-cache-for-org";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { parseWallClockInAppTimeZone } from "@/src/core/domain/app-time-zone";
+import { dateOnlyToWallClock } from "@/src/core/domain/transcript-header";
 
 const meetingOutcomeSchema = z.enum([
   "WON",
@@ -50,7 +51,9 @@ const createMeetingSchema = z.object({
   */
   meetingAt: z.preprocess(
     (v) =>
-      typeof v === "string" ? (parseWallClockInAppTimeZone(v) ?? v) : v,
+      typeof v === "string"
+        ? (parseWallClockInAppTimeZone(dateOnlyToWallClock(v) ?? v) ?? v)
+        : v,
     z.coerce.date(),
   ),
   durationMin: z

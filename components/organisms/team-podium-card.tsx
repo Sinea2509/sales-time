@@ -8,7 +8,10 @@ import { prospectInitials } from "@/lib/prospect-initials";
 import { podiumLabel } from "@/lib/stats-window-labels";
 import { teamMemberDisplayName } from "@/lib/team-member-display-name";
 import type { OrgAdminPodiumStep } from "@/src/core/application/get-org-admin-dashboard";
-import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type {
+  StatsWindowDays,
+  StatsWindowRange,
+} from "@/src/core/domain/dashboard-stats-window";
 import { formatNoteFr } from "@/src/core/domain/team-ranking";
 
 /**
@@ -19,10 +22,12 @@ import { formatNoteFr } from "@/src/core/domain/team-ranking";
 export function TeamPodiumCard({
   podium,
   statsWindowDays,
+  statsWindowRange = null,
   equipePage,
 }: {
   podium: OrgAdminPodiumStep[];
   statsWindowDays: StatsWindowDays;
+  statsWindowRange?: StatsWindowRange | null;
   equipePage: number;
 }) {
   return (
@@ -30,7 +35,7 @@ export function TeamPodiumCard({
       <CardContent className="space-y-3 pt-6">
         <div>
           <h2 className={cardTitleClass}>
-            Podium {podiumLabel(statsWindowDays)}
+            Podium {podiumLabel(statsWindowDays, statsWindowRange)}
           </h2>
           <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
             Sur la note moyenne des analyses, ramenée sur 5.
@@ -54,7 +59,7 @@ export function TeamPodiumCard({
                   <Link
                     href={ficheMembreHref(
                       p.userId,
-                      statsWindowDays,
+                      { days: statsWindowDays, range: statsWindowRange },
                       equipePage,
                     )}
                     className="min-w-0 truncate text-sm font-semibold hover:underline"

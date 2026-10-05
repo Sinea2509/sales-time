@@ -9,6 +9,9 @@ import {
   isCurrentVisitReport,
   isVisitReportHeading,
   shortPersonName,
+  VISIT_REPORT_DATE_TO_FIX,
+  withDatesFromTranscript,
+  withQuotesFromTranscript,
   withMomentsFromTranscript,
   VISIT_REPORT_METHOD_NOTE,
   VISIT_REPORT_TITLE,
@@ -843,5 +846,165 @@ describe("withMomentsFromTranscript", () => {
     );
     expect(none.themes[0].citations.map((q) => q.moment)).toEqual(["", ""]);
     expect(none.objections[0].moment).toBe("");
+  });
+});
+
+describe("withQuotesFromTranscript", () => {
+  const transcript =
+    "Lisa : Et à date, nous avons 2 seulement 2 formateurs en management sur ces thématiques-là.\nLisa : On a fait appel à un prestataire et on a été déçus.";
+
+  it("retire une citation reformulée et garde les mots réellement dits", () => {
+    const out = withQuotesFromTranscript(
+      {
+        ...extraction,
+        themes: [
+          {
+            titre: "Besoins",
+            texte: "Peu de formateurs internes.",
+            citations: [
+              {
+                qui: "Lisa",
+                moment: "",
+                texte: "nous avons 2 seulement 2 formateurs en management",
+              },
+              {
+                qui: "Lisa",
+                moment: "",
+                texte:
+                  "Nous avons seulement 2 formateurs en management, donc nous sommes ouverts à des suggestions.",
+              },
+            ],
+          },
+        ],
+      },
+      transcript,
+    );
+    expect(out.themes[0].citations.map((q) => q.texte)).toEqual([
+      "nous avons 2 seulement 2 formateurs en management",
+    ]);
+  });
+
+  it("écrit « En substance » une objection reformulée, sans guillemets", () => {
+    const out = withQuotesFromTranscript(
+      {
+        ...extraction,
+        objections: [
+          {
+            qui: "Lisa Androlus",
+            moment: "",
+            objection:
+              "Nous avons été très déçus de la qualité des prestations des autres prestataires.",
+            reponse: "Pas de réponse directe.",
+            effet: "En attente.",
+          },
+        ],
+      },
+      transcript,
+    );
+    const text = composeVisitReport(input({ extraction: out }));
+    expect(text).toContain(
+      "  En substance : Nous avons été très déçus de la qualité des prestations des autres prestataires.",
+    );
+    expect(text).not.toContain("« Nous avons été très déçus");
+  });
+});
+
+describe("withDatesFromTranscript", () => {
+  const transcript =
+    "Lisa : Première semaine de novembre, le 2 c'est mon anniversaire.\nCédric : Je vais tenter le lundi de 14h00. Ou le mercredi après-midi 4 novembre.\nCédric : Je vous envoie la proposition le 15 octobre.";
+
+  it("n'écrit pas comme convenue une date absente du transcript", () => {
+    const out = withDatesFromTranscript(
+      {
+        ...extraction,
+        prochainRendezVous: {
+          ...extraction.prochainRendezVous,
+          quand: "Lundi 2 novembre à 14h00",
+        },
+      },
+      transcript,
+    );
+    expect(out.prochainRendezVous.quand).toBe(VISIT_REPORT_DATE_TO_FIX);
+  });
+
+  it("garde une date dite telle quelle, et les échéances sans date", () => {
+    const out = withDatesFromTranscript(
+      {
+        ...extraction,
+        prochainRendezVous: {
+          ...extraction.prochainRendezVous,
+          quand: "le mercredi 4 novembre après-midi",
+        },
+        prochainesEtapes: [
+          {
+            action: "Envoyer la proposition",
+            echeance: "le 15 octobre",
+            porteur: "Cédric",
+          },
+          { action: "Relancer", echeance: "d'ici vendredi", porteur: "Cédric" },
+          { action: "Appeler", echeance: "le 3 novembre", porteur: "Cédric" },
+        ],
+      },
+      transcript,
+    );
+    expect(out.prochainRendezVous.quand).toBe(
+      "le mercredi 4 novembre après-midi",
+    );
+    expect(out.prochainesEtapes.map((s) => s.echeance)).toEqual([
+      "le 15 octobre",
+      "d'ici vendredi",
+      "à fixer",
+    ]);
+  });
+});
+
+describe("withDatesFromTranscript, dates écrites en lettres", () => {
+  const transcript =
+    "Cédric : Je vais tenter le lundi de 14h00. Ou le mercredi après-midi 4 novembre.";
+
+  it("lit « quatre novembre » comme « 4 novembre », et refuse un jour de la semaine jamais dit", () => {
+    const out = withDatesFromTranscript(
+      {
+        ...extraction,
+        prochainRendezVous: {
+          ...extraction.prochainRendezVous,
+          quand: "mardi quatre novembre à quatorze heures",
+        },
+      },
+      transcript,
+    );
+    expect(out.prochainRendezVous.quand).toBe(VISIT_REPORT_DATE_TO_FIX);
+  });
+
+  it("garde « mercredi quatre novembre », dit tel quel", () => {
+    const out = withDatesFromTranscript(
+      {
+        ...extraction,
+        prochainRendezVous: {
+          ...extraction.prochainRendezVous,
+          quand: "mercredi quatre novembre après-midi, à confirmer",
+        },
+      },
+      transcript,
+    );
+    expect(out.prochainRendezVous.quand).toBe(
+      "mercredi quatre novembre après-midi, à confirmer",
+    );
+  });
+});
+
+describe("withDatesFromTranscript, jour de la semaine collé à un mot", () => {
+  it("ne prend pas « mardi » dans « mardis » ni un jour dans un autre mot", () => {
+    const out = withDatesFromTranscript(
+      {
+        ...extraction,
+        prochainRendezVous: {
+          ...extraction.prochainRendezVous,
+          quand: "mardi 4 novembre",
+        },
+      },
+      "Cédric : Les mardis je ne peux pas. Le 4 novembre, peut-être.",
+    );
+    expect(out.prochainRendezVous.quand).toBe(VISIT_REPORT_DATE_TO_FIX);
   });
 });

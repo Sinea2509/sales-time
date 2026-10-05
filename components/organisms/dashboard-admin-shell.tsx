@@ -57,11 +57,12 @@ export function DashboardAdminShell({
   const { home, monEquipe, discPie, soncasPie, kissTeamRollup, teamReading } =
     admin;
   const jours = admin.statsWindowDays;
+  const range = admin.statsWindowRange;
   const essentiel = essentielDuManager({
     dispersion: monEquipe.collectif.dispersion,
     rows: monEquipe.rows,
     ranking: monEquipe.ranking,
-    statsWindowDays: jours,
+    statsWindowDays: { days: jours, range },
     equipePage: monEquipe.page,
   });
   const aDesPriorites = !essentielEstVide(essentiel);
@@ -71,9 +72,9 @@ export function DashboardAdminShell({
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-muted-foreground text-sm leading-relaxed">
-            L&apos;activité des {statsWindowLabel(jours)}, comparée aux{" "}
-            {previousWindowLabel(jours)}. La période choisie s&apos;applique à
-            toutes les pages du manager.
+            L&apos;activité des {statsWindowLabel(jours, range)}, comparée aux{" "}
+            {previousWindowLabel(jours, range)}. La période choisie
+            s&apos;applique à toutes les pages du manager.
           </p>
           <Suspense
             fallback={
@@ -82,6 +83,7 @@ export function DashboardAdminShell({
           >
             <DashboardStatsPeriodSelect
               value={home.statsWindowDays}
+              range={range}
               disabledDays={disabledStatsDays}
             />
           </Suspense>
@@ -100,6 +102,7 @@ export function DashboardAdminShell({
           <TeamSalesScoreBarsCard
             bars={teamReading.scoreBars}
             statsWindowDays={jours}
+            statsWindowRange={range}
             equipePage={monEquipe.page}
           />
           <TeamBlockAxesCard
@@ -118,6 +121,7 @@ export function DashboardAdminShell({
           <TeamPodiumCard
             podium={teamReading.podium}
             statsWindowDays={jours}
+            statsWindowRange={range}
             equipePage={monEquipe.page}
           />
         </div>
@@ -126,6 +130,7 @@ export function DashboardAdminShell({
       <MonEquipeSection
         monEquipe={monEquipe}
         statsWindowDays={jours}
+        statsWindowRange={range}
         currentUserEmail={currentUserEmail}
         listBasePath="/company"
         comparisonGroup={comparisonGroup}

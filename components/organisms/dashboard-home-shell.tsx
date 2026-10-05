@@ -82,6 +82,7 @@ export function DashboardHomeShell({
           >
             <DashboardStatsPeriodSelect
               value={home.statsWindowDays}
+              range={home.statsWindowRange}
               disabledDays={disabledStatsDays}
             />
           </Suspense>
@@ -90,6 +91,7 @@ export function DashboardHomeShell({
           salesScoreAvg={home.salesScoreAvg}
           scoredMeetings={home.noteGlobaleSampleCount}
           statsWindowDays={home.statsWindowDays}
+          statsWindowRange={home.statsWindowRange}
           trendPoints={home.salesScoreTrendPoints}
           rank={
             standing?.row?.rank != null && standing.ranking.rankedCount > 1

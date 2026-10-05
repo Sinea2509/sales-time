@@ -19,12 +19,13 @@ import { loadTeamMemberPerformanceView } from "@/lib/team-member-performance-vie
 import {
   disabledStatsWindowDays,
   partitionMeetingsByStatsWindow,
+  statsWindowBounds,
 } from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
-import { ensureEligibleStatsWindowDays } from "@/lib/resolve-stats-window-days";
+import { ensureEligibleStatsWindow } from "@/lib/resolve-stats-window-days";
 import { ORG_ADMIN_DASHBOARD_MEETING_CAP } from "@/src/core/application/get-org-admin-dashboard";
 import { getStatsWindowRdvsCounts } from "@/src/core/application/get-stats-window-availability";
 import {
@@ -98,11 +99,12 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       organizationId: actor.activeOrganizationId,
       sellerUserIds: [sellerId],
     });
-    const statsWindowDays = ensureEligibleStatsWindowDays({
-      searchParams: sp,
-      counts: windowCounts,
-      redirectPath: "/company/analyse",
-    });
+    const { days: statsWindowDays, range: statsWindowRange } =
+      await ensureEligibleStatsWindow({
+        searchParams: sp,
+        counts: windowCounts,
+        redirectPath: "/company/analyse",
+      });
     /*
       Le rang se mesure dans l'équipe de son manager, exactement le groupe que
       ce manager voit dans « Mon équipe ». Sans ce cadrage, cet écran et la
@@ -116,6 +118,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
       organizationId: actor.activeOrganizationId,
       sellerUserId: sellerId,
       statsWindowDays,
+      statsWindowRange,
       teamUserIds,
       audience: "commercial",
     });
@@ -168,16 +171,26 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
     organizationId: actor.activeOrganizationId,
     sellerUserIds: teamUserIds,
   });
-  const statsWindowDays = ensureEligibleStatsWindowDays({
-    searchParams: sp,
-    counts: windowCounts,
-    redirectPath: "/company/analyse",
-  });
+  const { days: statsWindowDays, range: statsWindowRange } =
+    await ensureEligibleStatsWindow({
+      searchParams: sp,
+      counts: windowCounts,
+      redirectPath: "/company/analyse",
+    });
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
 
+  /*
+    Une période choisie au calendrier se termine à sa date de fin : la
+    trajectoire et la comparaison se comptent depuis elle, pas depuis
+    aujourd'hui.
+  */
+  const statsWindowEnd =
+    statsWindowBounds({ days: statsWindowDays, range: statsWindowRange })
+      .before ?? new Date();
   const sinceProfileHistory = meetingAtSinceForWindows(
     statsWindowDays,
     SALES_PROFILE_HISTORY_PERIODS,
+    statsWindowEnd,
   );
 
   const aiEnabled = Boolean(getEnv().AI_GATEWAY_API_KEY);
@@ -222,12 +235,18 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   const scopedMeetings = scopeMeetingsToTeam(meetingsForWindow, teamUserIds);
 
   const { currentWindow: meetings, previousWindow: previousMeetings } =
-    partitionMeetingsByStatsWindow(scopedMeetings, statsWindowDays);
+    partitionMeetingsByStatsWindow(
+      scopedMeetings,
+      statsWindowDays,
+      new Date(),
+      statsWindowRange,
+    );
 
   const profileHistory = salesProfileHistory(
     scopedMeetings,
     statsWindowDays,
     SALES_PROFILE_HISTORY_PERIODS,
+    statsWindowEnd,
   );
 
   /*
@@ -238,6 +257,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
   */
   const home = dashboardHomeFromMeetings({
     statsWindowDays,
+    statsWindowRange,
     tamMinutesPerRdv: tamMinutesSavedPerMeetingFromSettings(orgSettings),
     prospectingMinutes: prospectingMinutesForStatsWindow(
       orgSettings?.tamObjectiveMinutesPerMonth ?? 180,
@@ -299,6 +319,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
           actions={
             <AnalysePagePeriodFallback
               value={home.statsWindowDays}
+              range={home.statsWindowRange}
               disabledDays={disabledStatsDays}
             />
           }
@@ -317,6 +338,7 @@ export default async function AnalysePage({ searchParams }: AnalysePageProps) {
           isTeamView
           etapeOrder={etapeOrder}
           statsWindowDays={home.statsWindowDays}
+          statsWindowRange={home.statsWindowRange}
           disabledStatsDays={disabledStatsDays}
         />
       </section>

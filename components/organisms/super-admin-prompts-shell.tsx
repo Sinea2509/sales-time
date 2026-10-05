@@ -28,6 +28,8 @@ export type SuperAdminPromptPanel = {
   initialMarkdown: string;
   /** La consigne d'origine de Sales Time, écrite dans le code. */
   defaultMarkdown: string;
+  /** La partie fixe que le produit ajoute, en lecture seule. */
+  fixedMarkdown: string | null;
   initialModel: string;
   versionCount: number;
   versions: VersionRow[];
@@ -124,6 +126,7 @@ export function SuperAdminPromptsShell({ panels, initialKind }: Props) {
           kind={selectedKind}
           initialMarkdown={selected.initialMarkdown}
           defaultMarkdown={selected.defaultMarkdown}
+          fixedMarkdown={selected.fixedMarkdown}
           initialModel={selected.initialModel}
           versions={selected.versions}
         />

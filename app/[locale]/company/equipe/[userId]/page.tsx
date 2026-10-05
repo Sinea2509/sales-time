@@ -4,11 +4,11 @@ import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { loadTeamMemberPerformanceView } from "@/lib/team-member-performance-view";
 import { resolveManagerTeamUserIds } from "@/lib/team-seller-scope";
+import { DEFAULT_STATS_WINDOW_DAYS } from "@/src/core/domain/dashboard-stats-window";
 import {
-  DEFAULT_STATS_WINDOW_DAYS,
-  parseStatsWindowDays,
-} from "@/src/core/domain/dashboard-stats-window";
-import { pathWithStatsWindow } from "@/lib/resolve-stats-window-days";
+  pathWithStatsWindow,
+  requestedStatsWindow,
+} from "@/lib/resolve-stats-window-days";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,12 @@ type Props = {
    * temps d'un aller-retour, pour que le lien de retour rende au manager la
    * page de liste d'où il vient plutôt que la première.
    */
-  searchParams?: Promise<{ jours?: string; equipePage?: string }>;
+  searchParams?: Promise<{
+    jours?: string;
+    du?: string;
+    au?: string;
+    equipePage?: string;
+  }>;
 };
 
 export default async function ManagerCommercialViewPage({
@@ -35,11 +40,11 @@ export default async function ManagerCommercialViewPage({
     // l'adresse suffisait à perdre la page de liste.
     redirect(pathWithStatsWindow(`/company/equipe/${userId}`, sp, null));
   }
-  const statsWindowDays = parseStatsWindowDays(sp.jours);
+  const statsWindow = await requestedStatsWindow(sp);
   const retourEquipeHref = pathWithStatsWindow(
     "/company/equipe",
     { equipePage: sp.equipePage },
-    statsWindowDays,
+    statsWindow,
   );
 
   const actor = await requireDashboardActor();
@@ -64,7 +69,8 @@ export default async function ManagerCommercialViewPage({
   const chargement = await loadTeamMemberPerformanceView(deps, {
     organizationId: orgId,
     sellerUserId: userId,
-    statsWindowDays,
+    statsWindowDays: statsWindow.days,
+    statsWindowRange: statsWindow.range,
     teamUserIds,
     audience: "manager",
   });

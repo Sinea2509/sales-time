@@ -1,3 +1,5 @@
+import { reuseAnalysisOutput } from "./reuse-analysis-output";
+import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 import { getEnv } from "@/lib/env";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
 import type {
@@ -17,7 +19,9 @@ import {
 import {
   composeVisitReport,
   isCurrentVisitReport,
+  withDatesFromTranscript,
   withMomentsFromTranscript,
+  withQuotesFromTranscript,
   type VisitReportHistoryEntry,
 } from "@/src/core/domain/visit-report";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
@@ -71,10 +75,13 @@ const PENDING_REPORT_MESSAGE =
  * Elle était de 8 000 caractères, soit une douzaine de minutes de rendez-vous :
  * le compte rendu d'un rendez-vous d'une heure s'écrivait sur son premier
  * quart, et tout ce qui se décidait à la fin (le prochain rendez-vous, les
- * engagements) n'y figurait jamais. 60 000 caractères couvrent un rendez-vous
- * de plus d'une heure et restent loin des limites des modèles proposés.
+ * engagements) n'y figurait jamais. 60 000 caractères ne suffisaient pas
+ * encore : un transcript Teams d'une heure, avec un nom et un horodatage par
+ * réplique, les dépasse, et le prix et la prochaine étape se discutent à la
+ * fin. 150 000 caractères couvrent deux heures et restent sous les limites des
+ * modèles proposés.
  */
-export const VISIT_REPORT_TRANSCRIPT_MAX_CHARS = 60_000;
+export const VISIT_REPORT_TRANSCRIPT_MAX_CHARS = 150_000;
 
 /** Les rendez-vous précédents repris dans l'historique du compte. */
 const VISIT_REPORT_HISTORY_MAX = 5;
@@ -90,6 +97,8 @@ type VisitReportDeps = {
     OrganizationSettingsRepositoryPort,
     "findByOrganizationId"
   >;
+  /** Pour rendre à l'identique un compte rendu déjà extrait du même transcript. */
+  aiSummaryCache?: AiSummaryCacheRepositoryPort;
 };
 
 function interlocutorProfileFromAnalyses(input: {
@@ -304,7 +313,7 @@ export async function summarizeMeetingDetail(
         organizationId: input.organizationId,
       }),
     ]);
-    const extracted = await deps.analysis.extractVisitReport({
+    const extractionInput = {
       systemMarkdown: prompt.markdown,
       model,
       prospectName: input.meeting.prospectName,
@@ -320,10 +329,22 @@ export async function summarizeMeetingDetail(
       notes: input.meeting.notes,
       soncasSummary: input.soncasResult?.summary?.trim() || null,
       discSummary: input.discResult?.summary?.trim() || null,
+    };
+    /* Le même transcript avec la même consigne rend le même compte rendu. */
+    const { value: extracted } = await reuseAnalysisOutput(deps, {
+      organizationId: input.organizationId,
+      kind: "MEETING_DETAIL_SYNTHESIS",
+      model,
+      systemPrompt: prompt.markdown,
+      userPrompt: JSON.stringify({ ...extractionInput, systemMarkdown: null }),
+      compute: () => deps.analysis.extractVisitReport(extractionInput),
     });
     // Un moment que le transcript ne porte pas a été estimé : il ne s'écrit pas.
-    const extraction = withMomentsFromTranscript(
-      extracted,
+    const extraction = withDatesFromTranscript(
+      withQuotesFromTranscript(
+        withMomentsFromTranscript(extracted, input.meeting.transcript),
+        input.meeting.transcript,
+      ),
       input.meeting.transcript,
     );
 

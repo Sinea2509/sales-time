@@ -1,7 +1,7 @@
 import {
-  withDataScopeSystemPrompt,
   withDiscSystemPrompt,
   withKissSystemPrompt,
+  withObjectionsSystemPrompt,
   withScorecardSystemPrompt,
   withSoncasSystemPrompt,
 } from "@/lib/ai-system-prompt";
@@ -23,11 +23,20 @@ import {
 } from "@/src/core/domain/analysis-system-markdown";
 import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { computeScorecardScore } from "@/src/core/domain/scorecard-score";
-import {
-  applyScorecardEvidenceRule,
-  keepKnownScorecardKeys,
-} from "@/src/core/domain/scorecard-evidence-rule";
+import { keepKnownScorecardKeys } from "@/src/core/domain/scorecard-evidence-rule";
+import { levelScorecardObservations } from "@/src/core/domain/scorecard-coverage";
+import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
+import { meetingAnalysisContext } from "@/src/core/domain/meeting-analysis-context";
+import { kissStopWithTalkShare } from "@/src/core/domain/kiss-talk-share-stop";
+import { markObjectionsVerbatim } from "@/src/core/domain/objections-verbatim";
 import { aiLogPromptVersionLabel } from "@/src/core/domain/organization-prompts";
+import {
+  LISTENING_CRITERION_KEY,
+  listeningMeasure,
+  talkShareFromTranscript,
+  talkShareInstruction,
+  transcriptSides,
+} from "@/src/core/domain/talk-share-from-transcript";
 import {
   applySoncasEvidenceRule,
   keepSoncasEvidenceFoundIn,
@@ -43,6 +52,8 @@ import type {
 } from "@/src/core/ports/meeting-repository-port";
 import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organization-prompt-repository-port";
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
+import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
+import { reuseAnalysisOutput } from "./reuse-analysis-output";
 import {
   resolveAnalysisPrompt,
   type ResolvedAnalysisPrompt,
@@ -88,6 +99,12 @@ export async function runMeetingAnalysis(
     organizationPrompts: OrganizationPromptRepositoryPort;
     analysis: AnalysisPort;
     aiLogs?: AiRequestLogRepositoryPort;
+    /**
+     * Où garder la réponse d'un appel pour la rendre à l'identique quand le
+     * même transcript revient avec la même consigne. Absent, chaque analyse
+     * appelle le modèle.
+     */
+    aiSummaryCache?: AiSummaryCacheRepositoryPort;
   },
   input: {
     organizationId: string | null;
@@ -128,6 +145,41 @@ export async function runMeetingAnalysis(
   const evidenceSource = [transcriptForAnalysis, meeting.notes ?? ""].join(
     "\n",
   );
+  /*
+    Qui a dit quoi, quand le transcript le distingue : une preuve sur le
+    prospect se cherche dans ses paroles à lui, jamais dans celles du
+    commercial.
+  */
+  const speakerHints = { prospectNames: [meeting.prospectName] };
+  const sides = transcriptSides(transcriptForAnalysis, speakerHints);
+  const talkShare = talkShareFromTranscript(
+    transcriptForAnalysis,
+    speakerHints,
+  );
+  const grid = scorecardGridForMeeting({
+    meetingType: meeting.meetingType,
+    pipelineStage: meeting.pipelineStage,
+  });
+  const contextBase = {
+    meetingType: meeting.meetingType ?? null,
+    pipelineStage: meeting.pipelineStage ?? null,
+    grid,
+    talkShare,
+  };
+  /** Rend la réponse d'un appel identique déjà fait, sinon appelle le modèle. */
+  const reuse = <T>(
+    systemPrompt: string,
+    userPrompt: string,
+    compute: () => Promise<T>,
+  ) =>
+    reuseAnalysisOutput(deps, {
+      organizationId: input.organizationId!,
+      kind: input.kind,
+      model,
+      systemPrompt,
+      userPrompt,
+      compute,
+    });
 
   /*
     La consigne de l'organisation si elle en a enregistré une, sinon celle du
@@ -205,7 +257,10 @@ export async function runMeetingAnalysis(
     ) {
       const profileSystemMarkdown = composeAnalysisSystemMarkdown(
         prompt.markdown,
-        [input.organizationPlaybookMarkdown],
+        [
+          input.organizationPlaybookMarkdown,
+          meetingAnalysisContext(contextBase),
+        ],
       );
       /*
         Le même choix qu'à la ligne de l'appel, plus bas, et il faut qu'il le
@@ -220,7 +275,7 @@ export async function runMeetingAnalysis(
           ? withSoncasSystemPrompt(profileSystemMarkdown)
           : input.kind === "DISC"
             ? withDiscSystemPrompt(profileSystemMarkdown)
-            : withDataScopeSystemPrompt(profileSystemMarkdown);
+            : withObjectionsSystemPrompt(profileSystemMarkdown);
       const userPrompt = buildDelimitedMeetingUserContent({
         transcript: transcriptForAnalysis,
         notes: meeting.notes,
@@ -244,30 +299,53 @@ export async function runMeetingAnalysis(
             ? deps.analysis.analyzeDisc
             : deps.analysis.analyzeObjections;
       try {
-        const out = await analyze({
-          systemMarkdown: profileSystemMarkdown,
-          transcript: transcriptForAnalysis,
-          notes: meeting.notes,
-          model,
-        });
+        const { value: out, reused } = await reuse(
+          systemPrompt,
+          userPrompt,
+          async () => {
+            const o = await analyze({
+              systemMarkdown: profileSystemMarkdown,
+              transcript: transcriptForAnalysis,
+              notes: meeting.notes,
+              model,
+            });
+            return { result: o.result, usage: o.usage ?? null };
+          },
+        );
         /*
           Le journal garde ce que le modèle a rendu, pas ce que le produit en a
           fait, comme pour la scorecard plus bas. C'est la seule trace où l'on
           puisse constater qu'un levier avait été annoncé à 80 sans une citation
-          pour le tenir : la fiche, elle, ne montrera plus que le 19.
+          pour le tenir : la fiche, elle, ne montrera plus que le 19. Une
+          réponse réutilisée n'a pas appelé le modèle et ne se journalise pas.
         */
-        await recordAiRequestSuccess(deps.aiLogs, logBase, {
-          rawOutput: out.result,
-          inputTokens: out.usage?.inputTokens ?? null,
-          outputTokens: out.usage?.outputTokens ?? null,
-          latencyMs: Date.now() - started,
-        });
+        if (!reused) {
+          await recordAiRequestSuccess(deps.aiLogs, logBase, {
+            rawOutput: out.result,
+            inputTokens: out.usage?.inputTokens ?? null,
+            outputTokens: out.usage?.outputTokens ?? null,
+            latencyMs: Date.now() - started,
+          });
+        }
+        /*
+          Les leviers SONCAS ne se prouvent qu'avec les mots du prospect : la
+          revue du 5 octobre a trouvé un levier appuyé sur une phrase du
+          commercial.
+        */
         const result =
           input.kind === "SONCAS"
             ? applySoncasEvidenceRule(
-                keepSoncasEvidenceFoundIn(out.result, evidenceSource),
+                keepSoncasEvidenceFoundIn(
+                  out.result as Parameters<typeof keepSoncasEvidenceFoundIn>[0],
+                  sides?.prospect ?? evidenceSource,
+                ),
               )
-            : out.result;
+            : input.kind === "OBJECTIONS"
+              ? markObjectionsVerbatim(
+                  out.result as Parameters<typeof markObjectionsVerbatim>[0],
+                  sides?.prospect ?? evidenceSource,
+                )
+              : out.result;
         const row = await deps.meetings.createAnalysis({
           meetingId: meeting.id,
           kind: input.kind,
@@ -294,17 +372,21 @@ export async function runMeetingAnalysis(
         deux doivent employer la même, sans quoi des niveaux notés sur une grille
         seraient additionnés sur les poids d'une autre.
       */
-      const grid = scorecardGridForMeeting({
-        meetingType: meeting.meetingType,
-        pipelineStage: meeting.pipelineStage,
-      });
       if (!grid) {
         return { ok: false, error: "NO_SCORECARD_GRID" };
       }
 
+      /*
+        La répartition de la parole se mesure, elle ne se devine pas : le
+        modèle la reçoit chiffrée, et le critère d'écoute prend le niveau de
+        la mesure.
+      */
       const scorecardSystemMarkdown = composeAnalysisSystemMarkdown(
         prompt.markdown,
-        [input.organizationPlaybookMarkdown],
+        [
+          input.organizationPlaybookMarkdown,
+          talkShare ? talkShareInstruction(talkShare) : null,
+        ],
       );
       const systemPrompt = withScorecardSystemPrompt(
         scorecardSystemMarkdown,
@@ -327,32 +409,52 @@ export async function runMeetingAnalysis(
       const started = Date.now();
 
       try {
-        const out = await deps.analysis.analyzeScorecard({
-          systemMarkdown: scorecardSystemMarkdown,
-          grid,
-          transcript: transcriptForAnalysis,
-          notes: meeting.notes,
-          model,
-        });
+        const { value: out, reused } = await reuse(
+          systemPrompt,
+          userPrompt,
+          async () => {
+            const o = await deps.analysis.analyzeScorecard({
+              systemMarkdown: scorecardSystemMarkdown,
+              grid,
+              transcript: transcriptForAnalysis,
+              notes: meeting.notes,
+              model,
+            });
+            return { result: o.result, usage: o.usage ?? null };
+          },
+        );
         /*
           Le journal garde ce que le modèle a rendu, pas ce que le produit en a
           fait. Y écrire le score calculé donnerait à relire un chiffre que le
           modèle n'a jamais produit, à l'endroit même où l'on vient vérifier ce
           qu'il a produit.
         */
-        await recordAiRequestSuccess(deps.aiLogs, logBase, {
-          rawOutput: out.result,
-          inputTokens: out.usage?.inputTokens ?? null,
-          outputTokens: out.usage?.outputTokens ?? null,
-          latencyMs: Date.now() - started,
-        });
+        if (!reused) {
+          await recordAiRequestSuccess(deps.aiLogs, logBase, {
+            rawOutput: out.result,
+            inputTokens: out.usage?.inputTokens ?? null,
+            outputTokens: out.usage?.outputTokens ?? null,
+            latencyMs: Date.now() - started,
+          });
+        }
         /*
-          Les preuves introuvables dans le transcript sont retirées, et un
-          critère resté sans preuve est plafonné, avant le calcul du score :
-          une grille notée 100 sur des définitions recopiées ne passe plus.
+          Le modèle a fait un relevé ; le produit vérifie chaque citation et
+          qui l'a dite, en tire les niveaux par une table fixe, puis le score.
+          L'écoute prend le niveau de la parole mesurée.
         */
         const checked = keepKnownScorecardKeys(
-          applyScorecardEvidenceRule(out.result, evidenceSource),
+          levelScorecardObservations(
+            out.result,
+            grid,
+            {
+              all: evidenceSource,
+              seller: sides?.seller ?? null,
+              prospect: sides?.prospect ?? null,
+            },
+            talkShare
+              ? { [LISTENING_CRITERION_KEY]: listeningMeasure(talkShare) }
+              : {},
+          ),
           grid,
         );
         const { blocks, overallScore } = computeScorecardScore(
@@ -406,7 +508,7 @@ export async function runMeetingAnalysis(
       };
     }
 
-    const [priorSoncas, priorDisc] = await Promise.all([
+    const [priorSoncas, priorDisc, priorScorecard] = await Promise.all([
       deps.meetings.findLatestAnalysisForMeeting({
         meetingId: meeting.id,
         organizationId: input.organizationId,
@@ -417,7 +519,15 @@ export async function runMeetingAnalysis(
         organizationId: input.organizationId,
         kind: "DISC",
       }),
+      deps.meetings.findLatestAnalysisForMeeting({
+        meetingId: meeting.id,
+        organizationId: input.organizationId,
+        kind: "SCORECARD",
+      }),
     ]);
+    const scorecardRead = scorecardResultSchema.safeParse(
+      priorScorecard?.result,
+    );
 
     const kissSystemMarkdown = composeAnalysisSystemMarkdown(prompt.markdown, [
       analysisSystemBlock(
@@ -425,6 +535,10 @@ export async function runMeetingAnalysis(
         input.kissSystemMarkdownAppendix,
       ),
       input.organizationPlaybookMarkdown,
+      meetingAnalysisContext({
+        ...contextBase,
+        scorecard: scorecardRead.success ? scorecardRead.data : null,
+      }),
     ]);
     /*
       Le même enrobage que celui appliqué par l'adaptateur, et non l'enrobage
@@ -453,27 +567,36 @@ export async function runMeetingAnalysis(
     const started = Date.now();
 
     try {
-      const out = await deps.analysis.analyzeKiss({
-        systemMarkdown: kissSystemMarkdown,
-        transcript: transcriptForAnalysis,
-        notes: meeting.notes,
-        model,
-        priorSoncasResult: priorSoncas?.result,
-        priorDiscResult: priorDisc?.result,
-      });
-      await recordAiRequestSuccess(deps.aiLogs, logBase, {
-        rawOutput: out.result,
-        inputTokens: out.usage?.inputTokens ?? null,
-        outputTokens: out.usage?.outputTokens ?? null,
-        latencyMs: Date.now() - started,
-      });
+      const { value: out, reused } = await reuse(
+        systemPrompt,
+        userPrompt,
+        async () => {
+          const o = await deps.analysis.analyzeKiss({
+            systemMarkdown: kissSystemMarkdown,
+            transcript: transcriptForAnalysis,
+            notes: meeting.notes,
+            model,
+            priorSoncasResult: priorSoncas?.result,
+            priorDiscResult: priorDisc?.result,
+          });
+          return { result: o.result, usage: o.usage ?? null };
+        },
+      );
+      if (!reused) {
+        await recordAiRequestSuccess(deps.aiLogs, logBase, {
+          rawOutput: out.result,
+          inputTokens: out.usage?.inputTokens ?? null,
+          outputTokens: out.usage?.outputTokens ?? null,
+          latencyMs: Date.now() - started,
+        });
+      }
       const row = await deps.meetings.createAnalysis({
         meetingId: meeting.id,
         kind: input.kind,
         promptVersionId: promptVersion.id,
         organizationPromptVersionId,
         model,
-        result: out.result,
+        result: kissStopWithTalkShare(out.result, talkShare),
       });
       return { ok: true, analysisId: row.id };
     } catch (e) {

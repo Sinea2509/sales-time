@@ -225,7 +225,10 @@ export default async function RendezVousDetailPage({
         gridName: grid?.name ?? null,
         sellerAverage30d: salesScoreAverage(scoresOf(sellerMeetings30d)),
         teamAverage30d: salesScoreAverage(scoresOf(teamMeetings30d)),
-        talkShare: talkShareFromTranscript(meeting.transcript),
+        talkShare: talkShareFromTranscript(meeting.transcript, {
+          sellerName,
+          prospectNames: [meeting.prospectName, contact?.displayName],
+        }),
         planActions,
         provenance: {
           gridName: grid?.name ?? null,

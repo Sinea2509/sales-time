@@ -47,6 +47,53 @@ These six scores rate **the seller's own behaviour** in this meeting. They feed 
 
 Anchor every score in the transcript and stay conservative: 50 is an ordinary meeting, and 80 or above is rare and must be visible in the words. A dimension the transcript does not let you observe (a topic never reached, a passage missing) stays near 50, and you name it as unobservable in coachingScoreJustification. Never use 0 or 100 for lack of evidence: these six numbers are averaged over months, and a gap in the evidence scored as a zero ends up reading as a competence the seller does not have.`;
 
+/**
+ * Ce qu'on lit pour SONCAS, fixé hors de la consigne modifiable.
+ *
+ * La revue du 5 octobre 2026 a relevé des leviers appuyés sur des phrases du
+ * commercial, et des leviers lus partout dans une heure d'échange. Le produit
+ * retire désormais toute citation qui ne vient pas du prospect ; cette règle
+ * dit au modèle où regarder pour ne pas en avoir besoin.
+ */
+export const SONCAS_READING_INSTRUCTION = `## Où lire les leviers SONCAS
+- Seules les paroles du prospect comptent. Une phrase dite par le commercial, même reprise ou approuvée par le prospect, n'est jamais une preuve : le produit la retire, et le levier retombe.
+- Cherche d'abord les moments qui révèlent ce qui fait choisir ce prospect : ce qu'il attend d'un prestataire ou d'une solution, ce qui l'a déçu avant, sa réaction au prix, ses conditions pour dire oui, ce que sa direction veut voir, et ce qu'il dit de la relation qu'il souhaite.
+- Un levier se juge à l'insistance du prospect, pas au sujet abordé. Parler de qualité n'est pas « sécurité » si le prospect cherche surtout à essayer autre chose (« nouveauté ») ; parler de son équipe interne n'est pas « orgueil » s'il n'y met aucune fierté.
+- Le levier principal est celui qui revient le plus et qui pèse sur la décision. Quand deux leviers se valent, le résumé le dit.`;
+
+/**
+ * Ce qu'on lit pour DISC, fixé hors de la consigne modifiable.
+ */
+export const DISC_READING_INSTRUCTION = `## Où lire le style DISC
+- Seul le comportement du prospect compte : sa façon de parler, pas ses sujets, et jamais celle du commercial.
+- Indices de Stabilité : attention aux personnes et à leur bien-être, souci que chacun s'y retrouve, rythme posé, besoin de prendre le temps et d'avancer pas à pas. Indices d'Influence : enthousiasme, anecdotes, phrases longues et expressives. Indices de Conformité : précision, chiffres, procédures, questions de méthode. Indices de Dominance : phrases courtes, décisions rapides, recentrage sur le résultat.
+- Évoquer une certification ou une règle ne fait pas un profil Conformité ; c'est la façon d'en parler qui compte.
+- Quand les indices sont faibles ou contradictoires, garde des notes proches et dis l'incertitude.`;
+
+/**
+ * La cohérence du coaching KISS, fixée hors de la consigne modifiable.
+ *
+ * Trois défauts relevés par la revue du 5 octobre 2026 : des conseils de
+ * rendez-vous de proposition donnés sur une découverte, des suggestions déjà
+ * faites dans le rendez-vous, et un « à arrêter » vide chez un commercial qui
+ * parlait 60 % du temps.
+ */
+export const KISS_COHERENCE_INSTRUCTION = `## Cohérence du coaching (règles du produit)
+- Le bloc « Ce rendez-vous » ci-dessous donne le type de rendez-vous, la répartition de la parole mesurée et le relevé de la grille. Ton coaching ne les contredit jamais : tu ne félicites pas pour une découverte que la grille trouve courte, et tu ne reproches pas l'absence d'un geste que la grille a relevé.
+- Avant d'écrire une puce « improve » ou « start », vérifie dans le transcript et dans le relevé que le geste n'a pas déjà été fait. Une suggestion de faire ce qui a été fait discrédite tout le coaching.
+- Respecte le type de rendez-vous : ce qui n'y est pas attendu ne se suggère pas. Une découverte ne présente ni programme détaillé, ni proposition chiffrée, ni comparatif de prix ; tu peux suggérer de les préparer pour le rendez-vous suivant.
+- Quand le commercial a parlé plus de 50 % du temps, « stop » le dit, avec le chiffre mesuré et le moment le plus long.
+- Une objection traitée en renvoyant la réponse détaillée au rendez-vous suivant, après l'avoir explorée, est un bon geste en découverte.`;
+
+/**
+ * Ce qu'est une objection traitée, fixé hors de la consigne modifiable.
+ */
+export const OBJECTIONS_TREATMENT_INSTRUCTION = `## Objections : règles du produit
+- Relève toutes les réserves du prospect qui pèsent sur l'affaire, y compris celles dites sans opposition franche : un prix qui surprend, une mauvaise expérience avec d'autres prestataires, un sujet qui n'est pas prioritaire en ce moment, un doute sur la qualité ou sur l'impact.
+- Une objection est traitée (\`handled\`) quand le commercial l'a entendue, explorée ou reformulée, et a apporté une réponse ou une suite que le prospect accepte, même plus tard dans le rendez-vous. Lis toute la suite de l'échange avant de conclure : la réponse arrive souvent quelques répliques après.
+- En rendez-vous de découverte, renvoyer la preuve détaillée au rendez-vous suivant, après avoir exploré la réserve, est un traitement partiel (\`partial\`) et non une objection ouverte.
+- \`objection\` reprend les mots du prospect, recopiés du transcript. \`response\` dit ce que le commercial a répondu, avec ses mots quand c'est possible.`;
+
 export function withDataScopeSystemPrompt(systemMarkdown: string): string {
   return [
     SYSTEM_DATA_ONLY_PREFIX,
@@ -68,6 +115,7 @@ export function withDataScopeSystemPrompt(systemMarkdown: string): string {
 export function withSoncasSystemPrompt(systemMarkdown: string): string {
   return [
     withDataScopeSystemPrompt(systemMarkdown),
+    SONCAS_READING_INSTRUCTION,
     soncasScoreScaleInstruction(),
   ].join("\n\n");
 }
@@ -76,7 +124,16 @@ export function withSoncasSystemPrompt(systemMarkdown: string): string {
 export function withDiscSystemPrompt(systemMarkdown: string): string {
   return [
     withDataScopeSystemPrompt(systemMarkdown),
+    DISC_READING_INSTRUCTION,
     discScoreScaleInstruction(),
+  ].join("\n\n");
+}
+
+/** Consigne des objections éditable, plus ce qu'est une objection traitée. */
+export function withObjectionsSystemPrompt(systemMarkdown: string): string {
+  return [
+    withDataScopeSystemPrompt(systemMarkdown),
+    OBJECTIONS_TREATMENT_INSTRUCTION,
   ].join("\n\n");
 }
 
@@ -92,6 +149,7 @@ export function withDiscSystemPrompt(systemMarkdown: string): string {
 export function withKissSystemPrompt(systemMarkdown: string): string {
   return [
     withDataScopeSystemPrompt(systemMarkdown),
+    KISS_COHERENCE_INSTRUCTION,
     KISS_SELLER_SKILLS_INSTRUCTION,
     coachingScoreScaleInstruction(),
   ].join("\n\n");

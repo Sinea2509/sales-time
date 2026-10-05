@@ -31,6 +31,7 @@ import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signat
 import {
   MIN_RDV_FOR_STATS,
   type StatsWindowDays,
+  type StatsWindowRange,
 } from "@/src/core/domain/dashboard-stats-window";
 import {
   cardProseBodyClass,
@@ -106,6 +107,8 @@ export type TeamMemberPerformanceShellProps = {
    */
   backHref?: string;
   statsWindowDays: StatsWindowDays;
+  /** Les dates de la période quand elle a été choisie au calendrier. */
+  statsWindowRange?: StatsWindowRange | null;
   /**
    * Périodes trop pauvres pour être choisies, options grisées du sélecteur.
    *
@@ -220,6 +223,7 @@ export function TeamMemberPerformanceShell({
   perspective = "manager",
   backHref,
   statsWindowDays,
+  statsWindowRange = null,
   disabledStatsDays,
   performanceFingerprint,
   nameLine,
@@ -380,6 +384,7 @@ export function TeamMemberPerformanceShell({
         key={performanceFingerprint}
         sellerUserId={sellerUserId}
         statsWindowDays={statsWindowDays}
+        statsWindowRange={statsWindowRange}
         initialFingerprint={performanceFingerprint}
         initialPerformance={{
           performanceForces,
@@ -484,6 +489,7 @@ export function TeamMemberPerformanceShell({
           <h2 className={sectionHeadingClass}>Performance</h2>
           <AnalysePagePeriodFallback
             value={statsWindowDays}
+            range={statsWindowRange}
             disabledDays={disabledStatsDays}
           />
         </div>
@@ -509,6 +515,7 @@ export function TeamMemberPerformanceShell({
             rdvSurLaPeriode={rdvSurLaPeriode}
             etapeOrder={etapeOrder}
             statsWindowDays={statsWindowDays}
+            statsWindowRange={statsWindowRange}
             disabledStatsDays={disabledStatsDays}
           />
         </div>

@@ -2,7 +2,6 @@
 
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -17,7 +16,10 @@ import {
 } from "@/components/organisms/analyse-priority-opportunities-table";
 import { QualificationPotentialMatrixScatter } from "@/components/organisms/qualification-potential-matrix-scatter";
 import { DashboardStatsPeriodSelect } from "@/components/molecules/dashboard-stats-period-select";
-import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type {
+  StatsWindowDays,
+  StatsWindowRange,
+} from "@/src/core/domain/dashboard-stats-window";
 import type { QualificationPotentialMatrixPoint } from "@/src/core/domain/meeting-analyse-matrices";
 
 const CHART_HEIGHT = 420;
@@ -29,6 +31,7 @@ export function AnalyseStatistiquesGlobalesSection({
   isTeamView = false,
   etapeOrder,
   statsWindowDays,
+  statsWindowRange = null,
   disabledStatsDays = [],
 }: {
   qualificationPotentialPoints: QualificationPotentialMatrixPoint[];
@@ -47,6 +50,7 @@ export function AnalyseStatistiquesGlobalesSection({
   /** Le vocabulaire d'étapes de l'organisation, qui range les filtres de la matrice. */
   etapeOrder?: readonly string[];
   statsWindowDays?: StatsWindowDays;
+  statsWindowRange?: StatsWindowRange | null;
   disabledStatsDays?: StatsWindowDays[];
 }) {
   const legendeMatrice = matriceRendezVousLegende({
@@ -66,12 +70,18 @@ export function AnalyseStatistiquesGlobalesSection({
             {legendeMatrice}
           </CardDescription>
           {statsWindowDays != null ? (
-            <CardAction>
+            /*
+              Sous la description plutôt qu'à droite du titre : une période
+              choisie au calendrier allonge le sélecteur, qui écrasait alors le
+              titre de la carte sur quatre lignes.
+            */
+            <div className="pt-2">
               <DashboardStatsPeriodSelect
                 value={statsWindowDays}
+                range={statsWindowRange}
                 disabledDays={disabledStatsDays}
               />
-            </CardAction>
+            </div>
           ) : null}
         </CardHeader>
         <CardContent className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-0 sm:px-4">

@@ -10,7 +10,10 @@ import { rdvNotes } from "@/lib/accord-fr";
 import { plurielFr } from "@/lib/pluriel-fr";
 import { statsWindowLabel } from "@/lib/stats-window-labels";
 import { cn } from "@/lib/utils";
-import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type {
+  StatsWindowDays,
+  StatsWindowRange,
+} from "@/src/core/domain/dashboard-stats-window";
 import type { SellerWeeklyChallenge } from "@/src/core/domain/seller-dashboard-focus";
 import { rankLabel, tierFromSalesScore } from "@/src/core/domain/team-ranking";
 
@@ -29,6 +32,7 @@ export function CommercialDashboardHero({
   salesScoreAvg,
   scoredMeetings,
   statsWindowDays,
+  statsWindowRange = null,
   trendPoints,
   rank,
   challenge,
@@ -37,6 +41,7 @@ export function CommercialDashboardHero({
   salesScoreAvg: number | null;
   scoredMeetings: number;
   statsWindowDays: StatsWindowDays;
+  statsWindowRange?: StatsWindowRange | null;
   /** Écart en points avec la période précédente, `null` sans comparaison. */
   trendPoints: number | null;
   /** Place dans l'équipe, quand elle est établie. */
@@ -108,8 +113,8 @@ export function CommercialDashboardHero({
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed">
             {scoredMeetings > 0
-              ? `Moyenne de vos ${rdvNotes(scoredMeetings)} sur les ${statsWindowLabel(statsWindowDays)}.`
-              : `Aucun rendez-vous analysé sur les ${statsWindowLabel(statsWindowDays)} : analysez-en un pour obtenir votre score.`}
+              ? `Moyenne de vos ${rdvNotes(scoredMeetings)} sur les ${statsWindowLabel(statsWindowDays, statsWindowRange)}.`
+              : `Aucun rendez-vous analysé sur les ${statsWindowLabel(statsWindowDays, statsWindowRange)} : analysez-en un pour obtenir votre score.`}
           </p>
         </div>
       </div>

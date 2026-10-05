@@ -68,6 +68,8 @@ type Props = {
   initialMarkdown: string;
   /** La consigne d'origine de Sales Time, que « Consigne d'origine » remet. */
   defaultMarkdown: string;
+  /** Ce que le produit ajoute à la consigne et qui ne se modifie pas : grille, règles de preuve. */
+  fixedMarkdown?: string | null;
   initialModel: string;
   versions: VersionRow[];
 };
@@ -193,6 +195,7 @@ export function SuperAdminPromptsEditor({
   kind,
   initialMarkdown,
   defaultMarkdown,
+  fixedMarkdown = null,
   initialModel,
   versions,
 }: Props) {
@@ -521,6 +524,32 @@ export function SuperAdminPromptsEditor({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {fixedMarkdown ? (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className={cardTitleClass}>
+              Ce que le produit ajoute à cette consigne
+            </CardTitle>
+            <CardDescription>
+              Lecture seule : ces règles sont jointes à chaque analyse, quelle
+              que soit la consigne publiée ou celle d&apos;une organisation. Pour la
+              grille, c&apos;est ici que se lisent les critères et la façon dont la
+              note est calculée.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <details>
+              <summary className="text-brand cursor-pointer text-sm font-semibold">
+                Afficher les règles fixes
+              </summary>
+              <div className="mt-3 max-h-[640px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-4">
+                <MarkdownPreview markdown={fixedMarkdown} />
+              </div>
+            </details>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Diff view, side by side with line numbers */}
       {diffRows && diffVersion && (

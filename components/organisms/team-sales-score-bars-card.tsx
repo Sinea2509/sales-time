@@ -10,7 +10,10 @@ import { statsWindowLabel } from "@/lib/stats-window-labels";
 import { teamMemberDisplayName } from "@/lib/team-member-display-name";
 import { cn } from "@/lib/utils";
 import type { OrgAdminScoreBar } from "@/src/core/application/get-org-admin-dashboard";
-import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type {
+  StatsWindowDays,
+  StatsWindowRange,
+} from "@/src/core/domain/dashboard-stats-window";
 
 /**
  * Le SalesScore moyen de chaque commercial, en barres, du plus haut au plus
@@ -24,10 +27,12 @@ import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 export function TeamSalesScoreBarsCard({
   bars,
   statsWindowDays,
+  statsWindowRange = null,
   equipePage,
 }: {
   bars: OrgAdminScoreBar[];
   statsWindowDays: StatsWindowDays;
+  statsWindowRange?: StatsWindowRange | null;
   equipePage: number;
 }) {
   const max = Math.max(1, ...bars.map((b) => b.salesScoreAvg));
@@ -38,8 +43,8 @@ export function TeamSalesScoreBarsCard({
           <h2 className={cardTitleClass}>SalesScore moyen par commercial</h2>
           <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
             Moyenne sur les rendez-vous analysés des{" "}
-            {statsWindowLabel(statsWindowDays)}. Cliquez un nom pour ouvrir sa
-            fiche.
+            {statsWindowLabel(statsWindowDays, statsWindowRange)}. Cliquez un
+            nom pour ouvrir sa fiche.
           </p>
         </div>
         {bars.length === 0 ? (
@@ -57,7 +62,7 @@ export function TeamSalesScoreBarsCard({
                     <Link
                       href={ficheMembreHref(
                         b.userId,
-                        statsWindowDays,
+                        { days: statsWindowDays, range: statsWindowRange },
                         equipePage,
                       )}
                       className="flex min-w-0 items-center gap-2 hover:underline"

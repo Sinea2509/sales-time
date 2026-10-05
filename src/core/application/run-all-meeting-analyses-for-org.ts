@@ -6,6 +6,7 @@ import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-ana
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
+import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 import type { AiRequestLogRepositoryPort } from "@/src/core/ports/ai-request-log-repository-port";
 import type { GlobalKissCoachingPromptsRepositoryPort } from "@/src/core/ports/global-kiss-coaching-prompts-repository-port";
 import type {
@@ -36,6 +37,8 @@ export async function runAllMeetingAnalysesForOrg(
     organizationPrompts: OrganizationPromptRepositoryPort;
     analysis: AnalysisPort;
     aiLogs?: AiRequestLogRepositoryPort;
+    /** Pour rendre à l'identique une analyse déjà faite sur le même transcript. */
+    aiSummaryCache?: AiSummaryCacheRepositoryPort;
     globalKissCoachingPrompts?: GlobalKissCoachingPromptsRepositoryPort;
     /** Absent : les analyses tournent sans le playbook de l'organisation. */
     organizationSettings?: OrganizationSettingsRepositoryPort;
@@ -99,6 +102,7 @@ export async function runAllMeetingAnalysesForOrg(
         organizationPrompts: deps.organizationPrompts,
         analysis: deps.analysis,
         aiLogs: deps.aiLogs,
+        aiSummaryCache: deps.aiSummaryCache,
       },
       {
         organizationId: input.organizationId,

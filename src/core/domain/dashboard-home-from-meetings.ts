@@ -1,5 +1,8 @@
 import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
-import type { StatsWindowDays } from "./dashboard-stats-window";
+import type {
+  StatsWindowDays,
+  StatsWindowRange,
+} from "./dashboard-stats-window";
 import {
   averageTamMinutes,
   countConnectedMeetings,
@@ -27,6 +30,8 @@ export type DashboardHomeMeeting = Pick<
 /** Les chiffres de tête d'un tableau de bord, hors liste des derniers RDV. */
 export type DashboardHomeFigures = {
   statsWindowDays: StatsWindowDays;
+  /** Les dates de la période quand elle a été choisie au calendrier. */
+  statsWindowRange: StatsWindowRange | null;
   /**
    * TAM par RDV (minutes) : temps administratif économisé sur un rendez-vous,
    * d'après les paramètres de l'organisation (CR + CRM + e-mail − résiduel).
@@ -101,6 +106,7 @@ function noteGlobaleOn5ForMeetings(
  */
 export function dashboardHomeFromMeetings(input: {
   statsWindowDays: StatsWindowDays;
+  statsWindowRange?: StatsWindowRange | null;
   /** Gain administratif par RDV, tiré des paramètres de l'organisation. */
   tamMinutesPerRdv: number;
   /** Temps de prospection de référence sur la fenêtre. */
@@ -192,6 +198,7 @@ export function dashboardHomeFromMeetings(input: {
 
   return {
     statsWindowDays: input.statsWindowDays,
+    statsWindowRange: input.statsWindowRange ?? null,
     tamMinutesPerRdv: input.tamMinutesPerRdv,
     avgDurationMin,
     usefulConversationMinutes,

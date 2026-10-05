@@ -61,8 +61,8 @@ import type {
 import type { OrganizationSettingsRepositoryPort } from "@/src/core/ports/organization-settings-repository-port";
 import type { OrganizationTeamRepositoryPort } from "@/src/core/ports/organization-team-repository-port";
 import {
-  meetingAtSinceForStatsWindow,
-  previousMeetingAtWindowStart,
+  statsWindowBounds,
+  type StatsWindowRange,
   type StatsWindowDays,
 } from "@/src/core/domain/dashboard-stats-window";
 import { teamMemberMeetingsFingerprint } from "@/src/core/application/team-member-meetings-fingerprint";
@@ -250,6 +250,8 @@ export type OrgAdminTeamReading = {
 
 export type OrgAdminDashboard = {
   statsWindowDays: StatsWindowDays;
+  /** Les dates de la période quand elle a été choisie au calendrier. */
+  statsWindowRange: StatsWindowRange | null;
   /**
    * Les chiffres de tête, sur la même population que le reste de la page.
    *
@@ -555,6 +557,7 @@ export async function getTeamMemberStanding(
   input: {
     organizationId: string | null;
     statsWindowDays: StatsWindowDays;
+    statsWindowRange?: StatsWindowRange | null;
     sellerUserId: string;
     /** Cadrage manager : quand il est fourni, le rang porte sur ce sous-ensemble. */
     teamUserIds?: string[];
@@ -562,6 +565,10 @@ export async function getTeamMemberStanding(
 ): Promise<TeamMemberStanding | null> {
   if (!input.organizationId) return null;
 
+  const { since, before } = statsWindowBounds({
+    days: input.statsWindowDays,
+    range: input.statsWindowRange ?? null,
+  });
   const [teamList, meetings] = await Promise.all([
     deps.organizationTeam.listMembersAndPendingInvitations(
       input.organizationId,
@@ -569,7 +576,8 @@ export async function getTeamMemberStanding(
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: input.organizationId,
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
-      meetingAtSince: meetingAtSinceForStatsWindow(input.statsWindowDays),
+      meetingAtSince: since,
+      ...(before ? { meetingAtBefore: before } : {}),
       includeLatestSoncasResult: true,
       includeLatestKissResult: true,
     }),
@@ -861,6 +869,7 @@ export async function getOrgAdminDashboard(
   input: {
     organizationId: string | null;
     statsWindowDays: StatsWindowDays;
+    statsWindowRange?: StatsWindowRange | null;
     /** Pagination 1-based pour la section Mon équipe (10 par page). */
     monEquipePage?: number;
     /** When set, limits team dashboard to these seller user ids (manager scope). */
@@ -869,14 +878,22 @@ export async function getOrgAdminDashboard(
 ): Promise<OrgAdminDashboard | null> {
   if (!input.organizationId) return null;
 
-  const sinceCurrent = meetingAtSinceForStatsWindow(input.statsWindowDays);
-  const sincePrev = previousMeetingAtWindowStart(input.statsWindowDays);
+  const statsWindowRange = input.statsWindowRange ?? null;
+  const {
+    since: sinceCurrent,
+    before,
+    previousSince: sincePrev,
+  } = statsWindowBounds({
+    days: input.statsWindowDays,
+    range: statsWindowRange,
+  });
 
   const [meetings, prevMeetings, teamList, orgSettings] = await Promise.all([
     deps.meetings.listRecentMeetingsForDashboard({
       organizationId: input.organizationId,
       limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
       meetingAtSince: sinceCurrent,
+      ...(before ? { meetingAtBefore: before } : {}),
       includeLatestSoncasResult: true,
       includeLatestDiscResult: true,
       includeLatestKissResult: true,
@@ -914,6 +931,7 @@ export async function getOrgAdminDashboard(
   */
   const home = dashboardHomeFromMeetings({
     statsWindowDays: input.statsWindowDays,
+    statsWindowRange,
     tamMinutesPerRdv: tamMinutesSavedPerMeetingFromSettings(orgSettings),
     prospectingMinutes: prospectingMinutesForStatsWindow(
       orgSettings?.tamObjectiveMinutesPerMonth ?? 180,
@@ -945,6 +963,7 @@ export async function getOrgAdminDashboard(
 
   return {
     statsWindowDays: input.statsWindowDays,
+    statsWindowRange,
     home,
     monEquipe,
     discPie,

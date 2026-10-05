@@ -5,8 +5,15 @@ import {
   soncasAnalysisOutputSchema,
 } from "@/src/core/domain/analysis-result-zod";
 import { kissGeneratedResultSchema } from "@/src/core/domain/kiss-result-zod";
-import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
-import { scorecardGeneratedResultSchema } from "@/src/core/domain/scorecard-result-zod";
+import {
+  scorecardGeneratedResultSchema,
+  scorecardGeneratedSchemaForGrid,
+  scorecardObservationsFromFields,
+} from "@/src/core/domain/scorecard-result-zod";
+import {
+  scorecardCriteria,
+  type ScorecardGrid,
+} from "@/src/core/domain/scorecard-grid";
 import { objectionsResultSchema } from "@/src/core/domain/objections-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
@@ -23,9 +30,11 @@ import {
   withDataScopeSystemPrompt,
   withDiscSystemPrompt,
   withKissSystemPrompt,
+  withObjectionsSystemPrompt,
   withScorecardSystemPrompt,
   withSoncasSystemPrompt,
 } from "@/lib/ai-system-prompt";
+import { stableCallSettings } from "./stable-call-settings";
 import {
   buildDelimitedMeetingUserContent,
   buildKissUserPrompt,
@@ -57,6 +66,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
 
     const { object, usage } = await generateObject({
       model: input.model,
+      ...stableCallSettings(input.model),
       schema: soncasAnalysisOutputSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -87,6 +97,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
 
     const { object, usage } = await generateObject({
       model: input.model,
+      ...stableCallSettings(input.model),
       schema: discAnalysisOutputSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -125,6 +136,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     // ici où l'analyse est produite.
     const { object, usage } = await generateObject({
       model: input.model,
+      ...stableCallSettings(input.model),
       schema: kissGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -161,15 +173,21 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     // schéma de lecture porte en plus le score et les sous-totaux, que le
     // produit calcule après cet appel ; les réclamer ici reviendrait à demander
     // au modèle l'addition qu'on lui retire justement des mains.
+    const keys = scorecardCriteria(input.grid).map((c) => c.key);
     const { object, usage } = await generateObject({
       model: input.model,
-      schema: scorecardGeneratedResultSchema,
+      ...stableCallSettings(input.model),
+      schema: scorecardGeneratedSchemaForGrid(keys),
       system: systemPrompt,
       prompt: userPrompt,
     });
+    const result = scorecardGeneratedResultSchema.parse({
+      ...object,
+      criteria: scorecardObservationsFromFields(object.criteria, keys),
+    });
 
     return {
-      result: object,
+      result,
       systemPrompt,
       userPrompt,
       usage: {
@@ -189,10 +207,11 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       transcript: input.transcript,
       notes: input.notes,
     });
-    const systemPrompt = withDataScopeSystemPrompt(input.systemMarkdown);
+    const systemPrompt = withObjectionsSystemPrompt(input.systemMarkdown);
 
     const { object, usage } = await generateObject({
       model: input.model,
+      ...stableCallSettings(input.model),
       schema: objectionsResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -219,6 +238,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
 
     const { object, usage } = await generateObject({
       model: input.model,
+      ...stableCallSettings(input.model),
       schema: followUpEmailResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -247,6 +267,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
 
     const { text } = await generateText({
       model: input.model,
+      ...stableCallSettings(input.model),
       system,
       prompt: userContent,
       maxOutputTokens: 450,
@@ -275,6 +296,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
 
     const { object } = await generateObject({
       model: input.model,
+      ...stableCallSettings(input.model),
       system,
       schema: sellerCommercialPerformanceSummarySchema,
       prompt: userContent,
@@ -308,6 +330,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
 
     const { object } = await generateObject({
       model: input.model,
+      ...stableCallSettings(input.model),
       system,
       schema: sellerRelationalAffinitySummarySchema,
       prompt: userContent,
@@ -348,6 +371,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
 
     const { object } = await generateObject({
       model: input.model,
+      ...stableCallSettings(input.model),
       system,
       schema: teamCoachingRecommendationsSchema,
       prompt: userContent,
@@ -372,6 +396,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     */
     const { text, usage } = await generateText({
       model: input.model,
+      ...stableCallSettings(input.model),
       messages: [
         {
           role: "user",
@@ -438,6 +463,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
 
     const { object } = await generateObject({
       model: input.model,
+      ...stableCallSettings(input.model),
       system,
       schema: visitReportExtractionSchema,
       prompt,
@@ -465,6 +491,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     ].join("\n");
     const { object } = await generateObject({
       model: input.model,
+      ...stableCallSettings(input.model),
       schema: meetingBriefingSchema,
       system,
       prompt: userContent,

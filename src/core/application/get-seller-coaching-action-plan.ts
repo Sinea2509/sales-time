@@ -1,7 +1,8 @@
 import { kissCoachingBulletsFromMeetings } from "@/src/core/domain/kiss-coaching-bullets-from-meetings";
 import {
-  meetingAtSinceForStatsWindow,
+  statsWindowBounds,
   type StatsWindowDays,
+  type StatsWindowRange,
 } from "@/src/core/domain/dashboard-stats-window";
 import {
   sellerActionPlan,
@@ -26,15 +27,21 @@ export async function getSellerCoachingActionPlan(
   input: {
     organizationId: string | null;
     statsWindowDays: StatsWindowDays;
+    statsWindowRange?: StatsWindowRange | null;
     sellerUserId: string;
   },
 ): Promise<CoachingAction[]> {
   if (!input.organizationId) return [];
 
+  const { since, before } = statsWindowBounds({
+    days: input.statsWindowDays,
+    range: input.statsWindowRange ?? null,
+  });
   const meetings = await deps.meetings.listRecentMeetingsForDashboard({
     organizationId: input.organizationId,
     limit: ORG_ADMIN_DASHBOARD_MEETING_CAP,
-    meetingAtSince: meetingAtSinceForStatsWindow(input.statsWindowDays),
+    meetingAtSince: since,
+    ...(before ? { meetingAtBefore: before } : {}),
     sellerUserId: input.sellerUserId,
     includeLatestKissResult: true,
   });

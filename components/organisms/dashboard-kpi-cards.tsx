@@ -55,7 +55,7 @@ export function DashboardKpiCards({
   };
   const rdvRenseignes = home.nbRdvsRenseignes;
   const analyzed = home.noteGlobaleSampleCount;
-  const periode = statsWindowLabel(home.statsWindowDays);
+  const periode = statsWindowLabel(home.statsWindowDays, home.statsWindowRange);
 
   return (
     <div

@@ -32,6 +32,12 @@ export const objectionSchema = z.object({
   outcome: z.enum(OBJECTION_OUTCOMES),
   /** Ce que nous suggérons pour la suite, avec une question à poser, en français. */
   suggestion: z.string().min(1).max(800),
+  /**
+   * Vrai quand la phrase a été retrouvée mot pour mot dans les paroles du
+   * prospect. Posé par le produit, jamais par le modèle ; absent sur les
+   * analyses d'avant octobre 2026.
+   */
+  verbatim: z.boolean().optional(),
 });
 
 export const objectionsResultSchema = z.object({

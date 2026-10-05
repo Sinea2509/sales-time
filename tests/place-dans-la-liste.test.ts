@@ -14,14 +14,25 @@ jest.mock("next/navigation", () => {
   };
 });
 
+// eslint-disable-next-line no-var
+var cookieValue: string | undefined;
+jest.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: (name: string) =>
+      name === "st_periode" && cookieValue != null
+        ? { name, value: cookieValue }
+        : undefined,
+  }),
+}));
+
 import {
-  ensureEligibleStatsWindowDays,
+  ensureEligibleStatsWindow,
   pathWithStatsWindow,
 } from "@/lib/resolve-stats-window-days";
 import { ficheMembreHref, monEquipeListHref } from "@/lib/liens-mon-equipe";
 import {
   DEFAULT_STATS_WINDOW_DAYS,
-  type StatsWindowDays,
+  type StatsWindowPreset,
 } from "@/src/core/domain/dashboard-stats-window";
 
 /**
@@ -43,9 +54,9 @@ import {
  */
 
 /** Les comptes de RDV par période, lus par la redirection. */
-function comptes(sept: number, trente: number, quatreVingtDix: number) {
-  return { 7: sept, 30: trente, 90: quatreVingtDix } as Record<
-    StatsWindowDays,
+function comptes(trente: number, quatreVingtDix: number, douzeMois: number) {
+  return { 30: trente, 90: quatreVingtDix, 365: douzeMois } as Record<
+    StatsWindowPreset,
     number
   >;
 }
@@ -103,45 +114,123 @@ describe("pathWithStatsWindow", () => {
     const adresse = pathWithStatsWindow(
       "/company/equipe",
       { tri: ["a", "b"] },
-      7,
+      365,
     );
     expect(valeursDeLAdresse(adresse)).toEqual({
-      jours: ["7"],
+      jours: ["365"],
       tri: ["a", "b"],
     });
   });
 });
 
-describe("ensureEligibleStatsWindowDays", () => {
+describe("ensureEligibleStatsWindow", () => {
   beforeEach(() => {
-    redirectMock.mockClear();
+    redirectMock?.mockClear();
+    cookieValue = undefined;
   });
 
-  it("rend la période demandée sans rediriger quand elle a assez de RDV", () => {
-    expect(
-      ensureEligibleStatsWindowDays({
-        searchParams: { jours: "7", equipePage: "3" },
+  it("rend la période demandée, sans rediriger, même quand elle compte peu de RDV", async () => {
+    await expect(
+      ensureEligibleStatsWindow({
+        searchParams: { jours: "90", equipePage: "3" },
+        counts: comptes(1, 2, 40),
+        redirectPath: "/company/equipe",
+      }),
+    ).resolves.toEqual({ days: 90, range: null });
+    expect(redirectMock?.mock.calls.length ?? 0).toBe(0);
+  });
+
+  it("reprend la période choisie sur une autre page quand l'adresse n'en nomme pas", async () => {
+    cookieValue = "365";
+    await expect(
+      ensureEligibleStatsWindow({
+        searchParams: { equipePage: "3" },
         counts: comptes(12, 40, 90),
         redirectPath: "/company/equipe",
       }),
-    ).toBe(7);
-    expect(redirectMock).not.toHaveBeenCalled();
+    ).resolves.toEqual({ days: 365, range: null });
   });
 
-  it("emporte la page de liste quand il corrige une période trop courte", () => {
-    expect(() =>
-      ensureEligibleStatsWindowDays({
-        searchParams: { jours: "7", equipePage: "3" },
-        counts: comptes(1, 40, 90),
+  it("préfère l'adresse au cookie, et 30 jours sans l'un ni l'autre", async () => {
+    cookieValue = "365";
+    await expect(
+      ensureEligibleStatsWindow({
+        searchParams: { jours: "30" },
+        counts: comptes(12, 40, 90),
         redirectPath: "/company/equipe",
       }),
-    ).toThrow("REDIRECT:");
+    ).resolves.toEqual({ days: 30, range: null });
+    cookieValue = undefined;
+    await expect(
+      ensureEligibleStatsWindow({
+        searchParams: {},
+        counts: comptes(12, 40, 90),
+        redirectPath: "/company/equipe",
+      }),
+    ).resolves.toEqual({ days: DEFAULT_STATS_WINDOW_DAYS, range: null });
+  });
+});
 
-    expect(redirectMock).toHaveBeenCalledTimes(1);
-    const adresse = String(redirectMock.mock.calls[0]![0]);
-    expect(adresse.split("?")[0]).toBe("/company/equipe");
-    expect(valeursDeLAdresse(adresse)).toEqual({
-      jours: ["30"],
+describe("la période choisie au calendrier", () => {
+  beforeEach(() => {
+    cookieValue = undefined;
+  });
+
+  it("se lit dans l'adresse, avant jours= et avant le cookie", async () => {
+    cookieValue = "365";
+    await expect(
+      ensureEligibleStatsWindow({
+        searchParams: { du: "2026-07-01", au: "2026-09-30", jours: "90" },
+        counts: comptes(12, 40, 90),
+        redirectPath: "/company/equipe",
+      }),
+    ).resolves.toEqual({
+      days: 92,
+      range: { from: "2026-07-01", to: "2026-09-30" },
+    });
+  });
+
+  it("se reprend du cookie sur une autre page", async () => {
+    cookieValue = "2026-01-01_2026-03-31";
+    await expect(
+      ensureEligibleStatsWindow({
+        searchParams: {},
+        counts: comptes(12, 40, 90),
+        redirectPath: "/company",
+      }),
+    ).resolves.toEqual({
+      days: 90,
+      range: { from: "2026-01-01", to: "2026-03-31" },
+    });
+  });
+
+  it("voyage dans les liens vers une fiche et dans la pagination", () => {
+    const periode = {
+      days: 92,
+      range: { from: "2026-07-01", to: "2026-09-30" },
+    };
+    expect(valeursDeLAdresse(ficheMembreHref("u-1", periode, 2))).toEqual({
+      du: ["2026-07-01"],
+      au: ["2026-09-30"],
+      equipePage: ["2"],
+    });
+    expect(
+      valeursDeLAdresse(monEquipeListHref("/company/equipe", periode, 1)),
+    ).toEqual({ du: ["2026-07-01"], au: ["2026-09-30"] });
+  });
+
+  it("remplace jours= par du= et au= sans toucher au reste", () => {
+    expect(
+      valeursDeLAdresse(
+        pathWithStatsWindow(
+          "/company/equipe",
+          { jours: "90", equipePage: "3" },
+          { days: 31, range: { from: "2026-08-01", to: "2026-08-31" } },
+        ),
+      ),
+    ).toEqual({
+      du: ["2026-08-01"],
+      au: ["2026-08-31"],
       equipePage: ["3"],
     });
   });

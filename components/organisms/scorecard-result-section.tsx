@@ -55,14 +55,37 @@ function CriterionRow({
   return (
     <div className="border-b border-dashed border-border py-2.5 last:border-b-0">
       <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3">
-        <div className="text-[13px] font-medium">
-          {criterion.key}. {criterion.label}
+        <div className="min-w-0">
+          <div className="text-[13px] font-medium">
+            {criterion.key}. {criterion.label}
+          </div>
+          {criterion.coverage ? (
+            <div className="text-muted-foreground mt-0.5 text-[11.5px]">
+              {criterion.coverage}
+            </div>
+          ) : null}
         </div>
         <LevelPips level={criterion.level} max={SCORECARD_LEVEL_MAX} />
         <span className="w-9 text-right text-[12.5px] font-semibold tabular-nums">
           {criterion.level}/{SCORECARD_LEVEL_MAX}
         </span>
       </div>
+      {criterion.learned || criterion.missing ? (
+        <div className="mt-1.5 space-y-0.5 text-[12.5px] leading-relaxed">
+          {criterion.learned ? (
+            <p>
+              <span className="font-semibold">Obtenu : </span>
+              {criterion.learned}
+            </p>
+          ) : null}
+          {criterion.missing ? (
+            <p className="text-muted-foreground">
+              <span className="font-semibold">Manque : </span>
+              {criterion.missing}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       {lost ? (
         <div
           className="mt-2 rounded-r-lg bg-muted/40 px-3.5 py-2.5"
@@ -297,6 +320,22 @@ export function ScorecardResultSection({
               {gridIntent ? `${gridIntent} ` : ""}
               Ouvrez un bloc pour voir ses critères et ce qui a manqué.
             </p>
+            <details className="mt-2 max-w-[70ch] text-xs leading-relaxed">
+              <summary className="text-brand cursor-pointer font-semibold">
+                Comment la note est calculée
+              </summary>
+              <p className="text-muted-foreground mt-1.5">
+                Chaque critère vaut de 0 à 4 points. Le coach relève deux choses
+                : le commercial a-t-il abordé le thème, puis l&apos;a-t-il
+                creusé, et qu&apos;a-t-il obtenu du prospect. Un thème seulement
+                abordé rapporte 1 ou 2 points ; un thème creusé avec une réponse
+                précise en rapporte 4. La formulation de la question ne compte
+                pas, seul le thème compte. Chaque citation est vérifiée dans le
+                transcript, avec la personne qui l&apos;a dite. L&apos;écoute se
+                mesure sur la répartition de la parole. Le même transcript
+                analysé deux fois avec la même consigne reçoit la même note.
+              </p>
+            </details>
           </div>
           <p className={cn("text-[13.5px] leading-relaxed")}>{view.summary}</p>
           <div className="grid gap-2.5">

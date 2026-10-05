@@ -1,5 +1,5 @@
 import type { ScorecardGrid } from "./scorecard-grid";
-import type { ScorecardGeneratedResult } from "./scorecard-result-zod";
+import type { ScorecardLeveledResult } from "./scorecard-result-zod";
 import { evidenceWords, isExcerptInSource } from "./transcript-evidence";
 
 /**
@@ -28,7 +28,7 @@ export const SCORECARD_UNPROVEN_LEVEL_MAX = 1;
  * qu'elle annonçait. Le journal des appels garde, lui, ce que le modèle a
  * rendu. Un résultat où rien n'est à corriger ressort identique.
  */
-export function applyScorecardEvidenceRule<T extends ScorecardGeneratedResult>(
+export function applyScorecardEvidenceRule<T extends ScorecardLeveledResult>(
   result: T,
   sourceText: string,
 ): T {
@@ -62,7 +62,7 @@ export function applyScorecardEvidenceRule<T extends ScorecardGeneratedResult>(
  * telle quelle. Une entrée sur une clé inconnue ne dit rien au commercial ; elle
  * disparaît, dans `criteria` comme dans `pointsLost`.
  */
-export function keepKnownScorecardKeys<T extends ScorecardGeneratedResult>(
+export function keepKnownScorecardKeys<T extends ScorecardLeveledResult>(
   result: T,
   grid: ScorecardGrid,
 ): T {
