@@ -278,7 +278,9 @@ Tu ne reprends que ce qui a été dit pendant le rendez-vous. Quand le transcrip
 
 ## Style d'écriture
 - Chaque phrase a un verbe conjugué : pas de style télégraphique.
-- Les dates s'écrivent en toutes lettres, exactement comme le transcript les donne. Si le transcript dit « d'ici vendredi », écris « d'ici vendredi », sans ajouter de quantième ni de mois.
+- Les dates et les heures s'écrivent exactement comme le transcript les donne, chiffres compris. Si le transcript dit « d'ici vendredi », écris « d'ici vendredi », sans ajouter de quantième ni de mois.
+- Un rendez-vous n'est fixé que si les deux parties ont retenu une date. Des créneaux proposés (« un lundi après-midi, ou un mercredi matin ») ne font pas une date convenue : écris-les comme des propositions à confirmer, et ne choisis jamais l'un d'eux.
+- Le décideur est celui dont le transcript dit qu'il signe ou qu'il valide ; la personne qui reçoit le commercial ne l'est pas par défaut.
 - Les citations sont copiées mot pour mot, sans guillemets autour : le produit les ajoute.
 - Aucun texte ne commence par une puce ou un tiret : le produit les pose.
 - Les noms, les chiffres et les dates cités en exemple dans cette consigne montrent une forme : ne les reprends jamais, tout ce que tu écris vient du transcript.`;

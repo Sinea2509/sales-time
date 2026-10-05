@@ -957,3 +957,54 @@ describe("withDatesFromTranscript", () => {
     ]);
   });
 });
+
+describe("withDatesFromTranscript, dates écrites en lettres", () => {
+  const transcript =
+    "Cédric : Je vais tenter le lundi de 14h00. Ou le mercredi après-midi 4 novembre.";
+
+  it("lit « quatre novembre » comme « 4 novembre », et refuse un jour de la semaine jamais dit", () => {
+    const out = withDatesFromTranscript(
+      {
+        ...extraction,
+        prochainRendezVous: {
+          ...extraction.prochainRendezVous,
+          quand: "mardi quatre novembre à quatorze heures",
+        },
+      },
+      transcript,
+    );
+    expect(out.prochainRendezVous.quand).toBe(VISIT_REPORT_DATE_TO_FIX);
+  });
+
+  it("garde « mercredi quatre novembre », dit tel quel", () => {
+    const out = withDatesFromTranscript(
+      {
+        ...extraction,
+        prochainRendezVous: {
+          ...extraction.prochainRendezVous,
+          quand: "mercredi quatre novembre après-midi, à confirmer",
+        },
+      },
+      transcript,
+    );
+    expect(out.prochainRendezVous.quand).toBe(
+      "mercredi quatre novembre après-midi, à confirmer",
+    );
+  });
+});
+
+describe("withDatesFromTranscript, jour de la semaine collé à un mot", () => {
+  it("ne prend pas « mardi » dans « mardis » ni un jour dans un autre mot", () => {
+    const out = withDatesFromTranscript(
+      {
+        ...extraction,
+        prochainRendezVous: {
+          ...extraction.prochainRendezVous,
+          quand: "mardi 4 novembre",
+        },
+      },
+      "Cédric : Les mardis je ne peux pas. Le 4 novembre, peut-être.",
+    );
+    expect(out.prochainRendezVous.quand).toBe(VISIT_REPORT_DATE_TO_FIX);
+  });
+});

@@ -867,6 +867,9 @@ const DAY_AND_MONTH = new RegExp(
   "giu",
 );
 
+const WEEKDAY =
+  /(?<![\p{L}])(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?![\p{L}])/gu;
+
 /** « À fixer » : ce que le compte rendu écrit quand aucune date n'a été convenue. */
 export const VISIT_REPORT_DATE_TO_FIX =
   "À fixer : aucune date ferme n'a été convenue pendant le rendez-vous.";
@@ -883,10 +886,19 @@ export function withDatesFromTranscript(
   transcript: string,
 ): VisitReportExtraction {
   const said = normalizedForDates(transcript);
-  const allSaid = (text: string) =>
-    [...text.matchAll(DAY_AND_MONTH)].every((m) =>
+  const allSaid = (text: string) => {
+    const t = normalizedForDates(text);
+    const dates = [...t.matchAll(DAY_AND_MONTH)];
+    if (dates.length === 0) return true;
+    const daysOk = dates.every((m) =>
       said.includes(`${Number(m[1])} ${normalizedForDates(m[2])}`),
     );
+    /* Avec une date, le jour de la semaine nommé doit avoir été dit : « mardi 4 novembre » pour un mercredi ne passe pas. Une échéance sans date (« d'ici vendredi ») reste telle quelle. */
+    const weekdaysOk = [...t.matchAll(WEEKDAY)].every((m) =>
+      new RegExp(String.raw`(?<![\p{L}])${m[1]}(?![\p{L}])`, "u").test(said),
+    );
+    return daysOk && weekdaysOk;
+  };
   const next = extraction.prochainRendezVous;
   return {
     ...extraction,
@@ -902,11 +914,61 @@ export function withDatesFromTranscript(
   };
 }
 
+/** Les quantièmes écrits en lettres, pour les comparer à ceux écrits en chiffres. */
+const DAY_WORDS: Record<string, number> = {
+  premier: 1,
+  un: 1,
+  deux: 2,
+  trois: 3,
+  quatre: 4,
+  cinq: 5,
+  six: 6,
+  sept: 7,
+  huit: 8,
+  neuf: 9,
+  dix: 10,
+  onze: 11,
+  douze: 12,
+  treize: 13,
+  quatorze: 14,
+  quinze: 15,
+  seize: 16,
+  "dix-sept": 17,
+  "dix-huit": 18,
+  "dix-neuf": 19,
+  vingt: 20,
+  "vingt et un": 21,
+  "vingt-et-un": 21,
+  "vingt-deux": 22,
+  "vingt-trois": 23,
+  "vingt-quatre": 24,
+  "vingt-cinq": 25,
+  "vingt-six": 26,
+  "vingt-sept": 27,
+  "vingt-huit": 28,
+  "vingt-neuf": 29,
+  trente: 30,
+  "trente et un": 31,
+  "trente-et-un": 31,
+};
+
+/** « quatre novembre » devient « 4 novembre », et seulement devant un mois. */
+const DAY_WORDS_BEFORE_MONTH = new RegExp(
+  String.raw`(?<![\p{L}-])(${Object.keys(DAY_WORDS)
+    .sort((a, b) => b.length - a.length)
+    .join("|")})\s+(?=(?:${MONTHS})(?![\p{L}]))`,
+  "giu",
+);
+
 function normalizedForDates(text: string): string {
   return text
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .toLocaleLowerCase("fr-FR")
-    .replace(/(\d{1,2})er\b/g, "$1")
-    .replace(/\s+/g, " ");
+    .replace(/\s+/g, " ")
+    .replace(
+      DAY_WORDS_BEFORE_MONTH,
+      (_, word: string) => `${DAY_WORDS[word] ?? word} `,
+    )
+    .replace(/(\d{1,2})er\b/g, "$1");
 }
