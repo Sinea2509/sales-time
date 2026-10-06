@@ -149,6 +149,7 @@ type SpeakerReading = {
   share: TalkShare;
   commercialKey: string;
   textBySpeaker: ReadonlyMap<string, string>;
+  turns: ReadonlyArray<{ speaker: string; words: number; text: string[] }>;
 };
 
 export function talkShareFromTranscript(
@@ -211,12 +212,12 @@ function readSpeakers(
   const questionsBySpeaker = new Map<string, number>();
   const labelBySpeaker = new Map<string, string>();
   const textParts = new Map<string, string[]>();
-  const turns: Array<{ speaker: string; words: number }> = [];
+  const turns: Array<{ speaker: string; words: number; text: string[] }> = [];
   let attributedWords = 0;
   let totalWords = 0;
   /** Les mots avant la première réplique : titre, date, durée de la réunion. */
   let preambleWords = 0;
-  let current: { speaker: string; words: number } | null = null;
+  let current: { speaker: string; words: number; text: string[] } | null = null;
 
   const add = (speaker: string, text: string) => {
     const w = countWords(text);
@@ -230,7 +231,10 @@ function readSpeakers(
       (questionsBySpeaker.get(speaker) ?? 0) + (text.match(/\?/g)?.length ?? 0),
     );
     attributedWords += w;
-    if (current) current.words += w;
+    if (current) {
+      current.words += w;
+      current.text.push(text.trim());
+    }
   };
 
   for (const line of lines) {
@@ -241,7 +245,7 @@ function readSpeakers(
       if (!labelBySpeaker.has(key)) labelBySpeaker.set(key, s.label);
       totalWords += countWords(s.spoken);
       if (!current || current.speaker !== key) {
-        current = { speaker: key, words: 0 };
+        current = { speaker: key, words: 0, text: [] };
         turns.push(current);
       }
       add(key, s.spoken);
@@ -366,7 +370,7 @@ function readSpeakers(
       basis === "labels" || basis === "names" || basis === "organizer",
     rolesBasis: basis,
   };
-  return { share, commercialKey, textBySpeaker };
+  return { share, commercialKey, textBySpeaker, turns };
 }
 
 /** Le critère de la grille qui note l'écoute. */
@@ -411,4 +415,71 @@ export function listeningMeasure(share: TalkShare): {
         ? ""
         : `Laisser davantage parler le prospect : le niveau 4 demande 40 % de parole au plus pour le commercial.`,
   };
+}
+
+/** Une question qui n'en est pas une : elle vérifie qu'on suit, sans rien demander. */
+const TAG_QUESTION =
+  /(vous voyez(?: ce que je veux dire)?|on est (?:bien )?d'accord|d'accord|c'est ça|n'est-ce pas|non|ok|okay|hein|vous me suivez|ça vous parle|ça va|vous comprenez|voilà|oui)\s*\?$/i;
+/** Ce qui ouvre une question : on ne peut pas y répondre par oui ou non. */
+const OPEN_QUESTION =
+  /(^|[\s,'’])(comment|pourquoi|qu['’]est-ce|quel|quelle|quels|quelles|combien|quand|où|qui|c['’]est quoi|à quoi|de quoi|dans quelle mesure|lequel|laquelle|lesquels|lesquelles|en quoi|qu['’]attendez|que pensez|que faites)(?=[\s,'’?]|$)/i;
+
+/** Les questions du commercial, rangées en trois sortes. */
+export type SellerQuestionStats = {
+  /** « Comment… ? », « Qu'est-ce qui… ? » : on ne peut pas y répondre par oui ou non. */
+  open: number;
+  /** « Vous faites de l'inter-entreprise ? » : oui ou non. */
+  closed: number;
+  /** « Vous voyez ce que je veux dire ? », « on est d'accord ? » : rien n'est demandé. */
+  tag: number;
+};
+
+/** Range une question du commercial. */
+export function classifyQuestion(question: string): keyof SellerQuestionStats {
+  const q = question.trim();
+  if (TAG_QUESTION.test(q) || q.split(/\s+/).length <= 2) return "tag";
+  return OPEN_QUESTION.test(q) ? "open" : "closed";
+}
+
+/** Ce que le produit mesure de la conduite du commercial. */
+export type SellerConversationMeasures = {
+  questions: SellerQuestionStats;
+  /**
+   * La plus longue prise de parole du commercial qui commence dans le premier
+   * tiers du rendez-vous, en mots : un argumentaire déroulé avant que le
+   * besoin soit exploré.
+   */
+  earlyLongestRunWords: number;
+};
+
+/**
+ * Mesure les questions du commercial et ses longs passages en début de
+ * rendez-vous. Rend `null` quand le transcript ne distingue pas ses
+ * intervenants.
+ */
+export function sellerConversationMeasures(
+  transcript: string,
+  hints: TalkShareHints = {},
+): SellerConversationMeasures | null {
+  const reading = readSpeakers(transcript, hints);
+  if (!reading) return null;
+  const questions: SellerQuestionStats = { open: 0, closed: 0, tag: 0 };
+  const total = reading.turns.reduce((acc, t) => acc + t.words, 0);
+  let seen = 0;
+  let earlyLongestRunWords = 0;
+  for (const turn of reading.turns) {
+    const startsEarly = seen < total / 3;
+    seen += turn.words;
+    if (turn.speaker !== reading.commercialKey) continue;
+    if (startsEarly) {
+      earlyLongestRunWords = Math.max(earlyLongestRunWords, turn.words);
+    }
+    const text = turn.text.join(" ");
+    for (const piece of text.split(/(?<=\?)/)) {
+      if (!piece.trim().endsWith("?")) continue;
+      const sentence = piece.split(/[.!…]\s/).pop() ?? piece;
+      questions[classifyQuestion(sentence)] += 1;
+    }
+  }
+  return { questions, earlyLongestRunWords };
 }

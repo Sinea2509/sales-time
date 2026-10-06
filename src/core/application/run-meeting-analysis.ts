@@ -35,12 +35,17 @@ import {
   listeningMeasure,
   talkShareFromTranscript,
   talkShareInstruction,
+  sellerConversationMeasures,
   transcriptSides,
 } from "@/src/core/domain/talk-share-from-transcript";
 import {
-  applySoncasEvidenceRule,
-  keepSoncasEvidenceFoundIn,
-} from "@/src/core/domain/soncas-evidence-rule";
+  conversationCaps,
+  conversationMeasuresInstruction,
+} from "@/src/core/domain/conversation-caps";
+import {
+  discFromMoments,
+  soncasFromMoments,
+} from "@/src/core/domain/profile-moments";
 import type { AnalysisPort } from "@/src/core/ports/analysis-port";
 import type {
   AiCallKind,
@@ -152,6 +157,11 @@ export async function runMeetingAnalysis(
   */
   const speakerHints = { prospectNames: [meeting.prospectName] };
   const sides = transcriptSides(transcriptForAnalysis, speakerHints);
+  /* Les questions du commercial et ses longs passages en début de rendez-vous, mesurés. */
+  const conversation = sellerConversationMeasures(
+    transcriptForAnalysis,
+    speakerHints,
+  );
   const talkShare = talkShareFromTranscript(
     transcriptForAnalysis,
     speakerHints,
@@ -332,20 +342,29 @@ export async function runMeetingAnalysis(
           revue du 5 octobre a trouvé un levier appuyé sur une phrase du
           commercial.
         */
+        /*
+          SONCAS et DISC rendent des passages ; le produit les vérifie dans
+          les paroles du prospect et en calcule les notes.
+        */
+        const prospectText = sides?.prospect ?? evidenceSource;
         const result =
           input.kind === "SONCAS"
-            ? applySoncasEvidenceRule(
-                keepSoncasEvidenceFoundIn(
-                  out.result as Parameters<typeof keepSoncasEvidenceFoundIn>[0],
-                  sides?.prospect ?? evidenceSource,
-                ),
+            ? soncasFromMoments(
+                out.result as Parameters<typeof soncasFromMoments>[0],
+                prospectText,
+                sides?.seller ?? null,
               )
-            : input.kind === "OBJECTIONS"
-              ? markObjectionsVerbatim(
-                  out.result as Parameters<typeof markObjectionsVerbatim>[0],
-                  sides?.prospect ?? evidenceSource,
+            : input.kind === "DISC"
+              ? discFromMoments(
+                  out.result as Parameters<typeof discFromMoments>[0],
+                  prospectText,
                 )
-              : out.result;
+              : input.kind === "OBJECTIONS"
+                ? markObjectionsVerbatim(
+                    out.result as Parameters<typeof markObjectionsVerbatim>[0],
+                    sides?.prospect ?? evidenceSource,
+                  )
+                : out.result;
         const row = await deps.meetings.createAnalysis({
           meetingId: meeting.id,
           kind: input.kind,
@@ -386,6 +405,7 @@ export async function runMeetingAnalysis(
         [
           input.organizationPlaybookMarkdown,
           talkShare ? talkShareInstruction(talkShare) : null,
+          conversationMeasuresInstruction(conversation),
         ],
       );
       const systemPrompt = withScorecardSystemPrompt(
@@ -454,6 +474,7 @@ export async function runMeetingAnalysis(
             talkShare
               ? { [LISTENING_CRITERION_KEY]: listeningMeasure(talkShare) }
               : {},
+            conversationCaps(conversation),
           ),
           grid,
         );

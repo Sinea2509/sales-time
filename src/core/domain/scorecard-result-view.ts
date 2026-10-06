@@ -43,6 +43,8 @@ export type ScorecardCriterionView = {
   readonly learned: string;
   /** Ce qui manque pour atteindre le niveau 4. */
   readonly missing: string;
+  /** Vrai quand le critère n'a pas pu être observé et ne compte pas. */
+  readonly unobservable: boolean;
 };
 
 export type ScorecardBlockView = {
@@ -124,7 +126,14 @@ function preuvesParCle(
 
 /** « Sujet creusé avec relance, information partielle » : le relevé en mots. */
 function couverture(entry: ScorecardCriterionResult | undefined): string {
+  if (entry?.unobservable) {
+    return "Non observable dans ce transcript : ce critère ne compte pas dans la note";
+  }
   if (!entry?.explored || !entry.obtained) return "";
+  if (entry.capped) {
+    const base = `${SCORECARD_EXPLORED_LABEL[entry.explored]}, ${SCORECARD_OBTAINED_LABEL[entry.obtained]} ; plafonné : ${entry.capped}`;
+    return base.charAt(0).toUpperCase() + base.slice(1);
+  }
   const texte = `${SCORECARD_EXPLORED_LABEL[entry.explored]}, ${SCORECARD_OBTAINED_LABEL[entry.obtained]}${entry.unproven ? " ; aucune citation retrouvée dans le transcript, le niveau reste à 1" : ""}`;
   return texte.charAt(0).toUpperCase() + texte.slice(1);
 }
@@ -173,6 +182,7 @@ function detailDuBloc(
       coverage: couverture(entry),
       learned: entry?.learned?.trim() ?? "",
       missing: entry?.missing?.trim() ?? "",
+      unobservable: entry?.unobservable === true,
     };
   });
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  DISC_MOMENTS_INSTRUCTION,
+  SONCAS_MOMENTS_INSTRUCTION,
   FRENCH_QUALITY_INSTRUCTION,
   FRENCH_TYPOGRAPHY_INSTRUCTION,
   KISS_SELLER_SKILLS_INSTRUCTION,
@@ -15,10 +17,6 @@ import {
   coachingScoreScaleInstruction,
 } from "@/src/core/domain/coaching-score-scale";
 import { sellerSkillScoresSchema } from "@/src/core/domain/kiss-result-zod";
-import {
-  discScoreScaleInstruction,
-  soncasScoreScaleInstruction,
-} from "@/src/core/domain/profile-score-scale";
 import {
   DEFAULT_SCORECARD_GRID,
   scorecardCriteria,
@@ -56,8 +54,8 @@ describe("withDataScopeSystemPrompt", () => {
   */
   it("does not calibrate the profile scores, which belong to SONCAS and DISC", () => {
     const prompt = withDataScopeSystemPrompt("x");
-    expect(prompt).not.toContain(soncasScoreScaleInstruction());
-    expect(prompt).not.toContain(discScoreScaleInstruction());
+    expect(prompt).not.toContain(SONCAS_MOMENTS_INSTRUCTION);
+    expect(prompt).not.toContain(DISC_MOMENTS_INSTRUCTION);
   });
 
   /*
@@ -91,8 +89,8 @@ describe("les consignes livrées", () => {
     expect(KISS_SELLER_SKILLS_INSTRUCTION).not.toContain("—");
     expect(FRENCH_QUALITY_INSTRUCTION).not.toContain("—");
     expect(coachingScoreScaleInstruction()).not.toContain("—");
-    expect(soncasScoreScaleInstruction()).not.toContain("—");
-    expect(discScoreScaleInstruction()).not.toContain("—");
+    expect(SONCAS_MOMENTS_INSTRUCTION).not.toContain("—");
+    expect(DISC_MOMENTS_INSTRUCTION).not.toContain("—");
     expect(scorecardGridInstruction(DEFAULT_SCORECARD_GRID)).not.toContain("—");
   });
 });
@@ -108,11 +106,11 @@ describe("withSoncasSystemPrompt", () => {
   it("keeps the editable markdown and appends the SONCAS scale", () => {
     const prompt = withSoncasSystemPrompt("CONSIGNE SONCAS DE L'ORG");
     expect(prompt).toContain("CONSIGNE SONCAS DE L'ORG");
-    expect(prompt).toContain(soncasScoreScaleInstruction());
+    expect(prompt).toContain(SONCAS_MOMENTS_INSTRUCTION);
   });
 
   it("appends the scale exactly once", () => {
-    const calibration = soncasScoreScaleInstruction();
+    const calibration = SONCAS_MOMENTS_INSTRUCTION;
     expect(withSoncasSystemPrompt("CONSIGNE").split(calibration)).toHaveLength(
       2,
     );
@@ -120,7 +118,7 @@ describe("withSoncasSystemPrompt", () => {
 
   it("survives a super-admin rewriting the whole SONCAS prompt", () => {
     expect(withSoncasSystemPrompt("Note comme tu le sens.")).toContain(
-      soncasScoreScaleInstruction(),
+      SONCAS_MOMENTS_INSTRUCTION,
     );
   });
 
@@ -136,7 +134,7 @@ describe("withSoncasSystemPrompt", () => {
     non comme une correction de ce qui suit.
   */
   it("closes with the scale, after everything the org may write", () => {
-    const calibration = soncasScoreScaleInstruction();
+    const calibration = SONCAS_MOMENTS_INSTRUCTION;
     const prompt = withSoncasSystemPrompt("CONSIGNE MAISON");
     expect(prompt.indexOf("CONSIGNE MAISON")).toBeLessThan(
       prompt.indexOf(calibration),
@@ -152,7 +150,7 @@ describe("withSoncasSystemPrompt", () => {
   */
   it("does not carry the DISC scale", () => {
     expect(withSoncasSystemPrompt("CONSIGNE")).not.toContain(
-      discScoreScaleInstruction(),
+      DISC_MOMENTS_INSTRUCTION,
     );
   });
 
@@ -167,17 +165,17 @@ describe("withDiscSystemPrompt", () => {
   it("keeps the editable markdown and appends the DISC scale", () => {
     const prompt = withDiscSystemPrompt("CONSIGNE DISC DE L'ORG");
     expect(prompt).toContain("CONSIGNE DISC DE L'ORG");
-    expect(prompt).toContain(discScoreScaleInstruction());
+    expect(prompt).toContain(DISC_MOMENTS_INSTRUCTION);
   });
 
   it("appends the scale exactly once", () => {
-    const calibration = discScoreScaleInstruction();
+    const calibration = DISC_MOMENTS_INSTRUCTION;
     expect(withDiscSystemPrompt("CONSIGNE").split(calibration)).toHaveLength(2);
   });
 
   it("survives a super-admin rewriting the whole DISC prompt", () => {
     expect(withDiscSystemPrompt("Note comme tu le sens.")).toContain(
-      discScoreScaleInstruction(),
+      DISC_MOMENTS_INSTRUCTION,
     );
   });
 
@@ -188,7 +186,7 @@ describe("withDiscSystemPrompt", () => {
   });
 
   it("closes with the scale, after everything the org may write", () => {
-    const calibration = discScoreScaleInstruction();
+    const calibration = DISC_MOMENTS_INSTRUCTION;
     const prompt = withDiscSystemPrompt("CONSIGNE MAISON");
     expect(prompt.indexOf("CONSIGNE MAISON")).toBeLessThan(
       prompt.indexOf(calibration),
@@ -204,7 +202,7 @@ describe("withDiscSystemPrompt", () => {
   */
   it("does not carry the SONCAS scale", () => {
     expect(withDiscSystemPrompt("CONSIGNE")).not.toContain(
-      soncasScoreScaleInstruction(),
+      SONCAS_MOMENTS_INSTRUCTION,
     );
   });
 

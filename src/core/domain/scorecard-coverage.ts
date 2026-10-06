@@ -129,11 +129,19 @@ function checkedProofs(
  *
  * Seules les clés de la grille sont gardées, une fois chacune.
  */
+/** Un plafond posé par une mesure du produit, avec sa raison. */
+export type ScorecardCap = { max: number; reason: string };
+
+/** Un nombre dit en chiffres ou en toutes lettres. */
+const FIGURE =
+  /\d|\b(deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|trente|quarante|cinquante|soixante|cent|cents|mille|million|millions|dizaine|douzaine|vingtaine|trentaine|centaine)\b/i;
+
 export function levelScorecardObservations(
   generated: ScorecardGeneratedResult,
   grid: ScorecardGrid,
   sources: ScorecardEvidenceSources,
   measured: Readonly<Record<string, ScorecardMeasuredCriterion>> = {},
+  caps: Readonly<Record<string, ScorecardCap>> = {},
 ): ScorecardLeveledResult {
   const words = {
     all: evidenceWords(sources.all),
@@ -169,7 +177,46 @@ export function levelScorecardObservations(
     }
     const fromTable = scorecardLevelFromCoverage(explored, obtained);
     const unproven = proofs.length === 0 && fromTable > 1;
-    const level = unproven ? 1 : fromTable;
+    let level = unproven ? 1 : fromTable;
+    let capped: string | undefined;
+    let missing = observation.missing.trim();
+
+    /*
+      Un chiffre exigé : sans chiffre dit par le prospect (ses citations
+      retrouvées), le niveau 4 n'est pas atteint.
+    */
+    if (
+      criterion.requiresFigure &&
+      level === SCORECARD_LEVEL_MAX &&
+      !proofs.some((p) => p.who === "prospect" && FIGURE.test(p.quote))
+    ) {
+      level = SCORECARD_LEVEL_MAX - 1;
+      capped = "aucun chiffre dit par le prospect";
+    }
+    /* Un plafond mesuré par le produit (questions, argumentaire en début de rendez-vous). */
+    const cap = caps[key];
+    if (cap && level > cap.max) {
+      level = cap.max;
+      capped = cap.reason;
+    }
+    if (capped && !missing) missing = capped;
+
+    /*
+      Un moment que le transcript ne montre pas (l'ouverture, quand
+      l'enregistrement a commencé après) sort du calcul au lieu de coûter des
+      points. Seuls les critères qui le permettent sont concernés.
+    */
+    if (criterion.canBeUnobservable && observation.observable === false) {
+      criteria.push({
+        key: criterion.key,
+        level: 0,
+        evidence: [],
+        learned: observation.learned.trim(),
+        missing: "",
+        unobservable: true,
+      });
+      continue;
+    }
 
     const measure = criterion.measuredByProduct ? measured[key] : undefined;
     if (measure) {
@@ -189,8 +236,9 @@ export function levelScorecardObservations(
       explored,
       obtained,
       learned: observation.learned.trim(),
-      missing: observation.missing.trim(),
+      missing,
       ...(unproven ? { unproven: true } : {}),
+      ...(capped ? { capped } : {}),
     });
   }
 
@@ -208,11 +256,16 @@ export function levelScorecardObservations(
   }
 
   const levelOf = new Map(criteria.map((c) => [c.key, c.level]));
+  const outOfScore = new Set(
+    criteria.filter((c) => c.unobservable).map((c) => c.key),
+  );
   const pointsLost = generated.pointsLost
     .map((p) => ({ ...p, key: p.key.trim().toUpperCase() }))
     .filter(
       (p) =>
-        known.has(p.key) && (levelOf.get(p.key) ?? 0) < SCORECARD_LEVEL_MAX,
+        known.has(p.key) &&
+        !outOfScore.has(p.key) &&
+        (levelOf.get(p.key) ?? 0) < SCORECARD_LEVEL_MAX,
     )
     .sort((a, b) => (levelOf.get(a.key) ?? 0) - (levelOf.get(b.key) ?? 0));
 

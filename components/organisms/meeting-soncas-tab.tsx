@@ -1,4 +1,5 @@
 import { ToneChip } from "@/components/atoms/tone-chip";
+import { ProfileMomentsList } from "@/components/molecules/profile-moments-list";
 import { Card, CardContent } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
@@ -109,9 +110,9 @@ export function MeetingSoncasTab({
                     ))
                   ) : (
                     <p className="text-muted-foreground text-xs leading-relaxed">
-                      Aucune preuve entendue : le score ne peut pas dépasser{" "}
-                      {PROFILE_SCORE_UNPROVEN_MAX}, c&apos;est la règle
-                      appliquée par le produit après l&apos;analyse.
+                      {soncas.moments
+                        ? "Aucun passage du rendez-vous ne montre ce levier."
+                        : `Aucune preuve entendue : le score ne peut pas dépasser ${PROFILE_SCORE_UNPROVEN_MAX}, c'est la règle appliquée par le produit après l'analyse.`}
                     </p>
                   )}
                 </div>
@@ -120,6 +121,23 @@ export function MeetingSoncasTab({
           </div>
         </CardContent>
       </Card>
+
+      <ProfileMomentsList
+        title="Les passages qui fondent l'analyse"
+        intro="Les réponses du prospect qui révèlent ce qui le fait choisir. Chaque levier vaut ce que valent ses passages : deux points pour un passage net, un pour un passage faible."
+        moments={(soncas.moments ?? []).map((m) => ({
+          moment: m.moment,
+          tags: m.levers
+            .map(
+              (l) =>
+                `${SONCAS_NAMES[l.lever]} (${l.strength === "nette" ? "net" : "faible"})`,
+            )
+            .join(", "),
+          question: m.sellerQuestion,
+          words: m.prospectWords,
+          reading: m.reading,
+        }))}
+      />
 
       {soncas.actionableAdvice ? (
         <div className="grid gap-4 sm:grid-cols-2">

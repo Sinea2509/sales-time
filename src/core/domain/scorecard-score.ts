@@ -16,6 +16,8 @@ import { SCORECARD_LEVEL_MAX, type ScorecardGrid } from "./scorecard-grid";
 export type ScorecardLevel = {
   readonly key: string;
   readonly level: number;
+  /** Vrai quand le critère n'a pas pu être observé : il sort du calcul de son bloc. */
+  readonly unobservable?: boolean;
 };
 
 /** Le score d'un bloc, entier, et le maximum qu'il pouvait atteindre. */
@@ -100,14 +102,26 @@ export function computeScorecardScore(
   levels: readonly ScorecardLevel[],
 ): ScorecardScore {
   const parCle = scorecardLevelsByKey(levels);
+  /*
+    Un critère non observable sort du calcul de son bloc : le bloc garde son
+    poids, et se mesure sur les critères qu'on a pu juger.
+  */
+  const horsCalcul = new Set(
+    levels
+      .filter((entry) => entry.unobservable)
+      .map((entry) => entry.key.trim().toUpperCase()),
+  );
 
   const exacts = grid.blocks.map((block) => {
-    const somme = block.criteria.reduce(
+    const juges = block.criteria.filter(
+      (criterion) => !horsCalcul.has(criterion.key.toUpperCase()),
+    );
+    const somme = juges.reduce(
       (total, criterion) =>
         total + (parCle.get(criterion.key.toUpperCase()) ?? 0),
       0,
     );
-    const diviseur = SCORECARD_LEVEL_MAX * block.criteria.length;
+    const diviseur = SCORECARD_LEVEL_MAX * juges.length;
     return diviseur > 0 ? (block.weight * somme) / diviseur : 0;
   });
 

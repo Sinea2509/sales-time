@@ -62,6 +62,14 @@ export type ScorecardCriterion = {
    * mesure (la répartition de la parole pour l'écoute).
    */
   readonly measuredByProduct?: boolean;
+  /**
+   * Vrai quand le transcript peut ne pas montrer le moment que le critère
+   * juge (l'ouverture du rendez-vous, quand l'enregistrement a commencé
+   * après) : le critère sort alors du calcul au lieu de coûter des points.
+   */
+  readonly canBeUnobservable?: boolean;
+  /** Vrai quand le niveau 4 exige un chiffre donné par le prospect. */
+  readonly requiresFigure?: boolean;
 };
 
 /** Un bloc de la grille : une famille de critères et son poids. */
@@ -170,8 +178,9 @@ export const DECOUVERTE_GRID: ScorecardGrid = {
         {
           key: "B3",
           label: "Impact et coût de l'inaction",
+          requiresFigure: true,
           expected:
-            "Ce que le problème coûte, en temps, en argent ou en risque, et ce qui arrive si rien ne bouge.",
+            "Ce que le problème coûte, en temps, en argent ou en risque, chiffré par le prospect, et ce qui arrive si rien ne bouge. Sans chiffre dit par le prospect, pas de niveau 4.",
         },
         {
           key: "B4",
@@ -331,8 +340,9 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
         {
           key: "A1",
           label: "Taille et organisation du compte",
+          requiresFigure: true,
           expected:
-            "Des ordres de grandeur chiffrés obtenus du prospect : effectif, nombre de sociétés, de sites ou d'équipes concernés.",
+            "Des ordres de grandeur chiffrés obtenus du prospect : effectif, nombre de sociétés, de sites ou d'équipes concernés. Sans chiffre dit par le prospect, pas de niveau 4.",
           lookFor:
             "Tout ce qui situe la taille du compte : effectifs, nombre de sociétés ou d'entités, de sites, de managers, d'équipes.",
           examples: [
@@ -443,8 +453,9 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
         {
           key: "B5",
           label: "Périmètre et volumétrie",
+          requiresFigure: true,
           expected:
-            "Qui est concerné, combien, où, sous quel format : de quoi dimensionner une proposition.",
+            "Qui est concerné, combien, où, sous quel format : de quoi dimensionner une proposition. Sans nombre de personnes, de groupes ou de sessions dit par le prospect, pas de niveau 4.",
           lookFor:
             "Le nombre de personnes ou de groupes concernés, les publics, les sites, les formats et durées possibles, le volume annuel.",
           examples: [
@@ -602,7 +613,7 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
           expected:
             "Des questions ouvertes, des relances sur les réponses vagues, des reformulations, tout au long du rendez-vous.",
           lookFor:
-            "Les questions ouvertes, les relances (« c'est-à-dire ? », « par exemple ? »), les reformulations du commercial.",
+            "Les questions ouvertes (comment, pourquoi, qu'est-ce que, combien…), les relances (« c'est-à-dire ? », « par exemple ? »), les reformulations. Les questions fermées et les questions de vérification (« vous voyez ce que je veux dire ? », « on est d'accord ? ») ne comptent pas : le produit les compte et plafonne le critère quand elles dominent.",
         },
         {
           key: "E3",
@@ -610,11 +621,12 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
           expected:
             "Un discours branché sur ce que le prospect vient de dire, illustré d'exemples qui lui parlent, jamais un argumentaire déroulé tel quel.",
           lookFor:
-            "Les moments où le commercial relie son offre à ce que le prospect a dit, avec un exemple ou un cas proche.",
+            "Les moments où le commercial relie son offre à ce que le prospect vient de dire, avec un exemple ou un cas proche. Un argumentaire déroulé avant que le besoin soit exploré est le contraire : le produit plafonne le critère quand un long passage du commercial arrive dans le premier tiers du rendez-vous.",
         },
         {
           key: "E4",
           label: "Cadrage et prise de lead",
+          canBeUnobservable: true,
           expected:
             "En ouverture, le commercial pose l'objectif, le déroulé et la durée du rendez-vous, obtient l'accord du prospect, puis garde la main sur le déroulé.",
           lookFor:

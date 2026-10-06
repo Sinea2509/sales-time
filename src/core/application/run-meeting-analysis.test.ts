@@ -1,6 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
 import { meetingAnalysisContext } from "@/src/core/domain/meeting-analysis-context";
 import {
+  DISC_MOMENTS_INSTRUCTION,
+  SONCAS_MOMENTS_INSTRUCTION,
   KISS_SELLER_SKILLS_INSTRUCTION,
   withDiscSystemPrompt,
   withKissSystemPrompt,
@@ -9,15 +11,11 @@ import {
 } from "@/lib/ai-system-prompt";
 import { coachingScoreScaleInstruction } from "@/src/core/domain/coaching-score-scale";
 import {
-  discScoreScaleInstruction,
-  PROFILE_SCORE_UNPROVEN_MAX,
-  soncasScoreScaleInstruction,
-} from "@/src/core/domain/profile-score-scale";
-import {
   DEFAULT_SCORECARD_GRID,
   scorecardCriteria,
 } from "@/src/core/domain/scorecard-grid";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
+import { profileScoreFromPoints } from "@/src/core/domain/profile-moments";
 import { noOrganizationPrompts } from "./testing/in-memory-organization-prompts";
 
 /**
@@ -738,8 +736,8 @@ describe("runMeetingAnalysis : prompt système composé", () => {
     expect(logged.systemPrompt).toBe(
       withSoncasSystemPrompt(systemMarkdownSentFor(analysis, "SONCAS")),
     );
-    expect(logged.systemPrompt).toContain(soncasScoreScaleInstruction());
-    expect(logged.systemPrompt).not.toContain(discScoreScaleInstruction());
+    expect(logged.systemPrompt).toContain(SONCAS_MOMENTS_INSTRUCTION);
+    expect(logged.systemPrompt).not.toContain(DISC_MOMENTS_INSTRUCTION);
   });
 
   it("journalise pour DISC le texte que l'adaptateur envoie vraiment", async () => {
@@ -760,8 +758,8 @@ describe("runMeetingAnalysis : prompt système composé", () => {
     expect(logged.systemPrompt).toBe(
       withDiscSystemPrompt(systemMarkdownSentFor(analysis, "DISC")),
     );
-    expect(logged.systemPrompt).toContain(discScoreScaleInstruction());
-    expect(logged.systemPrompt).not.toContain(soncasScoreScaleInstruction());
+    expect(logged.systemPrompt).toContain(DISC_MOMENTS_INSTRUCTION);
+    expect(logged.systemPrompt).not.toContain(SONCAS_MOMENTS_INSTRUCTION);
   });
 });
 
@@ -771,27 +769,39 @@ describe("runMeetingAnalysis : prompt système composé", () => {
   qu'elle soit branchée du bon côté : après le journal, avant l'enregistrement,
   et sur SONCAS seulement.
 */
-describe("runMeetingAnalysis : verbatim obligatoire sur SONCAS", () => {
+describe("runMeetingAnalysis : SONCAS et DISC par passages", () => {
+  const CONSEILS = {
+    whatItMeans: "Sens.",
+    howToTalk: "Ton.",
+    whatToAvoid: "Évite.",
+  };
+
   /**
-   * Ce que rendrait un modèle qui pose un levier haut sans rien pour l'appuyer.
-   *
-   * Confort est appuyé et monte à 70 : sans lui, Argent ramené à 19 resterait le
-   * mieux noté des six et le dominant ne bougerait pas, si bien que le test ne
-   * dirait rien de la façon dont on le recalcule.
+   * Un passage net sur le confort, retrouvé dans le transcript, et un passage
+   * net sur l'argent que la prospect n'a jamais dit.
    */
-  function soncasSansPreuveSurArgent() {
-    const plancher = { score: 10, evidence: ["on l a entendu"] };
+  function soncasRendu() {
     return {
-      drivers: {
-        securite: plancher,
-        orgueil: plancher,
-        nouveaute: plancher,
-        confort: { score: 70, evidence: ["je veux que ca roule tout seul"] },
-        argent: { score: 90, evidence: [] },
-        sympathie: plancher,
-      },
-      dominant: "argent" as const,
-      summary: "Un prospect qui compte.",
+      moments: [
+        {
+          moment: "",
+          topic: "attentes" as const,
+          sellerQuestion: "",
+          prospectWords: "Je veux que ça roule tout seul.",
+          levers: [{ lever: "confort" as const, strength: "nette" as const }],
+          reading: "Elle veut de la simplicité.",
+        },
+        {
+          moment: "",
+          topic: "reaction_au_prix" as const,
+          sellerQuestion: "",
+          prospectWords: "Ça nous coûte une fortune chaque année.",
+          levers: [{ lever: "argent" as const, strength: "nette" as const }],
+          reading: "Inventé.",
+        },
+      ],
+      summary: "Un prospect qui veut du simple.",
+      actionableAdvice: CONSEILS,
     };
   }
 
@@ -800,7 +810,6 @@ describe("runMeetingAnalysis : verbatim obligatoire sur SONCAS", () => {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue({
         id: "m1",
         organizationId: "org_1",
-        // Les preuves citées par les résultats simulés sont dans le transcript.
         transcript:
           "On l a entendu. Je veux que ça roule tout seul. C'est trop cher.",
         notes: null,
@@ -837,84 +846,82 @@ describe("runMeetingAnalysis : verbatim obligatoire sur SONCAS", () => {
     return { meetings, prompts, organizationPrompts, analysis, aiLogs };
   }
 
-  it("enregistre le levier sans preuve ramené au seuil", async () => {
-    const deps = harness("SONCAS", soncasSansPreuveSurArgent());
+  it("calcule les leviers sur les seuls passages retrouvés dans les paroles du prospect", async () => {
+    const deps = harness("SONCAS", soncasRendu());
     await runMeetingAnalysis(deps as never, {
       organizationId: "org_1",
       meetingId: "m1",
       kind: "SONCAS",
     });
     const persiste = deps.meetings.createAnalysis.mock.calls[0][0] as {
-      result: { drivers: Record<string, { score: number }>; dominant: string };
+      result: {
+        drivers: Record<string, { score: number; evidence: string[] }>;
+        dominant: string;
+        moments: unknown[];
+      };
     };
+    expect(persiste.result.moments).toHaveLength(1);
+    expect(persiste.result.drivers.confort).toEqual({
+      score: profileScoreFromPoints(2),
+      evidence: ["Je veux que ça roule tout seul."],
+    });
     expect(persiste.result.drivers.argent?.score).toBe(
-      PROFILE_SCORE_UNPROVEN_MAX,
+      profileScoreFromPoints(0),
     );
     expect(persiste.result.dominant).toBe("confort");
   });
 
   /*
-    Le journal garde ce que le modèle a rendu, pas ce que le produit en a fait.
-    C'est la seule trace où l'on puisse constater qu'un 90 avait été annoncé sans
-    citation : la fiche, elle, ne montrera plus que le 19, et un journal corrigé
-    en même temps qu'elle rendrait la correction invisible partout.
+    Le journal garde ce que le modèle a rendu, passage inventé compris : c'est
+    la seule trace où l'on puisse constater qu'il avait été proposé.
   */
-  it("laisse dans le journal la note que le modèle avait annoncée", async () => {
-    const deps = harness("SONCAS", soncasSansPreuveSurArgent());
+  it("laisse dans le journal les passages que le modèle avait rendus", async () => {
+    const deps = harness("SONCAS", soncasRendu());
     await runMeetingAnalysis(deps as never, {
       organizationId: "org_1",
       meetingId: "m1",
       kind: "SONCAS",
     });
     const logged = deps.aiLogs.createLog.mock.calls[0][0] as {
-      rawOutput: { drivers: Record<string, { score: number }> };
+      rawOutput: { moments: unknown[] };
     };
-    expect(logged.rawOutput.drivers.argent?.score).toBe(90);
+    expect(logged.rawOutput.moments).toHaveLength(2);
   });
 
-  it("n'applique aucune correction à un SONCAS entièrement appuyé", async () => {
-    const rendu = {
-      ...soncasSansPreuveSurArgent(),
-      drivers: {
-        ...soncasSansPreuveSurArgent().drivers,
-        argent: { score: 90, evidence: ["c est trop cher"] },
-      },
-    };
-    const deps = harness("SONCAS", rendu);
-    await runMeetingAnalysis(deps as never, {
-      organizationId: "org_1",
-      meetingId: "m1",
-      kind: "SONCAS",
+  it("calcule les styles DISC sur leurs passages", async () => {
+    const deps = harness("DISC", {
+      moments: [
+        {
+          moment: "",
+          situation: "reaction_au_prix" as const,
+          prospectWords: "C'est trop cher.",
+          behaviour: "Elle tranche en trois mots.",
+          styles: [{ style: "D" as const, strength: "nette" as const }],
+        },
+      ],
+      summary: "Directe.",
+      actionableAdvice: CONSEILS,
     });
-    const persiste = deps.meetings.createAnalysis.mock.calls[0][0] as {
-      result: unknown;
-    };
-    expect(persiste.result).toBe(rendu);
-  });
-
-  /*
-    DISC passe sans correction, et pas par oubli : son schéma porte une seule
-    liste `evidence` pour quatre styles, si bien qu'aucune preuve n'est
-    rattachable à une note en particulier. Une règle automatique y jetterait les
-    quatre notes dès que la liste est vide, ou n'en jetterait aucune.
-  */
-  it("enregistre le résultat DISC tel que le modèle l'a rendu", async () => {
-    const rendu = {
-      scores: { D: 80, I: 20, S: 20, C: 20 },
-      dominant: "D" as const,
-      evidence: [],
-      summary: "Direct.",
-    };
-    const deps = harness("DISC", rendu);
     await runMeetingAnalysis(deps as never, {
       organizationId: "org_1",
       meetingId: "m1",
       kind: "DISC",
     });
     const persiste = deps.meetings.createAnalysis.mock.calls[0][0] as {
-      result: unknown;
+      result: {
+        scores: Record<string, number>;
+        dominant: string;
+        evidence: string[];
+      };
     };
-    expect(persiste.result).toBe(rendu);
+    expect(persiste.result.scores).toEqual({
+      D: profileScoreFromPoints(2),
+      I: profileScoreFromPoints(0),
+      S: profileScoreFromPoints(0),
+      C: profileScoreFromPoints(0),
+    });
+    expect(persiste.result.dominant).toBe("D");
+    expect(persiste.result.evidence[0]).toContain("C'est trop cher.");
   });
 });
 
@@ -938,6 +945,7 @@ describe("runMeetingAnalysis : scorecard", () => {
       obtained,
       learned: "",
       missing: "",
+      observable: true,
       evidence: [{ who: "prospect", quote: "extrait" }],
     }));
   }

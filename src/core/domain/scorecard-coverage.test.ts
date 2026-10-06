@@ -48,6 +48,7 @@ describe("levelScorecardObservations", () => {
           obtained: "exploitable",
           learned: "Sandrine décide.",
           missing: "",
+          observable: true,
           evidence: [
             {
               who: "commercial",
@@ -76,6 +77,7 @@ describe("levelScorecardObservations", () => {
           obtained: "exploitable",
           learned: "Cegos a déçu.",
           missing: "",
+          observable: true,
           evidence: [
             {
               who: "commercial",
@@ -101,6 +103,7 @@ describe("levelScorecardObservations", () => {
           obtained: "exploitable",
           learned: "",
           missing: "",
+          observable: true,
           evidence: [
             { who: "commercial", quote: "Qui d'autre faut-il convaincre ?" },
           ],
@@ -122,6 +125,7 @@ describe("levelScorecardObservations", () => {
           obtained: "exploitable",
           learned: "Coût chiffré.",
           missing: "",
+          observable: true,
           evidence: [
             {
               who: "prospect",
@@ -161,6 +165,7 @@ describe("levelScorecardObservations", () => {
       obtained: "exploitable" as const,
       learned: "",
       missing: "",
+      observable: true,
       evidence: [
         { who: "prospect" as const, quote: "Je vais voir avec Sandrine" },
       ],

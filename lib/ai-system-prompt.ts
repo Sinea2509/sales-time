@@ -1,8 +1,4 @@
 import { coachingScoreScaleInstruction } from "@/src/core/domain/coaching-score-scale";
-import {
-  discScoreScaleInstruction,
-  soncasScoreScaleInstruction,
-} from "@/src/core/domain/profile-score-scale";
 import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
 import { scorecardGridInstruction } from "@/src/core/domain/scorecard-prompt";
 
@@ -62,6 +58,45 @@ export const SONCAS_READING_INSTRUCTION = `## Où lire les leviers SONCAS
 - Le levier principal est celui qui revient le plus et qui pèse sur la décision. Quand deux leviers se valent, le résumé le dit.`;
 
 /**
+ * La méthode SONCAS par passages, fixée hors de la consigne modifiable : elle
+ * décrit le format de réponse et la façon dont le produit calcule les notes.
+ */
+export const SONCAS_MOMENTS_INSTRUCTION = `## La méthode : des passages-clés, pas des mots pris partout
+Tu ne donnes aucune note. Tu relèves 3 à 8 passages-clés du rendez-vous, et le produit calcule les notes à partir d'eux.
+
+Un passage-clé est une réponse du prospect qui révèle ce qui le fait choisir. Cherche-les en priorité dans ses réponses à ces questions, quelle que soit leur formulation :
+- ce qui est important pour lui, ce qu'il attend d'un prestataire ou d'une solution (\`attentes\`, \`criteres_de_choix\`) ;
+- ce qui ferait qu'il vous teste, ce qu'il lui faut pour dire oui (\`conditions\`, \`decision\`) ;
+- ce qui l'a déçu ou satisfait avant (\`experience_passee\`) ;
+- sa réaction au prix annoncé (\`reaction_au_prix\`) ;
+- ses objections (\`objection\`), et ce qu'il dit de la relation qu'il veut (\`relation\`).
+Ignore le reste : un mot isolé dans un passage technique ou descriptif ne dit rien d'un levier.
+
+Pour chaque passage :
+- \`prospectWords\` : les mots du prospect, recopiés mot pour mot (une ou deux phrases). Le produit les cherche dans ses paroles ; un passage introuvable est écarté.
+- \`sellerQuestion\` : la question ou la relance du commercial qui l'a amené, recopiée ; vide si le prospect l'a dit de lui-même.
+- \`levers\` : 1 à 3 leviers que ce passage montre, chacun \`nette\` (le passage le dit clairement) ou \`faible\` (il le laisse entendre).
+- \`reading\` : ce que le passage révèle, en une phrase.
+- \`moment\` : l'horodatage recopié du transcript s'il en porte un, sinon vide.
+
+Le produit compte deux points par passage net et un par passage faible, et en tire la note de chaque levier : 0 point vaut 10, 1 vaut 25, 2 vaut 45, 4 vaut 62, 6 vaut 78, 8 vaut 90. Le levier principal est celui qui a la note la plus haute.`;
+
+/**
+ * La méthode DISC par passages, fixée hors de la consigne modifiable.
+ */
+export const DISC_MOMENTS_INSTRUCTION = `## La méthode : des passages-clés, pas une impression d'ensemble
+Tu ne donnes aucune note. Tu relèves 3 à 8 passages où la façon de réagir du prospect se voit, et le produit calcule les notes à partir d'eux.
+
+Cherche-les en priorité dans ces situations : sa réponse à une question ouverte, sa réaction au prix, sa réaction à une proposition, une objection, un moment où il prend l'initiative, la fin du rendez-vous.
+
+Pour chaque passage :
+- \`prospectWords\` : ses mots, recopiés mot pour mot. Un passage introuvable dans ses paroles est écarté.
+- \`behaviour\` : comment il le dit (rythme, longueur, ton, ce qu'il met en avant), en une phrase.
+- \`styles\` : 1 ou 2 styles que ce passage montre, chacun \`nette\` ou \`faible\`.
+
+Le produit compte deux points par passage net et un par passage faible, et en tire la note de chaque style, avec la même table que SONCAS. Le style principal est celui qui a la note la plus haute.`;
+
+/**
  * Ce qu'on lit pour DISC, fixé hors de la consigne modifiable.
  */
 export const DISC_READING_INSTRUCTION = `## Où lire le style DISC
@@ -116,7 +151,7 @@ export function withSoncasSystemPrompt(systemMarkdown: string): string {
   return [
     withDataScopeSystemPrompt(systemMarkdown),
     SONCAS_READING_INSTRUCTION,
-    soncasScoreScaleInstruction(),
+    SONCAS_MOMENTS_INSTRUCTION,
   ].join("\n\n");
 }
 
@@ -125,7 +160,7 @@ export function withDiscSystemPrompt(systemMarkdown: string): string {
   return [
     withDataScopeSystemPrompt(systemMarkdown),
     DISC_READING_INSTRUCTION,
-    discScoreScaleInstruction(),
+    DISC_MOMENTS_INSTRUCTION,
   ].join("\n\n");
 }
 

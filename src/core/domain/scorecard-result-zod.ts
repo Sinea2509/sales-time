@@ -42,6 +42,12 @@ export const scorecardObservationSchema = z.object({
   /** Ce qui manque pour atteindre le niveau 4. */
   missing: z.string().max(500),
   evidence: z.array(scorecardProofSchema).max(3),
+  /**
+   * Faux quand le transcript ne montre pas le moment jugé (l'ouverture n'a
+   * pas été enregistrée). Le produit n'en tient compte que pour les critères
+   * qui le permettent.
+   */
+  observable: z.boolean(),
 });
 
 /** Un critère noté, tel que le produit l'enregistre. */
@@ -57,6 +63,10 @@ export const scorecardCriterionSchema = z.object({
   missing: z.string().max(500).optional(),
   /** Vrai quand le relevé annonçait plus, mais qu'aucune citation n'a été retrouvée : le niveau est resté à 1. */
   unproven: z.boolean().optional(),
+  /** Vrai quand le moment jugé n'est pas dans le transcript : le critère ne compte pas. */
+  unobservable: z.boolean().optional(),
+  /** Pourquoi le produit a plafonné le niveau, quand il l'a fait. */
+  capped: z.string().max(400).optional(),
 });
 
 /** Un point perdu prioritaire : le manque, et la phrase qui le comblait. */

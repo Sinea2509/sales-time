@@ -36,6 +36,12 @@ export function scorecardGridInstruction(grid: ScorecardGrid): string {
             criterion.measuredByProduct
               ? "  Mesuré par le produit : renseigne seulement `learned` et `missing` à partir de la mesure donnée plus bas."
               : null,
+            criterion.requiresFigure
+              ? "  Chiffre exigé : le niveau 4 demande un nombre dit par le prospect, cité dans `evidence`."
+              : null,
+            criterion.canBeUnobservable
+              ? "  Peut être non observable : si le transcript commence après ce moment (l'enregistrement a démarré en cours de rendez-vous), mets `observable` à false."
+              : null,
           ];
           return parts.filter(Boolean).join("\n");
         })
@@ -71,6 +77,7 @@ Pour chaque critère :
 - **learned** : une phrase qui dit ce que le commercial sait maintenant sur ce thème, avec les faits du transcript (noms, chiffres, dates). Vide si rien.
 - **missing** : une phrase qui dit ce qui manque encore pour atteindre le niveau ${SCORECARD_LEVEL_MAX}. Vide si rien ne manque.
 - **evidence** : 1 à 3 extraits recopiés mot pour mot, chacun avec \`who\` : \`commercial\` ou \`prospect\`, selon la personne qui l'a dit. Donne de préférence la question ou la relance du commercial ET la réponse du prospect. Un extrait est une phrase entière, ou un morceau de phrase qui a du sens seul : ne le coupe jamais au milieu d'une idée. Aucun extrait quand le thème est absent.
+- **observable** : \`true\` presque toujours. \`false\` seulement pour un critère marqué « peut être non observable », quand le transcript ne montre pas le moment qu'il juge : le critère sort alors du calcul au lieu de coûter des points. Un thème simplement absent du rendez-vous reste observable : il vaut 0.
 
 Le produit vérifie chaque extrait dans le transcript et qui l'a dit. Un extrait introuvable est retiré. Une information « obtenue » sans parole du prospect retrouvée baisse d'un cran ; un sujet « creusé » sans parole du commercial retrouvée devient « abordé ». Un critère sans aucun extrait ne dépasse pas le niveau 1.
 

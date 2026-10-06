@@ -4,6 +4,7 @@ import {
   COACHING_SCORE_MAX,
 } from "@/src/core/domain/coaching-score-scale";
 import { PROFILE_SCORE_BANDS } from "@/src/core/domain/profile-score-scale";
+import { PROFILE_SCORE_BY_POINTS } from "@/src/core/domain/profile-moments";
 import { libelleTranche, scoreBands } from "@/src/core/domain/score-bands";
 import {
   SCORECARD_EXPLORED_LABEL,
@@ -71,6 +72,19 @@ function profileBandsTable(caption: string): ScoringTable {
     rows: PROFILE_SCORE_BANDS.map((b) => [
       `${b.min} à ${b.max}`,
       PROFILE_BAND_FR[b.nom] ?? b.nom,
+    ]),
+  };
+}
+
+function momentPointsTable(caption: string): ScoringTable {
+  return {
+    caption,
+    head: ["Points des passages", "Note sur 100"],
+    rows: PROFILE_SCORE_BY_POINTS.map((score, points) => [
+      points === PROFILE_SCORE_BY_POINTS.length - 1
+        ? `${points} et plus`
+        : String(points),
+      String(score),
     ]),
   };
 }
@@ -204,14 +218,19 @@ const OVERVIEWS: Partial<
   SONCAS: () => ({
     role: "SONCAS décrit ce qui motive le prospect à acheter. Il ne note pas le commercial.",
     produces: [
+      "3 à 8 passages-clés : la réponse du prospect, la question qui l'a amenée, ce qu'elle révèle.",
       "Six leviers notés sur 100 : sécurité, orgueil, nouveauté, confort, argent, sympathie.",
       "Le levier principal, et comment lui parler.",
     ],
     scoring: [
-      "Chaque levier se note sur la quantité de traces dans les paroles du prospect, selon les tranches ci-dessous.",
-      "Seuls les mots du prospect comptent. Le produit retire toute citation qui ne vient pas de lui, et un levier sans citation retombe sous 20.",
+      "L'IA ne note pas les leviers. Elle relève les passages-clés : les réponses du prospect sur ce qui est important pour lui, ce qu'il attend d'un prestataire, ce qui l'a déçu, sa réaction au prix, ses conditions, ses objections. Le reste du rendez-vous est ignoré.",
+      "Chaque passage est recherché mot pour mot dans les paroles du prospect ; un passage introuvable, ou dit par le commercial, est écarté.",
+      "Le produit compte deux points par passage net et un par passage faible, puis lit la note du levier dans le tableau ci-dessous.",
     ],
-    tables: [profileBandsTable("Les tranches d'un levier")],
+    tables: [
+      momentPointsTable("La note d'un levier, selon ses passages"),
+      profileBandsTable("Ce que veut dire la note"),
+    ],
     notHere: [
       "La note du commercial : la grille.",
       "Le style de communication du prospect : DISC.",
@@ -220,13 +239,19 @@ const OVERVIEWS: Partial<
   DISC: () => ({
     role: "DISC décrit la façon dont le prospect communique dans ce rendez-vous. Ce n'est pas un test de personnalité, et il ne note pas le commercial.",
     produces: [
+      "3 à 8 passages-clés : les mots du prospect et la façon dont il les dit.",
       "Quatre styles notés sur 100, indépendants : dominance, influence, stabilité, conformité.",
       "Le style principal, et comment lui parler.",
     ],
     scoring: [
-      "Chaque style se note sur la façon de parler du prospect, pas sur ses sujets, selon les tranches ci-dessous.",
+      "L'IA ne note pas les styles. Elle relève les passages où la façon de réagir du prospect se voit : réponse à une question ouverte, réaction au prix ou à une proposition, objection, initiative, fin du rendez-vous.",
+      "Chaque passage est recherché mot pour mot dans les paroles du prospect ; un passage introuvable est écarté.",
+      "Le produit compte deux points par passage net et un par passage faible, puis lit la note du style dans le tableau ci-dessous.",
     ],
-    tables: [profileBandsTable("Les tranches d'un style")],
+    tables: [
+      momentPointsTable("La note d'un style, selon ses passages"),
+      profileBandsTable("Ce que veut dire la note"),
+    ],
     notHere: [
       "Ce qui motive le prospect : SONCAS.",
       "La note du commercial : la grille.",

@@ -1,13 +1,11 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  DISC_MOMENTS_INSTRUCTION,
+  SONCAS_MOMENTS_INSTRUCTION,
   FRENCH_TYPOGRAPHY_INSTRUCTION,
   KISS_SELLER_SKILLS_INSTRUCTION,
 } from "@/lib/ai-system-prompt";
 import type { OrganizationPromptKind } from "@/src/core/domain/organization-prompts";
-import {
-  discScoreScaleInstruction,
-  soncasScoreScaleInstruction,
-} from "@/src/core/domain/profile-score-scale";
 import {
   DEFAULT_SCORECARD_GRID,
   scorecardCriteria,
@@ -53,6 +51,7 @@ function scorecardResult() {
       obtained: "partiel",
       learned: "",
       missing: "",
+      observable: true,
       evidence: [{ who: "prospect", quote: "on en parle" }],
     })),
     pointsLost: [],
@@ -153,7 +152,7 @@ describe("runMeetingAnalysis avec une consigne d'organisation", () => {
     expect(sent.systemMarkdown).toContain(ORG_TEXT);
     expect(sent.systemMarkdown).not.toContain(SUPER_ADMIN_TEXT);
     expect(logged(deps).systemPrompt).toContain(ORG_TEXT);
-    expect(logged(deps).systemPrompt).toContain(soncasScoreScaleInstruction());
+    expect(logged(deps).systemPrompt).toContain(SONCAS_MOMENTS_INSTRUCTION);
   });
 
   it("enregistre sur l'analyse la consigne d'organisation qui l'a produite", async () => {
@@ -270,7 +269,7 @@ describe("runMeetingAnalysis avec une consigne d'organisation", () => {
 
     const systemPrompt = logged(deps).systemPrompt;
     expect(systemPrompt).toContain(ORG_TEXT);
-    expect(systemPrompt).toContain(discScoreScaleInstruction());
+    expect(systemPrompt).toContain(DISC_MOMENTS_INSTRUCTION);
     expect(systemPrompt).toContain(FRENCH_TYPOGRAPHY_INSTRUCTION);
   });
 

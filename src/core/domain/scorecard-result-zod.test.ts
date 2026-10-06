@@ -37,6 +37,7 @@ const RELEVE = {
       obtained: "partiel",
       learned: "Le siège compte trente-deux personnes.",
       missing: "Les effectifs des sites restent inconnus.",
+      observable: true,
       evidence: [{ who: "prospect", quote: "On est trente-deux au siège." }],
     },
     {
@@ -45,6 +46,7 @@ const RELEVE = {
       obtained: "rien",
       learned: "",
       missing: "Qui intervient sur le sujet.",
+      observable: true,
       evidence: [],
     },
   ],
@@ -172,6 +174,7 @@ describe("scorecardGeneratedResultSchema", () => {
           obtained: "exploitable",
           learned: "Un fait.",
           missing: "",
+          observable: true,
           evidence: [{ who: "prospect", quote: "Une citation." }],
         })),
       }).success,
