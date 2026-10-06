@@ -116,6 +116,8 @@ function scorecardOverview(): AnalysisScoringOverview {
       "L'IA ne donne aucune note. Elle relève, pour chaque critère, ce que le commercial a fait du thème et ce qu'il a obtenu. Le produit en tire le niveau par la table ci-dessous, toujours de la même façon.",
       "Le thème compte, pas la formulation : une question posée avec d'autres mots que les exemples compte pleinement.",
       `Chaque citation est retrouvée dans le transcript, avec la personne qui l'a dite. Une information sans parole du prospect retrouvée baisse d'un cran ; un critère sans aucune citation ne dépasse pas 1 point.`,
+      "Le produit fixe lui-même les deux constats à partir des citations retrouvées : une question du commercial et une réponse du prospect sur le thème font un thème creusé ; une réponse du prospect qui donne quelque chose de précis (un nombre, une date ou une échéance, un nom) fait une information exploitable, sinon partielle. Deux modèles qui citent les mêmes passages reçoivent donc la même note.",
+      "Le cadrage (E4) sort du calcul quand le transcript commence sans l'ouverture : le prospect parle en premier, sans salutation.",
       `L'écoute (E1) est mesurée sur la répartition de la parole : ${[
         40, 50, 60, 61,
       ]

@@ -35,12 +35,14 @@ import {
   listeningMeasure,
   talkShareFromTranscript,
   talkShareInstruction,
+  openingNotRecorded,
   sellerConversationMeasures,
   transcriptSides,
 } from "@/src/core/domain/talk-share-from-transcript";
 import {
   conversationCaps,
   conversationMeasuresInstruction,
+  FRAMING_CRITERION_KEY,
   QUESTIONING_CRITERION_KEY,
   questioningMeasure,
 } from "@/src/core/domain/conversation-caps";
@@ -486,6 +488,9 @@ export async function runMeetingAnalysis(
                 : {}),
             },
             conversationCaps(conversation),
+            openingNotRecorded(transcriptForAnalysis, speakerHints)
+              ? new Set([FRAMING_CRITERION_KEY])
+              : new Set(),
           ),
           grid,
         );
