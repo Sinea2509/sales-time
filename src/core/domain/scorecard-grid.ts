@@ -611,9 +611,15 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
           key: "E2",
           label: "Qualité du questionnement",
           expected:
-            "Des questions ouvertes, des relances sur les réponses vagues, des reformulations, tout au long du rendez-vous.",
+            "Au moins 55 % de questions ouvertes parmi les questions du commercial, et au moins huit questions ouvertes sur le rendez-vous.",
           lookFor:
-            "Les questions ouvertes (comment, pourquoi, qu'est-ce que, combien…), les relances (« c'est-à-dire ? », « par exemple ? »), les reformulations. Les questions fermées et les questions de vérification (« vous voyez ce que je veux dire ? », « on est d'accord ? ») ne comptent pas : le produit les compte et plafonne le critère quand elles dominent.",
+            "Les questions du commercial, comptées par le produit : ouvertes (comment, pourquoi, qu'est-ce que, combien…), fermées (une réponse par oui ou non), ou de simple vérification (« vous voyez ce que je veux dire ? », « on est d'accord ? »).",
+          examples: [
+            "Comment ça se passe aujourd'hui chez vous ?",
+            "Qu'est-ce qui vous fait dire ça ?",
+            "C'est-à-dire ?",
+          ],
+          measuredByProduct: true,
         },
         {
           key: "E3",

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
-import { conversationCaps, questioningCap } from "./conversation-caps";
+import {
+  conversationCaps,
+  questioningCap,
+  questioningMeasure,
+} from "./conversation-caps";
 import { levelScorecardObservations } from "./scorecard-coverage";
 import { DECOUVERTE_V2_GRID } from "./scorecard-grid";
 import type { ScorecardGeneratedResult } from "./scorecard-result-zod";
@@ -171,5 +175,38 @@ describe("les règles plus pointues de la grille", () => {
         { key: "E4", level: 0 },
       ]),
     ).toBe(12);
+  });
+});
+
+describe("le questionnement mesuré par le produit", () => {
+  it("fixe le niveau sur le compte des questions, quoi que dise le relevé", () => {
+    // Noz : 20 ouvertes sur 54.
+    const m = questioningMeasure({ open: 20, closed: 22, tag: 12 });
+    expect(m.level).toBe(2);
+    expect(m.learned).toContain("54 questions");
+    expect(m.missing).toContain("40 %");
+    const out = levelScorecardObservations(
+      releve([
+        {
+          key: "E2",
+          explored: "non",
+          obtained: "rien",
+          learned: "Sujet non abordé.",
+          missing: "",
+          observable: true,
+          evidence: [],
+        },
+      ]),
+      DECOUVERTE_V2_GRID,
+      SOURCES,
+      { E2: m },
+    );
+    expect(out.criteria[0]).toMatchObject({ key: "E2", level: 2 });
+    expect(out.criteria[0].learned).toContain("54 questions");
+  });
+
+  it("donne 4 à un questionnement ouvert et nourri, 0 sans question", () => {
+    expect(questioningMeasure({ open: 20, closed: 8, tag: 2 }).level).toBe(4);
+    expect(questioningMeasure({ open: 0, closed: 0, tag: 0 }).level).toBe(0);
   });
 });
