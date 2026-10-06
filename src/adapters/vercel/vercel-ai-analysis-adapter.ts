@@ -14,7 +14,7 @@ import {
   scorecardCriteria,
   type ScorecardGrid,
 } from "@/src/core/domain/scorecard-grid";
-import { objectionsResultSchema } from "@/src/core/domain/objections-result-zod";
+import { objectionsGeneratedResultSchema } from "@/src/core/domain/objections-result-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import { visitReportExtractionSchema } from "@/src/core/domain/visit-report-zod";
@@ -212,7 +212,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      schema: objectionsResultSchema,
+      schema: objectionsGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
     });
