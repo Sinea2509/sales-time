@@ -4,14 +4,17 @@ import {
   questioningCap,
   questioningMeasure,
 } from "./conversation-caps";
-import { levelScorecardObservations } from "./scorecard-coverage";
+import { isConcrete, levelScorecardObservations } from "./scorecard-coverage";
 import { DECOUVERTE_V2_GRID } from "./scorecard-grid";
 import type { ScorecardGeneratedResult } from "./scorecard-result-zod";
 import { computeScorecardScore } from "./scorecard-score";
-import { classifyQuestion } from "./talk-share-from-transcript";
+import {
+  classifyQuestion,
+  openingNotRecorded,
+} from "./talk-share-from-transcript";
 
 const PROSPECT =
-  "On a une centaine de managers.\nOn a déjà des formateurs internes.";
+  "On a une centaine de managers.\nOn a déjà des formateurs internes.\nOn travaille avec Cegos depuis longtemps.";
 const SELLER = "Combien de managers sont concernés ?";
 const SOURCES = {
   all: `${SELLER}\n${PROSPECT}`,
@@ -72,7 +75,10 @@ describe("les règles plus pointues de la grille", () => {
           ...creuseExploitable,
           evidence: [
             { who: "commercial", quote: SELLER },
-            { who: "prospect", quote: "On a déjà des formateurs internes." },
+            {
+              who: "prospect",
+              quote: "On travaille avec Cegos depuis longtemps.",
+            },
           ],
         },
       ]),
@@ -208,5 +214,108 @@ describe("le questionnement mesuré par le produit", () => {
   it("donne 4 à un questionnement ouvert et nourri, 0 sans question", () => {
     expect(questioningMeasure({ open: 20, closed: 8, tag: 2 }).level).toBe(4);
     expect(questioningMeasure({ open: 0, closed: 0, tag: 0 }).level).toBe(0);
+  });
+});
+
+describe("les trois règles du 6 octobre", () => {
+  it("reconnaît une information précise : nombre, échéance, nom propre", () => {
+    expect(isConcrete("On a une centaine de managers.")).toBe(true);
+    expect(isConcrete("Retour avant la fin de la semaine.")).toBe(true);
+    expect(isConcrete("Je vais voir avec Sandrine.")).toBe(true);
+    expect(isConcrete("On l'a fait l'année dernière.")).toBe(true);
+    expect(isConcrete("On est ouvert à vos propositions.")).toBe(false);
+  });
+
+  it("pose « creusé » sur une question du commercial et une réponse du prospect, quoi qu'ait relevé le modèle", () => {
+    const out = levelScorecardObservations(
+      releve([
+        {
+          key: "A1",
+          explored: "non",
+          obtained: "partiel",
+          learned: "",
+          missing: "",
+          observable: true,
+          evidence: [
+            { who: "commercial", quote: SELLER },
+            { who: "prospect", quote: "On a une centaine de managers." },
+          ],
+        },
+      ]),
+      DECOUVERTE_V2_GRID,
+      SOURCES,
+    );
+    expect(out.criteria[0]).toMatchObject({
+      explored: "creuse",
+      obtained: "exploitable",
+      level: 4,
+    });
+  });
+
+  it("ramène à « partiel » une information sans rien de précis, quoi qu'ait relevé le modèle", () => {
+    const out = levelScorecardObservations(
+      releve([
+        {
+          key: "A4",
+          explored: "creuse",
+          obtained: "exploitable",
+          learned: "",
+          missing: "",
+          observable: true,
+          evidence: [
+            { who: "commercial", quote: SELLER },
+            { who: "prospect", quote: "On a déjà des formateurs internes." },
+          ],
+        },
+      ]),
+      DECOUVERTE_V2_GRID,
+      SOURCES,
+    );
+    expect(out.criteria[0]).toMatchObject({ obtained: "partiel", level: 3 });
+  });
+
+  it("sort le cadrage du calcul quand le produit sait l'ouverture absente du transcript", () => {
+    const out = levelScorecardObservations(
+      releve([
+        {
+          key: "E4",
+          explored: "non",
+          obtained: "rien",
+          learned: "Aucun cadrage visible.",
+          missing: "",
+          observable: true,
+          evidence: [],
+        },
+      ]),
+      DECOUVERTE_V2_GRID,
+      SOURCES,
+      {},
+      {},
+      new Set(["E4"]),
+    );
+    expect(out.criteria[0]).toMatchObject({ key: "E4", unobservable: true });
+  });
+
+  it("repère une ouverture non enregistrée : le prospect parle d'abord, sans salutation", () => {
+    const sansOuverture = [
+      "Lisa ANDROLUS   0:03",
+      "Je suis dans.",
+      "Cédric Laigneau   0:04",
+      "Ok, super.",
+      "Lisa ANDROLUS   0:06",
+      "Je suis plutôt en charge du plan de développement.",
+      "Cédric Laigneau   0:10",
+      "D'accord, et comment ça se passe ?",
+    ].join("\n");
+    expect(
+      openingNotRecorded(sansOuverture, { prospectNames: ["Lisa Androlus"] }),
+    ).toBe(true);
+    const avecOuverture = sansOuverture.replace(
+      "Je suis dans.",
+      "Bonjour Cédric, je vous entends bien.",
+    );
+    expect(
+      openingNotRecorded(avecOuverture, { prospectNames: ["Lisa Androlus"] }),
+    ).toBe(false);
   });
 });

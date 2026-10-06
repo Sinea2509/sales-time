@@ -79,7 +79,10 @@ Pour chaque critère :
 - **evidence** : 1 à 3 extraits recopiés mot pour mot, chacun avec \`who\` : \`commercial\` ou \`prospect\`, selon la personne qui l'a dit. Donne de préférence la question ou la relance du commercial ET la réponse du prospect. Un extrait est une phrase entière, ou un morceau de phrase qui a du sens seul : ne le coupe jamais au milieu d'une idée. Aucun extrait quand le thème est absent.
 - **observable** : \`true\` presque toujours. \`false\` seulement pour un critère marqué « peut être non observable », quand le transcript ne montre pas le moment qu'il juge : le critère sort alors du calcul au lieu de coûter des points. Un thème simplement absent du rendez-vous reste observable : il vaut 0.
 
-Le produit vérifie chaque extrait dans le transcript et qui l'a dit. Un extrait introuvable est retiré. Une information « obtenue » sans parole du prospect retrouvée baisse d'un cran ; un sujet « creusé » sans parole du commercial retrouvée devient « abordé ». Un critère sans aucun extrait ne dépasse pas le niveau 1.
+Le produit vérifie chaque extrait dans le transcript et qui l'a dit, puis fixe lui-même les deux crans à partir des extraits retrouvés :
+- \`explored\` : une question ou une relance du commercial ET une réponse du prospect sur le thème font « creusé » ; une parole du commercial seule fait « abordé ».
+- \`obtained\` : une réponse du prospect qui donne quelque chose de précis (un nombre, une date ou une échéance, un nom de personne, de société ou de lieu) fait « exploitable » ; une réponse sans rien de précis fait « partiel ».
+Donne donc toujours, quand ils existent, la question du commercial et la réponse du prospect qui porte le fait le plus précis. Un extrait introuvable est retiré. Un critère sans aucun extrait ne dépasse pas le niveau 1.
 
 Le niveau que le produit en tire (colonnes : ${SCORECARD_EXPLORED.join(", ")}) :
 

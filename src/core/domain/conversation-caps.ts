@@ -3,6 +3,8 @@ import type { SellerConversationMeasures } from "./talk-share-from-transcript";
 
 /** Le critère de la grille qui juge les questions. */
 export const QUESTIONING_CRITERION_KEY = "E2";
+/** Le critère de la grille qui juge le cadrage du rendez-vous. */
+export const FRAMING_CRITERION_KEY = "E4";
 /** Le critère de la grille qui juge la personnalisation du discours. */
 export const PERSONALIZATION_CRITERION_KEY = "E3";
 
