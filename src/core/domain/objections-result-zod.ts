@@ -18,7 +18,12 @@ export type ObjectionOutcome = (typeof OBJECTION_OUTCOMES)[number];
 
 export const OBJECTIONS_MAX = 8;
 
-export const objectionSchema = z.object({
+/**
+ * Une objection telle que le modèle la rend. Aucun champ facultatif : les
+ * formats imposés d'OpenAI les refusent, et l'analyse échouait à chaque
+ * rendez-vous (incident du 6 octobre 2026, champ `verbatim`).
+ */
+export const objectionGeneratedSchema = z.object({
   /** La phrase du prospect, recopiée depuis le transcript. */
   objection: z.string().min(1).max(500),
   /** Qui l'a dite, tel que le transcript le nomme : « Le prospect », « H. Vasseur ». */
@@ -32,12 +37,24 @@ export const objectionSchema = z.object({
   outcome: z.enum(OBJECTION_OUTCOMES),
   /** Ce que nous suggérons pour la suite, avec une question à poser, en français. */
   suggestion: z.string().min(1).max(800),
+});
+
+/** Une objection telle que le produit l'enregistre et la relit. */
+export const objectionSchema = objectionGeneratedSchema.extend({
   /**
    * Vrai quand la phrase a été retrouvée mot pour mot dans les paroles du
    * prospect. Posé par le produit, jamais par le modèle ; absent sur les
    * analyses d'avant octobre 2026.
    */
   verbatim: z.boolean().optional(),
+});
+
+const objectionsSummary = z.string().max(1500);
+
+/** Ce que le modèle doit produire. */
+export const objectionsGeneratedResultSchema = z.object({
+  objections: z.array(objectionGeneratedSchema).max(OBJECTIONS_MAX),
+  summary: objectionsSummary,
 });
 
 export const objectionsResultSchema = z.object({
