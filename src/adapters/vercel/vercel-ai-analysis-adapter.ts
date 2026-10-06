@@ -34,6 +34,7 @@ import {
   withScorecardSystemPrompt,
   withSoncasSystemPrompt,
 } from "@/lib/ai-system-prompt";
+import { repairOverlongFields } from "./repair-overlong-fields";
 import { stableCallSettings } from "./stable-call-settings";
 import {
   buildDelimitedMeetingUserContent,
@@ -67,6 +68,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       schema: soncasMomentsOutputSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -98,6 +100,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       schema: discMomentsOutputSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -137,6 +140,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       schema: kissGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -177,6 +181,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       schema: scorecardGeneratedSchemaForGrid(keys),
       system: systemPrompt,
       prompt: userPrompt,
@@ -212,6 +217,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       schema: objectionsGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -239,6 +245,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       schema: followUpEmailResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -297,6 +304,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       system,
       schema: sellerCommercialPerformanceSummarySchema,
       prompt: userContent,
@@ -331,6 +339,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       system,
       schema: sellerRelationalAffinitySummarySchema,
       prompt: userContent,
@@ -372,6 +381,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       system,
       schema: teamCoachingRecommendationsSchema,
       prompt: userContent,
@@ -464,6 +474,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       system,
       schema: visitReportExtractionSchema,
       prompt,
@@ -492,6 +503,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
       schema: meetingBriefingSchema,
       system,
       prompt: userContent,
