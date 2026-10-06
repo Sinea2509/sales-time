@@ -1,3 +1,4 @@
+import { objectionsResultSchema } from "@/src/core/domain/objections-result-zod";
 import { reuseAnalysisOutput } from "./reuse-analysis-output";
 import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 import { getEnv } from "@/lib/env";
@@ -369,6 +370,14 @@ export async function summarizeMeetingDetail(
       soncas: input.soncasResult,
       disc: input.discResult,
       scorecard: input.scorecardResult ?? null,
+      kiss: input.kissResult,
+      /* Les objections viennent de leur analyse, plus d'une seconde lecture. */
+      objectionsAnalysis: (() => {
+        const parsed = objectionsResultSchema.safeParse(
+          input.meeting.analyses.find((a) => a.kind === "OBJECTIONS")?.result,
+        );
+        return parsed.success ? parsed.data : null;
+      })(),
     });
 
     if (deps.meetings) {

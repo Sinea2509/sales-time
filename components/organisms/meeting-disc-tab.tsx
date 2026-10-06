@@ -1,4 +1,5 @@
 import { DiscWheel, DISC_NAMES } from "@/components/molecules/disc-wheel";
+import { ProfileMomentsList } from "@/components/molecules/profile-moments-list";
 import { Card, CardContent } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
 import type { DiscAnalysisResult } from "@/src/core/domain/analysis-result-zod";
@@ -116,7 +117,8 @@ export function MeetingDiscTab({
             ))}
           </div>
 
-          {disc.evidence.length > 0 ? (
+          {/* Les passages remplacent la liste d'indices sur les analyses qui en ont. */}
+          {disc.evidence.length > 0 && !disc.moments?.length ? (
             <div className="space-y-2">
               <p className="text-muted-foreground text-xs">
                 Ce qui a été entendu, {disc.evidence.length}{" "}
@@ -135,6 +137,23 @@ export function MeetingDiscTab({
           ) : null}
         </CardContent>
       </Card>
+
+      <ProfileMomentsList
+        title="Les passages qui fondent l'analyse"
+        intro="Les moments où la façon de réagir du prospect se voit. Chaque style vaut ce que valent ses passages : deux points pour un passage net, un pour un passage faible."
+        moments={(disc.moments ?? []).map((m) => ({
+          moment: m.moment,
+          tags: m.styles
+            .map(
+              (s) =>
+                `${DISC_NAMES[s.style]} (${s.strength === "nette" ? "net" : "faible"})`,
+            )
+            .join(", "),
+          question: "",
+          words: m.prospectWords,
+          reading: m.behaviour,
+        }))}
+      />
 
       {disc.actionableAdvice ? (
         <div className="grid gap-4 sm:grid-cols-2">

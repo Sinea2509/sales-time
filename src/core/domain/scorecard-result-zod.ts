@@ -42,6 +42,12 @@ export const scorecardObservationSchema = z.object({
   /** Ce qui manque pour atteindre le niveau 4. */
   missing: z.string().max(500),
   evidence: z.array(scorecardProofSchema).max(3),
+  /**
+   * Faux quand le transcript ne montre pas le moment jugé (l'ouverture n'a
+   * pas été enregistrée). Le produit n'en tient compte que pour les critères
+   * qui le permettent.
+   */
+  observable: z.boolean(),
 });
 
 /** Un critère noté, tel que le produit l'enregistre. */
@@ -57,6 +63,10 @@ export const scorecardCriterionSchema = z.object({
   missing: z.string().max(500).optional(),
   /** Vrai quand le relevé annonçait plus, mais qu'aucune citation n'a été retrouvée : le niveau est resté à 1. */
   unproven: z.boolean().optional(),
+  /** Vrai quand le moment jugé n'est pas dans le transcript : le critère ne compte pas. */
+  unobservable: z.boolean().optional(),
+  /** Pourquoi le produit a plafonné le niveau, quand il l'a fait. */
+  capped: z.string().max(400).optional(),
 });
 
 /** Un point perdu prioritaire : le manque, et la phrase qui le comblait. */
@@ -68,18 +78,35 @@ export const scorecardPointLostSchema = z.object({
   whatToSayInstead: z.string().min(1).max(600),
 });
 
+/**
+ * Ce que la grille produit en plus du relevé : où gagner des points, et une
+ * synthèse de la note.
+ *
+ * Le coaching (à garder, à améliorer, à arrêter, question en or, défi) n'en
+ * fait plus partie depuis le 5 octobre 2026 : la grille et KISS l'écrivaient
+ * chacun de leur côté, et la fiche affichait deux conseils qui se
+ * contredisaient. Il appartient désormais à KISS seul.
+ */
 const scorecardCoachingFields = {
   pointsLost: z.array(scorecardPointLostSchema).max(8),
-  keep: z.array(z.string()).max(8),
-  improve: z.array(z.string()).max(8),
-  stop: z.array(z.string()).max(8),
-  goldenQuestion: z.string().min(1).max(500),
-  challenge: z.string().min(1).max(500),
   summary: z.string().min(1).max(4000),
 };
 
 /**
- * Ce que le modèle doit produire : un relevé par critère et le coaching.
+ * Le coaching que la grille écrivait avant octobre 2026, gardé en lecture
+ * pour les analyses déjà enregistrées.
+ */
+const scorecardLegacyCoachingFields = {
+  keep: z.array(z.string()).max(8).optional(),
+  improve: z.array(z.string()).max(8).optional(),
+  stop: z.array(z.string()).max(8).optional(),
+  goldenQuestion: z.string().max(500).optional(),
+  challenge: z.string().max(500).optional(),
+};
+
+/**
+ * Ce que le modèle doit produire : un relevé par critère, les points perdus
+ * et la synthèse.
  *
  * Ni niveau, ni total, ni palier : le produit les déduit du relevé.
  */
@@ -92,6 +119,7 @@ export const scorecardGeneratedResultSchema = z.object({
 export const scorecardLeveledResultSchema = z.object({
   criteria: z.array(scorecardCriterionSchema).max(40),
   ...scorecardCoachingFields,
+  ...scorecardLegacyCoachingFields,
 });
 
 /** Le score d'un bloc, tel que le produit l'a calculé et enregistré. */

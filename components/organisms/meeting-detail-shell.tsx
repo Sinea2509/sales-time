@@ -187,7 +187,9 @@ export function MeetingDetailShell({
       panel: showSellerCoaching ? (
         <MeetingKissTab
           kiss={kissResult}
-          challenge={scorecardResult?.challenge ?? null}
+          challenge={
+            kissResult?.challenge ?? scorecardResult?.challenge ?? null
+          }
           pending={pending}
         />
       ) : (

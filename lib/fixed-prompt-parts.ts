@@ -1,15 +1,13 @@
 import {
+  DISC_MOMENTS_INSTRUCTION,
   DISC_READING_INSTRUCTION,
   KISS_COHERENCE_INSTRUCTION,
   KISS_SELLER_SKILLS_INSTRUCTION,
   OBJECTIONS_TREATMENT_INSTRUCTION,
+  SONCAS_MOMENTS_INSTRUCTION,
   SONCAS_READING_INSTRUCTION,
 } from "@/lib/ai-system-prompt";
 import { coachingScoreScaleInstruction } from "@/src/core/domain/coaching-score-scale";
-import {
-  discScoreScaleInstruction,
-  soncasScoreScaleInstruction,
-} from "@/src/core/domain/profile-score-scale";
 import { DEFAULT_SCORECARD_GRID } from "@/src/core/domain/scorecard-grid";
 import { scorecardGridInstruction } from "@/src/core/domain/scorecard-prompt";
 import type { AnalysisKindSlug } from "@/src/core/ports/prompt-template-repository-port";
@@ -29,13 +27,11 @@ export function fixedPromptPart(kind: AnalysisKindSlug): string | null {
     case "SCORECARD":
       return scorecardGridInstruction(DEFAULT_SCORECARD_GRID);
     case "SONCAS":
-      return [SONCAS_READING_INSTRUCTION, soncasScoreScaleInstruction()].join(
+      return [SONCAS_READING_INSTRUCTION, SONCAS_MOMENTS_INSTRUCTION].join(
         "\n\n",
       );
     case "DISC":
-      return [DISC_READING_INSTRUCTION, discScoreScaleInstruction()].join(
-        "\n\n",
-      );
+      return [DISC_READING_INSTRUCTION, DISC_MOMENTS_INSTRUCTION].join("\n\n");
     case "KISS":
       return [
         KISS_COHERENCE_INSTRUCTION,

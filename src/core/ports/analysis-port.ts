@@ -1,7 +1,7 @@
 import type {
-  DiscAnalysisResult,
-  SoncasAnalysisResult,
-} from "@/src/core/domain/analysis-result-zod";
+  DiscMomentsOutput,
+  SoncasMomentsOutput,
+} from "@/src/core/domain/profile-moments";
 import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
 import type { ScorecardGeneratedResult } from "@/src/core/domain/scorecard-result-zod";
@@ -62,14 +62,14 @@ export interface AnalysisPort {
     transcript: string;
     notes: string | null;
     model: string;
-  }): Promise<{ result: SoncasAnalysisResult; rawText?: string } & AiCallTrace>;
+  }): Promise<{ result: SoncasMomentsOutput; rawText?: string } & AiCallTrace>;
 
   analyzeDisc(input: {
     systemMarkdown: string;
     transcript: string;
     notes: string | null;
     model: string;
-  }): Promise<{ result: DiscAnalysisResult; rawText?: string } & AiCallTrace>;
+  }): Promise<{ result: DiscMomentsOutput; rawText?: string } & AiCallTrace>;
 
   analyzeKiss(input: {
     systemMarkdown: string;

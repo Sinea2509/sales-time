@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { discMomentSchema, soncasMomentSchema } from "./profile-moments-zod";
 
 /** Conseils actionnables liés au profil dominant (DISC ou SONCAS). */
 export const profileActionableAdviceSchema = z.object({
@@ -7,7 +8,9 @@ export const profileActionableAdviceSchema = z.object({
   whatToAvoid: z.string().min(1).max(1500),
 });
 
-export type ProfileActionableAdvice = z.infer<typeof profileActionableAdviceSchema>;
+export type ProfileActionableAdvice = z.infer<
+  typeof profileActionableAdviceSchema
+>;
 
 export const soncasDriverBlockSchema = z.object({
   score: z.number().min(0).max(100),
@@ -33,6 +36,8 @@ const soncasResultBaseSchema = z.object({
   ]),
   summary: z.string(),
   actionableAdvice: profileActionableAdviceSchema.optional(),
+  /** Les passages qui fondent les notes, depuis octobre 2026. */
+  moments: z.array(soncasMomentSchema).optional(),
 });
 
 export const soncasResultSchema = soncasResultBaseSchema;
@@ -53,6 +58,8 @@ const discResultBaseSchema = z.object({
   evidence: z.array(z.string()),
   summary: z.string(),
   actionableAdvice: profileActionableAdviceSchema.optional(),
+  /** Les passages qui fondent les notes, depuis octobre 2026. */
+  moments: z.array(discMomentSchema).optional(),
 });
 
 export const discResultSchema = discResultBaseSchema;

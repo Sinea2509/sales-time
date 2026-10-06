@@ -37,6 +37,7 @@ const RELEVE = {
       obtained: "partiel",
       learned: "Le siège compte trente-deux personnes.",
       missing: "Les effectifs des sites restent inconnus.",
+      observable: true,
       evidence: [{ who: "prospect", quote: "On est trente-deux au siège." }],
     },
     {
@@ -45,6 +46,7 @@ const RELEVE = {
       obtained: "rien",
       learned: "",
       missing: "Qui intervient sur le sujet.",
+      observable: true,
       evidence: [],
     },
   ],
@@ -138,17 +140,8 @@ describe("scorecardGeneratedResultSchema", () => {
     expect(analyse).not.toHaveProperty("tier");
   });
 
-  it("exige chacun des champs de conseil", () => {
-    for (const champ of [
-      "criteria",
-      "pointsLost",
-      "keep",
-      "improve",
-      "stop",
-      "goldenQuestion",
-      "challenge",
-      "summary",
-    ]) {
+  it("exige le relevé, les points perdus et la synthèse", () => {
+    for (const champ of ["criteria", "pointsLost", "summary"]) {
       const partiel: Record<string, unknown> = { ...RELEVE };
       delete partiel[champ];
       expect(scorecardGeneratedResultSchema.safeParse(partiel).success).toBe(
@@ -157,13 +150,14 @@ describe("scorecardGeneratedResultSchema", () => {
     }
   });
 
-  it("refuse une question ou une synthèse vide", () => {
-    expect(
-      scorecardGeneratedResultSchema.safeParse({
-        ...RELEVE,
-        goldenQuestion: "",
-      }).success,
-    ).toBe(false);
+  it("ne demande plus de coaching à la grille, et refuse une synthèse vide", () => {
+    const sansCoaching: Record<string, unknown> = { ...RELEVE };
+    for (const champ of ["keep", "improve", "stop", "goldenQuestion", "challenge"]) {
+      delete sansCoaching[champ];
+    }
+    expect(scorecardGeneratedResultSchema.safeParse(sansCoaching).success).toBe(
+      true,
+    );
     expect(
       scorecardGeneratedResultSchema.safeParse({ ...RELEVE, summary: "" })
         .success,
@@ -180,6 +174,7 @@ describe("scorecardGeneratedResultSchema", () => {
           obtained: "exploitable",
           learned: "Un fait.",
           missing: "",
+          observable: true,
           evidence: [{ who: "prospect", quote: "Une citation." }],
         })),
       }).success,

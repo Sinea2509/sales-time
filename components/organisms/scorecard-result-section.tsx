@@ -65,10 +65,18 @@ function CriterionRow({
             </div>
           ) : null}
         </div>
-        <LevelPips level={criterion.level} max={SCORECARD_LEVEL_MAX} />
-        <span className="w-9 text-right text-[12.5px] font-semibold tabular-nums">
-          {criterion.level}/{SCORECARD_LEVEL_MAX}
-        </span>
+        {criterion.unobservable ? (
+          <span className="text-muted-foreground col-span-2 text-right text-[11.5px] font-semibold">
+            hors note
+          </span>
+        ) : (
+          <>
+            <LevelPips level={criterion.level} max={SCORECARD_LEVEL_MAX} />
+            <span className="w-9 text-right text-[12.5px] font-semibold tabular-nums">
+              {criterion.level}/{SCORECARD_LEVEL_MAX}
+            </span>
+          </>
+        )}
       </div>
       {criterion.learned || criterion.missing ? (
         <div className="mt-1.5 space-y-0.5 text-[12.5px] leading-relaxed">
@@ -103,8 +111,8 @@ function CriterionRow({
         </div>
       ) : criterion.evidence.length > 0 ? (
         <ul className="text-muted-foreground mt-1.5 space-y-1 text-xs leading-relaxed">
-          {criterion.evidence.map((quote) => (
-            <li key={quote} className="italic">
+          {criterion.evidence.map((quote, index) => (
+            <li key={`${index}-${quote}`} className="italic">
               « {quote} »
             </li>
           ))}

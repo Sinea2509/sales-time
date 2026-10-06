@@ -11,6 +11,7 @@ const VIDE = {
   obtained: "rien",
   learned: "",
   missing: "",
+  observable: true,
   evidence: [],
 };
 const COACHING = {

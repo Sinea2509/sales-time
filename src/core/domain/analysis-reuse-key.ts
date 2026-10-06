@@ -18,7 +18,7 @@ export const ANALYSIS_REUSE_SCOPE_PREFIX = "ANALYSE_RDV:";
  * À changer quand la forme d'un résultat change : une réponse rangée sous
  * l'ancienne forme ne doit pas ressortir dans la nouvelle.
  */
-export const ANALYSIS_REUSE_FORMAT = "2026-10-05.2";
+export const ANALYSIS_REUSE_FORMAT = "2026-10-06.1";
 
 export function analysisReuseScopeKey(kind: string): string {
   return `${ANALYSIS_REUSE_SCOPE_PREFIX}${kind}`;

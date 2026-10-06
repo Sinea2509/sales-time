@@ -33,6 +33,11 @@ export const kissGeneratedResultSchema = z.object({
   stop: z.array(z.string()).max(20),
   start: z.array(z.string()).max(20),
   goldenQuestion: z.string().min(1).max(500),
+  /**
+   * Un exercice pour le prochain rendez-vous. Il était écrit par la grille
+   * jusqu'en octobre 2026 ; tout le coaching appartient désormais à KISS.
+   */
+  challenge: z.string().min(1).max(500),
   coachingScore: z.number().int().min(0).max(10),
   coachingScoreJustification: z.string().min(1).max(2000),
   summary: z.string().min(1).max(4000),
@@ -50,6 +55,7 @@ export const kissGeneratedResultSchema = z.object({
  */
 export const kissResultSchema = kissGeneratedResultSchema.extend({
   sellerSkills: sellerSkillScoresSchema.optional(),
+  challenge: z.string().max(500).optional(),
 });
 
 export type KissAnalysisResult = z.infer<typeof kissResultSchema>;
