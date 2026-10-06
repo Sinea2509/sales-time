@@ -41,6 +41,8 @@ import {
 import {
   conversationCaps,
   conversationMeasuresInstruction,
+  QUESTIONING_CRITERION_KEY,
+  questioningMeasure,
 } from "@/src/core/domain/conversation-caps";
 import {
   discFromMoments,
@@ -471,9 +473,18 @@ export async function runMeetingAnalysis(
               seller: sides?.seller ?? null,
               prospect: sides?.prospect ?? null,
             },
-            talkShare
-              ? { [LISTENING_CRITERION_KEY]: listeningMeasure(talkShare) }
-              : {},
+            {
+              ...(talkShare
+                ? { [LISTENING_CRITERION_KEY]: listeningMeasure(talkShare) }
+                : {}),
+              ...(conversation
+                ? {
+                    [QUESTIONING_CRITERION_KEY]: questioningMeasure(
+                      conversation.questions,
+                    ),
+                  }
+                : {}),
+            },
             conversationCaps(conversation),
           ),
           grid,

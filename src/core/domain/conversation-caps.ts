@@ -29,14 +29,43 @@ export function questioningCap(
   return { max: 2, reason };
 }
 
+/**
+ * Le relevé du questionnement, écrit par le produit lui-même.
+ *
+ * Depuis le 6 octobre 2026, le niveau de ce critère vient du seul compte des
+ * questions. Le relevé « abordé, creusé, obtenu » ne lui convenait pas : un
+ * modèle notait « sujet non abordé » un commercial qui avait posé 54
+ * questions, et le critère tombait à 0.
+ */
+export function questioningMeasure(
+  questions: SellerConversationMeasures["questions"],
+): { level: number; learned: string; missing: string } {
+  const total = questions.open + questions.closed + questions.tag;
+  if (total === 0) {
+    return {
+      level: 0,
+      learned: "Le commercial n'a posé aucune question.",
+      missing: "Poser des questions ouvertes pour faire parler le prospect.",
+    };
+  }
+  const { max } = questioningCap(questions);
+  const pct = Math.round((100 * questions.open) / total);
+  const learned = `Le commercial a posé ${total} questions : ${questions.open} ouvertes (${pct} %), ${questions.closed} fermées et ${questions.tag} de simple vérification.`;
+  const missing =
+    max >= 4
+      ? ""
+      : questions.open < 8 && pct >= 55
+        ? "Poser au moins huit questions ouvertes sur le rendez-vous."
+        : `Faire passer les questions ouvertes de ${pct} % à au moins ${max >= 3 ? 55 : 40} % : remplacer les questions fermées et les « vous voyez ? » par des « comment », « qu'est-ce qui », « par exemple ? ».`;
+  return { level: max, learned, missing };
+}
+
 /** Les plafonds que les mesures de conduite posent sur la grille. */
 export function conversationCaps(
   measures: SellerConversationMeasures | null,
 ): Record<string, ScorecardCap> {
   if (!measures) return {};
-  const caps: Record<string, ScorecardCap> = {
-    [QUESTIONING_CRITERION_KEY]: questioningCap(measures.questions),
-  };
+  const caps: Record<string, ScorecardCap> = {};
   if (measures.earlyLongestRunWords >= EARLY_PITCH_WORDS) {
     caps[PERSONALIZATION_CRITERION_KEY] = {
       max: 2,
@@ -52,9 +81,10 @@ export function conversationMeasuresInstruction(
 ): string | null {
   if (!measures) return null;
   const caps = conversationCaps(measures);
+  const questioning = questioningMeasure(measures.questions);
   const lines = [
     "## Conduite mesurée par le produit",
-    `- Questions du commercial : ${caps[QUESTIONING_CRITERION_KEY]!.reason}. Le critère ${QUESTIONING_CRITERION_KEY} ne dépasse pas le niveau ${caps[QUESTIONING_CRITERION_KEY]!.max}.`,
+    `- Questions du commercial : ${questioning.learned} Le critère ${QUESTIONING_CRITERION_KEY} est fixé par le produit au niveau ${questioning.level} sur ce compte.`,
   ];
   const pitch = caps[PERSONALIZATION_CRITERION_KEY];
   lines.push(
