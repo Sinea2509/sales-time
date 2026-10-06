@@ -1,5 +1,7 @@
 "use client";
 
+import { AnalysisScoringOverviewCard } from "@/components/molecules/analysis-scoring-overview-card";
+
 import { useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, PenLine } from "lucide-react";
@@ -397,6 +399,12 @@ export function OrgSettingsPromptCards({
                   produit calcule.
                 </DialogDescription>
               </DialogHeader>
+
+              {openCard.scoringOverview ? (
+                <AnalysisScoringOverviewCard
+                  overview={openCard.scoringOverview}
+                />
+              ) : null}
 
               <div className="space-y-1.5">
                 <Textarea

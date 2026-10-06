@@ -138,17 +138,8 @@ describe("scorecardGeneratedResultSchema", () => {
     expect(analyse).not.toHaveProperty("tier");
   });
 
-  it("exige chacun des champs de conseil", () => {
-    for (const champ of [
-      "criteria",
-      "pointsLost",
-      "keep",
-      "improve",
-      "stop",
-      "goldenQuestion",
-      "challenge",
-      "summary",
-    ]) {
+  it("exige le relevé, les points perdus et la synthèse", () => {
+    for (const champ of ["criteria", "pointsLost", "summary"]) {
       const partiel: Record<string, unknown> = { ...RELEVE };
       delete partiel[champ];
       expect(scorecardGeneratedResultSchema.safeParse(partiel).success).toBe(
@@ -157,13 +148,14 @@ describe("scorecardGeneratedResultSchema", () => {
     }
   });
 
-  it("refuse une question ou une synthèse vide", () => {
-    expect(
-      scorecardGeneratedResultSchema.safeParse({
-        ...RELEVE,
-        goldenQuestion: "",
-      }).success,
-    ).toBe(false);
+  it("ne demande plus de coaching à la grille, et refuse une synthèse vide", () => {
+    const sansCoaching: Record<string, unknown> = { ...RELEVE };
+    for (const champ of ["keep", "improve", "stop", "goldenQuestion", "challenge"]) {
+      delete sansCoaching[champ];
+    }
+    expect(scorecardGeneratedResultSchema.safeParse(sansCoaching).success).toBe(
+      true,
+    );
     expect(
       scorecardGeneratedResultSchema.safeParse({ ...RELEVE, summary: "" })
         .success,

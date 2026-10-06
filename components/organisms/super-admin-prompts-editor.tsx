@@ -52,6 +52,8 @@ import { Separator } from "@/components/ui/separator";
 import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 import { MarkdownPreview } from "@/components/atoms/markdown-preview";
+import { AnalysisScoringOverviewCard } from "@/components/molecules/analysis-scoring-overview-card";
+import type { AnalysisScoringOverview } from "@/lib/analysis-scoring-overview";
 import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 type VersionRow = {
@@ -70,6 +72,8 @@ type Props = {
   defaultMarkdown: string;
   /** Ce que le produit ajoute à la consigne et qui ne se modifie pas : grille, règles de preuve. */
   fixedMarkdown?: string | null;
+  /** Le rôle de l'analyse et son système de notation. */
+  scoringOverview?: AnalysisScoringOverview | null;
   initialModel: string;
   versions: VersionRow[];
 };
@@ -196,6 +200,7 @@ export function SuperAdminPromptsEditor({
   initialMarkdown,
   defaultMarkdown,
   fixedMarkdown = null,
+  scoringOverview = null,
   initialModel,
   versions,
 }: Props) {
@@ -288,6 +293,9 @@ export function SuperAdminPromptsEditor({
 
   return (
     <div className="space-y-6">
+      {scoringOverview ? (
+        <AnalysisScoringOverviewCard overview={scoringOverview} />
+      ) : null}
       <Card className="overflow-hidden shadow-sm">
         <CardHeader className="bg-muted/20 border-b pb-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -533,9 +541,9 @@ export function SuperAdminPromptsEditor({
             </CardTitle>
             <CardDescription>
               Lecture seule : ces règles sont jointes à chaque analyse, quelle
-              que soit la consigne publiée ou celle d&apos;une organisation. Pour la
-              grille, c&apos;est ici que se lisent les critères et la façon dont la
-              note est calculée.
+              que soit la consigne publiée ou celle d&apos;une organisation.
+              Pour la grille, c&apos;est ici que se lisent les critères et la
+              façon dont la note est calculée.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -1,3 +1,4 @@
+import { analysisScoringOverview } from "@/lib/analysis-scoring-overview";
 import { describe, expect, it } from "@jest/globals";
 import {
   ORGANIZATION_PROMPT_DESCRIPTIONS,
@@ -20,6 +21,7 @@ describe("organizationPromptCardView", () => {
       modified: false,
       badge: "Consigne d'origine, version 4",
       badgeTooltip: null,
+      scoringOverview: analysisScoringOverview("SONCAS"),
     });
   });
 

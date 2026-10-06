@@ -49,10 +49,17 @@ describe("kissResultSchema", () => {
     expect(r.success && r.data.sellerSkills).toEqual(sellerSkills);
   });
 
-  it("requires the seller scores from the model", () => {
+  it("requires the seller scores and the challenge from the model", () => {
     expect(kissGeneratedResultSchema.safeParse(minimal).success).toBe(false);
     expect(
       kissGeneratedResultSchema.safeParse({ ...minimal, sellerSkills }).success,
+    ).toBe(false);
+    expect(
+      kissGeneratedResultSchema.safeParse({
+        ...minimal,
+        sellerSkills,
+        challenge: "Obtenir le nom du décideur.",
+      }).success,
     ).toBe(true);
   });
 

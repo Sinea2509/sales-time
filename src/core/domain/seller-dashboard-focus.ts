@@ -5,6 +5,7 @@ import {
 import { salesScoreSeries } from "./sales-score-series";
 import { salesProfileScoresFromMeeting } from "./sales-profile-from-meetings";
 import { scorecardResultSchema } from "./scorecard-result-zod";
+import { kissResultSchema } from "./kiss-result-zod";
 import {
   sellerMonthlyAxis,
   type SellerMonthlyAxis,
@@ -61,10 +62,16 @@ export function sellerDashboardFocus(
 
   let challenge: SellerWeeklyChallenge | null = null;
   for (const m of byDateDesc) {
+    /* Le défi vient de KISS ; une grille d'avant octobre 2026 en portait un. */
+    const kiss = kissResultSchema.safeParse(m.latestKissResult);
     const parsed = scorecardResultSchema.safeParse(m.latestScorecardResult);
-    if (parsed.success && parsed.data.challenge.trim()) {
+    const text =
+      (kiss.success ? kiss.data.challenge?.trim() : "") ||
+      (parsed.success ? parsed.data.challenge?.trim() : "") ||
+      "";
+    if (text) {
       challenge = {
-        text: parsed.data.challenge.trim(),
+        text,
         meetingId: m.id,
         from: m.prospectCompany?.trim() || m.prospectName,
       };

@@ -92,6 +92,7 @@ function checkedProofs(
 ): ScorecardProof[] {
   const kept: ScorecardProof[] = [];
   for (const proof of proofs) {
+    if (kept.some((k) => k.quote.trim() === proof.quote.trim())) continue;
     if (!isExcerptInSource(proof.quote, words.all)) continue;
     if (words.seller && words.prospect) {
       const own = proof.who === "commercial" ? words.seller : words.prospect;
@@ -218,11 +219,6 @@ export function levelScorecardObservations(
   return {
     criteria,
     pointsLost,
-    keep: generated.keep,
-    improve: generated.improve,
-    stop: generated.stop,
-    goldenQuestion: generated.goldenQuestion,
-    challenge: generated.challenge,
     summary: generated.summary,
   };
 }

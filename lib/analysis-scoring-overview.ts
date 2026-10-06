@@ -1,0 +1,269 @@
+import { plurielFr } from "@/lib/pluriel-fr";
+import {
+  coachingScoreBands,
+  COACHING_SCORE_MAX,
+} from "@/src/core/domain/coaching-score-scale";
+import { PROFILE_SCORE_BANDS } from "@/src/core/domain/profile-score-scale";
+import { libelleTranche, scoreBands } from "@/src/core/domain/score-bands";
+import {
+  SCORECARD_EXPLORED_LABEL,
+  SCORECARD_OBTAINED_LABEL,
+  scorecardLevelFromCoverage,
+} from "@/src/core/domain/scorecard-coverage";
+import {
+  DEFAULT_SCORECARD_GRID,
+  SCORECARD_LEVEL_MAX,
+  SCORECARD_TOTAL,
+  scorecardCriteria,
+} from "@/src/core/domain/scorecard-grid";
+import {
+  SCORECARD_EXPLORED,
+  SCORECARD_OBTAINED,
+} from "@/src/core/domain/scorecard-result-zod";
+import {
+  listeningLevelFromTalkShare,
+  TALK_SHARE_CEILING_PCT,
+} from "@/src/core/domain/talk-share-from-transcript";
+import type { AnalysisKindSlug } from "@/src/core/ports/prompt-template-repository-port";
+
+/**
+ * Ce que fait une analyse, comment elle note, et ce qu'elle laisse aux autres.
+ *
+ * La revue du 5 octobre 2026 l'a demandé : en lisant les consignes, on ne
+ * voyait pas le système de notation, et des consignes se recouvraient (la
+ * grille et KISS écrivaient chacune leur coaching, le compte rendu et
+ * l'analyse des objections relevaient chacun leurs objections). Chaque
+ * analyse a désormais un rôle, et cette fiche le dit.
+ *
+ * Tout ce qui est chiffré se lit dans les constantes du produit, jamais
+ * recopié : la fiche ne peut pas dire autre chose que ce que le calcul fait.
+ */
+export type ScoringTable = {
+  readonly caption: string;
+  readonly head: readonly string[];
+  readonly rows: readonly (readonly string[])[];
+};
+
+export type AnalysisScoringOverview = {
+  /** Ce que l'analyse apporte, en une phrase. */
+  readonly role: string;
+  /** Ce qu'elle produit, élément par élément. */
+  readonly produces: readonly string[];
+  /** Comment elle note, en phrases. Vide pour une analyse qui ne note pas. */
+  readonly scoring: readonly string[];
+  readonly tables: readonly ScoringTable[];
+  /** Ce qu'elle ne fait pas, et l'analyse qui s'en charge. */
+  readonly notHere: readonly string[];
+};
+
+const PROFILE_BAND_FR: Record<string, string> = {
+  absent: "rien à citer dans le transcript",
+  faint: "un signe isolé, ou ambigu",
+  clear: "net, au moins une fois, dans les mots du prospect",
+  marked: "revient à plusieurs moments du rendez-vous",
+  pervasive: "traverse tout le rendez-vous",
+};
+
+function profileBandsTable(caption: string): ScoringTable {
+  return {
+    caption,
+    head: ["Note", "Ce qu'il faut avoir entendu"],
+    rows: PROFILE_SCORE_BANDS.map((b) => [
+      `${b.min} à ${b.max}`,
+      PROFILE_BAND_FR[b.nom] ?? b.nom,
+    ]),
+  };
+}
+
+function tiersTable(): ScoringTable {
+  return {
+    caption: "Le palier affiché au commercial",
+    head: ["SalesScore", "Palier"],
+    rows: scoreBands({ max: SCORECARD_TOTAL, pointsParUnite: 1 }).map((b) => [
+      libelleTranche(b),
+      b.tier.nom,
+    ]),
+  };
+}
+
+function scorecardOverview(): AnalysisScoringOverview {
+  const grid = DEFAULT_SCORECARD_GRID;
+  const criteria = scorecardCriteria(grid);
+  return {
+    role: "La grille donne le SalesScore du commercial sur 100 : c'est la seule note de sa performance sur le rendez-vous.",
+    produces: [
+      "Le SalesScore sur 100, et le score de chaque bloc.",
+      "Pour chaque critère : ce qui a été obtenu, ce qui manque, et les citations.",
+      "« Où gagner des points » : 3 à 5 critères avec la phrase à dire la prochaine fois.",
+      "Une synthèse de 3 à 5 phrases qui explique la note.",
+    ],
+    scoring: [
+      `${criteria.length} critères en ${grid.blocks.length} blocs. Chaque critère vaut de 0 à ${SCORECARD_LEVEL_MAX} points, et les points s'additionnent jusqu'à ${SCORECARD_TOTAL}.`,
+      "L'IA ne donne aucune note. Elle relève, pour chaque critère, ce que le commercial a fait du thème et ce qu'il a obtenu. Le produit en tire le niveau par la table ci-dessous, toujours de la même façon.",
+      "Le thème compte, pas la formulation : une question posée avec d'autres mots que les exemples compte pleinement.",
+      `Chaque citation est retrouvée dans le transcript, avec la personne qui l'a dite. Une information sans parole du prospect retrouvée baisse d'un cran ; un critère sans aucune citation ne dépasse pas 1 point.`,
+      `L'écoute (E1) est mesurée sur la répartition de la parole : ${[
+        40, 50, 60, 61,
+      ]
+        .map(
+          (pct, i) =>
+            `${i < 3 ? `jusqu'à ${pct} %` : `au-delà de 60 %`} : ${listeningLevelFromTalkShare(pct)} ${plurielFr(listeningLevelFromTalkShare(pct), "point")}`,
+        )
+        .join(
+          " ; ",
+        )}. Plafond conseillé : ${TALK_SHARE_CEILING_PCT} % pour le commercial.`,
+      "Le même transcript, avec la même consigne et le même modèle, reçoit la même note.",
+      "Pour une bonne note : couvrir les cinq blocs ; relancer chaque réponse vague jusqu'à obtenir un nom, un chiffre, une date ou un exemple ; repartir avec une date ferme et un engagement du prospect ; parler moins de 40 % du temps. Le tableau « Critère par critère » donne, pour chacun, ce qu'il faut obtenir et des questions qui y mènent.",
+    ],
+    tables: [
+      {
+        caption: "Le niveau d'un critère, selon le relevé",
+        head: [
+          "Ce qui a été obtenu",
+          ...SCORECARD_EXPLORED.map((e) => SCORECARD_EXPLORED_LABEL[e]),
+        ],
+        rows: SCORECARD_OBTAINED.map((o) => [
+          SCORECARD_OBTAINED_LABEL[o],
+          ...SCORECARD_EXPLORED.map((e) =>
+            String(scorecardLevelFromCoverage(e, o)),
+          ),
+        ]),
+      },
+      {
+        caption: `Les blocs de la grille « ${grid.name} »`,
+        head: ["Bloc", "Points", "Critères"],
+        rows: grid.blocks.map((b) => [
+          `${b.key}. ${b.name}`,
+          String(b.weight),
+          b.criteria.map((c) => `${c.key} ${c.label}`).join(", "),
+        ]),
+      },
+      {
+        caption:
+          "Critère par critère : comment avoir 4 points, et les questions qui y mènent",
+        head: [
+          "Critère",
+          "Pour avoir 4 points",
+          "Ce qui compte, n'importe où dans le rendez-vous",
+          "Questions possibles (d'autres mots comptent aussi)",
+        ],
+        rows: criteria.map((c) => [
+          `${c.key}. ${c.label}`,
+          c.expected,
+          c.measuredByProduct
+            ? "Mesuré par le produit sur la répartition de la parole."
+            : (c.lookFor ?? ""),
+          c.examples?.length
+            ? c.examples.map((e) => `« ${e} »`).join(" ")
+            : c.measuredByProduct
+              ? "Laisser parler le prospect : poser une question courte, puis se taire."
+              : "Pas de question type : c'est la façon de mener tout l'échange.",
+        ]),
+      },
+      tiersTable(),
+    ],
+    notHere: [
+      "Le coaching (à garder, à améliorer, à arrêter, question en or, défi) : analyse KISS.",
+      "Les objections : analyse des objections.",
+      "Le profil du prospect : SONCAS et DISC.",
+    ],
+  };
+}
+
+const OVERVIEWS: Partial<
+  Record<AnalysisKindSlug, () => AnalysisScoringOverview>
+> = {
+  SCORECARD: scorecardOverview,
+  KISS: () => ({
+    role: "KISS écrit le coaching du commercial, et lui seul : ce qu'il faut garder, améliorer, arrêter et essayer, la question en or et le défi.",
+    produces: [
+      "Le brief du coach : un paragraphe à relire avant le prochain contact.",
+      "Quatre listes : à conserver, à améliorer, à arrêter, à démarrer.",
+      "La question en or et le défi du prochain rendez-vous.",
+      "Six notes du comportement du commercial (radar « Mon profil de vente ») et une note de conduite du rendez-vous.",
+    ],
+    scoring: [
+      "KISS ne donne pas le SalesScore. Il reçoit le relevé de la grille, le type de rendez-vous et la parole mesurée, et son coaching ne doit pas les contredire.",
+      `La note de conduite va de 0 à ${COACHING_SCORE_MAX}. Elle ne sert que lorsqu'un rendez-vous n'a pas de grille.`,
+      "Les six notes du commercial vont de 0 à 100 : assertivité, écoute active, capital sympathie, argumentation, traitement des objections, prochaines étapes. 50 est un rendez-vous ordinaire.",
+      `Quand le commercial a parlé plus de ${TALK_SHARE_CEILING_PCT} % du temps, « à arrêter » le dit toujours, avec le chiffre mesuré.`,
+    ],
+    tables: [
+      {
+        caption: "La note de conduite et son palier",
+        head: ["Note sur 10", "Palier"],
+        rows: coachingScoreBands().map((b) => [libelleTranche(b), b.tier.nom]),
+      },
+    ],
+    notHere: [
+      "La note du commercial (SalesScore) : la grille.",
+      "Les objections : analyse des objections.",
+      "Le profil du prospect : SONCAS et DISC.",
+    ],
+  }),
+  SONCAS: () => ({
+    role: "SONCAS décrit ce qui motive le prospect à acheter. Il ne note pas le commercial.",
+    produces: [
+      "Six leviers notés sur 100 : sécurité, orgueil, nouveauté, confort, argent, sympathie.",
+      "Le levier principal, et comment lui parler.",
+    ],
+    scoring: [
+      "Chaque levier se note sur la quantité de traces dans les paroles du prospect, selon les tranches ci-dessous.",
+      "Seuls les mots du prospect comptent. Le produit retire toute citation qui ne vient pas de lui, et un levier sans citation retombe sous 20.",
+    ],
+    tables: [profileBandsTable("Les tranches d'un levier")],
+    notHere: [
+      "La note du commercial : la grille.",
+      "Le style de communication du prospect : DISC.",
+    ],
+  }),
+  DISC: () => ({
+    role: "DISC décrit la façon dont le prospect communique dans ce rendez-vous. Ce n'est pas un test de personnalité, et il ne note pas le commercial.",
+    produces: [
+      "Quatre styles notés sur 100, indépendants : dominance, influence, stabilité, conformité.",
+      "Le style principal, et comment lui parler.",
+    ],
+    scoring: [
+      "Chaque style se note sur la façon de parler du prospect, pas sur ses sujets, selon les tranches ci-dessous.",
+    ],
+    tables: [profileBandsTable("Les tranches d'un style")],
+    notHere: [
+      "Ce qui motive le prospect : SONCAS.",
+      "La note du commercial : la grille.",
+    ],
+  }),
+  OBJECTIONS: () => ({
+    role: "L'analyse des objections relève les réserves du prospect et la façon dont le commercial les a traitées. C'est la seule source des objections, compte rendu compris.",
+    produces: [
+      "Chaque objection : la phrase du prospect, la réponse du commercial, l'effet, et une question à poser.",
+    ],
+    scoring: [
+      "Pas de note. Chaque objection reçoit un état : levée (le prospect accepte la réponse ou la suite), levée à moitié (une preuve reste à apporter ; en découverte, renvoyer la preuve au rendez-vous suivant après avoir exploré la réserve), ou ouverte.",
+      "Une objection retrouvée mot pour mot dans les paroles du prospect s'affiche entre guillemets ; sinon, « En substance ».",
+    ],
+    tables: [],
+    notHere: ["Le coaching : KISS.", "La note du commercial : la grille."],
+  }),
+  MEETING_DETAIL_SYNTHESIS: () => ({
+    role: "Le compte rendu de visite rassemble les faits du rendez-vous pour le CRM. Il ne note rien lui-même.",
+    produces: [
+      "Les faits : participants, contexte, existant, besoin, décision, prix, prestataires, suite.",
+    ],
+    scoring: [
+      "Pas de note. Il reprend tel quel le SalesScore et la maturité de la grille, le coaching de KISS, les objections de leur analyse et le profil SONCAS et DISC.",
+    ],
+    tables: [],
+    notHere: [
+      "La note : la grille.",
+      "Le coaching : KISS.",
+      "Les objections : analyse des objections.",
+    ],
+  }),
+};
+
+/** La fiche d'une analyse, ou `null` pour celles qui ne notent rien. */
+export function analysisScoringOverview(
+  kind: AnalysisKindSlug,
+): AnalysisScoringOverview | null {
+  return OVERVIEWS[kind]?.() ?? null;
+}

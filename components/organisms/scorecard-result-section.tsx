@@ -103,8 +103,8 @@ function CriterionRow({
         </div>
       ) : criterion.evidence.length > 0 ? (
         <ul className="text-muted-foreground mt-1.5 space-y-1 text-xs leading-relaxed">
-          {criterion.evidence.map((quote) => (
-            <li key={quote} className="italic">
+          {criterion.evidence.map((quote, index) => (
+            <li key={`${index}-${quote}`} className="italic">
               « {quote} »
             </li>
           ))}

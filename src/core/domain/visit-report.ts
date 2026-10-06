@@ -6,6 +6,8 @@ import { APP_TIME_ZONE } from "./app-time-zone";
 import { evidenceWords, isExcerptInSource } from "./transcript-evidence";
 import { scorecardGridById, scorecardCriteria } from "./scorecard-grid";
 import type { ScorecardAnalysisResult } from "./scorecard-result-zod";
+import type { KissAnalysisResult } from "./kiss-result-zod";
+import type { ObjectionsAnalysisResult } from "./objections-result-zod";
 import { scorecardResultView } from "./scorecard-result-view";
 import { scorecardLevelsByKey } from "./scorecard-score";
 import type {
@@ -74,6 +76,16 @@ export type VisitReportInput = {
   readonly soncas: SoncasAnalysisResult | null;
   readonly disc: DiscAnalysisResult | null;
   readonly scorecard: ScorecardAnalysisResult | null;
+  /**
+   * Le coaching du rendez-vous. Depuis octobre 2026, KISS est seul à
+   * l'écrire ; la grille ne donne plus que la note et les points perdus.
+   */
+  readonly kiss?: KissAnalysisResult | null;
+  /**
+   * L'analyse des objections, seule source des objections depuis octobre
+   * 2026 : le compte rendu en relevait une seconde liste, différente.
+   */
+  readonly objectionsAnalysis?: ObjectionsAnalysisResult | null;
 };
 
 export const VISIT_REPORT_TITLE = "COMPTE RENDU DE VISITE";
@@ -435,9 +447,31 @@ function body(out: Lines, input: VisitReportInput): void {
   }
 }
 
+/** Les objections de l'analyse dédiée, dans la forme du compte rendu. */
+function objectionsFromAnalysis(
+  analysis: ObjectionsAnalysisResult,
+): VisitReportExtraction["objections"] {
+  const effet: Record<string, string> = {
+    handled: "levée",
+    partial: "levée à moitié",
+    open: "pas traitée",
+  };
+  return analysis.objections.map((o) => ({
+    qui: o.who,
+    moment: o.moment ?? "",
+    objection: o.objection,
+    reponse: o.response,
+    effet: `${effet[o.outcome] ?? ""}${o.effect ? `. ${o.effect}` : ""}`,
+    ...(o.verbatim === false ? { verbatim: false } : {}),
+  }));
+}
+
 function objections(out: Lines, input: VisitReportInput): void {
   out.title("Objections et réponses apportées");
-  const items = input.extraction.objections.filter((o) => clean(o.objection));
+  const source = input.objectionsAnalysis
+    ? objectionsFromAnalysis(input.objectionsAnalysis)
+    : input.extraction.objections;
+  const items = source.filter((o) => clean(o.objection));
   if (items.length === 0) {
     out.push("Aucune objection n'a été soulevée pendant le rendez-vous.");
     return;
@@ -665,10 +699,16 @@ function quality(out: Lines, input: VisitReportInput): void {
     );
   }
 
+  /*
+    Le coaching vient de KISS ; la grille ne l'écrit plus. Une analyse
+    d'avant octobre 2026 sans KISS garde le coaching que sa grille portait.
+  */
+  const kiss = input.kiss ?? null;
   const lists: [string, string[]][] = [
-    ["Ce qui a fonctionné :", scorecard.keep],
-    ["À élever d'un niveau :", scorecard.improve],
-    ["À arrêter :", scorecard.stop],
+    ["Ce qui a fonctionné :", kiss?.keep ?? scorecard.keep ?? []],
+    ["À élever d'un niveau :", kiss?.improve ?? scorecard.improve ?? []],
+    ["À arrêter :", kiss?.stop ?? scorecard.stop ?? []],
+    ["À essayer au prochain rendez-vous :", kiss?.start ?? []],
   ];
   let first = true;
   for (const [label, items] of lists) {
@@ -682,8 +722,10 @@ function quality(out: Lines, input: VisitReportInput): void {
     for (const item of rendered) out.push(`- ${item}`);
   }
 
-  const question = clean(view.goldenQuestion).replace(/^«\s*|\s*»$/g, "");
-  const challenge = clean(view.challenge);
+  const question = clean(
+    kiss?.goldenQuestion ?? view.goldenQuestion ?? "",
+  ).replace(/^«\s*|\s*»$/g, "");
+  const challenge = clean(kiss?.challenge ?? view.challenge ?? "");
   if (question || challenge) out.blank();
   if (question) {
     out.push("Question à poser au prochain échange :");

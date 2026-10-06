@@ -22,11 +22,6 @@ function releve(
   return {
     criteria,
     pointsLost: [],
-    keep: [],
-    improve: [],
-    stop: [],
-    goldenQuestion: "Q",
-    challenge: "C",
     summary: "S",
   };
 }

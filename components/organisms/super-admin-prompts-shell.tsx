@@ -1,5 +1,6 @@
 "use client";
 
+import type { AnalysisScoringOverview } from "@/lib/analysis-scoring-overview";
 import { useCallback, useMemo, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -30,6 +31,8 @@ export type SuperAdminPromptPanel = {
   defaultMarkdown: string;
   /** La partie fixe que le produit ajoute, en lecture seule. */
   fixedMarkdown: string | null;
+  /** Le rôle de l'analyse et son système de notation, affichés en tête. */
+  scoringOverview: AnalysisScoringOverview | null;
   initialModel: string;
   versionCount: number;
   versions: VersionRow[];
@@ -127,6 +130,7 @@ export function SuperAdminPromptsShell({ panels, initialKind }: Props) {
           initialMarkdown={selected.initialMarkdown}
           defaultMarkdown={selected.defaultMarkdown}
           fixedMarkdown={selected.fixedMarkdown}
+          scoringOverview={selected.scoringOverview}
           initialModel={selected.initialModel}
           versions={selected.versions}
         />

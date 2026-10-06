@@ -71,8 +71,9 @@ export type ScorecardResultView = {
   readonly tier: RankingTier | null;
   readonly blocks: readonly ScorecardBlockView[];
   readonly pointsLost: readonly ScorecardPointLostView[];
-  readonly goldenQuestion: string;
-  readonly challenge: string;
+  /** Écrit par la grille avant octobre 2026 seulement ; KISS le porte depuis. */
+  readonly goldenQuestion?: string;
+  readonly challenge?: string;
   readonly summary: string;
 };
 

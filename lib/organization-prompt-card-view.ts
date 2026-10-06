@@ -1,3 +1,7 @@
+import {
+  analysisScoringOverview,
+  type AnalysisScoringOverview,
+} from "@/lib/analysis-scoring-overview";
 import type { OrganizationPromptCard } from "@/src/core/application/organization-prompt-settings";
 import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 import {
@@ -49,6 +53,8 @@ export type OrganizationPromptCardView = {
   badge: string;
   /** « Modifiée par Prénom Nom » ; null quand l'auteur n'est plus connu. */
   badgeTooltip: string | null;
+  /** Le rôle de l'analyse et son système de notation, affichés dans la fenêtre. */
+  scoringOverview: AnalysisScoringOverview | null;
 };
 
 const modifiedDate = new Intl.DateTimeFormat("fr-FR", {
@@ -76,6 +82,7 @@ export function organizationPromptCardView(
     title: ORGANIZATION_PROMPT_TITLES[card.kind],
     description: ORGANIZATION_PROMPT_DESCRIPTIONS[card.kind],
     markdown: card.markdown,
+    scoringOverview: analysisScoringOverview(card.kind),
   };
   if (card.modified) {
     return {
