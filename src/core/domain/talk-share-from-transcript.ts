@@ -381,7 +381,7 @@ export const LISTENING_CRITERION_KEY = "E1";
  *
  * Un premier rendez-vous réussi laisse parler le prospect : jusqu'à 40 % de
  * parole pour le commercial, niveau 4 ; jusqu'à 50 %, 3 ; jusqu'à 60 %, 2 ;
- * au-delà, 1. Le modèle peut noter plus bas, jamais plus haut.
+ * au-delà, 1. Le produit fixe ce niveau, le modèle n'y touche pas.
  */
 export function listeningLevelFromTalkShare(commercialPct: number): number {
   if (commercialPct <= 40) return 4;
@@ -396,7 +396,7 @@ export function talkShareInstruction(share: TalkShare): string {
   return [
     "## Faits mesurés par le produit",
     `Dans ce transcript, le commercial (${share.commercialLabel}) a parlé ${share.commercialPct} % du temps de parole et ${share.prospectLabel} ${share.prospectPct} %, compté en mots. Sa plus longue prise de parole d'affilée fait ${share.longestCommercialRunWords} mots.`,
-    `Le critère ${LISTENING_CRITERION_KEY} (écoute) est fixé par le produit au niveau ${level} sur cette mesure : 4 jusqu'à 40 % de parole pour le commercial, 3 jusqu'à 50 %, 2 jusqu'à 60 %, 1 au-delà. Ne déduis jamais la répartition de la parole de ta lecture. Quand le commercial dépasse 50 %, dis-le dans le coaching : c'est un point à travailler.`,
+    `Le critère ${LISTENING_CRITERION_KEY} (écoute) est fixé par le produit au niveau ${level} sur cette mesure : 4 jusqu'à 40 % de parole pour le commercial, 3 jusqu'à 50 %, 2 jusqu'à 60 %, 1 au-delà. Ne déduis jamais la répartition de la parole de ta lecture.`,
   ].join("\n");
 }
 
@@ -417,8 +417,9 @@ export function listeningMeasure(share: TalkShare): {
   };
 }
 
+/* Les lettres accentuées ne sont pas des « \b » : la frontière se pose à la main (« enchanté »). */
 const GREETING =
-  /\b(bonjour|bonsoir|salut|hello|enchanté|enchantée|ravi de|ravie de|merci de prendre|merci d'avoir|vous m'entendez|on peut commencer|je vous propose qu'on)\b/i;
+  /(?<![\p{L}])(bonjour|bonsoir|salut|hello|enchanté|enchantée|ravi de|ravie de|merci de prendre|merci d'avoir|vous m'entendez|on peut commencer|je vous propose qu'on)(?![\p{L}])/iu;
 
 /**
  * Vrai quand l'enregistrement a manifestement commencé après l'ouverture du
