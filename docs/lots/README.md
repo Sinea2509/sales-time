@@ -89,9 +89,18 @@ deploy && next build`). Aucune migration destructive sans décision écrite.
 ## Les décisions prises, pour ne pas les rouvrir
 
 - Le SalesScore d'un rendez-vous est le score sur 100 de sa grille (la
-  scorecard), pas la moyenne des leviers SONCAS. Tant qu'il n'existe qu'une
-  grille, celle de la découverte s'applique à tous les types de rendez-vous,
-  avec la mention « grille de découverte appliquée en attendant la sienne ».
+  scorecard), et rien d'autre : la moyenne des leviers SONCAS n'en tient
+  plus lieu depuis le lot 92 (décision de Thomas, 10 octobre 2026). Un
+  rendez-vous dont le type n'a pas de grille n'est pas noté et n'entre ni
+  dans les moyennes ni dans le classement, jusqu'à ce que sa grille existe.
+- La note ne mesure le côté des citations, l'écoute, les questions et les
+  plafonds que lorsque le commercial est reconnu sûrement dans le transcript
+  (rôle écrit, nom connu du produit, organisateur de la réunion). Deviné à
+  l'ordre de parole, il ne l'est pas, et la fiche le dit (lot 92).
+- Les citations ne font que baisser un relevé, jamais le monter ; un nombre
+  cité doit être exact ; une citation fait trois mots au moins et ne sert
+  qu'à un critère ; une citation tirée des notes ne vaut pas une parole du
+  prospect (lot 92).
 - Le commercial lit son SalesScore sur 100 ; la note sur 5 et les paliers
   (Démarrage, Progression, Maîtrise, Excellence) servent au manager pour
   classer.

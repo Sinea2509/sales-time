@@ -142,7 +142,7 @@ export function MeetingDetailShell({
             <p className="text-muted-foreground text-sm leading-relaxed">
               {pending
                 ? "La scorecard se remplit pendant l'analyse."
-                : "Ce type de rendez-vous n'a pas encore de grille de notation : seule la découverte en a une. Sans grille, le SalesScore de la colonne de droite est la moyenne des leviers SONCAS."}
+                : "Ce type de rendez-vous n'a pas encore de grille de notation : seule la découverte en a une. Sans grille, le rendez-vous n'est pas noté : il ne compte ni dans la moyenne ni dans le classement."}
             </p>
           </CardContent>
         </Card>

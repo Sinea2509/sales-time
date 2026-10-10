@@ -121,7 +121,6 @@ export default async function RendezVousDetailPage({
 
   const salesScore = salesScoreForMeeting({
     scorecardResult: scorecard?.result ?? null,
-    soncasResult: soncas?.result ?? null,
   });
   const scoresOf = (rows: typeof sellerMeetings30d) =>
     rows

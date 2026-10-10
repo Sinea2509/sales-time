@@ -93,8 +93,8 @@ function ScoreCard(props: MeetingDetailRailProps) {
             </p>
             <p className="text-muted-foreground mt-0.5 text-[11.5px]">
               {props.gridName
-                ? "La note de la grille, sur ses 25 critères."
-                : "Sans grille pour ce type de rendez-vous : la moyenne des six leviers SONCAS."}
+                ? "La note de la grille, sur ses critères."
+                : "Sans grille pour ce type de rendez-vous : le rendez-vous n'est pas noté."}
             </p>
           </div>
         </div>

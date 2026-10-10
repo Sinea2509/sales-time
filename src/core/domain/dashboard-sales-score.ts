@@ -1,4 +1,3 @@
-import { soncasResultSchema } from "./analysis-result-zod";
 import { scorecardResultSchema } from "./scorecard-result-zod";
 
 /**
@@ -6,31 +5,16 @@ import { scorecardResultSchema } from "./scorecard-result-zod";
  * maquette du 11 septembre l'annonce (« sur 100, grille rendez-vous de
  * découverte »).
  *
- * La moyenne des six leviers SONCAS ne sert plus que de repli, pour un
- * rendez-vous noté avant la grille ou dont la grille a échoué : un rendez-vous
- * analysé garde ainsi un score, et le classement ne perd personne.
+ * Rien d'autre ne tient lieu de note. La moyenne des six leviers SONCAS a
+ * servi de repli jusqu'au lot 92 : c'était un trait du prospect présenté
+ * comme une note du commercial, et il entrait dans les moyennes et le
+ * classement. Un rendez-vous sans grille lisible n'est pas noté, et la fiche
+ * le dit.
  */
 export function salesScoreForMeeting(input: {
   scorecardResult: unknown;
-  soncasResult: unknown;
 }): number | null {
   const scorecard = scorecardResultSchema.safeParse(input.scorecardResult);
   if (scorecard.success) return Math.round(scorecard.data.overallScore);
-  return salesScoreFromSoncasResult(input.soncasResult);
-}
-
-/** Score 0–100 à partir du dernier résultat SONCAS (moyenne des 6 leviers), le repli sans grille. */
-export function salesScoreFromSoncasResult(result: unknown): number | null {
-  const parsed = soncasResultSchema.safeParse(result);
-  if (!parsed.success) return null;
-  const d = parsed.data.drivers;
-  const scores = [
-    d.securite.score,
-    d.orgueil.score,
-    d.nouveaute.score,
-    d.confort.score,
-    d.argent.score,
-    d.sympathie.score,
-  ];
-  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  return null;
 }
