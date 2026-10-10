@@ -44,8 +44,9 @@ export const scorecardObservationSchema = z.object({
   evidence: z.array(scorecardProofSchema).max(3),
   /**
    * Faux quand le transcript ne montre pas le moment jugé (l'ouverture n'a
-   * pas été enregistrée). Le produit n'en tient compte que pour les critères
-   * qui le permettent.
+   * pas été enregistrée). Depuis le lot 92, le produit n'en tient plus
+   * compte : c'est lui qui constate l'ouverture manquante, jamais le modèle.
+   * Le champ reste demandé pour que le format ne change pas.
    */
   observable: z.boolean(),
 });
@@ -115,11 +116,25 @@ export const scorecardGeneratedResultSchema = z.object({
   ...scorecardCoachingFields,
 });
 
+/**
+ * Comment le commercial a été reconnu dans le transcript, et donc ce que la
+ * note a pu mesurer : reconnu (rôle écrit, nom connu, organisateur), deviné
+ * (ordre de parole, questions), ou aucun intervenant distingué.
+ *
+ * Quand il n'est que deviné ou absent, le côté des citations, l'écoute, les
+ * questions et les plafonds ne s'appliquent pas : une inversion des rôles
+ * retournerait toute la note. La fiche le dit.
+ */
+export const SCORECARD_SPEAKERS = ["recognized", "guessed", "none"] as const;
+export type ScorecardSpeakers = (typeof SCORECARD_SPEAKERS)[number];
+
 /** Le résultat une fois les niveaux posés par le produit, avant le score. */
 export const scorecardLeveledResultSchema = z.object({
   criteria: z.array(scorecardCriterionSchema).max(40),
   ...scorecardCoachingFields,
   ...scorecardLegacyCoachingFields,
+  /** Absent sur les analyses d'avant le lot 92. */
+  speakers: z.enum(SCORECARD_SPEAKERS).optional(),
 });
 
 /** Le score d'un bloc, tel que le produit l'a calculé et enregistré. */

@@ -318,6 +318,26 @@ export function ScorecardResultSection({
         </Card>
       ) : null}
 
+      {result.speakers === "guessed" || result.speakers === "none" ? (
+        <Card className="border-amber-200 bg-amber-50 shadow-none dark:border-amber-800 dark:bg-amber-950/40">
+          <CardContent className="flex flex-wrap items-center gap-3 pt-6">
+            <ToneChip tone="warn">
+              {result.speakers === "guessed"
+                ? "Commercial deviné"
+                : "Intervenants non distingués"}
+            </ToneChip>
+            <span className="text-[12.5px] leading-relaxed">
+              {result.speakers === "guessed"
+                ? "Le transcript ne dit pas qui est le commercial : il a été deviné à l'ordre de parole. L'écoute, les questions, le côté des citations et les plafonds n'ont donc pas été mesurés sur ce rendez-vous."
+                : "Le transcript ne distingue pas ses intervenants. L'écoute, les questions, le côté des citations et les plafonds n'ont donc pas été mesurés sur ce rendez-vous."}{" "}
+              Un transcript où chaque réplique commence par « Commercial : » ou
+              « Prospect : », ou qui porte le nom du commercial tel qu&apos;il
+              est écrit dans son profil, le permet.
+            </span>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardContent className="space-y-3 pt-6">
           <div>
@@ -339,9 +359,11 @@ export function ScorecardResultSection({
                 abordé rapporte 1 ou 2 points ; un thème creusé avec une réponse
                 précise en rapporte 4. La formulation de la question ne compte
                 pas, seul le thème compte. Chaque citation est vérifiée dans le
-                transcript, avec la personne qui l&apos;a dite. L&apos;écoute se
-                mesure sur la répartition de la parole. Le même transcript
-                analysé deux fois avec la même consigne reçoit la même note.
+                transcript, avec la personne qui l&apos;a dite, et ne peut que
+                faire baisser le relevé, jamais le monter. L&apos;écoute et les
+                questions se mesurent sur le transcript, quand le commercial y
+                est reconnu. Le même transcript analysé deux fois avec la même
+                consigne reçoit la même note.
               </p>
             </details>
           </div>

@@ -37,6 +37,9 @@ export type MeetingRow = {
   updatedAt: Date;
 };
 
+/** Un rendez-vous et le nom affiché de son commercial, `null` s'il n'en a pas. */
+export type MeetingRowWithSeller = MeetingRow & { sellerName: string | null };
+
 export type MeetingAnalysisRow = {
   id: string;
   meetingId: string;
@@ -151,10 +154,14 @@ export interface MeetingRepositoryPort {
     status?: MeetingStatus;
   }): Promise<MeetingRow>;
 
+  /**
+   * Le rendez-vous avec le nom de son commercial : l'analyse s'en sert pour
+   * le reconnaître dans le transcript.
+   */
   findMeetingByIdForOrg(input: {
     id: string;
     organizationId: string;
-  }): Promise<MeetingRow | null>;
+  }): Promise<MeetingRowWithSeller | null>;
 
   listMeetingsForOrg(input: {
     organizationId: string;

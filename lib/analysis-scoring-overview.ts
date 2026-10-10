@@ -115,9 +115,10 @@ function scorecardOverview(): AnalysisScoringOverview {
       `${criteria.length} critères en ${grid.blocks.length} blocs. Chaque critère vaut de 0 à ${SCORECARD_LEVEL_MAX} points, et les points s'additionnent jusqu'à ${SCORECARD_TOTAL}.`,
       "L'IA ne donne aucune note. Elle relève, pour chaque critère, ce que le commercial a fait du thème et ce qu'il a obtenu. Le produit en tire le niveau par la table ci-dessous, toujours de la même façon.",
       "Le thème compte, pas la formulation : une question posée avec d'autres mots que les exemples compte pleinement.",
-      `Chaque citation est retrouvée dans le transcript, avec la personne qui l'a dite. Une information sans parole du prospect retrouvée baisse d'un cran ; un critère sans aucune citation ne dépasse pas 1 point.`,
-      "Le produit fixe lui-même les deux constats à partir des citations retrouvées : une question du commercial et une réponse du prospect sur le thème font un thème creusé ; une réponse du prospect qui donne quelque chose de précis (un nombre, une date ou une échéance, un nom) fait une information exploitable, sinon partielle. Deux modèles qui citent les mêmes passages reçoivent donc la même note.",
-      "Le cadrage (E4) sort du calcul quand le transcript commence sans l'ouverture : le prospect parle en premier, sans salutation.",
+      `Chaque citation est retrouvée dans le transcript, avec la personne qui l'a dite : trois mots au moins, les nombres exacts, et une même citation ne sert qu'à un critère. Une citation introuvable est retirée ; un critère sans aucune citation ne dépasse pas 1 point.`,
+      "Les citations ne peuvent que faire baisser le relevé, jamais le monter : un thème « creusé » sans relance visible (la question du commercial et la réponse du prospect, ou deux paroles du commercial) redescend à « abordé » ; une information « exploitable » sans rien de précis dans les mots du prospect (un nombre, une date ou une échéance, un nom) redescend à « partielle » ; une information sans parole du prospect retrouvée baisse d'un cran. Une citation tirée des notes du commercial ne vaut pas une parole du prospect. Deux modèles qui citent les mêmes passages reçoivent donc la même note.",
+      "Le produit reconnaît le commercial dans le transcript à son rôle écrit (« Commercial : »), à son nom, ou parce qu'il a lancé la transcription. Quand il n'est que deviné, à l'ordre de parole ou aux questions, le côté des citations, l'écoute, les questions et les plafonds ne s'appliquent pas, et la fiche le dit : une inversion des rôles retournerait toute la note.",
+      "Le cadrage (E4) sort du calcul quand le produit constate que le transcript commence sans l'ouverture : le prospect parle en premier, sans salutation. L'IA ne décide pas de cela.",
       `L'écoute (E1) est mesurée sur la répartition de la parole : ${[
         40, 50, 60, 61,
       ]
@@ -131,6 +132,7 @@ function scorecardOverview(): AnalysisScoringOverview {
       "Le questionnement (E2) est mesuré sur les questions du commercial, rangées en ouvertes, fermées et de simple vérification : 4 points avec au moins 55 % de questions ouvertes et au moins huit d'entre elles, 3 points à partir de 40 %, sinon 2 points, et 0 sans aucune question.",
       "La personnalisation (E3) ne dépasse pas 2 points quand le commercial déroule plus de 250 mots d'affilée dans le premier tiers du rendez-vous.",
       "Le même transcript, avec la même consigne et le même modèle, reçoit la même note.",
+      "Un rendez-vous sans grille (un type autre que la découverte) n'est pas noté : il n'entre ni dans la moyenne ni dans le classement.",
       "Pour une bonne note : couvrir les cinq blocs ; relancer chaque réponse vague jusqu'à obtenir un nom, un chiffre, une date ou un exemple ; repartir avec une date ferme et un engagement du prospect ; parler moins de 40 % du temps. Le tableau « Critère par critère » donne, pour chacun, ce qu'il faut obtenir et des questions qui y mènent.",
     ],
     tables: [
@@ -202,7 +204,7 @@ const OVERVIEWS: Partial<
     ],
     scoring: [
       "KISS ne donne pas le SalesScore. Il reçoit le relevé de la grille, le type de rendez-vous et la parole mesurée, et son coaching ne doit pas les contredire.",
-      `La note de conduite va de 0 à ${COACHING_SCORE_MAX}. Elle ne sert que lorsqu'un rendez-vous n'a pas de grille.`,
+      `La note de conduite va de 0 à ${COACHING_SCORE_MAX}. Elle ne remplace pas le SalesScore et n'entre dans aucune moyenne.`,
       "Les six notes du commercial vont de 0 à 100 : assertivité, écoute active, capital sympathie, argumentation, traitement des objections, prochaines étapes. 50 est un rendez-vous ordinaire.",
       `Quand le commercial a parlé plus de ${TALK_SHARE_CEILING_PCT} % du temps, « à arrêter » le dit toujours, avec le chiffre mesuré.`,
     ],
