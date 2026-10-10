@@ -1,9 +1,7 @@
 {
   "version": "0.2",
   "language": "en,fr",
-  "import": [
-    "@cspell/dict-fr-fr/cspell-ext.json"
-  ],
+  "import": ["@cspell/dict-fr-fr/cspell-ext.json"],
   "useGitignore": true,
   "ignorePaths": [
     ".next",
@@ -16,10 +14,13 @@
     "prisma/migrations",
     "*.svg"
   ],
-  "ignoreRegExpList": [
-    "/data:image\\\\\\+svg[^\"']+/gi"
-  ],
+  "ignoreRegExpList": ["/data:image\\\\\\+svg[^\"']+/gi"],
   "words": [
+    "annee",
+    "cegid",
+    "odoo",
+    "rejouabilité",
+    "rentree",
     "criteres",
     "Cegos",
     "releve",

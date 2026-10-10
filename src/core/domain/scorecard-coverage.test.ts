@@ -94,7 +94,7 @@ describe("levelScorecardObservations", () => {
     expect(out.criteria[0].obtained).toBe("exploitable");
   });
 
-  it("baisse d'un cran une information sans parole du prospect retrouvée", () => {
+  it("baisse d'un cran une information sans parole du prospect retrouvée, et « creusé » sans relance visible devient « abordé »", () => {
     const out = levelScorecardObservations(
       releve([
         {
@@ -113,7 +113,8 @@ describe("levelScorecardObservations", () => {
       SOURCES,
     );
     expect(out.criteria[0].obtained).toBe("partiel");
-    expect(out.criteria[0].level).toBe(3);
+    expect(out.criteria[0].explored).toBe("aborde");
+    expect(out.criteria[0].level).toBe(2);
   });
 
   it("retire une citation introuvable et plafonne à 1 un critère sans preuve", () => {

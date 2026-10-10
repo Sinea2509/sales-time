@@ -111,34 +111,30 @@ describe("les règles plus pointues de la grille", () => {
     const out = levelScorecardObservations(
       releve([
         {
-          key: "E2",
+          key: "E3",
           ...creuseExploitable,
-          evidence: [{ who: "commercial", quote: SELLER }],
+          evidence: [
+            { who: "commercial", quote: SELLER },
+            { who: "prospect", quote: "On a une centaine de managers." },
+          ],
         },
       ]),
       DECOUVERTE_V2_GRID,
       SOURCES,
       {},
-      { E2: { max: 2, reason: "20 questions ouvertes sur 54" } },
+      { E3: { max: 2, reason: "un argumentaire de 576 mots d'affilée" } },
     );
     expect(out.criteria[0]).toMatchObject({
       level: 2,
-      capped: "20 questions ouvertes sur 54",
+      capped: "un argumentaire de 576 mots d'affilée",
     });
   });
 
-  it("sort du calcul un cadrage non observable, sans coûter de points", () => {
+  it("ne laisse plus le modèle sortir le cadrage du calcul : seul le produit le constate", () => {
     const out = levelScorecardObservations(
       releve([
         {
           key: "E4",
-          ...creuseExploitable,
-          observable: false,
-          evidence: [],
-        },
-        // Un critère qui ne le permet pas reste noté, même déclaré non observable.
-        {
-          key: "E2",
           explored: "non",
           obtained: "rien",
           learned: "",
@@ -150,11 +146,12 @@ describe("les règles plus pointues de la grille", () => {
       DECOUVERTE_V2_GRID,
       SOURCES,
     );
+    // Déclaré non observable par le modèle, le cadrage reste noté : 0.
     expect(out.criteria.find((c) => c.key === "E4")).toMatchObject({
-      unobservable: true,
+      level: 0,
     });
     expect(
-      out.criteria.find((c) => c.key === "E2")?.unobservable,
+      out.criteria.find((c) => c.key === "E4")?.unobservable,
     ).toBeUndefined();
 
     const e = (
@@ -226,7 +223,7 @@ describe("les trois règles du 6 octobre", () => {
     expect(isConcrete("On est ouvert à vos propositions.")).toBe(false);
   });
 
-  it("pose « creusé » sur une question du commercial et une réponse du prospect, quoi qu'ait relevé le modèle", () => {
+  it("ne monte jamais un relevé : « non » et « partiel » restent tels quels malgré la question et la réponse citées", () => {
     const out = levelScorecardObservations(
       releve([
         {
@@ -246,9 +243,56 @@ describe("les trois règles du 6 octobre", () => {
       SOURCES,
     );
     expect(out.criteria[0]).toMatchObject({
+      explored: "non",
+      obtained: "partiel",
+      level: 1,
+    });
+  });
+
+  it("garde « creusé » quand la relance se voit : question et réponse, ou deux paroles du commercial", () => {
+    const relances =
+      "Et sur combien de sites ?\nVous avez des sites à l'étranger ?";
+    const sources = {
+      all: `${SELLER}\n${relances}\n${PROSPECT}`,
+      seller: `${SELLER}\n${relances}`,
+      prospect: PROSPECT,
+    };
+    const out = levelScorecardObservations(
+      releve([
+        {
+          key: "A1",
+          ...creuseExploitable,
+          evidence: [
+            { who: "commercial", quote: SELLER },
+            { who: "prospect", quote: "On a une centaine de managers." },
+          ],
+        },
+        {
+          key: "A2",
+          explored: "creuse",
+          obtained: "rien",
+          learned: "",
+          missing: "",
+          observable: true,
+          evidence: [
+            { who: "commercial", quote: "Et sur combien de sites ?" },
+            { who: "commercial", quote: "Vous avez des sites à l'étranger ?" },
+          ],
+        },
+      ]),
+      DECOUVERTE_V2_GRID,
+      sources,
+    );
+    expect(out.criteria[0]).toMatchObject({
+      key: "A1",
       explored: "creuse",
-      obtained: "exploitable",
       level: 4,
+    });
+    // Deux relances sans réponse : creusé, rien obtenu, 2 points.
+    expect(out.criteria[1]).toMatchObject({
+      key: "A2",
+      explored: "creuse",
+      level: 2,
     });
   });
 

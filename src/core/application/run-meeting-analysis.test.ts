@@ -946,7 +946,10 @@ describe("runMeetingAnalysis : scorecard", () => {
       learned: "",
       missing: "",
       observable: true,
-      evidence: [{ who: "prospect", quote: "extrait" }],
+      // Une citation par critère : la même phrase ne prouve pas deux thèmes.
+      evidence: [
+        { who: "prospect", quote: `extrait du critère ${criterion.key}` },
+      ],
     }));
   }
 
@@ -979,8 +982,10 @@ describe("runMeetingAnalysis : scorecard", () => {
       findMeetingByIdForOrg: jest.fn().mockResolvedValue({
         id: "m1",
         organizationId: "org_1",
-        // Le mot cité en preuve par les critères simulés est dans le transcript.
-        transcript: "Voici un extrait du rendez-vous.",
+        // Les citations des critères simulés sont dans le transcript, une par critère.
+        transcript: scorecardCriteria(DEFAULT_SCORECARD_GRID)
+          .map((c) => `Voici un extrait du critère ${c.key}.`)
+          .join("\n"),
         notes: null,
         meetingType: options?.meetingType ?? "RDV découverte",
         pipelineStage: null,

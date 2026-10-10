@@ -34,13 +34,13 @@ export function scorecardGridInstruction(grid: ScorecardGrid): string {
                   .join(" ; ")}`
               : null,
             criterion.measuredByProduct
-              ? "  Mesuré par le produit : renseigne seulement `learned` et `missing` à partir de la mesure donnée plus bas."
+              ? "  Mesuré par le produit : renseigne seulement `learned` et `missing` à partir de la mesure donnée dans « Conduite mesurée par le produit », quand elle existe."
               : null,
             criterion.requiresFigure
               ? "  Chiffre exigé : le niveau 4 demande un nombre dit par le prospect, cité dans `evidence`."
               : null,
             criterion.canBeUnobservable
-              ? "  Peut être non observable : si le transcript commence après ce moment (l'enregistrement a démarré en cours de rendez-vous), mets `observable` à false."
+              ? "  Peut être non observable : le produit constate lui-même quand le transcript commence après ce moment, et sort alors le critère du calcul. Relève-le comme les autres."
               : null,
           ];
           return parts.filter(Boolean).join("\n");
@@ -76,12 +76,12 @@ Pour chaque critère :
   - \`exploitable\` : une information assez précise pour préparer la suite : un nom, un chiffre, une étape, une date, un exemple vécu.
 - **learned** : une phrase qui dit ce que le commercial sait maintenant sur ce thème, avec les faits du transcript (noms, chiffres, dates). Vide si rien.
 - **missing** : une phrase qui dit ce qui manque encore pour atteindre le niveau ${SCORECARD_LEVEL_MAX}. Vide si rien ne manque.
-- **evidence** : 1 à 3 extraits recopiés mot pour mot, chacun avec \`who\` : \`commercial\` ou \`prospect\`, selon la personne qui l'a dit. Donne de préférence la question ou la relance du commercial ET la réponse du prospect. Un extrait est une phrase entière, ou un morceau de phrase qui a du sens seul : ne le coupe jamais au milieu d'une idée. Aucun extrait quand le thème est absent.
-- **observable** : \`true\` presque toujours. \`false\` seulement pour un critère marqué « peut être non observable », quand le transcript ne montre pas le moment qu'il juge : le critère sort alors du calcul au lieu de coûter des points. Un thème simplement absent du rendez-vous reste observable : il vaut 0.
+- **evidence** : 1 à 3 extraits recopiés mot pour mot, chacun avec \`who\` : \`commercial\` ou \`prospect\`, selon la personne qui l'a dit. Donne de préférence la question ou la relance du commercial ET la réponse du prospect. Un extrait est une phrase entière, ou un morceau de phrase qui a du sens seul, de trois mots au moins : ne le coupe jamais au milieu d'une idée. Les nombres se recopient exactement : un chiffre changé rend l'extrait introuvable. Un même extrait ne sert qu'à un seul critère : cite pour chaque critère le passage qui lui est propre. Aucun extrait quand le thème est absent.
+- **observable** : \`true\`, toujours. Le produit constate lui-même quand un moment n'est pas dans le transcript.
 
-Le produit vérifie chaque extrait dans le transcript et qui l'a dit, puis fixe lui-même les deux crans à partir des extraits retrouvés :
-- \`explored\` : une question ou une relance du commercial ET une réponse du prospect sur le thème font « creusé » ; une parole du commercial seule fait « abordé ».
-- \`obtained\` : une réponse du prospect qui donne quelque chose de précis (un nombre, une date ou une échéance, un nom de personne, de société ou de lieu) fait « exploitable » ; une réponse sans rien de précis fait « partiel ».
+Le produit vérifie chaque extrait dans le transcript et qui l'a dit, puis relit les deux crans au vu des extraits retrouvés, sans jamais les monter :
+- \`explored\` : « creusé » ne tient que si la relance se voit, la question ou la relance du commercial ET la réponse du prospect sur le thème, ou deux paroles du commercial sur le thème ; sinon le cran redescend à « abordé ».
+- \`obtained\` : « exploitable » ne tient que si une réponse du prospect donne quelque chose de précis (un nombre, une date ou une échéance, un nom de personne, de société ou de lieu) ; sinon le cran redescend à « partiel ». Sans aucune parole du prospect retrouvée, il baisse d'un cran. Un extrait tiré des notes du commercial ne vaut pas une parole du prospect.
 Donne donc toujours, quand ils existent, la question du commercial et la réponse du prospect qui porte le fait le plus précis. Un extrait introuvable est retiré. Un critère sans aucun extrait ne dépasse pas le niveau 1.
 
 Le niveau que le produit en tire (colonnes : ${SCORECARD_EXPLORED.join(", ")}) :
