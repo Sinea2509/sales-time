@@ -87,7 +87,7 @@ describe("les règles plus pointues de la grille", () => {
     );
     expect(sansChiffre.criteria[0]).toMatchObject({
       level: 3,
-      capped: "aucun chiffre dit par le prospect",
+      capped: "aucun effectif dit par le prospect",
     });
 
     const avecChiffre = levelScorecardObservations(

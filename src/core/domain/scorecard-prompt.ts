@@ -3,6 +3,7 @@ import {
   SCORECARD_OBTAINED_LABEL,
   scorecardLevelFromCoverage,
 } from "./scorecard-coverage";
+import { FULL_MARK_PROOF_TEXT } from "./scorecard-full-mark-proof";
 import { SCORECARD_LEVEL_MAX, type ScorecardGrid } from "./scorecard-grid";
 import { SCORECARD_EXPLORED, SCORECARD_OBTAINED } from "./scorecard-result-zod";
 
@@ -36,8 +37,8 @@ export function scorecardGridInstruction(grid: ScorecardGrid): string {
             criterion.measuredByProduct
               ? "  Mesuré par le produit : renseigne seulement `learned` et `missing` à partir de la mesure donnée plus bas."
               : null,
-            criterion.requiresFigure
-              ? "  Chiffre exigé : le niveau 4 demande un nombre dit par le prospect, cité dans `evidence`."
+            criterion.fullMarkProof
+              ? `  ${FULL_MARK_PROOF_TEXT[criterion.fullMarkProof].instruction}`
               : null,
             criterion.canBeUnobservable
               ? "  Peut être non observable : si le transcript commence après ce moment (l'enregistrement a démarré en cours de rendez-vous), mets `observable` à false."

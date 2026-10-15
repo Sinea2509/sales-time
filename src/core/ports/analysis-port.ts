@@ -6,6 +6,7 @@ import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
 import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
 import type { ScorecardGeneratedResult } from "@/src/core/domain/scorecard-result-zod";
 import type { ObjectionsAnalysisResult } from "@/src/core/domain/objections-result-zod";
+import type { ProspectProfileGenerated } from "@/src/core/domain/prospect-profile-zod";
 import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod";
 import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
 import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
@@ -120,6 +121,22 @@ export interface AnalysisPort {
     model: string;
   }): Promise<
     { result: ObjectionsAnalysisResult; rawText?: string } & AiCallTrace
+  >;
+
+  /**
+   * SONCAS, DISC et les objections en un seul appel : le transcript n'est lu
+   * qu'une fois, et les trois lectures s'appuient sur les mêmes passages.
+   *
+   * La consigne arrive déjà assemblée (`withProspectProfileSystemPrompt`) :
+   * l'appelant la journalise telle qu'elle part au modèle.
+   */
+  analyzeProspectProfile(input: {
+    systemPrompt: string;
+    transcript: string;
+    notes: string | null;
+    model: string;
+  }): Promise<
+    { result: ProspectProfileGenerated; rawText?: string } & AiCallTrace
   >;
 
   generateFollowUpEmail(input: {

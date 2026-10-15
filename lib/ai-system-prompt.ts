@@ -172,6 +172,51 @@ export function withObjectionsSystemPrompt(systemMarkdown: string): string {
   ].join("\n\n");
 }
 
+/** L'en-tête de la lecture du prospect en un seul appel. */
+export const PROSPECT_PROFILE_INTRO = `# Trois lectures du même prospect
+Tu rends en une seule réponse trois lectures indépendantes du prospect de ce rendez-vous : \`soncas\`, \`disc\` et \`objections\`. Chacune suit sa propre consigne, ci-dessous, et remplit seulement son champ. Lis le rendez-vous une fois en entier et repère les passages-clés, puis rends chaque lecture. Un même passage peut servir à plusieurs lectures quand il le justifie ; aucune lecture ne reprend les conclusions d'une autre.`;
+
+const PROSPECT_PROFILE_CONTEXT_HEADING = "# Contexte commun aux trois lectures";
+
+/**
+ * SONCAS, DISC et les objections assemblés en une seule consigne.
+ *
+ * Chaque partie garde sa consigne éditable et ses règles fixes, exactement
+ * celles de l'appel séparé ; les règles communes (données seules, qualité du
+ * français) et le contexte de l'organisation ne sont écrits qu'une fois.
+ */
+export function withProspectProfileSystemPrompt(input: {
+  soncasMarkdown: string;
+  discMarkdown: string;
+  objectionsMarkdown: string;
+  /** Le playbook et le contexte du rendez-vous, communs aux trois lectures. */
+  contextBlocks: readonly (string | null | undefined)[];
+}): string {
+  const context = input.contextBlocks
+    .map((block) => block?.trim())
+    .filter((block): block is string => Boolean(block));
+  return [
+    SYSTEM_DATA_ONLY_PREFIX,
+    FRENCH_QUALITY_INSTRUCTION,
+    FRENCH_TYPOGRAPHY_INSTRUCTION,
+    PROSPECT_PROFILE_INTRO,
+    "# Lecture 1 : SONCAS, dans le champ `soncas`",
+    input.soncasMarkdown.trim(),
+    SONCAS_READING_INSTRUCTION,
+    SONCAS_MOMENTS_INSTRUCTION,
+    "# Lecture 2 : DISC, dans le champ `disc`",
+    input.discMarkdown.trim(),
+    DISC_READING_INSTRUCTION,
+    DISC_MOMENTS_INSTRUCTION,
+    "# Lecture 3 : les objections, dans le champ `objections`",
+    input.objectionsMarkdown.trim(),
+    OBJECTIONS_TREATMENT_INSTRUCTION,
+    ...(context.length > 0
+      ? [PROSPECT_PROFILE_CONTEXT_HEADING, ...context]
+      : []),
+  ].join("\n\n");
+}
+
 /**
  * Consigne KISS, quelle qu'elle soit, plus ce que le schéma exige sans le dire.
  *

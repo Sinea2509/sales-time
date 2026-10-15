@@ -1,3 +1,4 @@
+import { FULL_MARK_PROOF_TEXT } from "@/src/core/domain/scorecard-full-mark-proof";
 import { plurielFr } from "@/lib/pluriel-fr";
 import {
   coachingScoreBands,
@@ -118,6 +119,10 @@ function scorecardOverview(): AnalysisScoringOverview {
       `Chaque citation est retrouvée dans le transcript, avec la personne qui l'a dite. Une information sans parole du prospect retrouvée baisse d'un cran ; un critère sans aucune citation ne dépasse pas 1 point.`,
       "Le produit fixe lui-même les deux constats à partir des citations retrouvées : une question du commercial et une réponse du prospect sur le thème font un thème creusé ; une réponse du prospect qui donne quelque chose de précis (un nombre, une date ou une échéance, un nom) fait une information exploitable, sinon partielle. Deux modèles qui citent les mêmes passages reçoivent donc la même note.",
       "Le cadrage (E4) sort du calcul quand le transcript commence sans l'ouverture : le prospect parle en premier, sans salutation.",
+      `Certains critères exigent une preuve de plus pour atteindre 4 points, sinon ils s'arrêtent à 3 : ${criteria
+        .filter((c) => c.fullMarkProof)
+        .map((c) => `${c.key} (${FULL_MARK_PROOF_TEXT[c.fullMarkProof!].flag})`)
+        .join(", ")}.`,
       `L'écoute (E1) est mesurée sur la répartition de la parole : ${[
         40, 50, 60, 61,
       ]
@@ -167,7 +172,9 @@ function scorecardOverview(): AnalysisScoringOverview {
         ],
         rows: criteria.map((c) => [
           `${c.key}. ${c.label}`,
-          c.expected,
+          c.fullMarkProof
+            ? `${c.expected} (${FULL_MARK_PROOF_TEXT[c.fullMarkProof].flag})`
+            : c.expected,
           c.measuredByProduct
             ? `Mesuré par le produit. ${c.lookFor ?? ""}`
             : (c.lookFor ?? ""),

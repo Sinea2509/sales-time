@@ -11,6 +11,10 @@ import type {
   ScorecardObtained,
   ScorecardProof,
 } from "./scorecard-result-zod";
+import {
+  FULL_MARK_PROOF_TEXT,
+  fullMarkProofMet,
+} from "./scorecard-full-mark-proof";
 import { evidenceWords, isExcerptInSource } from "./transcript-evidence";
 
 /**
@@ -221,16 +225,17 @@ export function levelScorecardObservations(
     let missing = observation.missing.trim();
 
     /*
-      Un chiffre exigé : sans chiffre dit par le prospect (ses citations
-      retrouvées), le niveau 4 n'est pas atteint.
+      Une preuve exigée pour le niveau 4 (un effectif, une date acceptée, un
+      décideur nommé) : sans elle dans les citations retrouvées, le critère
+      s'arrête à 3.
     */
     if (
-      criterion.requiresFigure &&
+      criterion.fullMarkProof &&
       level === SCORECARD_LEVEL_MAX &&
-      !proofs.some((p) => p.who === "prospect" && FIGURE.test(p.quote))
+      !fullMarkProofMet(criterion.fullMarkProof, proofs)
     ) {
       level = SCORECARD_LEVEL_MAX - 1;
-      capped = "aucun chiffre dit par le prospect";
+      capped = FULL_MARK_PROOF_TEXT[criterion.fullMarkProof].capped;
     }
     /* Un plafond mesuré par le produit (questions, argumentaire en début de rendez-vous). */
     const cap = caps[key];

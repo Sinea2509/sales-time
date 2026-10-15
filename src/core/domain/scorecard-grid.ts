@@ -1,3 +1,5 @@
+import type { ScorecardFullMarkProof } from "./scorecard-full-mark-proof";
+
 /**
  * La grille d'un rendez-vous : ses blocs, ses critères et leur poids.
  *
@@ -68,8 +70,12 @@ export type ScorecardCriterion = {
    * après) : le critère sort alors du calcul au lieu de coûter des points.
    */
   readonly canBeUnobservable?: boolean;
-  /** Vrai quand le niveau 4 exige un chiffre donné par le prospect. */
-  readonly requiresFigure?: boolean;
+  /**
+   * Ce que le niveau 4 exige du prospect, au-delà d'une information précise :
+   * un effectif, une date acceptée, un décideur nommé (voir
+   * `scorecard-full-mark-proof.ts`).
+   */
+  readonly fullMarkProof?: ScorecardFullMarkProof;
 };
 
 /** Un bloc de la grille : une famille de critères et son poids. */
@@ -178,7 +184,7 @@ export const DECOUVERTE_GRID: ScorecardGrid = {
         {
           key: "B3",
           label: "Impact et coût de l'inaction",
-          requiresFigure: true,
+          fullMarkProof: "figure",
           expected:
             "Ce que le problème coûte, en temps, en argent ou en risque, chiffré par le prospect, et ce qui arrive si rien ne bouge. Sans chiffre dit par le prospect, pas de niveau 4.",
         },
@@ -340,7 +346,7 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
         {
           key: "A1",
           label: "Taille et organisation du compte",
-          requiresFigure: true,
+          fullMarkProof: "headcount",
           expected:
             "Des ordres de grandeur chiffrés obtenus du prospect : effectif, nombre de sociétés, de sites ou d'équipes concernés. Sans chiffre dit par le prospect, pas de niveau 4.",
           lookFor:
@@ -453,7 +459,7 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
         {
           key: "B5",
           label: "Périmètre et volumétrie",
-          requiresFigure: true,
+          fullMarkProof: "headcount",
           expected:
             "Qui est concerné, combien, où, sous quel format : de quoi dimensionner une proposition. Sans nombre de personnes, de groupes ou de sessions dit par le prospect, pas de niveau 4.",
           lookFor:
@@ -466,6 +472,7 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
         {
           key: "B6",
           label: "Historique des tentatives",
+          fullMarkProof: "failureReason",
           expected:
             "Ce qui a déjà été essayé, avec qui, et pourquoi cela n'a pas suffi.",
           lookFor:
@@ -494,6 +501,7 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
         {
           key: "C1",
           label: "Décideur",
+          fullMarkProof: "namedDecider",
           expected:
             "Qui décide et qui signe, nommément, et son rapport au sujet. L'interlocuteur n'est pas le décideur par défaut.",
           lookFor:
@@ -569,6 +577,7 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
         {
           key: "D1",
           label: "Prochaine étape planifiée",
+          fullMarkProof: "acceptedDate",
           expected:
             "Une date ferme retenue par les deux parties pendant le rendez-vous. Des créneaux proposés à confirmer sont une information partielle.",
           lookFor:

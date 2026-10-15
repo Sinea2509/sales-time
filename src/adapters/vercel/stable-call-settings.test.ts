@@ -15,5 +15,11 @@ describe("stableCallSettings", () => {
 
   it("ne règle que la graine des modèles à raisonnement, qui refusent la température", () => {
     expect(stableCallSettings("openai/gpt-5.4")).toEqual({ seed: STABLE_SEED });
+    expect(stableCallSettings("anthropic/claude-haiku-5.5")).toEqual({
+      seed: STABLE_SEED,
+    });
+    expect(stableCallSettings("anthropic/claude-sonnet-5.5")).toEqual({
+      seed: STABLE_SEED,
+    });
   });
 });
