@@ -5,6 +5,25 @@ jest.mock("./run-meeting-analysis", () => ({
   runMeetingAnalysis: jest.fn(),
 }));
 
+/*
+  La lecture du prospect (SONCAS, DISC et objections en un appel) est simulée
+  par trois appels à l'analyse simulée : les cas ci-dessous gardent ainsi une
+  analyse par étape, comme la fiche les enregistre.
+*/
+jest.mock("./run-prospect-profile-analysis", () => ({
+  runProspectProfileAnalysis: jest.fn(async (deps: unknown, input: object) => {
+    const { runMeetingAnalysis: run } = jest.requireMock(
+      "./run-meeting-analysis",
+    );
+    const [SONCAS, DISC, OBJECTIONS] = await Promise.all(
+      ["SONCAS", "DISC", "OBJECTIONS"].map((kind) =>
+        run(deps, { ...input, kind }),
+      ),
+    );
+    return { SONCAS, DISC, OBJECTIONS };
+  }),
+}));
+
 const runMeetingAnalysisMock = runMeetingAnalysis as jest.MockedFunction<
   typeof runMeetingAnalysis
 >;
@@ -64,8 +83,8 @@ describe("runAllMeetingAnalysesForOrg", () => {
     expect(runMeetingAnalysisMock.mock.calls.map((c) => c[1].kind)).toEqual([
       "SONCAS",
       "DISC",
-      "SCORECARD",
       "OBJECTIONS",
+      "SCORECARD",
       "KISS",
     ]);
     expect(deps.meetings.updateMeetingStatus).toHaveBeenLastCalledWith(
@@ -163,8 +182,8 @@ describe("runAllMeetingAnalysesForOrg", () => {
     expect(runMeetingAnalysisMock.mock.calls.map((c) => c[1].kind)).toEqual([
       "SONCAS",
       "DISC",
-      "SCORECARD",
       "OBJECTIONS",
+      "SCORECARD",
       "KISS",
     ]);
   });

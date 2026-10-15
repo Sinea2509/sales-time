@@ -15,6 +15,7 @@ import {
   type ScorecardGrid,
 } from "@/src/core/domain/scorecard-grid";
 import { objectionsGeneratedResultSchema } from "@/src/core/domain/objections-result-zod";
+import { prospectProfileGeneratedSchema } from "@/src/core/domain/prospect-profile-zod";
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import { visitReportExtractionSchema } from "@/src/core/domain/visit-report-zod";
@@ -226,6 +227,37 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     return {
       result: object,
       systemPrompt,
+      userPrompt,
+      usage: {
+        inputTokens: usage?.inputTokens,
+        outputTokens: usage?.outputTokens,
+      },
+    };
+  }
+
+  async analyzeProspectProfile(input: {
+    systemPrompt: string;
+    transcript: string;
+    notes: string | null;
+    model: string;
+  }) {
+    const userPrompt = buildDelimitedMeetingUserContent({
+      transcript: input.transcript,
+      notes: input.notes,
+    });
+
+    const { object, usage } = await generateObject({
+      model: input.model,
+      ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
+      schema: prospectProfileGeneratedSchema,
+      system: input.systemPrompt,
+      prompt: userPrompt,
+    });
+
+    return {
+      result: object,
+      systemPrompt: input.systemPrompt,
       userPrompt,
       usage: {
         inputTokens: usage?.inputTokens,

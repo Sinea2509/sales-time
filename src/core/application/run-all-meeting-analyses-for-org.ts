@@ -19,6 +19,7 @@ import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organiza
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
+import { runProspectProfileAnalysis } from "./run-prospect-profile-analysis";
 
 export type RunAllMeetingAnalysesResult =
   | { ok: true }
@@ -128,8 +129,34 @@ export async function runAllMeetingAnalysesForOrg(
     que le rendez-vous nomme toujours la même étape fautive quand deux échouent
     ensemble.
   */
+  /*
+    SONCAS, DISC et les objections partent en un seul appel au modèle depuis
+    le 15 octobre 2026 (voir `run-prospect-profile-analysis.ts`) ; ils
+    s'enregistrent toujours à part et se dépouillent ici comme avant.
+  */
   const FIRST_WAVE = ["SONCAS", "DISC", "SCORECARD", "OBJECTIONS"] as const;
-  const firstWave = await Promise.all(FIRST_WAVE.map((kind) => runKind(kind)));
+  const [profile, scorecard] = await Promise.all([
+    runProspectProfileAnalysis(
+      {
+        meetings: deps.meetings,
+        prompts: deps.prompts,
+        organizationPrompts: deps.organizationPrompts,
+        analysis: deps.analysis,
+        aiLogs: deps.aiLogs,
+        aiSummaryCache: deps.aiSummaryCache,
+      },
+      {
+        organizationId: input.organizationId,
+        meetingId: input.meetingId,
+        jobId: input.jobId ?? null,
+        organizationPlaybookMarkdown: playbookMarkdown,
+      },
+    ),
+    runKind("SCORECARD"),
+  ]);
+  const firstWave = FIRST_WAVE.map((kind) =>
+    kind === "SCORECARD" ? scorecard : profile[kind],
+  );
 
   for (let i = 0; i < FIRST_WAVE.length; i += 1) {
     const kind = FIRST_WAVE[i];

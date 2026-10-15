@@ -50,6 +50,16 @@ export const ANALYSIS_GATEWAY_MODEL_OPTIONS: readonly AnalysisGatewayModelOption
       provider: "Anthropic",
     },
     {
+      id: "anthropic/claude-haiku-5.5",
+      label: "Claude Haiku 5.5",
+      provider: "Anthropic",
+    },
+    {
+      id: "anthropic/claude-sonnet-5.5",
+      label: "Claude Sonnet 5.5",
+      provider: "Anthropic",
+    },
+    {
       id: "google/gemini-2.5-flash",
       label: "Gemini 2.5 Flash",
       provider: "Google",
