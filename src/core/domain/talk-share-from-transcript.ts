@@ -417,6 +417,30 @@ export function listeningMeasure(share: TalkShare): {
   };
 }
 
+const GREETING =
+  /\b(bonjour|bonsoir|salut|hello|enchanté|enchantée|ravi de|ravie de|merci de prendre|merci d'avoir|vous m'entendez|on peut commencer|je vous propose qu'on)\b/i;
+
+/**
+ * Vrai quand l'enregistrement a manifestement commencé après l'ouverture du
+ * rendez-vous : c'est le prospect qui parle en premier, et les deux premières
+ * répliques ne portent ni salutation ni mise en route. Le cadrage ne peut
+ * alors pas être jugé (rendez-vous Noz : « Je suis dans. », puis Lisa qui se
+ * présente).
+ */
+export function openingNotRecorded(
+  transcript: string,
+  hints: TalkShareHints = {},
+): boolean {
+  const reading = readSpeakers(transcript, hints);
+  if (!reading || reading.turns.length < 2) return false;
+  if (reading.turns[0].speaker === reading.commercialKey) return false;
+  const opening = reading.turns
+    .slice(0, 2)
+    .map((t) => t.text.join(" "))
+    .join(" ");
+  return !GREETING.test(opening);
+}
+
 /** Une question qui n'en est pas une : elle vérifie qu'on suit, sans rien demander. */
 const TAG_QUESTION =
   /(vous voyez(?: ce que je veux dire)?|on est (?:bien )?d'accord|d'accord|c'est ça|n'est-ce pas|non|ok|okay|hein|vous me suivez|ça vous parle|ça va|vous comprenez|voilà|oui)\s*\?$/i;

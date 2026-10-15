@@ -116,6 +116,8 @@ function scorecardOverview(): AnalysisScoringOverview {
       "L'IA ne donne aucune note. Elle relève, pour chaque critère, ce que le commercial a fait du thème et ce qu'il a obtenu. Le produit en tire le niveau par la table ci-dessous, toujours de la même façon.",
       "Le thème compte, pas la formulation : une question posée avec d'autres mots que les exemples compte pleinement.",
       `Chaque citation est retrouvée dans le transcript, avec la personne qui l'a dite. Une information sans parole du prospect retrouvée baisse d'un cran ; un critère sans aucune citation ne dépasse pas 1 point.`,
+      "Le produit fixe lui-même les deux constats à partir des citations retrouvées : une question du commercial et une réponse du prospect sur le thème font un thème creusé ; une réponse du prospect qui donne quelque chose de précis (un nombre, une date ou une échéance, un nom) fait une information exploitable, sinon partielle. Deux modèles qui citent les mêmes passages reçoivent donc la même note.",
+      "Le cadrage (E4) sort du calcul quand le transcript commence sans l'ouverture : le prospect parle en premier, sans salutation.",
       `L'écoute (E1) est mesurée sur la répartition de la parole : ${[
         40, 50, 60, 61,
       ]
@@ -126,6 +128,8 @@ function scorecardOverview(): AnalysisScoringOverview {
         .join(
           " ; ",
         )}. Plafond conseillé : ${TALK_SHARE_CEILING_PCT} % pour le commercial.`,
+      "Le questionnement (E2) est mesuré sur les questions du commercial, rangées en ouvertes, fermées et de simple vérification : 4 points avec au moins 55 % de questions ouvertes et au moins huit d'entre elles, 3 points à partir de 40 %, sinon 2 points, et 0 sans aucune question.",
+      "La personnalisation (E3) ne dépasse pas 2 points quand le commercial déroule plus de 250 mots d'affilée dans le premier tiers du rendez-vous.",
       "Le même transcript, avec la même consigne et le même modèle, reçoit la même note.",
       "Pour une bonne note : couvrir les cinq blocs ; relancer chaque réponse vague jusqu'à obtenir un nom, un chiffre, une date ou un exemple ; repartir avec une date ferme et un engagement du prospect ; parler moins de 40 % du temps. Le tableau « Critère par critère » donne, pour chacun, ce qu'il faut obtenir et des questions qui y mènent.",
     ],
@@ -165,7 +169,7 @@ function scorecardOverview(): AnalysisScoringOverview {
           `${c.key}. ${c.label}`,
           c.expected,
           c.measuredByProduct
-            ? "Mesuré par le produit sur la répartition de la parole."
+            ? `Mesuré par le produit. ${c.lookFor ?? ""}`
             : (c.lookFor ?? ""),
           c.examples?.length
             ? c.examples.map((e) => `« ${e} »`).join(" ")

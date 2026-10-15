@@ -129,6 +129,28 @@ function checkedProofs(
  *
  * Seules les clés de la grille sont gardées, une fois chacune.
  */
+const MONTHS_AND_DAYS =
+  "janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche";
+/** Une échéance dite avec des mots : « d'ici la fin de la semaine », « l'année prochaine ». */
+const TIME_WORDS =
+  "semaine|semaines|mois|trimestre|année|an prochain|demain|d'ici|d’ici|fin de|avant la fin|rentrée";
+
+/**
+ * Vrai quand une citation du prospect donne quelque chose de précis : un
+ * nombre, une date, une échéance, ou un nom propre (une personne, une
+ * société, une ville), repéré à sa majuscule au milieu d'une phrase.
+ */
+export function isConcrete(quote: string): boolean {
+  if (FIGURE.test(quote)) return true;
+  // Les lettres accentuées ne sont pas des « \b » : la frontière se pose à la main.
+  const timeWords = new RegExp(
+    `(?<![\\p{L}])(${MONTHS_AND_DAYS}|${TIME_WORDS})(?![\\p{L}])`,
+    "iu",
+  );
+  if (timeWords.test(quote)) return true;
+  return /[\p{Ll},]\s+\p{Lu}[\p{Ll}]{2,}/u.test(quote);
+}
+
 /** Un plafond posé par une mesure du produit, avec sa raison. */
 export type ScorecardCap = { max: number; reason: string };
 
@@ -142,6 +164,8 @@ export function levelScorecardObservations(
   sources: ScorecardEvidenceSources,
   measured: Readonly<Record<string, ScorecardMeasuredCriterion>> = {},
   caps: Readonly<Record<string, ScorecardCap>> = {},
+  /** Les critères que le produit sait non observables dans ce transcript. */
+  unobservableKeys: ReadonlySet<string> = new Set(),
 ): ScorecardLeveledResult {
   const words = {
     all: evidenceWords(sources.all),
@@ -165,14 +189,29 @@ export function levelScorecardObservations(
     let explored = observation.explored;
     let obtained = observation.obtained;
     if (sidesKnown) {
-      if (obtained !== "rien" && !proofs.some((p) => p.who === "prospect")) {
-        obtained = LOWER_OBTAINED[obtained];
-      }
-      if (
-        explored === "creuse" &&
-        !proofs.some((p) => p.who === "commercial")
-      ) {
-        explored = "aborde";
+      const sellerProof = proofs.some((p) => p.who === "commercial");
+      const prospectProofs = proofs.filter((p) => p.who === "prospect");
+      /*
+        Ce que le commercial a fait du thème se lit dans les citations, pas
+        dans l'humeur du modèle : sa question et la réponse du prospect sur le
+        même thème font un thème creusé ; sa seule question, un thème abordé.
+        Deux modèles qui citent les mêmes passages reçoivent le même niveau
+        (revue du 6 octobre 2026 : 75 avec GPT-4o, 54 avec Claude Sonnet).
+      */
+      if (sellerProof && prospectProofs.length > 0) explored = "creuse";
+      else if (sellerProof && explored === "non") explored = "aborde";
+      else if (!sellerProof && explored === "creuse") explored = "aborde";
+      /*
+        Une information est exploitable quand les mots du prospect donnent
+        quelque chose de précis : un nombre, une date ou une échéance, un nom.
+        Sans cela, elle est partielle, quoi qu'en dise le modèle.
+      */
+      if (prospectProofs.length === 0) {
+        if (obtained !== "rien") obtained = LOWER_OBTAINED[obtained];
+      } else if (obtained !== "rien") {
+        obtained = prospectProofs.some((p) => isConcrete(p.quote))
+          ? "exploitable"
+          : "partiel";
       }
     }
     const fromTable = scorecardLevelFromCoverage(explored, obtained);
@@ -206,7 +245,10 @@ export function levelScorecardObservations(
       l'enregistrement a commencé après) sort du calcul au lieu de coûter des
       points. Seuls les critères qui le permettent sont concernés.
     */
-    if (criterion.canBeUnobservable && observation.observable === false) {
+    if (
+      criterion.canBeUnobservable &&
+      (observation.observable === false || unobservableKeys.has(key))
+    ) {
       criteria.push({
         key: criterion.key,
         level: 0,
