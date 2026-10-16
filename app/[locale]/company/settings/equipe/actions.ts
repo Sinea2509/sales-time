@@ -125,15 +125,33 @@ export async function inviteMemberAction(
   const base = getAppBaseUrl();
   const link = `${base}/invitations/${encodeURIComponent(rawToken)}`;
 
-  await sendTransactionalEmail({
-    to: email,
-    subject: `Invitation · ${orgName}`,
-    html: buildInvitationEmailHtml({
-      organizationName: orgName,
-      inviteLink: link,
-      bodyHtml: "",
-    }),
-  });
+  try {
+    await sendTransactionalEmail({
+      to: email,
+      subject: `Invitation · ${orgName}`,
+      html: buildInvitationEmailHtml({
+        organizationName: orgName,
+        inviteLink: link,
+        bodyHtml: "",
+      }),
+    });
+  } catch {
+    /*
+      Une invitation dont le mail n'est pas parti est retirée : sinon elle
+      bloquerait le renvoi (« une invitation est déjà en cours ») avec un
+      lien que personne n'a reçu.
+    */
+    const created = await deps.organizationTeam.findPendingInvitationForEmail(
+      gate.organizationId,
+      email,
+    );
+    if (created) await deps.organizationTeam.revokeInvitation(created.id);
+    return {
+      ok: false,
+      message:
+        "Le mail d'invitation n'a pas pu partir. L'invitation est annulée : réessayez dans un instant, ou contactez le support si le problème continue.",
+    };
+  }
 
   revalidatePath("/company/settings/equipe");
   revalidatePath("/company");

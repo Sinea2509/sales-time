@@ -225,6 +225,11 @@ export async function submitOnboardingStep4(
   });
 
   const orgName = result.companyName;
+  /*
+    L'organisation est créée : un mail d'invitation qui échoue ne doit pas
+    bloquer l'arrivée sur l'application. L'invitation reste visible dans
+    Paramètres, Équipe, d'où elle peut être annulée puis renvoyée.
+  */
   for (const m of result.mailPayloads) {
     await sendTransactionalEmail({
       to: m.to,
@@ -234,6 +239,11 @@ export async function submitOnboardingStep4(
         inviteLink: m.link,
         bodyHtml: inviteMessageSanitized ?? "",
       }),
+    }).catch((e: unknown) => {
+      console.error("onboarding: invitation non envoyée", {
+        to: m.to,
+        error: e instanceof Error ? e.message : String(e),
+      });
     });
   }
 
