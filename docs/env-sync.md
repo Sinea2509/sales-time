@@ -82,7 +82,7 @@ Sync credentials (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) are read
 
    Expect `{ "ok": true, ... }`, not `{ "error": "Unauthorized" }`.
 
-   RDV create/update/retry runs analysis **in-process** via Next.js `after()`. A cron every 5 minutes (`*/5 * * * *` in `vercel.json`) runs `/api/cron/process-analysis-jobs` as a reconciliation backup for stuck or orphaned jobs.
+   RDV create/update/retry runs analysis **in-process** via Next.js `after()`. An hourly cron (`0 * * * *` in `vercel.json`, every 5 minutes until 20 October 2026: it kept the Neon compute awake around the clock) runs `/api/cron/process-analysis-jobs` as a reconciliation backup for stuck or orphaned jobs.
 
 ## Rotate a secret
 

@@ -16,7 +16,7 @@ const STALE_MINUTES = 10;
   ce délai, plus long que la durée maximale d'une fonction (300 secondes).
   Le bouton qui analyse un rendez-vous directement, sans tâche, laisse le
   rendez-vous en cours pendant tout son travail : à 2 minutes, la reprise
-  lancée toutes les 15 minutes pouvait le prendre pour un orphelin et doubler
+  automatique pouvait le prendre pour un orphelin et doubler
   l'analyse.
 */
 const RECONCILE_MINUTES = 6;
