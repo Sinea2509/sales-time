@@ -248,7 +248,7 @@ export function MeetingDetailShell({
       {canEdit && processingLooksStuck ? (
         <InfoCard
           title="Analyse bloquée"
-          description="L'analyse semble bloquée depuis plus de 15 minutes. Relancez l'analyse, ou attendez le rattrapage automatique, toutes les cinq minutes."
+          description="L'analyse semble bloquée depuis plus de 15 minutes. Relancez l'analyse, ou attendez le rattrapage automatique, qui passe une fois par heure."
         />
       ) : null}
 

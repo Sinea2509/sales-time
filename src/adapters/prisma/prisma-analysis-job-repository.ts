@@ -99,7 +99,9 @@ export class PrismaAnalysisJobRepository implements AnalysisJobRepositoryPort {
     requeue: boolean;
     runAfter?: Date;
   }): Promise<void> {
-    const job = await this.db.analysisJob.findUnique({ where: { id: input.jobId } });
+    const job = await this.db.analysisJob.findUnique({
+      where: { id: input.jobId },
+    });
     if (!job) return;
 
     const dead = !input.requeue || job.attempts >= job.maxAttempts;
@@ -110,7 +112,8 @@ export class PrismaAnalysisJobRepository implements AnalysisJobRepositoryPort {
         lastError: input.error.slice(0, 4000),
         lockedAt: null,
         lockedBy: null,
-        runAfter: input.runAfter ?? new Date(Date.now() + 60_000 * 2 ** job.attempts),
+        runAfter:
+          input.runAfter ?? new Date(Date.now() + 60_000 * 2 ** job.attempts),
       },
     });
   }
@@ -121,7 +124,7 @@ export class PrismaAnalysisJobRepository implements AnalysisJobRepositoryPort {
    *
    * Une tâche arrêtée de cette façon ne passe jamais par `markJobFailed`, qui
    * compte les essais. Sans ce compte, une analyse trop longue repartait à
-   * chaque passage de la reprise, désormais toutes les 15 minutes, et la fiche
+   * chaque passage de la reprise automatique, et la fiche
    * restait « en cours » pour toujours. Une tâche qui a épuisé ses essais est
    * donc abandonnée, et son rendez-vous passe en échec avec un message qui dit
    * quoi faire.
