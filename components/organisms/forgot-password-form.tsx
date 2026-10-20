@@ -44,8 +44,10 @@ export function ForgotPasswordForm() {
         <div className="space-y-3 text-center">
           <h2 className={pageTitleClass}>Vérifiez votre e-mail</h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Nous vous avons envoyé un lien pour réinitialiser votre mot de
-            passe.
+            Si un compte existe pour cette adresse, nous vous avons envoyé un
+            lien pour choisir un nouveau mot de passe. Si vous avez été invité
+            sans avoir encore créé votre compte, c&apos;est votre invitation qui
+            vient de repartir : créez votre compte avec son bouton.
           </p>
         </div>
         <Link

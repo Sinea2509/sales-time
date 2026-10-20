@@ -15,9 +15,14 @@ const schema = z
     firstName: z.string().trim().min(1, "Le prénom est requis").max(80),
     lastName: z.string().trim().min(1, "Le nom est requis").max(80),
     password: z.string().min(8, "Au moins 8 caractères.").max(200),
-    confirmPassword: z.string().min(1).max(200),
+    /*
+      Facultatif depuis le 20 octobre 2026 : le formulaire n'a plus qu'un
+      champ, avec un bouton pour afficher le mot de passe. Envoyé, il doit
+      toujours correspondre.
+    */
+    confirmPassword: z.string().max(200).optional(),
   })
-  .refine((d) => d.password === d.confirmPassword, {
+  .refine((d) => !d.confirmPassword || d.password === d.confirmPassword, {
     message: "Les mots de passe ne correspondent pas.",
     path: ["confirmPassword"],
   });
@@ -33,7 +38,7 @@ export async function registerFromInvitationAction(
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     password: formData.get("password"),
-    confirmPassword: formData.get("confirmPassword"),
+    confirmPassword: formData.get("confirmPassword") ?? undefined,
   });
   if (!parsed.success) {
     const flat = parsed.error.flatten();

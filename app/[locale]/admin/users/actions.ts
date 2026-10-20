@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
+import {
+  buildInvitationEmailHtml,
+  invitationEmailSubject,
+} from "@/lib/invite-email-html";
+import { inviterDisplayName } from "@/lib/inviter-display-name";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getAppBaseUrl } from "@/lib/app-base-url";
 import { requireSuperAdminActor } from "@/src/core/application/require-super-admin";
@@ -193,8 +198,14 @@ export async function inviteUserToOrgAction(
 
   await sendTransactionalEmail({
     to: parsed.data.email,
-    subject: `Invitation à rejoindre ${org.name} · Sales Time`,
-    html: `<p>Vous êtes invité à rejoindre <strong>${org.name}</strong> sur Sales Time.</p><p><a href="${link}">Accepter l'invitation</a></p><p>Ce lien expire dans 14 jours.</p>`,
+    subject: invitationEmailSubject({ organizationName: org.name }),
+    html: buildInvitationEmailHtml({
+      organizationName: org.name,
+      inviteLink: link,
+      bodyHtml: "",
+      inviterName: await inviterDisplayName(deps.users, gate.actorUserId),
+      expiresAt,
+    }),
   });
 
   await deps.backoffice.createSuperAdminAuditLog({
