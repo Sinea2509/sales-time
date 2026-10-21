@@ -332,3 +332,40 @@
     animation: none;
   }
 }
+
+/*
+  Les visuels 3D de la charte (livrés le 21 octobre 2026) n'ont pas d'ombre
+  au sol : elle se pose ici, juste au-dessus du bord inférieur, où le visuel
+  s'arrête à 10 % de marge. Sur fond sombre, une lueur violette la remplace.
+*/
+@layer components {
+  .visual3d {
+    position: relative;
+    display: inline-block;
+    isolation: isolate;
+    line-height: 0;
+  }
+  .visual3d::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 24%;
+    right: 24%;
+    bottom: 7%;
+    height: 6%;
+    border-radius: 50%;
+    background: radial-gradient(
+      closest-side,
+      rgba(23, 16, 64, 0.22),
+      transparent
+    );
+    filter: blur(4px);
+  }
+  .dark .visual3d::after {
+    background: radial-gradient(
+      closest-side,
+      rgba(108, 77, 255, 0.45),
+      transparent
+    );
+  }
+}

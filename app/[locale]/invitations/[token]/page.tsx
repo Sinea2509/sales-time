@@ -1,6 +1,8 @@
+// cspell:words expiree
 import Link from "next/link";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { pageTitleClass } from "@/lib/page-typography";
+import { Visual3d } from "@/components/atoms/visual-3d";
 import {
   InvitationPageShell,
   type InvitationPageMode,
@@ -37,6 +39,7 @@ export default async function InvitationPage({ params }: Props) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
         <div className="w-full max-w-md space-y-3 rounded-xl border border-border p-8 text-center shadow-sm">
+          <Visual3d name="c6-invitation-expiree" width={240} height={180} />
           <h1 className={pageTitleClass}>Invitation expirée</h1>
           <p className="text-muted-foreground text-sm">
             Ce lien d&apos;invitation n&apos;est plus valable : il a expiré, a

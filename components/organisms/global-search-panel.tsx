@@ -5,7 +5,6 @@ import { Link } from "@/i18n/navigation";
 import { searchOrgAction } from "@/app/[locale]/company/recherche/actions";
 import { Input } from "@/components/ui/input";
 import { PrdEmptyState } from "@/components/molecules/prd-empty-state";
-import { Search } from "lucide-react";
 
 type SearchResults = {
   meetings: Array<{ id: string; prospectName: string }>;
@@ -53,7 +52,7 @@ export function GlobalSearchPanel() {
 
       {empty ? (
         <PrdEmptyState
-          icon={Search}
+          illustration="c5-recherche-vide"
           title="Aucun résultat"
           description="Essayez un autre terme : nom de prospect, entreprise ou email."
         />

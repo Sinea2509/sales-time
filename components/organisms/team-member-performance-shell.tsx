@@ -2,6 +2,9 @@ import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalysePagePeriodFallback } from "@/components/molecules/analyse-page-period-fallback";
 import { NavLinkButton } from "@/components/molecules/nav-link-button";
+import { PerformanceUnlockPanel } from "@/components/molecules/performance-unlock-panel";
+import { UnlockProgress } from "@/components/molecules/unlock-progress";
+import { statsWindowLabel } from "@/lib/stats-window-labels";
 import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { AnalyseKpiCards } from "@/components/organisms/analyse-kpi-cards";
 import { AnalyseRecommandationsSection } from "@/components/organisms/analyse-recommandations-section";
@@ -40,23 +43,6 @@ import {
   sectionHeadingClass,
 } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
-
-/**
- * Phrase d'attente d'un profil, avec les deux chiffres qui la justifient.
- *
- * « Pas assez de données » ne dit ni combien il en manque, ni quand cela
- * changera : le lecteur ne sait pas s'il doit attendre un rendez-vous ou dix,
- * et finit par croire que la fonctionnalité est cassée.
- */
-function profilEnAttente(analyses: number, minimum: number): string {
-  const compte =
-    analyses === 0
-      ? "Aucun rendez-vous analysé"
-      : analyses === 1
-        ? "1 rendez-vous analysé"
-        : `${analyses} rendez-vous analysés`;
-  return `${compte} sur la période : le profil s'affiche à partir de ${minimum}.`;
-}
 
 function statColumn({
   value,
@@ -261,6 +247,31 @@ export function TeamMemberPerformanceShell({
   home,
 }: TeamMemberPerformanceShellProps) {
   const luParSonManager = perspective === "manager";
+  /*
+    Revue UX du 21 octobre 2026 : avant cinq rendez-vous analysés, la fiche
+    se remplissait de « 0 », de « n. c. » et de « Pas assez de données ». Un
+    panneau dit désormais ce qui se débloque et où en est le commercial ; et
+    sans aucun rendez-vous sur la période, il est seul sur la page.
+  */
+  const analyzed = Math.max(
+    discAnalyzedMeetings,
+    soncasAnalyzedMeetings,
+    salesProfileRdvCount,
+  );
+  const enConstruction = analyzed < MIN_RDV_FOR_STATS;
+  const pageVide = nbRdvs === 0;
+  const unlockPanel = enConstruction ? (
+    <PerformanceUnlockPanel
+      analyzed={analyzed}
+      deposited={nbRdvs}
+      profileThreshold={MIN_RDV_FOR_STATS}
+      perspective={luParSonManager ? "manager" : "commercial"}
+      newMeetingHref={
+        luParSonManager ? undefined : "/company/rendez-vous/nouveau"
+      }
+      periodLabel={statsWindowLabel(statsWindowDays, statsWindowRange)}
+    />
+  ) : null;
   return (
     <div className="space-y-8">
       {/*
@@ -345,196 +356,227 @@ export function TeamMemberPerformanceShell({
           </div>
         </div>
 
-        <div className="flex flex-1 flex-wrap items-start justify-center gap-8 self-start border-t border-border pt-6 sm:justify-end sm:border-t-0 sm:pt-0 lg:min-w-0 dark:border-zinc-800">
-          {statColumn({
-            value: String(nbRdvs),
-            label: "RDV",
-            title:
-              "Nombre total de rendez-vous sur la période, toutes étapes confondues. Les deux compteurs suivants en sont des sous-ensembles : leur somme peut être inférieure au total, les autres étapes n'y figurant pas.",
-          })}
-          {statColumn({
-            value: String(decouverte),
-            label: "RDV Découverte",
-            title:
-              "Rendez-vous de la période dont l'étape est « Découverte ». Sous-ensemble du total.",
-          })}
-          {statColumn({
-            value: String(proposition),
-            label: "RDV Proposition",
-            title:
-              "Rendez-vous de la période dont l'étape est « Proposition ». Sous-ensemble du total.",
-          })}
-          {statColumn({
-            value:
-              tamMinutesAvg != null
-                ? formatDurationHoursMinutes(tamMinutesAvg)
-                : VALEUR_NON_CALCULABLE,
-            label: "TAM",
-            title:
-              tamMinutesAvg == null
-                ? "Non calculable : aucun rendez-vous connecté avec une durée renseignée sur la période."
-                : luParSonManager
-                  ? "Temps d'appel moyen sur les rendez-vous connectés de ce commercial, c'est-à-dire ceux dont la durée est renseignée."
-                  : "Temps d'appel moyen sur vos rendez-vous connectés, c'est-à-dire ceux dont la durée est renseignée.",
-          })}
-        </div>
-      </div>
-
-      <TeamMemberPerformanceProfileCard
-        key={performanceFingerprint}
-        sellerUserId={sellerUserId}
-        statsWindowDays={statsWindowDays}
-        statsWindowRange={statsWindowRange}
-        initialFingerprint={performanceFingerprint}
-        initialPerformance={{
-          performanceForces,
-          performanceAxes,
-          performanceStop,
-        }}
-      />
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card
-          size="sm"
-          className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-        >
-          <CardHeader className="gap-2 pb-3">
-            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-              <CardTitle className={cardTitleClass}>
-                Affinité relationnelle par profil DISC
-              </CardTitle>
-              <GuideDeGrille grille={GRILLE_DISC} className="mt-0.5 shrink-0" />
-            </div>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Les styles de communication avec lesquels ce commercial obtient
-              ses meilleurs rendez-vous. Touchez un profil pour savoir comment
-              s&apos;y adapter.
-            </p>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {discAnalyzedMeetings >= MIN_RDV_FOR_STATS ? (
-              <ProfileAffinityHorizontalBars
-                items={discBarItems}
-                grilleCle="disc"
-              />
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                {profilEnAttente(discAnalyzedMeetings, MIN_RDV_FOR_STATS)}
-              </p>
-            )}
-            {discAffinityText?.trim() ? (
-              <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
-                {discAffinityText.trim()}
-              </p>
-            ) : null}
-          </CardContent>
-        </Card>
-        <Card
-          size="sm"
-          className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-        >
-          <CardHeader className="gap-2 pb-3">
-            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-              <CardTitle className={cardTitleClass}>
-                Affinité relationnelle par profil SONCAS
-              </CardTitle>
-              <GuideDeGrille
-                grille={GRILLE_SONCAS}
-                className="mt-0.5 shrink-0"
-              />
-            </div>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Les motivations d&apos;achat que ce commercial active le mieux.
-              Touchez un levier pour savoir comment l&apos;activer.
-            </p>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {soncasAnalyzedMeetings >= MIN_RDV_FOR_STATS ? (
-              <ProfileAffinityHorizontalBars
-                items={soncasBarItems}
-                grilleCle="soncas"
-              />
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                {profilEnAttente(soncasAnalyzedMeetings, MIN_RDV_FOR_STATS)}
-              </p>
-            )}
-            {soncasAffinityText?.trim() ? (
-              <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
-                {soncasAffinityText.trim()}
-              </p>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
-
-      <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-          <h2 className={sectionHeadingClass}>Coaching KISS</h2>
-          <GuideKiss className="shrink-0" />
-        </div>
-        {kissSellerStrengthsNarrative?.trim() ? (
-          <p className={cn(cardProseBodyClass, "max-w-3xl")}>
-            {kissSellerStrengthsNarrative.trim()}
-          </p>
-        ) : null}
-        <OrgAdminKissQuadrantGrid
-          rollup={kissSellerRollup}
-          presentation={luParSonManager ? "managerMemberProfile" : "sellerSelf"}
-        />
-      </section>
-
-      <section className="space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className={sectionHeadingClass}>Performance</h2>
+        {pageVide ? (
           <AnalysePagePeriodFallback
             value={statsWindowDays}
             range={statsWindowRange}
             disabledDays={disabledStatsDays}
           />
-        </div>
+        ) : (
+          <div className="flex flex-1 flex-wrap items-start justify-center gap-8 self-start border-t border-border pt-6 sm:justify-end sm:border-t-0 sm:pt-0 lg:min-w-0 dark:border-zinc-800">
+            {statColumn({
+              value: String(nbRdvs),
+              label: "RDV",
+              title:
+                "Nombre total de rendez-vous sur la période, toutes étapes confondues. Les deux compteurs suivants en sont des sous-ensembles : leur somme peut être inférieure au total, les autres étapes n'y figurant pas.",
+            })}
+            {statColumn({
+              value: String(decouverte),
+              label: "RDV Découverte",
+              title:
+                "Rendez-vous de la période dont l'étape est « Découverte ». Sous-ensemble du total.",
+            })}
+            {statColumn({
+              value: String(proposition),
+              label: "RDV Proposition",
+              title:
+                "Rendez-vous de la période dont l'étape est « Proposition ». Sous-ensemble du total.",
+            })}
+            {statColumn({
+              value:
+                tamMinutesAvg != null
+                  ? formatDurationHoursMinutes(tamMinutesAvg)
+                  : VALEUR_NON_CALCULABLE,
+              label: "TAM",
+              title:
+                tamMinutesAvg == null
+                  ? "Non calculable : aucun rendez-vous connecté avec une durée renseignée sur la période."
+                  : luParSonManager
+                    ? "Temps d'appel moyen sur les rendez-vous connectés de ce commercial, c'est-à-dire ceux dont la durée est renseignée."
+                    : "Temps d'appel moyen sur vos rendez-vous connectés, c'est-à-dire ceux dont la durée est renseignée.",
+            })}
+          </div>
+        )}
+      </div>
 
-        {/*
+      {unlockPanel}
+
+      {pageVide ? null : (
+        <>
+          <TeamMemberPerformanceProfileCard
+            key={performanceFingerprint}
+            sellerUserId={sellerUserId}
+            statsWindowDays={statsWindowDays}
+            statsWindowRange={statsWindowRange}
+            initialFingerprint={performanceFingerprint}
+            initialPerformance={{
+              performanceForces,
+              performanceAxes,
+              performanceStop,
+            }}
+          />
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card
+              size="sm"
+              className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+            >
+              <CardHeader className="gap-2 pb-3">
+                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                  <CardTitle className={cardTitleClass}>
+                    Affinité relationnelle par profil DISC
+                  </CardTitle>
+                  <GuideDeGrille
+                    grille={GRILLE_DISC}
+                    className="mt-0.5 shrink-0"
+                  />
+                </div>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Les styles de communication avec lesquels ce commercial
+                  obtient ses meilleurs rendez-vous. Touchez un profil pour
+                  savoir comment s&apos;y adapter.
+                </p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {discAnalyzedMeetings >= MIN_RDV_FOR_STATS ? (
+                  <ProfileAffinityHorizontalBars
+                    items={discBarItems}
+                    grilleCle="disc"
+                  />
+                ) : (
+                  <UnlockProgress
+                    current={discAnalyzedMeetings}
+                    target={MIN_RDV_FOR_STATS}
+                    unlocks={
+                      luParSonManager
+                        ? "ses affinités DISC"
+                        : "vos affinités DISC"
+                    }
+                  />
+                )}
+                {discAffinityText?.trim() ? (
+                  <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
+                    {discAffinityText.trim()}
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
+            <Card
+              size="sm"
+              className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+            >
+              <CardHeader className="gap-2 pb-3">
+                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                  <CardTitle className={cardTitleClass}>
+                    Affinité relationnelle par profil SONCAS
+                  </CardTitle>
+                  <GuideDeGrille
+                    grille={GRILLE_SONCAS}
+                    className="mt-0.5 shrink-0"
+                  />
+                </div>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Les motivations d&apos;achat que ce commercial active le
+                  mieux. Touchez un levier pour savoir comment l&apos;activer.
+                </p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {soncasAnalyzedMeetings >= MIN_RDV_FOR_STATS ? (
+                  <ProfileAffinityHorizontalBars
+                    items={soncasBarItems}
+                    grilleCle="soncas"
+                  />
+                ) : (
+                  <UnlockProgress
+                    current={soncasAnalyzedMeetings}
+                    target={MIN_RDV_FOR_STATS}
+                    unlocks={
+                      luParSonManager
+                        ? "ses affinités SONCAS"
+                        : "vos affinités SONCAS"
+                    }
+                  />
+                )}
+                {soncasAffinityText?.trim() ? (
+                  <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
+                    {soncasAffinityText.trim()}
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
+          </div>
+
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <h2 className={sectionHeadingClass}>Coaching KISS</h2>
+              <GuideKiss className="shrink-0" />
+            </div>
+            {kissSellerStrengthsNarrative?.trim() ? (
+              <p className={cn(cardProseBodyClass, "max-w-3xl")}>
+                {kissSellerStrengthsNarrative.trim()}
+              </p>
+            ) : null}
+            <OrgAdminKissQuadrantGrid
+              rollup={kissSellerRollup}
+              presentation={
+                luParSonManager ? "managerMemberProfile" : "sellerSelf"
+              }
+            />
+          </section>
+
+          <section className="space-y-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className={sectionHeadingClass}>Performance</h2>
+              <AnalysePagePeriodFallback
+                value={statsWindowDays}
+                range={statsWindowRange}
+                disabledDays={disabledStatsDays}
+              />
+            </div>
+
+            {/*
           Les deux drapeaux ne décrivent pas le lecteur mais ce qu'il regarde :
           « un administrateur » et « un commercial en particulier ». Ils sont
           donc vrais ensemble ou faux ensemble ici, le commercial qui se lit
           lui-même n'étant ni l'un ni l'autre.
         */}
-        <AnalyseKpiCards
-          home={home}
-          isOrgAdmin={luParSonManager}
-          sellerScoped={luParSonManager}
-          echelle={luParSonManager ? "sur5" : "sur100"}
-        />
+            <AnalyseKpiCards
+              home={home}
+              isOrgAdmin={luParSonManager}
+              sellerScoped={luParSonManager}
+              echelle={luParSonManager ? "sur5" : "sur100"}
+            />
 
-        <div className="space-y-4">
-          <h3 className={sectionHeadingClass}>Statistiques globales</h3>
-          <AnalyseStatistiquesGlobalesSection
-            qualificationPotentialPoints={qualificationPotentialPoints}
-            priorityOpportunities={priorityOpportunities}
-            rdvSurLaPeriode={rdvSurLaPeriode}
-            etapeOrder={etapeOrder}
-            statsWindowDays={statsWindowDays}
-            statsWindowRange={statsWindowRange}
-            disabledStatsDays={disabledStatsDays}
-          />
-        </div>
+            <div className="space-y-4">
+              <h3 className={sectionHeadingClass}>Statistiques globales</h3>
+              <AnalyseStatistiquesGlobalesSection
+                qualificationPotentialPoints={qualificationPotentialPoints}
+                priorityOpportunities={priorityOpportunities}
+                rdvSurLaPeriode={rdvSurLaPeriode}
+                etapeOrder={etapeOrder}
+                statsWindowDays={statsWindowDays}
+                statsWindowRange={statsWindowRange}
+                disabledStatsDays={disabledStatsDays}
+              />
+            </div>
 
-        <div className="space-y-4">
-          <h3 className={sectionHeadingClass}>Recommandations</h3>
-          <AnalyseRecommandationsSection
-            salesProfile={salesProfile}
-            previousSalesProfile={previousSalesProfile}
-            profileHistory={profileHistory}
-            rdvCount={salesProfileRdvCount}
-            progressBullets={progressBullets}
-            improvementBullets={improvementBullets}
-            isOrgAdmin={luParSonManager}
-            sellerScoped={luParSonManager}
-            statsWindowDays={statsWindowDays}
-          />
-        </div>
-      </section>
+            <div className="space-y-4">
+              <h3 className={sectionHeadingClass}>Recommandations</h3>
+              <AnalyseRecommandationsSection
+                salesProfile={salesProfile}
+                previousSalesProfile={previousSalesProfile}
+                profileHistory={profileHistory}
+                rdvCount={salesProfileRdvCount}
+                progressBullets={progressBullets}
+                improvementBullets={improvementBullets}
+                isOrgAdmin={luParSonManager}
+                sellerScoped={luParSonManager}
+                statsWindowDays={statsWindowDays}
+              />
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }
