@@ -1,30 +1,18 @@
 import { BarRow } from "@/components/molecules/bar-row";
 import { Card, CardContent } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
+import { levelColor } from "@/lib/data-palette";
 import { plurielFr } from "@/lib/pluriel-fr";
 import type { ScorecardBlockAverage } from "@/src/core/domain/scorecard-team-axes";
-
-/**
- * Une couleur par bloc de la grille, celles de la maquette du 11 septembre,
- * distinctes du violet des boutons. Un bloc inconnu prend la marque.
- */
-const BLOCK_COLORS: Readonly<Record<string, string>> = {
-  A: "#4C6FD6",
-  B: "#2E9C97",
-  C: "#9A57B5",
-  D: "#D0763D",
-  E: "#5F9A4E",
-};
-
-export function blockColor(key: string): string {
-  return BLOCK_COLORS[key] ?? "var(--brand)";
-}
 
 /**
  * Les axes d'amélioration de l'équipe : la moyenne de chaque bloc de la
  * grille sur les rendez-vous notés de la période, du plus en retrait au plus
  * solide. Un bloc bas chez tout le monde est un sujet d'atelier, pas de
  * coaching individuel, et la carte le dit.
+ *
+ * Chaque bloc avait sa couleur, sans signification ; depuis l'audit du
+ * 21 octobre 2026, la couleur dit le niveau (`levelColor`).
  */
 export function TeamBlockAxesCard({
   axes,
@@ -64,7 +52,7 @@ export function TeamBlockAxesCard({
                   }
                   percent={a.avgPercent}
                   value={`${a.avgPercent} %`}
-                  color={blockColor(a.key)}
+                  color={levelColor(a.avgPercent)}
                   title={`${a.name} : ${a.avgPercent} % en moyenne sur ${a.meetings} ${plurielFr(a.meetings, "rendez-vous")}`}
                 />
               ))}

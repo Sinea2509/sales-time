@@ -28,6 +28,12 @@ type KissQuadrant = {
   iconWrapClass: string;
 };
 
+/*
+  Les quatre pastilles gardent des icônes au trait, qui portent un sens
+  précis ; leurs couleurs passent à la palette de la charte (audit du
+  21 octobre 2026) : Keep turquoise, Improve violet, Start ambre, Stop
+  corail.
+*/
 const quadrantsTeam: readonly KissQuadrant[] = [
   {
     key: "keep" as const,
@@ -35,8 +41,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
     subtitle: "Ce que l'équipe réussit déjà, à sécuriser",
     bulletsKey: "keepBullets" as const,
     icon: UserRound,
-    iconWrapClass:
-      "bg-emerald-500/20 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300",
+    iconWrapClass: "bg-[#33D1B5]/18 text-[#0B6E5C] dark:text-[#9EEEDF]",
   },
   {
     key: "improve" as const,
@@ -44,7 +49,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
     subtitle: "Presque là, à affiner ensemble",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
-    iconWrapClass: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+    iconWrapClass: "bg-[#6C4DFF]/12 text-[#4527D6] dark:text-[#C9BDFF]",
   },
   {
     key: "start" as const,
@@ -52,7 +57,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
     subtitle: "Le réflexe qui manque, à installer",
     bulletsKey: "startBullets" as const,
     icon: Play,
-    iconWrapClass: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+    iconWrapClass: "bg-[#FFB547]/18 text-[#8A5600] dark:text-[#FFD9A0]",
   },
   {
     key: "stop" as const,
@@ -60,7 +65,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
     subtitle: "Ce qui coûte des rendez-vous, à couper",
     bulletsKey: "stopBullets" as const,
     icon: Ban,
-    iconWrapClass: "bg-red-600/15 text-red-700 dark:text-red-400",
+    iconWrapClass: "bg-[#FF7A6B]/15 text-[#A93A2C] dark:text-[#FFB3A9]",
   },
 ];
 
@@ -72,8 +77,7 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
     subtitle: "Ses points forts, à valoriser au prochain point",
     bulletsKey: "keepBullets" as const,
     icon: UserRound,
-    iconWrapClass:
-      "bg-emerald-500/20 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300",
+    iconWrapClass: "bg-[#33D1B5]/18 text-[#0B6E5C] dark:text-[#9EEEDF]",
   },
   {
     key: "improve" as const,
@@ -81,7 +85,7 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
     subtitle: "À améliorer ensemble, dès le prochain coaching",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
-    iconWrapClass: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+    iconWrapClass: "bg-[#6C4DFF]/12 text-[#4527D6] dark:text-[#C9BDFF]",
   },
   {
     key: "start" as const,
@@ -89,7 +93,7 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
     subtitle: "Le réflexe à installer avec ce commercial",
     bulletsKey: "startBullets" as const,
     icon: Play,
-    iconWrapClass: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+    iconWrapClass: "bg-[#FFB547]/18 text-[#8A5600] dark:text-[#FFD9A0]",
   },
   {
     key: "stop" as const,
@@ -97,7 +101,7 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
     subtitle: "À l'aider à couper, ça lui coûte des rendez-vous",
     bulletsKey: "stopBullets" as const,
     icon: Ban,
-    iconWrapClass: "bg-red-600/15 text-red-700 dark:text-red-400",
+    iconWrapClass: "bg-[#FF7A6B]/15 text-[#A93A2C] dark:text-[#FFB3A9]",
   },
 ];
 
@@ -116,8 +120,7 @@ const quadrantsSellerSelf: readonly KissQuadrant[] = [
     subtitle: "Ce que vous réussissez, gardez-le tel quel",
     bulletsKey: "keepBullets" as const,
     icon: UserRound,
-    iconWrapClass:
-      "bg-emerald-500/20 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300",
+    iconWrapClass: "bg-[#33D1B5]/18 text-[#0B6E5C] dark:text-[#9EEEDF]",
   },
   {
     key: "improve" as const,
@@ -125,7 +128,7 @@ const quadrantsSellerSelf: readonly KissQuadrant[] = [
     subtitle: "Presque acquis, à affiner d'un cran",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
-    iconWrapClass: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+    iconWrapClass: "bg-[#6C4DFF]/12 text-[#4527D6] dark:text-[#C9BDFF]",
   },
   {
     key: "start" as const,
@@ -133,7 +136,7 @@ const quadrantsSellerSelf: readonly KissQuadrant[] = [
     subtitle: "Le réflexe à installer dès le prochain rendez-vous",
     bulletsKey: "startBullets" as const,
     icon: Play,
-    iconWrapClass: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+    iconWrapClass: "bg-[#FFB547]/18 text-[#8A5600] dark:text-[#FFD9A0]",
   },
   {
     key: "stop" as const,
@@ -141,7 +144,7 @@ const quadrantsSellerSelf: readonly KissQuadrant[] = [
     subtitle: "À couper, ça vous coûte des rendez-vous",
     bulletsKey: "stopBullets" as const,
     icon: Ban,
-    iconWrapClass: "bg-red-600/15 text-red-700 dark:text-red-400",
+    iconWrapClass: "bg-[#FF7A6B]/15 text-[#A93A2C] dark:text-[#FFB3A9]",
   },
 ];
 

@@ -56,79 +56,90 @@ export const SONCAS_LABEL_FR: Record<(typeof SONCAS_KEYS)[number], string> = {
   Une seule couleur par profil, écrite ici et nulle part ailleurs : les barres
   des fiches, leurs pastilles et les camemberts du tableau de bord manager
   lisent ces tables. Avant, « Influent » était ambre sur la fiche et bleu sur
-  le camembert, « Sécurité » cyan ici et indigo là-bas : le même profil
-  changeait de couleur en changeant de page.
+  le camembert : le même profil changeait de couleur en changeant de page.
 
-  Les deux jeux sont passés au validateur de palettes du kit de visualisation
-  (OKLab, vision normale et les trois daltonismes, toutes paires) sur fond
-  clair, seul thème optimisé. DISC passe tout. SONCAS passe avec deux réserves
-  que l'écran honore déjà : la paire rose et émeraude tombe dans la bande 6 à
-  8 de séparation daltonienne, licite seulement avec un étiquetage direct, et
-  l'ambre comme le cyan tiennent moins de 3:1 sur blanc. Chaque barre et
-  chaque part de camembert porte donc son libellé et son pourcentage en
-  toutes lettres, jamais la couleur seule.
+  Depuis l'audit du tableau de bord du 21 octobre 2026, les profils prennent
+  la palette de la charte (celle des visuels 3D) au lieu des couleurs
+  primaires saturées : DISC garde ses quatre teintes conventionnelles,
+  accordées à la palette (D corail, I ambre, S turquoise, C violet) ; SONCAS
+  prend les quatre mêmes, plus un violet clair et un gris violet. Le violet
+  de la marque entre donc dans les données, à la demande de l'audit.
 
-  Le violet n'y figure pas : il signe la marque, les actions et la
-  navigation. « Orgueil », qui portait violet-600, passe en fuchsia.
+  Ambre et turquoise tiennent moins de 3:1 sur blanc : chaque barre et chaque
+  part de camembert porte son libellé et son pourcentage en toutes lettres,
+  jamais la couleur seule.
 */
 
 /** Couleur hex par profil DISC, pour les tracés qui ne lisent pas de classe. */
 export const DISC_HEX: Record<(typeof DISC_KEYS)[number], string> = {
-  D: "#dc2626",
-  I: "#f59e0b",
-  S: "#059669",
-  C: "#2563eb",
+  D: "#FF7A6B",
+  I: "#FFB547",
+  S: "#33D1B5",
+  C: "#6C4DFF",
 };
 
-/** Remplissage barre DISC : dominant rouge, influent ambre, stable vert, conforme bleu. */
+/** Remplissage barre DISC : la même couleur que le camembert. */
 export const DISC_BAR_CLASS: Record<(typeof DISC_KEYS)[number], string> = {
-  D: "bg-red-600",
-  I: "bg-amber-500",
-  S: "bg-emerald-600",
-  C: "bg-blue-600",
+  D: "bg-[#FF7A6B]",
+  I: "bg-[#FFB547]",
+  S: "bg-[#33D1B5]",
+  C: "bg-[#6C4DFF]",
 };
 
 /** Couleur hex par levier SONCAS, la même que la barre du levier. */
 export const SONCAS_HEX: Record<(typeof SONCAS_KEYS)[number], string> = {
-  securite: "#1d4ed8",
-  orgueil: "#d946ef",
-  nouveaute: "#047857",
-  confort: "#06b6d4",
-  argent: "#f59e0b",
-  sympathie: "#e11d48",
+  securite: "#6C4DFF",
+  orgueil: "#FF7A6B",
+  nouveaute: "#FFB547",
+  confort: "#33D1B5",
+  argent: "#A08CFF",
+  sympathie: "#8C88A8",
 };
 
-/** Remplissage barre SONCAS : couleurs distinctes par levier. */
+/** Remplissage barre SONCAS : la même couleur que le camembert. */
 export const SONCAS_BAR_CLASS: Record<(typeof SONCAS_KEYS)[number], string> = {
-  securite: "bg-blue-700",
-  orgueil: "bg-fuchsia-500",
-  nouveaute: "bg-emerald-700",
-  confort: "bg-cyan-500",
-  argent: "bg-amber-500",
-  sympathie: "bg-rose-600",
+  securite: "bg-[#6C4DFF]",
+  orgueil: "bg-[#FF7A6B]",
+  nouveaute: "bg-[#FFB547]",
+  confort: "bg-[#33D1B5]",
+  argent: "bg-[#A08CFF]",
+  sympathie: "bg-[#8C88A8]",
 };
+
+/*
+  Les pastilles : un fond pâle de la couleur du profil, et un texte de la
+  même teinte assombri, lisible sur ce fond.
+*/
+const PILL = {
+  coral:
+    "border-[#FF7A6B]/40 bg-[#FF7A6B]/12 text-[#A93A2C] dark:text-[#FFB3A9]",
+  amber:
+    "border-[#FFB547]/45 bg-[#FFB547]/15 text-[#8A5600] dark:text-[#FFD9A0]",
+  teal: "border-[#33D1B5]/45 bg-[#33D1B5]/15 text-[#0B6E5C] dark:text-[#9EEEDF]",
+  violet:
+    "border-[#6C4DFF]/35 bg-[#6C4DFF]/10 text-[#4527D6] dark:text-[#C9BDFF]",
+  lavender:
+    "border-[#A08CFF]/45 bg-[#A08CFF]/15 text-[#5240B8] dark:text-[#D9D0FF]",
+  greyViolet:
+    "border-[#8C88A8]/45 bg-[#8C88A8]/15 text-[#4A4762] dark:text-[#D2D0E0]",
+} as const;
 
 /** Pastille tag : même palette que les barres DISC. */
 export const DISC_PILL_CLASS: Record<(typeof DISC_KEYS)[number], string> = {
-  D: "border-red-600/30 bg-red-600/10 text-red-800 dark:text-red-200",
-  I: "border-amber-500/35 bg-amber-500/15 text-amber-900 dark:text-amber-100",
-  S: "border-emerald-600/30 bg-emerald-600/10 text-emerald-800 dark:text-emerald-200",
-  C: "border-blue-600/30 bg-blue-600/10 text-blue-800 dark:text-blue-200",
+  D: PILL.coral,
+  I: PILL.amber,
+  S: PILL.teal,
+  C: PILL.violet,
 };
 
 /** Pastille tag : même palette que les barres SONCAS. */
 export const SONCAS_PILL_CLASS: Record<(typeof SONCAS_KEYS)[number], string> = {
-  securite:
-    "border-blue-700/30 bg-blue-700/10 text-blue-800 dark:text-blue-200",
-  orgueil:
-    "border-fuchsia-500/35 bg-fuchsia-500/10 text-fuchsia-800 dark:text-fuchsia-200",
-  nouveaute:
-    "border-emerald-700/30 bg-emerald-700/10 text-emerald-800 dark:text-emerald-200",
-  confort: "border-cyan-500/35 bg-cyan-500/10 text-cyan-800 dark:text-cyan-200",
-  argent:
-    "border-amber-500/35 bg-amber-500/10 text-amber-900 dark:text-amber-100",
-  sympathie:
-    "border-rose-600/30 bg-rose-600/10 text-rose-800 dark:text-rose-200",
+  securite: PILL.violet,
+  orgueil: PILL.coral,
+  nouveaute: PILL.amber,
+  confort: PILL.teal,
+  argent: PILL.lavender,
+  sympathie: PILL.greyViolet,
 };
 
 function clampPct(n: number): number {

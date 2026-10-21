@@ -1,5 +1,7 @@
 import { TeamRankingSummary } from "@/components/molecules/team-ranking-summary";
 import { TEAM_TIER_CLASS } from "@/components/molecules/team-tier-badge";
+import { InfoHint } from "@/components/molecules/info-hint";
+import { levelColor } from "@/lib/data-palette";
 import type { CardHeadingTag } from "@/lib/page-typography";
 import { plurielFr } from "@/lib/pluriel-fr";
 import { prospectInitials } from "@/lib/prospect-initials";
@@ -431,7 +433,17 @@ function CarteDesCompetences({
       lecteur d'écran au premier des deux titres.
     */
     <section className={CARTE} aria-label="Compétences de l'équipe">
-      <Titre className={TITRE}>Compétences de l&apos;équipe</Titre>
+      <div className="flex items-center gap-1.5">
+        <Titre className={TITRE}>Compétences de l&apos;équipe</Titre>
+        {vue != null ? (
+          <InfoHint label="Comment lire ces niveaux">
+            Niveaux sur 100, moyenne de {commerciaux(collectif.skillSellers)}{" "}
+            sur la période : chaque commercial y compte pour un, quel que soit
+            son nombre de rendez-vous. Le repère vertical marque le niveau moyen
+            de l&apos;équipe, {vue.niveauMoyen}/100.
+          </InfoHint>
+        ) : null}
+      </div>
       {vue == null ? (
         <p className={cn(LEGENDE, "mt-1.5")}>
           Aucun rendez-vous coaché sur la période : les six compétences du
@@ -507,14 +519,17 @@ function CarteDesCompetences({
                       aria-hidden
                     >
                       {/*
-                        La barre est de l'encre, pas de la marque : six barres
-                        violettes faisaient du violet la couleur du fond de
-                        page, alors qu'il signe les actions. Le niveau se lit à
-                        la longueur ; la couleur n'y ajoutait rien.
+                        La barre était d'encre presque noire, un cinquième
+                        système de couleur sur la page. Depuis l'audit du
+                        21 octobre 2026, la couleur dit le niveau, comme sur
+                        les axes d'amélioration : corail, ambre, turquoise.
                       */}
                       <span
-                        className="st-bar block h-full rounded-full bg-foreground/80 dark:bg-zinc-300"
-                        style={{ width: `${bar.valeur}%` }}
+                        className="st-bar block h-full rounded-full"
+                        style={{
+                          width: `${bar.valeur}%`,
+                          background: levelColor(bar.valeur),
+                        }}
                       />
                     </span>
                     {/*
@@ -534,22 +549,11 @@ function CarteDesCompetences({
             })}
           </ul>
           {/*
-            « Niveaux » et non « notes » : la note, sur cet écran, est celle
-            sur 5 qui classe les membres juste au-dessus. Deux échelles portant
-            le même mot sur une même page se confondent, et 62 se lirait comme
-            une note.
-
-            La deuxième phrase dit ce que le calcul fait vraiment : la
+            La note de lecture est passée dans le (i) du titre (audit du
+            21 octobre 2026). Elle dit ce que le calcul fait vraiment : la
             référence d'équipe moyenne une valeur par commercial, pas une par
-            rendez-vous. Ce qui était écrit ici, « un vote par personne »,
-            promettait un vote qui n'existe nulle part dans le produit.
+            rendez-vous.
           */}
-          <p className={cn(LEGENDE, "mt-3")}>
-            Niveaux sur 100, moyenne de {commerciaux(collectif.skillSellers)}{" "}
-            sur la période : chaque commercial y compte pour un, quel que soit
-            son nombre de rendez-vous. Le repère vertical marque le niveau moyen
-            de l&apos;équipe, {vue.niveauMoyen}/100.
-          </p>
         </>
       )}
     </section>
@@ -613,18 +617,19 @@ export function TeamCollectiveOverview({
         />
         <div className={MARGE}>
           <p className="text-sm leading-relaxed text-foreground dark:text-zinc-300">
-            {phraseDeRepartition(dots, ranking.minScoredMeetings)}
+            {phraseDeRepartition(dots, ranking.minScoredMeetings)}{" "}
+            <InfoHint label="Comment lire la répartition">
+              Une pastille par membre classé, à sa note. Deux pastilles
+              l&apos;une sur l&apos;autre sont trop proches pour tenir côte à
+              côte.
+              {ranking.averageNoteOn5 != null
+                ? ` Le trait vertical marque la moyenne d'équipe, ${formatNoteFr(
+                    ranking.averageNoteOn5,
+                  )}/5.`
+                : null}
+            </InfoHint>
           </p>
           <PisteDeRepartition dots={dots} moyenne={ranking.averageNoteOn5} />
-          <p className={cn(LEGENDE, "mt-2")}>
-            Une pastille par membre classé, à sa note. Deux pastilles l&apos;une
-            sur l&apos;autre sont trop proches pour tenir côte à côte.
-            {ranking.averageNoteOn5 != null
-              ? ` Le trait vertical marque la moyenne d'équipe, ${formatNoteFr(
-                  ranking.averageNoteOn5,
-                )}/5.`
-              : null}
-          </p>
         </div>
       </section>
       <CarteDesCompetences
