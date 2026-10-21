@@ -146,7 +146,7 @@ function Floating({
   depth: number;
   tilt?: number;
   delay: number;
-  children?: ReactNode;
+  children: ReactNode;
 }) {
   const style: CSSProperties = {
     transform: `translateZ(${depth}px) rotate(${tilt}deg)`,
@@ -165,15 +165,6 @@ function Floating({
   );
 }
 
-const SPHERE = {
-  violet:
-    "bg-[radial-gradient(circle_at_32%_28%,#F3F0FF_0%,#9C82FF_28%,#5B3DF5_62%,#24107A_100%)] shadow-[0_24px_40px_-14px_rgba(108,77,255,0.8)]",
-  coral:
-    "bg-[radial-gradient(circle_at_32%_28%,#FFE9DE_0%,#FF9B7A_30%,#F2547A_65%,#8A1F4E_100%)] shadow-[0_20px_36px_-12px_rgba(255,107,120,0.8)]",
-  amber:
-    "bg-[radial-gradient(circle_at_32%_28%,#FFF6DA_0%,#FFC96B_32%,#F2902A_70%,#8A4A0A_100%)] shadow-[0_16px_28px_-10px_rgba(255,170,60,0.8)]",
-} as const;
-
 type Props = {
   focus: OnboardingSceneFocus;
   className?: string;
@@ -181,8 +172,9 @@ type Props = {
 
 /**
  * Une petite scène en relief pour les pages d'arrivée : trois cartes de
- * verre en perspective (une analyse, une note, un conseil…) et des sphères
- * brillantes qui flottent autour. La carte du premier plan illustre l'étape.
+ * verre en perspective (une analyse, une note, un conseil…), qui flottent
+ * doucement devant une lueur colorée. La carte du premier plan illustre
+ * l'étape.
  *
  * Tout est en CSS : aucune image ni bibliothèque à charger, et le mouvement
  * s'arrête pour qui a demandé moins d'animations.
@@ -202,17 +194,9 @@ export function OnboardingScene3d({ focus, className }: Props) {
       )}
     >
       <div className="absolute inset-0 [transform:rotateX(12deg)_rotateY(-16deg)] [transform-style:preserve-3d]">
-        <Floating
-          className={cn(
-            "-bottom-2 -left-12 size-20 rounded-full",
-            SPHERE.violet,
-          )}
-          depth={-120}
-          delay={-1}
-        />
         <div
-          className="absolute -right-10 bottom-0 size-28 rounded-full border-[9px] border-[#9C82FF]/55 shadow-[0_0_30px_rgba(139,108,255,0.45),inset_0_0_14px_rgba(255,255,255,0.25)]"
-          style={{ transform: "translateZ(-30px) rotateX(66deg)" }}
+          className="absolute inset-x-6 inset-y-4 bg-[radial-gradient(50%_60%_at_30%_40%,rgba(108,77,255,0.45),transparent_70%),radial-gradient(45%_55%_at_75%_70%,rgba(255,122,107,0.35),transparent_70%)] blur-2xl"
+          style={{ transform: "translateZ(-140px)" }}
         />
         <Floating
           className={cn("top-2 left-0 w-[210px]", GLASS)}
@@ -240,16 +224,6 @@ export function OnboardingScene3d({ focus, className }: Props) {
         >
           <Front />
         </Floating>
-        <Floating
-          className={cn("-top-3 right-14 size-14 rounded-full", SPHERE.coral)}
-          depth={110}
-          delay={-4}
-        />
-        <Floating
-          className={cn("right-2 bottom-8 size-8 rounded-full", SPHERE.amber)}
-          depth={140}
-          delay={-6}
-        />
       </div>
     </div>
   );

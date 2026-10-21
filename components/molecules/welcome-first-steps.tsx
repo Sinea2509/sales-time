@@ -41,14 +41,6 @@ const STEPS = [
 export function WelcomeFirstSteps({ newMeetingHref, guideHref }: Props) {
   return (
     <section className="relative overflow-hidden rounded-2xl border border-brand/20 bg-[linear-gradient(135deg,rgba(108,77,255,0.12),rgba(255,138,91,0.08)_55%,transparent)] bg-card p-6 sm:p-8">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-6 right-8 hidden h-32 w-56 md:block"
-      >
-        <span className="animate-st-float absolute top-0 right-6 size-16 rounded-full bg-[radial-gradient(circle_at_32%_28%,#FFE9DE_0%,#FF9B7A_30%,#F2547A_65%,#8A1F4E_100%)] shadow-[0_20px_36px_-12px_rgba(255,107,120,0.7)] motion-reduce:animate-none" />
-        <span className="animate-st-float absolute top-10 right-28 size-10 rounded-full bg-[radial-gradient(circle_at_32%_28%,#F3F0FF_0%,#9C82FF_28%,#5B3DF5_62%,#24107A_100%)] shadow-[0_16px_28px_-10px_rgba(108,77,255,0.7)] [animation-delay:-3s] motion-reduce:animate-none" />
-        <span className="animate-st-float absolute top-20 right-0 size-6 rounded-full bg-[radial-gradient(circle_at_32%_28%,#FFF6DA_0%,#FFC96B_32%,#F2902A_70%,#8A4A0A_100%)] shadow-[0_12px_20px_-8px_rgba(255,170,60,0.7)] [animation-delay:-5s] motion-reduce:animate-none" />
-      </div>
       <div className="relative max-w-2xl space-y-2">
         <p className="text-brand text-xs font-semibold tracking-[0.14em] uppercase">
           Premiers pas
