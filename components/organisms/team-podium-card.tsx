@@ -7,7 +7,10 @@ import { cardTitleClass } from "@/lib/page-typography";
 import { prospectInitials } from "@/lib/prospect-initials";
 import { podiumLabel } from "@/lib/stats-window-labels";
 import { teamMemberDisplayName } from "@/lib/team-member-display-name";
-import type { OrgAdminPodiumStep } from "@/src/core/application/get-org-admin-dashboard";
+import type {
+  OrgAdminPodiumStep,
+  OrgAdminPodiumWaiting,
+} from "@/src/core/application/get-org-admin-dashboard";
 import type {
   StatsWindowDays,
   StatsWindowRange,
@@ -21,11 +24,16 @@ import { formatNoteFr } from "@/src/core/domain/team-ranking";
  */
 export function TeamPodiumCard({
   podium,
+  waiting = [],
+  minScoredMeetings,
   statsWindowDays,
   statsWindowRange = null,
   equipePage,
 }: {
   podium: OrgAdminPodiumStep[];
+  /** Notés, mais sous le seuil du classement. */
+  waiting?: OrgAdminPodiumWaiting[];
+  minScoredMeetings: number;
   statsWindowDays: StatsWindowDays;
   statsWindowRange?: StatsWindowRange | null;
   equipePage: number;
@@ -75,6 +83,36 @@ export function TeamPodiumCard({
             })}
           </ol>
         )}
+        {/*
+          Audit du 21 octobre 2026 : un membre noté mais sous le seuil
+          n'apparaissait nulle part ici, et le podium semblait se tromper. Il
+          est listé à part, avec ce qui lui manque pour entrer au classement.
+        */}
+        {waiting.length > 0 ? (
+          <div className="border-t border-border pt-3">
+            <p className="text-muted-foreground mb-2 text-xs font-medium">
+              Pas encore classés
+            </p>
+            <ul className="space-y-2">
+              {waiting.map((w) => {
+                const name = teamMemberDisplayName(w);
+                return (
+                  <li key={w.userId} className="flex items-center gap-3">
+                    <span className="bg-muted grid size-7 shrink-0 place-items-center rounded-full text-[10.5px] font-semibold dark:bg-zinc-800">
+                      {prospectInitials(name.initialsSource)}
+                    </span>
+                    <span className="min-w-0 truncate text-sm">
+                      {name.primary}
+                    </span>
+                    <span className="bg-muted text-muted-foreground ml-auto shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums dark:bg-zinc-800">
+                      {w.scoredMeetings} RDV sur {minScoredMeetings}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );

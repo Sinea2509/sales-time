@@ -49,43 +49,42 @@ describe("seller-affinity-from-meetings", () => {
   });
 
   /*
-    Les hex des camemberts et les classes des barres doivent nommer le même
-    cran Tailwind : c'est toute la promesse « une couleur par profil, sur
-    toutes les pages ». La table hex-vers-cran reprend la palette Tailwind v4,
-    qui est un fait extérieur au produit, pas un choix à retester.
+    Les hex des camemberts et les classes des barres doivent nommer la même
+    couleur : c'est toute la promesse « une couleur par profil, sur toutes
+    les pages ».
   */
-  it("peint chaque profil du même cran en barre et en camembert", () => {
-    const cranParHex: Record<string, string> = {
-      "#dc2626": "red-600",
-      "#f59e0b": "amber-500",
-      "#059669": "emerald-600",
-      "#2563eb": "blue-600",
-      "#1d4ed8": "blue-700",
-      "#d946ef": "fuchsia-500",
-      "#047857": "emerald-700",
-      "#06b6d4": "cyan-500",
-      "#e11d48": "rose-600",
-    };
+  it("peint chaque profil de la même couleur en barre et en camembert", () => {
     for (const key of Object.keys(DISC_HEX) as Array<keyof typeof DISC_HEX>) {
-      expect(DISC_BAR_CLASS[key]).toBe(`bg-${cranParHex[DISC_HEX[key]]}`);
+      expect(DISC_BAR_CLASS[key]).toBe(`bg-[${DISC_HEX[key]}]`);
     }
     for (const key of Object.keys(SONCAS_HEX) as Array<
       keyof typeof SONCAS_HEX
     >) {
-      expect(SONCAS_BAR_CLASS[key]).toBe(`bg-${cranParHex[SONCAS_HEX[key]]}`);
+      expect(SONCAS_BAR_CLASS[key]).toBe(`bg-[${SONCAS_HEX[key]}]`);
     }
   });
 
-  it("ne peint aucun profil au violet de la marque", () => {
-    const tout = [
-      ...Object.values(DISC_BAR_CLASS),
-      ...Object.values(SONCAS_BAR_CLASS),
-      ...Object.values(DISC_PILL_CLASS),
-      ...Object.values(SONCAS_PILL_CLASS),
+  it("ne prend que les couleurs de la charte (audit du 21 octobre 2026)", () => {
+    const charte = new Set([
+      "#6C4DFF",
+      "#FF7A6B",
+      "#FFB547",
+      "#33D1B5",
+      "#A08CFF",
+      "#8C88A8",
+    ]);
+    for (const hex of [
       ...Object.values(DISC_HEX),
       ...Object.values(SONCAS_HEX),
-    ].join(" ");
-    expect(tout).not.toMatch(/violet|purple|indigo/);
+    ]) {
+      expect(charte.has(hex)).toBe(true);
+    }
+    for (const pill of [
+      ...Object.values(DISC_PILL_CLASS),
+      ...Object.values(SONCAS_PILL_CLASS),
+    ]) {
+      expect(pill).toMatch(/border-\[#[0-9A-F]{6}\]/);
+    }
   });
 
   it("returns empty aggregates when no valid analyses", () => {

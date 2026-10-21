@@ -21,6 +21,7 @@ import {
   salesScoreAverage,
 } from "@/src/core/domain/note-globale-on5";
 import {
+  DEFAULT_MIN_SCORED_MEETINGS,
   formatNoteFr,
   rankTeamMembers,
   type MemberRanking,
@@ -230,6 +231,15 @@ export type OrgAdminPodiumStep = {
   tier: RankingTier | null;
 };
 
+/** Un membre noté qui attend d'avoir assez de rendez-vous pour être classé. */
+export type OrgAdminPodiumWaiting = {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  scoredMeetings: number;
+};
+
 /**
  * Ce que le tableau de bord du manager lit de son équipe au-delà des lignes :
  * les SalesScores par commercial, les blocs de la grille en retrait, la
@@ -242,6 +252,14 @@ export type OrgAdminTeamReading = {
   scorecards: number;
   synthesis: TeamWrittenSynthesis | null;
   podium: OrgAdminPodiumStep[];
+  /**
+   * Les membres notés mais pas encore classés, faute de volume. Audit du
+   * 21 octobre 2026 : sans eux, un manager voyait Thomas premier du podium
+   * alors que Zohra avait le meilleur score, et croyait à un bug.
+   */
+  podiumWaiting: OrgAdminPodiumWaiting[];
+  /** Le seuil de rendez-vous notés qui ouvre le classement. */
+  minScoredMeetings: number;
   pipeline: PipelineInProgress;
   scoreSeries: number[];
   /** Commerciaux de l'équipe cadrée. */
@@ -848,12 +866,24 @@ export function buildOrgAdminTeamReading(input: {
       tier: r.tier,
     }));
 
+  const podiumWaiting: OrgAdminPodiumWaiting[] = input.rows
+    .filter((r) => r.unrankedReason === "volume-insuffisant")
+    .map((r) => ({
+      userId: r.userId,
+      firstName: r.firstName,
+      lastName: r.lastName,
+      email: r.email,
+      scoredMeetings: r.scoredMeetings,
+    }));
+
   return {
     scoreBars,
     blockAxes,
     scorecards: scorecards.length,
     synthesis,
     podium,
+    podiumWaiting,
+    minScoredMeetings: DEFAULT_MIN_SCORED_MEETINGS,
     pipeline: pipelineInProgress(input.meetings),
     scoreSeries: salesScoreSeries(input.meetings),
     sellersCount: input.rows.length,

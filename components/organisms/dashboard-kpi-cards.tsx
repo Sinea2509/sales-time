@@ -85,7 +85,8 @@ export function DashboardKpiCards({
       {audience === "team" ? (
         <KpiTile
           icon={Gauge}
-          label="SalesScore équipe, sur 100"
+          label="SalesScore équipe"
+          unit={home.salesScoreAvg != null ? "/100" : undefined}
           labelTooltip={SALES_SCORE_HINT}
           footer={
             home.salesScoreTrendPoints == null
@@ -121,7 +122,7 @@ export function DashboardKpiCards({
 
       <KpiTile
         icon={Clock}
-        label="Temps administratif gagné"
+        label="Temps admin gagné"
         labelTooltip={KPI_TAM_HINT}
         footer={
           rdvRenseignes > 0

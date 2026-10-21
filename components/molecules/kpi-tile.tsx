@@ -17,6 +17,8 @@ export type KpiTileProps = {
   trend?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  /** L’unité après le chiffre, en plus petit : « /100 ». Elle sortait du libellé, qui se coupait. */
+  unit?: string;
   className?: string;
   /** When set, icon tile uses admin accent colors instead of brand. */
   accent?: StatAccent;
@@ -29,6 +31,7 @@ export function KpiTile({
   trend,
   children,
   footer,
+  unit,
   className,
   accent,
 }: KpiTileProps) {
@@ -86,6 +89,11 @@ export function KpiTile({
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
         <p className="text-3xl font-semibold tabular-nums">
           <AnimatedFigure>{children}</AnimatedFigure>
+          {unit ? (
+            <span className="text-muted-foreground ml-1 text-base font-medium">
+              {unit}
+            </span>
+          ) : null}
         </p>
         {trend ? <div className="shrink-0">{trend}</div> : null}
       </div>

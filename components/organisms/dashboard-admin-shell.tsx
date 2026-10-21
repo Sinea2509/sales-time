@@ -22,7 +22,10 @@ import {
 } from "@/lib/essentiel-du-manager";
 import type { TeamScopeGroup } from "@/lib/team-seller-scope";
 import type { OrgAdminDashboard } from "@/src/core/application/get-org-admin-dashboard";
-import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import {
+  MIN_RDV_FOR_STATS,
+  type StatsWindowDays,
+} from "@/src/core/domain/dashboard-stats-window";
 
 /**
  * Le tableau de bord du manager, comme la maquette du 11 septembre le
@@ -71,10 +74,18 @@ export function DashboardAdminShell({
     <div className="space-y-8">
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/*
+            Audit du 21 octobre 2026 : le sous-titre promettait une comparaison
+            que les indicateurs ne montraient pas, faute de période précédente
+            ou de rendez-vous en nombre suffisant. Il ne l'annonce plus que
+            lorsque les pastilles d'évolution peuvent s'afficher.
+          */}
           <p className="text-muted-foreground text-sm leading-relaxed">
-            L&apos;activité des {statsWindowLabel(jours, range)}, comparée aux{" "}
-            {previousWindowLabel(jours, range)}. La période choisie
-            s&apos;applique à toutes les pages du manager.
+            L&apos;activité des {statsWindowLabel(jours, range)}
+            {home.nbRdvsTrendPercent != null && home.nbRdvs >= MIN_RDV_FOR_STATS
+              ? `, comparée aux ${previousWindowLabel(jours, range)}`
+              : ""}
+            . La période choisie s&apos;applique à toutes les pages du manager.
           </p>
           <Suspense
             fallback={
@@ -120,6 +131,8 @@ export function DashboardAdminShell({
           ) : null}
           <TeamPodiumCard
             podium={teamReading.podium}
+            waiting={teamReading.podiumWaiting}
+            minScoredMeetings={teamReading.minScoredMeetings}
             statsWindowDays={jours}
             statsWindowRange={range}
             equipePage={monEquipe.page}
