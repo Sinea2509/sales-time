@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { pageTitleClass } from "@/lib/page-typography";
+import { Visual3d } from "@/components/atoms/visual-3d";
 
 /**
  * L'erreur d'une page de l'application, affichée dans sa charte.
@@ -27,6 +28,7 @@ export default function LocaleError({
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center gap-4 px-6 py-12 text-center">
+      <Visual3d name="c7-erreur" width={240} height={180} />
       <h1 className={pageTitleClass}>
         Cette page n&apos;a pas pu s&apos;afficher
       </h1>

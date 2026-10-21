@@ -240,7 +240,12 @@ export default async function DashboardHomePage({
           guideHref="/bienvenue"
         />
       ) : null}
-      {!home ? null : (
+      {/*
+        Revue UX du 21 octobre 2026 : sous la carte d'accueil, un commercial
+        qui n'a encore rien déposé voyait une page de « 0 » et de « n. c. ».
+        Tant qu'il n'a aucun rendez-vous, l'accueil est seul sur la page.
+      */}
+      {!home || meetingsEver === 0 ? null : (
         <DashboardHomeShell
           home={home}
           standing={standing}

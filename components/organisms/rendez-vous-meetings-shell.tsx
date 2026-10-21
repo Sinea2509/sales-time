@@ -9,6 +9,7 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import { PrdEmptyState } from "@/components/molecules/prd-empty-state";
 import { ProspectIdentityCell } from "@/components/molecules/prospect-identity-cell";
 import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
 import { MeetingActionBadge } from "@/components/molecules/meeting-action-badge";
@@ -306,6 +307,26 @@ export function RendezVousMeetingsShell({
     },
     [openMeetingDetail],
   );
+
+  /*
+    Revue UX du 21 octobre 2026 : sans aucun rendez-vous, la recherche, les
+    filtres et un tableau vide n'ont rien à proposer. Un seul message, et le
+    geste qui fait démarrer.
+  */
+  if (meetings.length === 0) {
+    return (
+      <PrdEmptyState
+        illustration="c1-aucun-rdv"
+        title="Aucun rendez-vous pour l'instant"
+        description="Déposez l'enregistrement ou le transcript d'un rendez-vous : Sales Time remplit la fiche et l'analyse en quelques minutes. C'est ce qui alimente le SalesScore et les statistiques."
+        action={
+          <BrandCtaLink href="/company/rendez-vous/nouveau" size="md">
+            Déposer un rendez-vous
+          </BrandCtaLink>
+        }
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
