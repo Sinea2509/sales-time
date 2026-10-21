@@ -5,6 +5,7 @@ import {
   resolveManagerAssignment,
   type ManagerAssignmentCandidate,
   type ManagerAssignmentRefusal,
+  managerFromInvitation,
 } from "./manager-assignment";
 
 const EQUIPE: ManagerAssignmentCandidate[] = [
@@ -197,3 +198,41 @@ describe("managerAssignmentRefusalMessage", () => {
   présent dans deux organisations n'a qu'un seul manager déclaré. La liste
   reçue ici est déjà cadrée sur une organisation par celui qui appelle.
 */
+
+describe("managerFromInvitation", () => {
+  const base = {
+    invitedRole: "MEMBER" as const,
+    inviteeUserId: "invite",
+    currentManagerUserId: null,
+    inviterUserId: "thomas",
+    inviterRole: "ADMIN" as const,
+  };
+
+  it("rattache un commercial invité au manager qui l'a invité", () => {
+    expect(managerFromInvitation(base)).toBe("thomas");
+  });
+
+  it("ne rattache pas un manager invité", () => {
+    expect(managerFromInvitation({ ...base, invitedRole: "ADMIN" })).toBeNull();
+  });
+
+  it("ne remplace jamais un rattachement déjà déclaré", () => {
+    expect(
+      managerFromInvitation({ ...base, currentManagerUserId: "cedric" }),
+    ).toBeNull();
+  });
+
+  it("ne rattache qu'à un membre qui a le rôle Manager", () => {
+    expect(
+      managerFromInvitation({ ...base, inviterRole: "MEMBER" }),
+    ).toBeNull();
+    expect(managerFromInvitation({ ...base, inviterRole: null })).toBeNull();
+    expect(managerFromInvitation({ ...base, inviterUserId: null })).toBeNull();
+  });
+
+  it("ne rattache personne à lui-même", () => {
+    expect(
+      managerFromInvitation({ ...base, inviterUserId: "invite" }),
+    ).toBeNull();
+  });
+});
