@@ -10,6 +10,7 @@ import {
 } from "@/app/[locale]/company/contacts/actions";
 import {
   getTeamMemberPerformanceFingerprintAction,
+  attachToMyTeamAction,
   refreshTeamMemberPerformanceAction,
 } from "@/app/[locale]/company/equipe/actions";
 import { prepareBriefingAction } from "@/app/[locale]/company/preparer/actions";
@@ -1503,6 +1504,66 @@ describe("meeting detail actions", () => {
       ok: false,
       error: "FAILED",
       message: "model failed",
+    });
+  });
+});
+
+describe("attachToMyTeamAction", () => {
+  const OTHER_ID = "clu99999999999999999999999";
+
+  function setup() {
+    const setManagerUserId = jest.fn().mockResolvedValue(undefined);
+    (
+      getApplicationDeps() as unknown as { users: Record<string, unknown> }
+    ).users.setManagerUserId = setManagerUserId;
+    organizationTeamMock.listMembersAndPendingInvitations.mockResolvedValue({
+      members: [
+        { userId: USER_ID, role: "ADMIN", managerUserId: null },
+        { userId: SELLER_ID, role: "MEMBER", managerUserId: null },
+        {
+          userId: OTHER_ID,
+          role: "MEMBER",
+          managerUserId: "cl000000000000000000000002",
+        },
+      ],
+      invitations: [],
+    });
+    return setManagerUserId;
+  }
+
+  it("refuse un commercial", async () => {
+    mockOrgMemberPrincipal();
+    setup();
+    const result = await attachToMyTeamAction([SELLER_ID]);
+    expect(result).toEqual({ ok: false, message: "Accès refusé." });
+  });
+
+  it("ajoute à l'équipe du manager un commercial rattaché à personne", async () => {
+    mockOrgAdminPrincipal();
+    const setManagerUserId = setup();
+    const result = await attachToMyTeamAction([SELLER_ID]);
+    expect(result).toEqual({ ok: true, attached: 1 });
+    expect(setManagerUserId).toHaveBeenCalledWith({
+      userId: SELLER_ID,
+      managerUserId: USER_ID,
+    });
+    expect(revalidatePathMock).toHaveBeenCalledWith("/company");
+  });
+
+  it("ne déplace jamais un commercial déjà rattaché à un autre manager", async () => {
+    mockOrgAdminPrincipal();
+    const setManagerUserId = setup();
+    const result = await attachToMyTeamAction([OTHER_ID]);
+    expect(result.ok).toBe(false);
+    expect(setManagerUserId).not.toHaveBeenCalled();
+  });
+
+  it("valide les identifiants", async () => {
+    mockOrgAdminPrincipal();
+    setup();
+    expect(await attachToMyTeamAction(["pas-un-id"])).toEqual({
+      ok: false,
+      message: "Identifiant invalide.",
     });
   });
 });

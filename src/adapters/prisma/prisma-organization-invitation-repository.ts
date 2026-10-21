@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
+import { managerFromInvitation } from "@/src/core/domain/manager-assignment";
 import { hashToken } from "@/lib/auth/tokens";
 import type {
   AcceptOrganizationInvitationResult,
@@ -104,7 +105,42 @@ export class PrismaOrganizationInvitationRepository implements OrganizationInvit
       return { ok: false, error: "EMAIL_MISMATCH" };
     }
 
+    // Le commercial invité rejoint l'équipe de celui qui l'a invité, s'il
+    // n'a pas déjà un manager.
+    const [inviter, invitee] = await Promise.all([
+      inv.invitedByUserId
+        ? this.db.organizationMembership.findUnique({
+            where: {
+              userId_organizationId: {
+                userId: inv.invitedByUserId,
+                organizationId: inv.organizationId,
+              },
+            },
+            select: { role: true },
+          })
+        : null,
+      this.db.user.findUnique({
+        where: { id: input.userId },
+        select: { managerId: true },
+      }),
+    ]);
+    const managerId = managerFromInvitation({
+      invitedRole: inv.role,
+      inviteeUserId: input.userId,
+      currentManagerUserId: invitee?.managerId ?? null,
+      inviterUserId: inv.invitedByUserId ?? null,
+      inviterRole: inviter?.role ?? null,
+    });
+
     await this.db.$transaction([
+      ...(managerId
+        ? [
+            this.db.user.update({
+              where: { id: input.userId },
+              data: { managerId },
+            }),
+          ]
+        : []),
       this.db.organizationMembership.upsert({
         where: {
           userId_organizationId: {

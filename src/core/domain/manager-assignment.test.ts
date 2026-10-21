@@ -2,9 +2,11 @@ import { describe, expect, it } from "@jest/globals";
 import {
   managerAssignmentRefusalMessage,
   managerChoicesForMember,
+  membersToAttach,
   resolveManagerAssignment,
   type ManagerAssignmentCandidate,
   type ManagerAssignmentRefusal,
+  managerFromInvitation,
 } from "./manager-assignment";
 
 const EQUIPE: ManagerAssignmentCandidate[] = [
@@ -197,3 +199,56 @@ describe("managerAssignmentRefusalMessage", () => {
   présent dans deux organisations n'a qu'un seul manager déclaré. La liste
   reçue ici est déjà cadrée sur une organisation par celui qui appelle.
 */
+
+describe("managerFromInvitation", () => {
+  const base = {
+    invitedRole: "MEMBER" as const,
+    inviteeUserId: "invite",
+    currentManagerUserId: null,
+    inviterUserId: "manager-a",
+    inviterRole: "ADMIN" as const,
+  };
+
+  it("rattache un commercial invité au manager qui l'a invité", () => {
+    expect(managerFromInvitation(base)).toBe("manager-a");
+  });
+
+  it("ne rattache pas un manager invité", () => {
+    expect(managerFromInvitation({ ...base, invitedRole: "ADMIN" })).toBeNull();
+  });
+
+  it("ne remplace jamais un rattachement déjà déclaré", () => {
+    expect(
+      managerFromInvitation({ ...base, currentManagerUserId: "manager-b" }),
+    ).toBeNull();
+  });
+
+  it("ne rattache qu'à un membre qui a le rôle Manager", () => {
+    expect(
+      managerFromInvitation({ ...base, inviterRole: "MEMBER" }),
+    ).toBeNull();
+    expect(managerFromInvitation({ ...base, inviterRole: null })).toBeNull();
+    expect(managerFromInvitation({ ...base, inviterUserId: null })).toBeNull();
+  });
+
+  it("ne rattache personne à lui-même", () => {
+    expect(
+      managerFromInvitation({ ...base, inviterUserId: "invite" }),
+    ).toBeNull();
+  });
+});
+
+describe("membersToAttach", () => {
+  const members = [
+    { userId: "manager-a", role: "ADMIN" as const, managerUserId: null },
+    { userId: "libre", role: "MEMBER" as const, managerUserId: null },
+    { userId: "deja", role: "MEMBER" as const, managerUserId: "manager-b" },
+    { userId: "manager-b", role: "ADMIN" as const, managerUserId: null },
+  ];
+
+  it("propose les seuls commerciaux rattachés à personne", () => {
+    expect(membersToAttach(members, "manager-a").map((m) => m.userId)).toEqual([
+      "libre",
+    ]);
+  });
+});

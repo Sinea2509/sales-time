@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { MembersToAttachCard } from "@/components/organisms/members-to-attach-card";
+import { loadMembersToAttach } from "@/lib/load-members-to-attach";
 import { InfoCard } from "@/components/molecules/info-card";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { WelcomeFirstSteps } from "@/components/molecules/welcome-first-steps";
@@ -117,9 +119,14 @@ export default async function DashboardHomePage({
               organizationPlaybookMarkdownForAnalysis(orgSettings),
           })
         : null;
+    const toAttach = await loadMembersToAttach(deps, {
+      organizationId: actor.activeOrganizationId,
+      managerUserId: actor.internalUserId,
+    });
     return (
       <div className="space-y-6">
         <PageHeaderSimple title="Tableau de bord équipe" />
+        <MembersToAttachCard members={toAttach} />
         {!admin ? null : (
           <DashboardAdminShell
             admin={admin}

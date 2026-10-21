@@ -101,3 +101,51 @@ export function managerAssignmentRefusalMessage(
     }
   }
 }
+
+/**
+ * Le manager d'une personne qui vient d'accepter une invitation.
+ *
+ * Retour de Thomas du 21 octobre 2026 : un commercial invité arrivait « sans
+ * manager », et n'apparaissait donc pas dans le tableau de bord de celui qui
+ * l'avait invité. Il est désormais rattaché d'office à la personne qui l'a
+ * invité, aux mêmes conditions que dans le menu de l'équipe : elle a le rôle
+ * Manager dans l'organisation, et ce n'est pas lui-même.
+ *
+ * Un manager invité n'est rattaché à personne, et un rattachement déjà
+ * déclaré n'est jamais remplacé : la personne pouvait déjà avoir un manager
+ * dans une autre organisation.
+ */
+export function managerFromInvitation(input: {
+  invitedRole: OrganizationMembershipRole;
+  inviteeUserId: string;
+  currentManagerUserId: string | null;
+  inviterUserId: string | null;
+  inviterRole: OrganizationMembershipRole | null;
+}): string | null {
+  if (input.invitedRole !== "MEMBER") return null;
+  if (input.currentManagerUserId != null) return null;
+  if (input.inviterUserId == null || input.inviterRole !== "ADMIN") return null;
+  if (input.inviterUserId === input.inviteeUserId) return null;
+  return input.inviterUserId;
+}
+
+/**
+ * Les commerciaux de l'organisation qui ne sont dans l'équipe de personne, et
+ * qu'un manager peut donc ajouter à la sienne.
+ *
+ * Retour de Thomas du 21 octobre 2026 : un manager ne voyait que les
+ * personnes déjà rattachées à lui. Les autres étaient invisibles, sauf à
+ * penser à ouvrir les paramètres de l'équipe. Un commercial déjà rattaché à
+ * un autre manager n'est pas proposé : le lui retirer d'un clic, depuis son
+ * propre tableau de bord, ne serait pas un geste anodin.
+ */
+export function membersToAttach<
+  T extends ManagerAssignmentCandidate & { managerUserId: string | null },
+>(members: readonly T[], managerUserId: string): T[] {
+  return members.filter(
+    (m) =>
+      m.role === "MEMBER" &&
+      m.managerUserId == null &&
+      m.userId !== managerUserId,
+  );
+}

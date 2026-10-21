@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@/lib/generated/prisma/client";
+import { managerFromInvitation } from "@/src/core/domain/manager-assignment";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { hashToken } from "@/lib/auth/tokens";
 import { emailDomainMatchesOrgWebsite } from "@/src/core/domain/email-domain-matches-org-website";
@@ -65,10 +66,7 @@ export class PrismaRegistrationRepository implements RegistrationRepositoryPort 
     }
 
     if (
-      !emailDomainMatchesOrgWebsite(
-        input.email,
-        input.signupWebsiteNormalized,
-      )
+      !emailDomainMatchesOrgWebsite(input.email, input.signupWebsiteNormalized)
     ) {
       return { ok: false, error: "EMAIL_DOMAIN_MISMATCH" };
     }
@@ -214,6 +212,32 @@ export class PrismaRegistrationRepository implements RegistrationRepositoryPort 
             },
             update: { role: inv.role },
           });
+
+          // Le commercial invité rejoint l'équipe de celui qui l'a invité.
+          const inviter = inv.invitedByUserId
+            ? await tx.organizationMembership.findUnique({
+                where: {
+                  userId_organizationId: {
+                    userId: inv.invitedByUserId,
+                    organizationId: inv.organizationId,
+                  },
+                },
+                select: { role: true },
+              })
+            : null;
+          const managerId = managerFromInvitation({
+            invitedRole: inv.role,
+            inviteeUserId: user.id,
+            currentManagerUserId: null,
+            inviterUserId: inv.invitedByUserId ?? null,
+            inviterRole: inviter?.role ?? null,
+          });
+          if (managerId) {
+            await tx.user.update({
+              where: { id: user.id },
+              data: { managerId },
+            });
+          }
 
           await tx.organizationInvitation.update({
             where: { id: inv.id },
