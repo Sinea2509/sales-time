@@ -19,6 +19,7 @@ import {
   deleteMeetingAction,
   getMeetingForEditAction,
   getOrgMeetingFormOptionsAction,
+  prepareMeetingDepositAction,
   updateMeetingAction,
 } from "@/app/[locale]/company/rendez-vous/actions";
 import {
@@ -104,7 +105,9 @@ jest.mock("@/lib/blob-paths", () => ({
 var scheduleAnalysisJobsAfterResponseMock: JestFn;
 jest.mock("@/app/[locale]/company/rendez-vous/schedule-analysis-jobs", () => {
   scheduleAnalysisJobsAfterResponseMock = jest.fn();
-  return { scheduleAnalysisJobsAfterResponse: scheduleAnalysisJobsAfterResponseMock };
+  return {
+    scheduleAnalysisJobsAfterResponse: scheduleAnalysisJobsAfterResponseMock,
+  };
 });
 
 import { blobUrlBelongsToOrg } from "@/lib/blob-paths";
@@ -114,7 +117,8 @@ var revalidateTeamMemberPerformancePathsMock: JestFn;
 jest.mock("@/lib/revalidate-team-member-paths", () => {
   revalidateTeamMemberPerformancePathsMock = jest.fn();
   return {
-    revalidateTeamMemberPerformancePaths: revalidateTeamMemberPerformancePathsMock,
+    revalidateTeamMemberPerformancePaths:
+      revalidateTeamMemberPerformancePathsMock,
   };
 });
 
@@ -145,7 +149,9 @@ jest.mock("@/src/core/application/run-all-meeting-analyses-for-org", () => {
 var generateFollowUpEmailForMeetingMock: JestFn;
 jest.mock("@/src/core/application/generate-follow-up-email", () => {
   generateFollowUpEmailForMeetingMock = jest.fn();
-  return { generateFollowUpEmailForMeeting: generateFollowUpEmailForMeetingMock };
+  return {
+    generateFollowUpEmailForMeeting: generateFollowUpEmailForMeetingMock,
+  };
 });
 
 // eslint-disable-next-line no-var
@@ -276,8 +282,9 @@ const {
   organizationQuotaMock,
   analysisJobsMock,
   analysisMock,
-} = (getApplicationDeps() as unknown as { __companyTestMocks: CompanyDepsMocks })
-  .__companyTestMocks;
+} = (
+  getApplicationDeps() as unknown as { __companyTestMocks: CompanyDepsMocks }
+).__companyTestMocks;
 
 function mockAuthenticatedActorContext(
   canManageOrganization = true,
@@ -394,7 +401,8 @@ function mockAnalysisActor(
     internalUserId: actorOverrides.actorUserId ?? USER_ID,
     email: actorOverrides.email ?? "admin@test.com",
     canManageOrganization: actorOverrides.canManageOrganization ?? true,
-    workspaceRoleMode: actorOverrides.canManageOrganization === false ? "member" : "admin",
+    workspaceRoleMode:
+      actorOverrides.canManageOrganization === false ? "member" : "admin",
     deps,
   });
   return deps;
@@ -653,9 +661,9 @@ describe("contacts actions", () => {
 
   it("createContactAction rethrows unexpected errors", async () => {
     contactsMock.create.mockRejectedValue(new Error("db down"));
-    await expect(
-      createContactAction({ displayName: "Alice" }),
-    ).rejects.toThrow("db down");
+    await expect(createContactAction({ displayName: "Alice" })).rejects.toThrow(
+      "db down",
+    );
   });
 
   it("createContactAction creates full contact", async () => {
@@ -905,6 +913,92 @@ describe("rendez-vous actions", () => {
     expect(result).toEqual({ ok: true, sellerUserId: SELLER_ID });
   });
 
+  it("prepareMeetingDepositAction arrête avant toute lecture quand le quota est épuisé", async () => {
+    organizationQuotaMock.isPlanUnlocked = jest.fn().mockResolvedValue(false);
+    organizationQuotaMock.getTrialAnalysesLeft.mockResolvedValueOnce(0);
+    const fd = new FormData();
+    fd.set("transcript", ANALYZABLE_TEST_TRANSCRIPT);
+    const result = await prepareMeetingDepositAction(fd);
+    expect(result).toEqual({ ok: false, error: "QUOTA_EXHAUSTED" });
+    expect(uploadMeetingTranscriptFileMock).not.toHaveBeenCalled();
+  });
+
+  it("prepareMeetingDepositAction rend le transcript collé et la fiche préremplie, sans rien créer", async () => {
+    organizationQuotaMock.isPlanUnlocked = jest.fn().mockResolvedValue(true);
+    const fd = new FormData();
+    fd.set(
+      "transcript",
+      `Point avec Durand SA\n29 septembre 2026, 01:09PM\n54min 42sec\n${ANALYZABLE_TEST_TRANSCRIPT}`,
+    );
+    const result = await prepareMeetingDepositAction(fd);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.sourceType).toBe("TRANSCRIPT");
+    expect(result.transcript).toContain("Seller: Bonjour");
+    expect(result.prefill.meetingDate).toBe("2026-09-29");
+    expect(result.prefill.durationMin).toBe(55);
+    expect(createMeetingForOrgMock).not.toHaveBeenCalled();
+  });
+
+  it("prepareMeetingDepositAction lit un fichier transcript", async () => {
+    organizationQuotaMock.isPlanUnlocked = jest.fn().mockResolvedValue(true);
+    uploadMeetingTranscriptFileMock.mockResolvedValue({
+      ok: true,
+      transcript: ANALYZABLE_TEST_TRANSCRIPT,
+      blobUrl: "https://blob.example/orgs/org/meetings/x.vtt",
+    });
+    const fd = new FormData();
+    fd.set("transcriptFile", new File(["x"], "reunion.vtt"));
+    const result = await prepareMeetingDepositAction(fd);
+    expect(result).toEqual(
+      expect.objectContaining({
+        ok: true,
+        sourceType: "UPLOAD",
+        sourceBlobUrl: "https://blob.example/orgs/org/meetings/x.vtt",
+      }),
+    );
+  });
+
+  it("prepareMeetingDepositAction refuse un transcript trop court", async () => {
+    organizationQuotaMock.isPlanUnlocked = jest.fn().mockResolvedValue(true);
+    const fd = new FormData();
+    fd.set("transcript", "Bonjour.");
+    const result = await prepareMeetingDepositAction(fd);
+    expect(result).toEqual({
+      ok: false,
+      error: "TRANSCRIPT_TOO_SHORT_FOR_ANALYSIS",
+    });
+  });
+
+  it("createMeetingAction reprend une source déjà préparée, sans ressenti", async () => {
+    const fd = meetingFormData({ feeling: "" });
+    fd.set("preparedSourceType", "UPLOAD");
+    fd.set(
+      "preparedSourceBlobUrl",
+      "https://blob.example/orgs/org/meetings/audio.m4a",
+    );
+    const result = await createMeetingAction(fd);
+    expect(result.ok).toBe(true);
+    expect(uploadMeetingTranscriptFileMock).not.toHaveBeenCalled();
+    expect(createMeetingForOrgMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        sourceType: "UPLOAD",
+        sourceBlobUrl: "https://blob.example/orgs/org/meetings/audio.m4a",
+        feeling: null,
+      }),
+    );
+  });
+
+  it("createMeetingAction refuse une source préparée d'une autre organisation", async () => {
+    (blobUrlBelongsToOrg as JestFn).mockReturnValueOnce(false);
+    const fd = meetingFormData();
+    fd.set("preparedSourceType", "UPLOAD");
+    fd.set("preparedSourceBlobUrl", "https://blob.example/orgs/other/x.m4a");
+    const result = await createMeetingAction(fd);
+    expect(result).toEqual({ ok: false, error: "VALIDATION" });
+  });
+
   it("createMeetingAction rejects invalid form fields", async () => {
     const result = await createMeetingAction(
       meetingFormData({ outcome: "NOT_AN_OUTCOME" }),
@@ -920,14 +1014,20 @@ describe("rendez-vous actions", () => {
     });
     (blobUrlBelongsToOrg as JestFn).mockReturnValueOnce(false);
     const fd = meetingFormData({ transcript: "" });
-    fd.set("transcriptFile", new File(["x"], "notes.txt", { type: "text/plain" }));
+    fd.set(
+      "transcriptFile",
+      new File(["x"], "notes.txt", { type: "text/plain" }),
+    );
     const result = await createMeetingAction(fd);
     expect(result).toEqual({ ok: false, error: "VALIDATION" });
   });
 
   it("createMeetingAction creates meeting from uploaded transcript file", async () => {
     const fd = meetingFormData({ transcript: "" });
-    fd.set("transcriptFile", new File(["hello"], "notes.txt", { type: "text/plain" }));
+    fd.set(
+      "transcriptFile",
+      new File(["hello"], "notes.txt", { type: "text/plain" }),
+    );
     const result = await createMeetingAction(fd);
     expect(result.ok).toBe(true);
     expect(createMeetingForOrgMock).toHaveBeenCalledWith(
@@ -962,7 +1062,10 @@ describe("rendez-vous actions", () => {
       error: "UNSUPPORTED",
     });
     const fd = meetingFormData({ transcript: "" });
-    fd.set("transcriptFile", new File(["x"], "notes.txt", { type: "text/plain" }));
+    fd.set(
+      "transcriptFile",
+      new File(["x"], "notes.txt", { type: "text/plain" }),
+    );
     const result = await createMeetingAction(fd);
     expect(result).toEqual({ ok: false, error: "UNSUPPORTED" });
   });
@@ -1092,7 +1195,10 @@ describe("rendez-vous actions", () => {
       error: "UNSUPPORTED",
     });
     const fd = meetingFormData({ meetingId: MEETING_ID, transcript: "" });
-    fd.set("transcriptFile", new File(["x"], "notes.txt", { type: "text/plain" }));
+    fd.set(
+      "transcriptFile",
+      new File(["x"], "notes.txt", { type: "text/plain" }),
+    );
     const result = await updateMeetingAction(fd);
     expect(result).toEqual({ ok: false, error: "UNSUPPORTED" });
   });
@@ -1142,7 +1248,10 @@ describe("rendez-vous actions", () => {
     });
     (blobUrlBelongsToOrg as JestFn).mockReturnValueOnce(false);
     const fd = meetingFormData({ meetingId: MEETING_ID, transcript: "" });
-    fd.set("transcriptFile", new File(["x"], "notes.txt", { type: "text/plain" }));
+    fd.set(
+      "transcriptFile",
+      new File(["x"], "notes.txt", { type: "text/plain" }),
+    );
     const result = await updateMeetingAction(fd);
     expect(result).toEqual({ ok: false, error: "VALIDATION" });
   });
@@ -1203,7 +1312,9 @@ describe("rendez-vous actions", () => {
   });
 
   it("updateMeetingAction rejects invalid meeting id", async () => {
-    const result = await updateMeetingAction(meetingFormData({ meetingId: "bad" }));
+    const result = await updateMeetingAction(
+      meetingFormData({ meetingId: "bad" }),
+    );
     expect(result).toEqual({ ok: false, error: "VALIDATION" });
   });
 
@@ -1259,7 +1370,10 @@ describe("rendez-vous actions", () => {
     });
     organizationQuotaMock.getTrialAnalysesLeft.mockResolvedValue(2);
     const result = await updateMeetingAction(
-      meetingFormData({ meetingId: MEETING_ID, transcript: ANALYZABLE_TEST_TRANSCRIPT }),
+      meetingFormData({
+        meetingId: MEETING_ID,
+        transcript: ANALYZABLE_TEST_TRANSCRIPT,
+      }),
     );
     expect(result).toEqual({
       ok: true,

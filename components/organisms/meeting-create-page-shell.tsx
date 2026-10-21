@@ -1,6 +1,6 @@
 import { ContentCard } from "@/components/molecules/content-card";
 import { NavLinkButton } from "@/components/molecules/nav-link-button";
-import { MeetingCreateForm } from "@/components/organisms/meeting-create-form";
+import { MeetingDepositFlow } from "@/components/organisms/meeting-deposit-flow";
 import { pageTitleClass } from "@/lib/page-typography";
 
 type MeetingCreatePageShellProps = {
@@ -16,8 +16,8 @@ export function MeetingCreatePageShell({
         <div>
           <h1 className={pageTitleClass}>Analyser un rendez-vous</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
-            Renseignez le prospect et déposez le transcript : l’analyse démarre
-            à l’enregistrement.
+            Déposez l’enregistrement ou le transcript : Sales Time remplit la
+            fiche, vous vérifiez, l’analyse démarre.
           </p>
         </div>
         <NavLinkButton href="/company/rendez-vous" variant="ghost" size="sm">
@@ -27,10 +27,9 @@ export function MeetingCreatePageShell({
 
       <ContentCard
         className="border-border shadow-sm dark:border-neutral-800"
-        title="Détails du rendez-vous"
-        description="Renseignez les informations puis enregistrez pour lancer l’analyse SONCAS / DISC."
+        title="Votre rendez-vous"
       >
-        <MeetingCreateForm meetingTypeOptions={meetingTypeOptions} />
+        <MeetingDepositFlow meetingTypeOptions={meetingTypeOptions} />
       </ContentCard>
     </div>
   );

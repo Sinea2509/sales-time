@@ -12,6 +12,7 @@ import {
 } from "@/lib/blob-paths";
 import { checkAiGatewayConfigured } from "@/lib/env";
 import { transcribeMeetingAudio } from "@/src/core/application/transcribe-meeting-audio";
+import { prefillMeetingFromTranscript } from "@/src/core/application/prefill-meeting-from-transcript";
 import {
   mergeMeetingTranscriptSources,
   isTranscriptAnalyzable,
@@ -91,7 +92,11 @@ const createMeetingSchema = z.object({
     z.union([z.null(), z.number().min(0).max(1e12)]),
   ),
   outcome: meetingOutcomeSchema,
-  feeling: z.coerce.number().int().min(1).max(5).optional().nullable(),
+  // Le ressenti est facultatif dans le dépôt en deux étapes : vide, il vaut null.
+  feeling: z.preprocess(
+    (v) => (v == null || v === "" ? null : v),
+    z.union([z.null(), z.coerce.number().int().min(1).max(5)]),
+  ),
 });
 
 export async function getOrgMeetingFormOptionsAction(): Promise<
@@ -134,6 +139,103 @@ export async function getAudioUploadPathnameAction(filename: string) {
   };
 }
 
+/**
+ * La première étape du dépôt : la conversation est lue (enregistrement
+ * transcrit, fichier extrait ou texte collé), puis la fiche du rendez-vous
+ * est préremplie à partir d'elle. Rien n'est encore créé ; le commercial
+ * vérifie la fiche, puis `createMeetingAction` reçoit le transcript et la
+ * source déjà prêts.
+ *
+ * Le quota est vérifié avant toute transcription : une organisation en fin
+ * d'essai ne doit pas attendre une minute pour apprendre qu'elle ne peut pas
+ * analyser.
+ */
+export async function prepareMeetingDepositAction(formData: FormData) {
+  const actor = await requireOrgActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
+
+  const quota = actor.deps.organizationQuota;
+  if (
+    !(await quota.isPlanUnlocked(actor.organizationId)) &&
+    (await quota.getTrialAnalysesLeft(actor.organizationId)) <= 0
+  ) {
+    return { ok: false as const, error: "QUOTA_EXHAUSTED" as const };
+  }
+
+  let sourceType: "TRANSCRIPT" | "UPLOAD" = "TRANSCRIPT";
+  let sourceBlobUrl: string | null = null;
+  let transcriptFromSource = "";
+
+  const audioBlobUrl = String(formData.get("audioBlobUrl") ?? "").trim();
+  const file = formData.get("transcriptFile");
+  if (audioBlobUrl) {
+    if (!blobUrlBelongsToOrg(audioBlobUrl, actor.organizationId)) {
+      return { ok: false as const, error: "VALIDATION" as const };
+    }
+    const ai = checkAiGatewayConfigured();
+    if (!ai.ok) return { ok: false as const, error: ai.error };
+    const transcribed = await transcribeMeetingAudio(
+      { analysis: actor.deps.analysis, fetchAudio: fetchOrgBlobBytes },
+      {
+        organizationId: actor.organizationId,
+        blobUrl: audioBlobUrl,
+        mediaType: String(formData.get("audioMediaType") ?? ""),
+      },
+    );
+    if (!transcribed.ok) {
+      return { ok: false as const, error: transcribed.error };
+    }
+    transcriptFromSource = transcribed.transcript;
+    sourceBlobUrl = audioBlobUrl;
+    sourceType = "UPLOAD";
+  } else if (file instanceof File && file.size > 0) {
+    const uploaded = await uploadMeetingTranscriptFile({
+      organizationId: actor.organizationId,
+      file,
+    });
+    if (!uploaded.ok) {
+      return { ok: false as const, error: uploaded.error };
+    }
+    transcriptFromSource = uploaded.transcript;
+    sourceBlobUrl = uploaded.blobUrl || null;
+    sourceType = "UPLOAD";
+  }
+
+  const transcript = mergeMeetingTranscriptSources(
+    transcriptFromSource,
+    String(formData.get("transcript") ?? "").trim(),
+  );
+  if (transcript.length < 1) {
+    return { ok: false as const, error: "VALIDATION" as const };
+  }
+  if (!isTranscriptAnalyzable(transcript)) {
+    return {
+      ok: false as const,
+      error: "TRANSCRIPT_TOO_SHORT_FOR_ANALYSIS" as const,
+    };
+  }
+
+  const settings = await actor.deps.organizationSettings.findByOrganizationId(
+    actor.organizationId,
+  );
+  const { meetingTypeOptions } = orgMeetingFormOptionsFromSettings(settings);
+  const prefill = await prefillMeetingFromTranscript(
+    {
+      analysis: actor.deps.analysis,
+      useModel: checkAiGatewayConfigured().ok,
+    },
+    { transcript, meetingTypeOptions },
+  );
+
+  return {
+    ok: true as const,
+    transcript,
+    sourceType,
+    sourceBlobUrl,
+    prefill,
+  };
+}
+
 export async function createMeetingAction(formData: FormData) {
   const actor = await requireOrgActor();
   if (!actor.ok) return { ok: false as const, error: actor.error };
@@ -143,8 +245,28 @@ export async function createMeetingAction(formData: FormData) {
   let sourceBlobUrl: string | null = null;
   let transcriptFromFile = "";
 
+  /*
+    Une source déjà préparée par `prepareMeetingDepositAction` : son
+    transcript arrive dans le champ texte, il n'y a plus rien à transcrire
+    ni à extraire.
+  */
+  const preparedBlobUrl = String(
+    formData.get("preparedSourceBlobUrl") ?? "",
+  ).trim();
+  const preparedUpload =
+    String(formData.get("preparedSourceType") ?? "") === "UPLOAD";
+
   const audioBlobUrl = String(formData.get("audioBlobUrl") ?? "").trim();
-  if (audioBlobUrl) {
+  if (preparedUpload) {
+    if (
+      preparedBlobUrl &&
+      !blobUrlBelongsToOrg(preparedBlobUrl, actor.organizationId)
+    ) {
+      return { ok: false as const, error: "VALIDATION" as const };
+    }
+    sourceBlobUrl = preparedBlobUrl || null;
+    sourceType = "UPLOAD";
+  } else if (audioBlobUrl) {
     if (!blobUrlBelongsToOrg(audioBlobUrl, actor.organizationId)) {
       return { ok: false as const, error: "VALIDATION" as const };
     }
