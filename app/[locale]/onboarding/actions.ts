@@ -4,7 +4,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { setActiveOrganizationCookie } from "@/lib/auth/session-cookie";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
-import { buildInvitationEmailHtml } from "@/lib/invite-email-html";
+import {
+  buildInvitationEmailHtml,
+  invitationEmailSubject,
+} from "@/lib/invite-email-html";
+import { inviterDisplayName } from "@/lib/inviter-display-name";
 import { sanitizeInviteMessageHtml } from "@/lib/invite-message-sanitize";
 import { getApplicationDeps } from "@/lib/application-deps";
 import type { DomainUser } from "@/src/core/ports/user-repository-port";
@@ -225,6 +229,9 @@ export async function submitOnboardingStep4(
   });
 
   const orgName = result.companyName;
+  const inviterName = await inviterDisplayName(deps.users, user.id);
+  /* La même durée que celle posée à la création des invitations. */
+  const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
   /*
     L'organisation est créée : un mail d'invitation qui échoue ne doit pas
     bloquer l'arrivée sur l'application. L'invitation reste visible dans
@@ -233,11 +240,16 @@ export async function submitOnboardingStep4(
   for (const m of result.mailPayloads) {
     await sendTransactionalEmail({
       to: m.to,
-      subject: `Invitation · ${orgName}`,
+      subject: invitationEmailSubject({
+        organizationName: orgName,
+        inviterName,
+      }),
       html: buildInvitationEmailHtml({
         organizationName: orgName,
         inviteLink: m.link,
         bodyHtml: inviteMessageSanitized ?? "",
+        inviterName,
+        expiresAt,
       }),
     }).catch((e: unknown) => {
       console.error("onboarding: invitation non envoyée", {

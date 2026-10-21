@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { generateOpaqueToken, hashToken } from "@/lib/auth/tokens";
 import { sendTransactionalEmail } from "@/lib/email/mailer";
-import { buildInvitationEmailHtml } from "@/lib/invite-email-html";
+import {
+  buildInvitationEmailHtml,
+  invitationEmailSubject,
+} from "@/lib/invite-email-html";
+import { inviterDisplayName } from "@/lib/inviter-display-name";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { getAppBaseUrl } from "@/lib/app-base-url";
 import { loadOrgSettingsActor } from "@/lib/load-org-settings-access";
@@ -125,14 +129,20 @@ export async function inviteMemberAction(
   const base = getAppBaseUrl();
   const link = `${base}/invitations/${encodeURIComponent(rawToken)}`;
 
+  const inviterName = await inviterDisplayName(deps.users, gate.actorUserId);
   try {
     await sendTransactionalEmail({
       to: email,
-      subject: `Invitation · ${orgName}`,
+      subject: invitationEmailSubject({
+        organizationName: orgName,
+        inviterName,
+      }),
       html: buildInvitationEmailHtml({
         organizationName: orgName,
         inviteLink: link,
         bodyHtml: "",
+        inviterName,
+        expiresAt,
       }),
     });
   } catch {

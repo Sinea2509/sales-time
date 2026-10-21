@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { InfoCard } from "@/components/molecules/info-card";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
+import { WelcomeFirstSteps } from "@/components/molecules/welcome-first-steps";
 import { DashboardAdminShell } from "@/components/organisms/dashboard-admin-shell";
 import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
@@ -162,48 +163,58 @@ export default async function DashboardHomePage({
   const teamUserIds = await resolveSellerTeamUserIds(deps, {
     internalUserId: sellerId,
   });
-  const [home, orgSettings, standing, managerNameLine, coachingActions] =
-    await Promise.all([
-      getOrgDashboardHome(deps, {
-        organizationId: actor.activeOrganizationId,
-        statsWindowDays,
-        statsWindowRange,
-        sellerUserId: sellerId,
-        withSellerFocus: true,
-      }),
-      deps.organizationSettings.findByOrganizationId(
-        actor.activeOrganizationId,
-      ),
-      getTeamMemberStanding(deps, {
-        organizationId: actor.activeOrganizationId,
-        statsWindowDays,
-        statsWindowRange,
-        sellerUserId: sellerId,
-        teamUserIds,
-      }),
-      /*
+  const [
+    home,
+    orgSettings,
+    standing,
+    managerNameLine,
+    coachingActions,
+    meetingsEver,
+  ] = await Promise.all([
+    getOrgDashboardHome(deps, {
+      organizationId: actor.activeOrganizationId,
+      statsWindowDays,
+      statsWindowRange,
+      sellerUserId: sellerId,
+      withSellerFocus: true,
+    }),
+    deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
+    getTeamMemberStanding(deps, {
+      organizationId: actor.activeOrganizationId,
+      statsWindowDays,
+      statsWindowRange,
+      sellerUserId: sellerId,
+      teamUserIds,
+    }),
+    /*
         Le nom qui désigne ce cadrage. Il relit le rattachement que
         `resolveSellerTeamUserIds` vient de lire, une ligne de plus sur une clé
         primaire, menée en parallèle des trois requêtes lourdes de cette salve :
         les fondre en une seule aurait demandé une troisième fonction dont
         « Ma performance », qui cadre sans nommer le manager, n'aurait rien fait.
       */
-      resolveSellerManagerNameLine(deps, {
-        organizationId: actor.activeOrganizationId,
-        internalUserId: sellerId,
-      }),
-      /*
+    resolveSellerManagerNameLine(deps, {
+      organizationId: actor.activeOrganizationId,
+      internalUserId: sellerId,
+    }),
+    /*
         Le plan d'action de la semaine, tiré des puces KISS de ses propres
         rendez-vous. Sa requête est cadrée sur lui et n'appelle aucune IA : les
         puces sont déjà écrites à l'analyse de chaque rendez-vous.
       */
-      getSellerCoachingActionPlan(deps, {
-        organizationId: actor.activeOrganizationId,
-        statsWindowDays,
-        statsWindowRange,
-        sellerUserId: sellerId,
-      }),
-    ]);
+    getSellerCoachingActionPlan(deps, {
+      organizationId: actor.activeOrganizationId,
+      statsWindowDays,
+      statsWindowRange,
+      sellerUserId: sellerId,
+    }),
+    /* Tous ses rendez-vous, sans fenêtre : l'accueil ne vaut que pour le tout premier. */
+    deps.meetings.countMeetingsWithMeetingAtSince({
+      organizationId: actor.activeOrganizationId,
+      since: new Date(0),
+      sellerUserIds: [sellerId],
+    }),
+  ]);
   const { meetingTypeOptions, pipelineStageOptions } =
     orgMeetingFormOptionsFromSettings(orgSettings);
 
@@ -223,6 +234,12 @@ export default async function DashboardHomePage({
         }
         description={`Votre activité des ${statsWindowLabel(statsWindowDays, statsWindowRange)}, et ce qui mérite votre attention aujourd'hui.`}
       />
+      {meetingsEver === 0 ? (
+        <WelcomeFirstSteps
+          newMeetingHref="/company/rendez-vous/nouveau"
+          guideHref="/bienvenue"
+        />
+      ) : null}
       {!home ? null : (
         <DashboardHomeShell
           home={home}

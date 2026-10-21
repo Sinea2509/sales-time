@@ -1,11 +1,32 @@
 import Link from "next/link";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { pageTitleClass } from "@/lib/page-typography";
-import { AcceptInvitationClient } from "@/components/organisms/accept-invitation-client";
+import {
+  InvitationPageShell,
+  type InvitationPageMode,
+} from "@/components/organisms/invitation-page-shell";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
 
 type Props = { params: Promise<{ token: string }> };
 
+function frenchDate(date: Date): string {
+  return date.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Paris",
+  });
+}
+
+/**
+ * La page où arrive un invité.
+ *
+ * Elle montre directement le bon chemin : le formulaire d'inscription quand
+ * l'adresse n'a pas encore de compte, un bouton « Se connecter » sinon. Avant
+ * le 20 octobre 2026, elle proposait deux petits liens, puis une seconde page
+ * de formulaire, et un invité a fini par chercher « le mot de passe à
+ * activer » dans « mot de passe oublié ».
+ */
 export default async function InvitationPage({ params }: Props) {
   const { token } = await params;
   const deps = getApplicationDeps();
@@ -14,64 +35,40 @@ export default async function InvitationPage({ params }: Props) {
 
   if (!inv) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6">
-        <p className="text-muted-foreground text-center text-sm">
-          Ce lien d&apos;invitation est invalide ou a expiré.
-        </p>
-        <Link href="/sign-in" className="mt-4 text-primary underline">
-          Connexion
-        </Link>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
+        <div className="w-full max-w-md space-y-3 rounded-xl border border-border p-8 text-center shadow-sm">
+          <h1 className={pageTitleClass}>Invitation expirée</h1>
+          <p className="text-muted-foreground text-sm">
+            Ce lien d&apos;invitation n&apos;est plus valable : il a expiré, a
+            déjà servi, ou a été remplacé par une nouvelle invitation. Demandez
+            à la personne qui vous a invité de vous la renvoyer.
+          </p>
+          <Link href="/sign-in" className="text-primary text-sm underline">
+            J&apos;ai déjà un compte : me connecter
+          </Link>
+        </div>
       </div>
     );
   }
 
   const principal = await deps.auth.getAuthenticatedPrincipal();
+  const mode: InvitationPageMode = principal
+    ? principal.email.toLowerCase() === inv.email.toLowerCase()
+      ? { kind: "accept" }
+      : { kind: "otherAccount", principalEmail: principal.email }
+    : inv.accountExists
+      ? { kind: "signIn" }
+      : { kind: "join" };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
-      <div className="w-full max-w-md space-y-6 rounded-xl border border-border p-8 text-center shadow-sm">
-        <h1 className={pageTitleClass}>Invitation · {inv.organizationName}</h1>
-        <p className="text-muted-foreground text-sm">
-          Vous avez été invité en tant que{" "}
-          <span className="font-medium text-foreground">
-            {organizationMembershipRoleLabel(inv.role).toLowerCase()}
-          </span>{" "}
-          pour l&apos;adresse{" "}
-          <span className="font-mono text-foreground">{inv.email}</span>.
-        </p>
-        {principal ? (
-          principal.email.toLowerCase() === inv.email.toLowerCase() ? (
-            <AcceptInvitationClient token={token} />
-          ) : (
-            <p className="text-destructive text-sm">
-              Connecté en tant que {principal.email}. Déconnectez-vous et
-              connectez-vous avec {inv.email} pour accepter.
-            </p>
-          )
-        ) : (
-          <div className="text-muted-foreground space-y-3 text-sm">
-            <p>
-              <Link
-                href={`/sign-in?next=/invitations/${encodeURIComponent(token)}`}
-                className="text-primary underline"
-              >
-                Connectez-vous
-              </Link>{" "}
-              avec {inv.email} pour rejoindre l&apos;organisation.
-            </p>
-            <p>
-              <Link
-                href={`/invitations/${encodeURIComponent(token)}/join`}
-                className="text-primary font-medium underline"
-              >
-                Créer un compte
-              </Link>{" "}
-              (inscription sans parcours d&apos;onboarding : vous rejoignez
-              directement l&apos;équipe).
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+    <InvitationPageShell
+      token={token}
+      organizationName={inv.organizationName}
+      roleLabel={organizationMembershipRoleLabel(inv.role).toLowerCase()}
+      inviterName={inv.inviterName?.trim() || null}
+      email={inv.email}
+      expiresAtLabel={inv.expiresAt ? frenchDate(inv.expiresAt) : null}
+      mode={mode}
+    />
   );
 }

@@ -52,6 +52,7 @@
   --color-brand-soft: var(--brand-soft);
   --color-brand-ring: var(--brand-ring);
   --color-gold: var(--gold);
+  --animate-st-float: st-float 7s ease-in-out infinite;
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -239,5 +240,20 @@
   }
   to {
     transform: translateX(100%);
+  }
+}
+
+/*
+  Flottement des objets en relief des pages d'arrivée (invitation, guide de
+  démarrage). Il passe par `translate`, pour se cumuler avec la position en
+  profondeur que chaque objet donne à `transform`.
+*/
+@keyframes st-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -10px;
   }
 }

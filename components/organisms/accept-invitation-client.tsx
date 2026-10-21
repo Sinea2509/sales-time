@@ -12,7 +12,7 @@ export function AcceptInvitationClient({ token }: Props) {
   return (
     <Button
       type="button"
-      className="w-full"
+      className="bg-brand text-brand-foreground hover:bg-brand-hover h-11 w-full"
       disabled={pending}
       onClick={() => {
         start(() => {

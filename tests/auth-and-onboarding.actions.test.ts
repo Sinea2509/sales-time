@@ -1,10 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it } from "@jest/globals";
 
 type JestFn = jest.Mock;
 
@@ -181,6 +175,10 @@ var passwordResetConsumeMock: jest.Mock;
 // eslint-disable-next-line no-var
 var organizationInvitationsAcceptMock: jest.Mock;
 // eslint-disable-next-line no-var
+var organizationInvitationsFindLatestMock: jest.Mock;
+// eslint-disable-next-line no-var
+var organizationInvitationsReplaceTokenMock: jest.Mock;
+// eslint-disable-next-line no-var
 var onboardingCompletionStep4Mock: jest.Mock;
 
 jest.mock("@/lib/application-deps", () => {
@@ -203,9 +201,8 @@ jest.mock("@/lib/application-deps", () => {
       signupWebsiteNormalized: string;
     }) => {
       const { prisma: prismaMock } = await import("@/lib/prisma");
-      const { emailDomainMatchesOrgWebsite } = await import(
-        "@/src/core/domain/email-domain-matches-org-website"
-      );
+      const { emailDomainMatchesOrgWebsite } =
+        await import("@/src/core/domain/email-domain-matches-org-website");
       const existing = await prismaMock.user.findUnique({
         where: { email: input.email },
       });
@@ -345,6 +342,10 @@ jest.mock("@/lib/application-deps", () => {
       return { ok: true as const };
     },
   );
+  organizationInvitationsFindLatestMock = jest.fn().mockResolvedValue(null);
+  organizationInvitationsReplaceTokenMock = jest
+    .fn()
+    .mockResolvedValue(undefined);
   organizationInvitationsAcceptMock = jest.fn(
     async (input: {
       tokenPlaintext: string;
@@ -427,9 +428,12 @@ jest.mock("@/lib/application-deps", () => {
       },
       organizationInvitations: {
         acceptPendingInvitation: organizationInvitationsAcceptMock,
+        findLatestPendingForEmail: organizationInvitationsFindLatestMock,
+        replaceTokenHash: organizationInvitationsReplaceTokenMock,
       },
       onboardingCompletion: {
-        completeStep4CreateOrganizationAndInvites: onboardingCompletionStep4Mock,
+        completeStep4CreateOrganizationAndInvites:
+          onboardingCompletionStep4Mock,
       },
       audit: {
         logPlatformAction: jest.fn().mockResolvedValue(undefined),
@@ -1052,6 +1056,35 @@ describe("forgotPasswordAction", () => {
     expect(r).toEqual({ ok: true });
     expect(prismaMock.passwordResetToken.create).not.toHaveBeenCalled();
     expect(sendTransactionalEmailMock).not.toHaveBeenCalled();
+  });
+
+  it("renvoie l'invitation, avec un lien neuf, à un invité qui n'a pas encore de compte", async () => {
+    prismaMock.user.findUnique.mockResolvedValue(null);
+    organizationInvitationsFindLatestMock.mockResolvedValueOnce({
+      id: "inv1",
+      organizationName: "Sinéa",
+      inviterName: "Thomas Vincent",
+      expiresAt: new Date("2026-11-03T00:00:00Z"),
+    });
+    sendTransactionalEmailMock.mockResolvedValue(undefined);
+
+    const r = await forgotPasswordAction(
+      null,
+      form({ email: "fclais@sinea.fr" }),
+    );
+
+    expect(r).toEqual({ ok: true });
+    expect(organizationInvitationsReplaceTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "inv1" }),
+    );
+    expect(prismaMock.passwordResetToken.create).not.toHaveBeenCalled();
+    expect(sendTransactionalEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "fclais@sinea.fr",
+        subject: "Thomas Vincent vous invite sur Sales Time · Sinéa",
+        html: expect.stringContaining("/invitations/"),
+      }),
+    );
   });
 
   it("creates reset token and sends email when user exists", async () => {

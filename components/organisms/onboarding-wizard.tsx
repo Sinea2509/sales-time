@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, useMemo, useRef, useState, useTransition } from "react";
+import { StepRail } from "@/components/molecules/step-rail";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -63,65 +64,7 @@ const STEPS = [
 ] as const;
 
 function OnboardingStepRail({ step }: { step: number }) {
-  const meta = STEPS[step - 1];
-  return (
-    <nav
-      className="mb-8 flex w-full flex-col items-center"
-      aria-label="Étapes du parcours"
-    >
-      <div className="mx-auto mb-5 flex w-full max-w-lg items-start justify-center gap-0.5 sm:gap-1">
-        {STEPS.map((s, index) => {
-          const isDone = step > s.id;
-          const isCurrent = step === s.id;
-          const isDoneOrCurrent = isDone || isCurrent;
-          return (
-            <Fragment key={s.id}>
-              <div className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1.5 sm:w-20">
-                <span
-                  aria-current={isCurrent ? "step" : undefined}
-                  aria-label={`Étape ${s.id} : ${s.label}`}
-                  className={cn(
-                    "flex size-10 items-center justify-center rounded-lg text-sm font-semibold tabular-nums transition-colors",
-                    isDoneOrCurrent &&
-                      "bg-brand text-brand-foreground shadow-sm shadow-brand/30",
-                    !isDoneOrCurrent &&
-                      "bg-muted text-muted-foreground dark:bg-neutral-700 dark:text-neutral-400",
-                  )}
-                >
-                  {s.id}
-                </span>
-                <span
-                  className={cn(
-                    "text-center text-xs font-normal leading-snug sm:text-sm",
-                    isDoneOrCurrent && "text-brand dark:text-brand-muted",
-                    !isDoneOrCurrent && "text-muted-foreground",
-                  )}
-                >
-                  {s.label}
-                </span>
-              </div>
-              {index < STEPS.length - 1 ? (
-                <div
-                  className={cn(
-                    "mx-0.5 mt-[1.125rem] h-0.5 min-w-[0.5rem] flex-1 rounded-full sm:mx-1",
-                    step > s.id ? "bg-brand" : "bg-muted dark:bg-neutral-700",
-                  )}
-                  aria-hidden
-                />
-              ) : null}
-            </Fragment>
-          );
-        })}
-      </div>
-      {meta.description ? (
-        <div className="mx-auto w-full max-w-lg text-center">
-          <p className="text-muted-foreground text-sm leading-relaxed sm:text-base">
-            {meta.description}
-          </p>
-        </div>
-      ) : null}
-    </nav>
-  );
+  return <StepRail steps={STEPS} current={step} className="mb-8" />;
 }
 
 export type OnboardingInitialState = {

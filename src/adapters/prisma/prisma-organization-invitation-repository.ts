@@ -19,14 +19,69 @@ export class PrismaOrganizationInvitationRepository implements OrganizationInvit
         status: "PENDING",
         expiresAt: { gt: new Date() },
       },
-      include: { organization: { select: { name: true } } },
+      include: {
+        organization: { select: { name: true } },
+        invitedBy: { select: { firstName: true, lastName: true } },
+      },
     });
     if (!inv) return null;
+    const account = await this.db.user.findFirst({
+      where: { email: { equals: inv.email, mode: "insensitive" } },
+      select: { id: true },
+    });
+    const inviterName = [inv.invitedBy?.firstName, inv.invitedBy?.lastName]
+      .map((part) => part?.trim())
+      .filter(Boolean)
+      .join(" ");
     return {
       email: inv.email,
       role: inv.role === "ADMIN" ? "ADMIN" : "MEMBER",
       organizationName: inv.organization.name,
+      inviterName: inviterName || null,
+      expiresAt: inv.expiresAt,
+      accountExists: account != null,
     };
+  }
+
+  async findLatestPendingForEmail(email: string): Promise<{
+    id: string;
+    organizationName: string;
+    inviterName: string | null;
+    expiresAt: Date;
+  } | null> {
+    const inv = await this.db.organizationInvitation.findFirst({
+      where: {
+        email: { equals: email.trim(), mode: "insensitive" },
+        status: "PENDING",
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        organization: { select: { name: true } },
+        invitedBy: { select: { firstName: true, lastName: true } },
+      },
+    });
+    if (!inv) return null;
+    const inviterName = [inv.invitedBy?.firstName, inv.invitedBy?.lastName]
+      .map((part) => part?.trim())
+      .filter(Boolean)
+      .join(" ");
+    return {
+      id: inv.id,
+      organizationName: inv.organization.name,
+      inviterName: inviterName || null,
+      expiresAt: inv.expiresAt,
+    };
+  }
+
+  async replaceTokenHash(input: {
+    id: string;
+    tokenHash: string;
+  }): Promise<void> {
+    await this.db.organizationInvitation.updateMany({
+      where: { id: input.id, status: "PENDING" },
+      data: { tokenHash: input.tokenHash },
+    });
   }
 
   async acceptPendingInvitation(input: {
