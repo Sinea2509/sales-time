@@ -128,3 +128,24 @@ export function managerFromInvitation(input: {
   if (input.inviterUserId === input.inviteeUserId) return null;
   return input.inviterUserId;
 }
+
+/**
+ * Les commerciaux de l'organisation qui ne sont dans l'équipe de personne, et
+ * qu'un manager peut donc ajouter à la sienne.
+ *
+ * Retour de Thomas du 21 octobre 2026 : un manager ne voyait que les
+ * personnes déjà rattachées à lui. Les autres étaient invisibles, sauf à
+ * penser à ouvrir les paramètres de l'équipe. Un commercial déjà rattaché à
+ * un autre manager n'est pas proposé : le lui retirer d'un clic, depuis son
+ * propre tableau de bord, ne serait pas un geste anodin.
+ */
+export function membersToAttach<
+  T extends ManagerAssignmentCandidate & { managerUserId: string | null },
+>(members: readonly T[], managerUserId: string): T[] {
+  return members.filter(
+    (m) =>
+      m.role === "MEMBER" &&
+      m.managerUserId == null &&
+      m.userId !== managerUserId,
+  );
+}

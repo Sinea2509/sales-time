@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireOrgActor } from "@/lib/analysis-server-context";
 import { getTeamMemberPerformanceProfile } from "@/src/core/application/get-team-member-performance-profile";
@@ -14,6 +15,10 @@ import {
   type StatsWindow,
 } from "@/src/core/domain/dashboard-stats-window";
 import { memberNameLine } from "@/src/core/domain/member-name-line";
+import {
+  membersToAttach,
+  resolveManagerAssignment,
+} from "@/src/core/domain/manager-assignment";
 
 const userIdSchema = z.string().cuid();
 
@@ -124,4 +129,71 @@ export async function refreshTeamMemberPerformanceAction(
   });
 
   return { ok: true as const, profile };
+}
+
+const attachSchema = z.array(z.string().cuid()).min(1).max(50);
+
+export type AttachToMyTeamResult =
+  | { ok: true; attached: number }
+  | { ok: false; message: string };
+
+/**
+ * Ajoute à l'équipe du manager connecté des commerciaux rattachés à personne.
+ *
+ * Retour de Thomas du 21 octobre 2026 : rattacher un collaborateur passait
+ * par une colonne des paramètres de l'organisation, que rien n'indiquait. Le
+ * manager le fait désormais d'un clic depuis son équipe. La règle reste celle
+ * du menu des paramètres (`resolveManagerAssignment`), et un commercial déjà
+ * rattaché à un autre manager n'est jamais déplacé d'ici.
+ */
+export async function attachToMyTeamAction(
+  memberUserIds: string[],
+): Promise<AttachToMyTeamResult> {
+  const actor = await requireOrgActor();
+  if (
+    !actor.ok ||
+    actor.workspaceRoleMode !== "admin" ||
+    !actor.internalUserId
+  ) {
+    return { ok: false, message: "Accès refusé." };
+  }
+  const parsed = attachSchema.safeParse(memberUserIds);
+  if (!parsed.success) return { ok: false, message: "Identifiant invalide." };
+
+  const managerUserId = actor.internalUserId;
+  const { members } =
+    await actor.deps.organizationTeam.listMembersAndPendingInvitations(
+      actor.organizationId,
+    );
+  const libres = new Set(
+    membersToAttach(members, managerUserId).map((m) => m.userId),
+  );
+
+  let attached = 0;
+  for (const memberUserId of parsed.data) {
+    if (!libres.has(memberUserId)) continue;
+    const decision = resolveManagerAssignment({
+      members,
+      memberUserId,
+      managerUserId,
+    });
+    if (!decision.ok) continue;
+    await actor.deps.users.setManagerUserId({
+      userId: memberUserId,
+      managerUserId: decision.managerUserId,
+    });
+    attached += 1;
+  }
+
+  if (attached === 0) {
+    return {
+      ok: false,
+      message:
+        "Ces personnes ont déjà été ajoutées à une équipe entre-temps. Rechargez la page.",
+    };
+  }
+  revalidatePath("/company");
+  revalidatePath("/company/equipe");
+  revalidatePath("/company/settings/equipe");
+  return { ok: true, attached };
 }

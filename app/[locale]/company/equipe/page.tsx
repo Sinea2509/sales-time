@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { MembersToAttachCard } from "@/components/organisms/members-to-attach-card";
+import { loadMembersToAttach } from "@/lib/load-members-to-attach";
 import { redirect } from "next/navigation";
 import { InfoCard } from "@/components/molecules/info-card";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
@@ -84,6 +86,11 @@ export default async function MonEquipePage({ searchParams }: Props) {
     teamUserIds,
   });
 
+  const toAttach = await loadMembersToAttach(deps, {
+    organizationId: actor.activeOrganizationId,
+    managerUserId: actor.internalUserId,
+  });
+
   if (!admin) {
     return (
       <div className="space-y-6">
@@ -128,6 +135,7 @@ export default async function MonEquipePage({ searchParams }: Props) {
           <TeamMemberInviteDialog currentUserEmail={actor.email} />
         </div>
       </div>
+      <MembersToAttachCard members={toAttach} />
       {/*
         La page porte déjà le titre et le bouton d'invitation : la section ne
         redit ni l'un ni l'autre.

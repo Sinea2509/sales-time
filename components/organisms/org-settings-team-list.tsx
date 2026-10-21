@@ -101,7 +101,7 @@ export function OrgSettingsTeamList({
   */
   function choixDeManager(m: TeamMemberRow) {
     const choix = [
-      { value: "", label: "Aucun manager" },
+      { value: "", label: "Aucune équipe" },
       ...managerChoicesForMember(members, m.userId).map((c) => ({
         value: c.userId,
         label: displayName(c),
@@ -246,11 +246,18 @@ export function OrgSettingsTeamList({
         */}
         <div className="space-y-1.5">
           <h2 className={sectionHeadingClass}>Membres</h2>
+          {/*
+            Retour de Thomas du 21 octobre 2026 : « Manager » se lisait comme
+            un champ d'annuaire, et rien ne disait ce qu'il changeait. La
+            colonne dit maintenant à quelle équipe chacun appartient, et la
+            phrase dit ce que cela ouvre, et que l'invitation le fait déjà.
+          */}
           <p className="text-muted-foreground max-w-prose text-sm">
-            La colonne Manager dessine les équipes : dans « Mon équipe », un
-            manager retrouve les personnes qui lui sont rattachées, et lui-même.
-            Tant que personne n&apos;est rattaché, chacun est classé sur
-            l&apos;organisation entière.
+            La colonne « Équipe de » dit qui accompagne qui : un manager
+            retrouve son équipe dans son tableau de bord et dans « Mon équipe ».
+            Un commercial invité par un manager rejoint son équipe
+            automatiquement ; un manager peut aussi ajouter d&apos;un clic,
+            depuis son tableau de bord, ceux qui ne sont dans aucune équipe.
           </p>
         </div>
         <div className="rounded-xl border px-3 sm:px-4">
@@ -260,7 +267,7 @@ export function OrgSettingsTeamList({
                 <TableHead>Utilisateur</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Rôle</TableHead>
-                <TableHead>Manager</TableHead>
+                <TableHead>Équipe de</TableHead>
                 <TableHead className="hidden sm:table-cell">
                   Rejoint le
                 </TableHead>
@@ -319,7 +326,7 @@ export function OrgSettingsTeamList({
                           nativeSelectCompactClassName,
                           "min-w-[10rem]",
                         )}
-                        aria-label={`Manager de ${displayName(m)}`}
+                        aria-label={`Équipe de ${displayName(m)}`}
                         value={m.managerUserId ?? ""}
                         disabled={pending}
                         onChange={(e) => {
@@ -349,7 +356,7 @@ export function OrgSettingsTeamList({
                       <span className="text-muted-foreground text-sm">
                         {m.managerUserId
                           ? libelleDuRattachement(m.managerUserId)
-                          : "Aucun manager"}
+                          : "Aucune équipe"}
                       </span>
                     )}
                   </TableCell>

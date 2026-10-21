@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   managerAssignmentRefusalMessage,
   managerChoicesForMember,
+  membersToAttach,
   resolveManagerAssignment,
   type ManagerAssignmentCandidate,
   type ManagerAssignmentRefusal,
@@ -234,5 +235,20 @@ describe("managerFromInvitation", () => {
     expect(
       managerFromInvitation({ ...base, inviterUserId: "invite" }),
     ).toBeNull();
+  });
+});
+
+describe("membersToAttach", () => {
+  const members = [
+    { userId: "manager-a", role: "ADMIN" as const, managerUserId: null },
+    { userId: "libre", role: "MEMBER" as const, managerUserId: null },
+    { userId: "deja", role: "MEMBER" as const, managerUserId: "manager-b" },
+    { userId: "manager-b", role: "ADMIN" as const, managerUserId: null },
+  ];
+
+  it("propose les seuls commerciaux rattachés à personne", () => {
+    expect(membersToAttach(members, "manager-a").map((m) => m.userId)).toEqual([
+      "libre",
+    ]);
   });
 });
