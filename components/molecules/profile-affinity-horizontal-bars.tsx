@@ -64,7 +64,7 @@ export function ProfileAffinityHorizontalBars({
           </div>
           <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted dark:bg-zinc-700">
             <div
-              className={`absolute inset-y-0 left-0 z-[2] rounded-full ${row.barClass}`}
+              className={`st-bar absolute inset-y-0 left-0 z-[2] rounded-full ${row.barClass}`}
               style={{ width: `${row.pct}%` }}
             />
             <QuarterTicks />

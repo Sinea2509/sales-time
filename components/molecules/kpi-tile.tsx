@@ -5,6 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AnimatedFigure } from "@/components/atoms/animated-figure";
 import { statAccentStyles, type StatAccent } from "@/lib/stat-accent-styles";
 import { cn } from "@/lib/utils";
 
@@ -83,7 +84,9 @@ export function KpiTile({
         </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <p className="text-3xl font-semibold tabular-nums">{children}</p>
+        <p className="text-3xl font-semibold tabular-nums">
+          <AnimatedFigure>{children}</AnimatedFigure>
+        </p>
         {trend ? <div className="shrink-0">{trend}</div> : null}
       </div>
       {footer ? (

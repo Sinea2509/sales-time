@@ -95,7 +95,7 @@ export function MeetingSoncasTab({
                   </div>
                   <span className="my-2 block h-[9px] overflow-hidden rounded-full bg-border">
                     <span
-                      className="bg-brand block h-full rounded-full"
+                      className="st-bar bg-brand block h-full rounded-full"
                       style={{ width: `${lever.score}%` }}
                     />
                   </span>

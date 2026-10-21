@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { easeOutCubic, useAnimateOnMount } from "@/lib/mount-animation";
 import { salesScoreColorClass } from "@/lib/sales-score-color";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 
 const COUNT_UP_MS = 1_400;
-
-function easeOutCubic(t: number): number {
-  return 1 - Math.pow(1 - t, 3);
-}
 
 function prefersReducedMotion(): boolean {
   return (
@@ -22,8 +19,9 @@ function prefersReducedMotion(): boolean {
  * Le SalesScore d'un rendez-vous, qui monte de zéro jusqu'à sa valeur quand
  * l'analyse SONCAS arrive, et change de couleur en passant les paliers.
  *
- * Une fiche ouverte avec son score déjà connu l'affiche tel quel : le
- * mouvement raconte l'arrivée d'un résultat, pas le chargement d'une page.
+ * Il monte aussi à l'arrivée sur une page, comme les autres chiffres clés
+ * (demande de Thomas du 21 octobre 2026), sauf au premier chargement : le
+ * serveur l'a déjà affiché, le remettre à zéro ferait clignoter la page.
  * Tant que le score n'existe pas, trois points animés disent que le calcul
  * est en route ; « n. c. » reste réservé au cas où il n'y aura pas de score.
  */
@@ -42,11 +40,12 @@ export function AnimatedSalesScore({
     score et la première image de son animation, le rendu sait que la valeur
     en mémoire décrit l'ancienne cible et repart de zéro.
   */
+  const animateOnMount = useAnimateOnMount();
   const [shown, setShown] = useState<{
     target: number | null;
     value: number | null;
-  }>({ target: score, value: score });
-  const lastTargetRef = useRef<number | null>(score);
+  }>(() => ({ target: score, value: animateOnMount ? 0 : score }));
+  const lastTargetRef = useRef<number | null>(animateOnMount ? null : score);
 
   useEffect(() => {
     const from = lastTargetRef.current;

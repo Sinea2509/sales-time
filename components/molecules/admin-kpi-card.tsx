@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { AnimatedFigure } from "@/components/atoms/animated-figure";
 import { statAccentStyles, type StatAccent } from "@/lib/stat-accent-styles";
 import { cn } from "@/lib/utils";
 
@@ -53,7 +54,9 @@ export function AdminKpiCard({
       </div>
       <div className="mt-3">
         <p className="text-2xl font-bold tabular-nums text-foreground dark:text-zinc-50">
-          {typeof value === "number" ? value.toLocaleString("fr-FR") : value}
+          <AnimatedFigure>
+            {typeof value === "number" ? value.toLocaleString("fr-FR") : value}
+          </AnimatedFigure>
         </p>
         <p className="mt-0.5 text-xs font-medium text-muted-foreground dark:text-zinc-400">
           {label}

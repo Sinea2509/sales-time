@@ -513,7 +513,7 @@ function CarteDesCompetences({
                         la longueur ; la couleur n'y ajoutait rien.
                       */}
                       <span
-                        className="block h-full rounded-full bg-foreground/80 dark:bg-zinc-300"
+                        className="st-bar block h-full rounded-full bg-foreground/80 dark:bg-zinc-300"
                         style={{ width: `${bar.valeur}%` }}
                       />
                     </span>

@@ -99,7 +99,7 @@ export function MeetingDiscTab({
                 </span>
                 <span className="block h-[11px] overflow-hidden rounded-[6px] bg-border">
                   <span
-                    className="block h-full rounded-[6px]"
+                    className="st-bar block h-full rounded-[6px]"
                     style={{
                       width: `${disc.scores[k]}%`,
                       background: DISC_HEX[k],

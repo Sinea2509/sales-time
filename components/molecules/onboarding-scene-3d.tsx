@@ -189,7 +189,7 @@ export function OnboardingScene3d({ focus, className }: Props) {
     <div
       aria-hidden
       className={cn(
-        "pointer-events-none relative h-[250px] w-[440px] [perspective:1100px]",
+        "st-enter pointer-events-none relative h-[250px] w-[440px] [perspective:1100px]",
         className,
       )}
     >
