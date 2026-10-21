@@ -13,12 +13,22 @@ import {
   UserRound,
   Video,
 } from "lucide-react";
+import {
+  ICON_3D_TONE_CYCLE,
+  Icon3d,
+  type Icon3dTone,
+} from "@/components/atoms/icon-3d";
 import { SalesTimeLogoMark } from "@/components/atoms/sales-time-logo-mark";
 import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
 import {
   OnboardingBrandPanel,
   OnboardingBrandPoint,
 } from "@/components/molecules/onboarding-brand-panel";
+import {
+  OnboardingMobileHero,
+  OnboardingScene3d,
+  type OnboardingSceneFocus,
+} from "@/components/molecules/onboarding-scene-3d";
 import { StepRail } from "@/components/molecules/step-rail";
 import { pageTitleClass } from "@/lib/page-typography";
 
@@ -45,6 +55,15 @@ type Props = {
 type PanelPoint = { icon: ReactNode; title: string; text: string };
 
 const ICON = "size-4.5";
+
+/** L'illustration en relief de chaque étape. */
+const FOCUS: Record<number, OnboardingSceneFocus> = {
+  1: "welcome",
+  2: "record",
+  3: "score",
+  4: "analysis",
+  5: "start",
+};
 
 /** Le panneau de gauche de chaque étape : un titre et trois repères. */
 const PANEL: Record<number, { title: string; points: PanelPoint[] }> = {
@@ -153,17 +172,19 @@ const PANEL: Record<number, { title: string; points: PanelPoint[] }> = {
 function Tile({
   icon,
   title,
+  tone = "violet",
   children,
 }: {
   icon: ReactNode;
   title: string;
+  tone?: Icon3dTone;
   children: ReactNode;
 }) {
   return (
-    <div className="flex gap-3.5 rounded-xl border border-border bg-card p-4 shadow-xs">
-      <span className="bg-brand-soft text-brand flex size-9 shrink-0 items-center justify-center rounded-lg">
+    <div className="flex gap-3.5 rounded-2xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_rgba(16,12,40,0.04),0_12px_24px_-16px_rgba(60,40,140,0.25)] transition-[translate,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgba(16,12,40,0.04),0_18px_32px_-16px_rgba(60,40,140,0.35)]">
+      <Icon3d tone={tone} size="md">
         {icon}
-      </span>
+      </Icon3d>
       <div className="space-y-1">
         <p className="text-sm font-semibold">{title}</p>
         <div className="text-muted-foreground text-sm leading-relaxed">
@@ -174,10 +195,20 @@ function Tile({
   );
 }
 
-function Callout({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+function Callout({
+  icon,
+  tone,
+  children,
+}: {
+  icon: ReactNode;
+  tone: Icon3dTone;
+  children: ReactNode;
+}) {
   return (
-    <div className="bg-brand-soft flex gap-3 rounded-xl border border-brand/20 p-4 text-sm leading-relaxed">
-      <span className="text-brand mt-0.5 shrink-0">{icon}</span>
+    <div className="flex items-start gap-3 rounded-2xl border border-[#FFB59A]/40 bg-[linear-gradient(135deg,rgba(255,236,226,0.9),rgba(240,235,255,0.9))] p-4 text-sm leading-relaxed dark:border-white/10 dark:bg-[linear-gradient(135deg,rgba(255,122,107,0.12),rgba(108,77,255,0.12))]">
+      <Icon3d tone={tone} size="sm">
+        {icon}
+      </Icon3d>
       <div>{children}</div>
     </div>
   );
@@ -208,12 +239,14 @@ function StepContent({
           <Tile
             icon={<Gauge className="size-4.5" />}
             title="Sales Time analyse"
+            tone="coral"
           >
             En quelques minutes : votre note, votre prospect, vos points forts.
           </Tile>
           <Tile
             icon={<Sparkles className="size-4.5" />}
             title="Vous progressez"
+            tone="amber"
           >
             Avec des conseils concrets, rendez-vous après rendez-vous.
           </Tile>
@@ -240,12 +273,16 @@ function StepContent({
             </li>
           </ol>
         </Tile>
-        <Tile icon={<Mic className="size-4.5" />} title="En face à face">
+        <Tile
+          icon={<Mic className="size-4.5" />}
+          title="En face à face"
+          tone="coral"
+        >
           Enregistrez avec le dictaphone de votre téléphone, posé entre vous
           deux, puis déposez le fichier audio (mp3, m4a, wav…). Jusqu&apos;à 20
           Mo, soit environ 45 minutes en m4a.
         </Tile>
-        <Callout icon={<ShieldAlert className="size-4.5" />}>
+        <Callout icon={<ShieldAlert />} tone="coral">
           <p>
             <span className="font-semibold">
               Prévenez toujours votre interlocuteur
@@ -265,7 +302,7 @@ function StepContent({
           Chaque rendez-vous de découverte est noté sur 100, en cinq blocs.
           Chaque critère vaut de 0 à 4 points.
         </p>
-        <div className="space-y-2.5 rounded-xl border border-border bg-card p-4 shadow-xs">
+        <div className="space-y-3 rounded-2xl border border-border/70 bg-card p-5 shadow-[0_12px_24px_-16px_rgba(60,40,140,0.25)]">
           {gridBlocks.map((b) => (
             <div key={b.key} className="space-y-1">
               <div className="flex items-baseline justify-between text-sm">
@@ -274,16 +311,16 @@ function StepContent({
                   {b.weight} pts
                 </span>
               </div>
-              <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+              <div className="bg-muted h-2 overflow-hidden rounded-full">
                 <div
-                  className="bg-brand h-full rounded-full"
+                  className="h-full rounded-full bg-gradient-to-r from-[#7B5CFF] via-[#B26BFF] to-[#FF7A8A] shadow-[0_0_10px_rgba(178,107,255,0.45)]"
                   style={{ width: `${(b.weight / max) * 100}%` }}
                 />
               </div>
             </div>
           ))}
         </div>
-        <Callout icon={<Sparkles className="size-4.5" />}>
+        <Callout icon={<Sparkles />} tone="amber">
           <p>
             <span className="font-semibold">Pour avoir 4 points</span> sur un
             critère : posez la question <em>et</em> obtenez une réponse précise
@@ -306,6 +343,7 @@ function StepContent({
         <Tile
           icon={<UserRound className="size-4.5" />}
           title="Le profil de votre prospect"
+          tone="teal"
         >
           Ce qui le fait choisir (SONCAS) et sa façon de communiquer (DISC),
           avec les passages qui le montrent.
@@ -313,6 +351,7 @@ function StepContent({
         <Tile
           icon={<MessageSquareQuote className="size-4.5" />}
           title="Ses objections"
+          tone="coral"
         >
           Ce qui le retient, comment vous avez répondu, et comment mieux
           répondre.
@@ -320,6 +359,7 @@ function StepContent({
         <Tile
           icon={<Sparkles className="size-4.5" />}
           title="Votre coaching et votre compte rendu"
+          tone="amber"
         >
           À garder, à améliorer, à arrêter, à démarrer, et un compte rendu prêt
           à coller dans votre CRM.
@@ -344,6 +384,7 @@ function StepContent({
       <Tile
         icon={<FileAudio className="size-4.5" />}
         title="Pas de rendez-vous sous la main ?"
+        tone="amber"
       >
         Pas de souci : vous pourrez revenir à ce guide à tout moment depuis
         votre tableau de bord.
@@ -391,11 +432,13 @@ export function MemberWelcomeGuide({
       <OnboardingBrandPanel
         eyebrow={`Étape ${current} sur ${total}`}
         title={panel.title}
+        scene={<OnboardingScene3d focus={FOCUS[current]} />}
       >
         <div className="mt-2 space-y-5">
-          {panel.points.map((p) => (
+          {panel.points.map((p, i) => (
             <OnboardingBrandPoint
               key={p.title}
+              tone={ICON_3D_TONE_CYCLE[i % ICON_3D_TONE_CYCLE.length]}
               icon={p.icon}
               title={p.title}
               text={p.text}
@@ -404,7 +447,7 @@ export function MemberWelcomeGuide({
         </div>
       </OnboardingBrandPanel>
 
-      <section className="flex min-h-0 flex-col overflow-y-auto px-6 py-8 sm:px-10">
+      <section className="flex min-h-0 flex-col overflow-y-auto bg-[radial-gradient(55%_45%_at_100%_0%,rgba(255,138,91,0.09),transparent),radial-gradient(50%_40%_at_0%_100%,rgba(108,77,255,0.08),transparent)] px-6 py-8 sm:px-10">
         <div className="mx-auto flex w-full max-w-xl flex-1 flex-col">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-2.25 lg:invisible">
@@ -420,6 +463,8 @@ export function MemberWelcomeGuide({
               Passer le guide
             </Link>
           </div>
+
+          <OnboardingMobileHero focus={FOCUS[current]} />
 
           <StepRail
             steps={MEMBER_GUIDE_STEPS}

@@ -34,7 +34,7 @@ export function StepRail({ steps, current, className }: Props) {
                   className={cn(
                     "flex size-8 items-center justify-center rounded-lg text-sm font-semibold tabular-nums transition-colors sm:size-10",
                     isDoneOrCurrent &&
-                      "bg-brand text-brand-foreground shadow-sm shadow-brand/30",
+                      "bg-gradient-to-br from-[#A48BFF] to-[#5B3DF5] text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),0_8px_16px_-6px_rgba(108,77,255,0.7)]",
                     !isDoneOrCurrent &&
                       "bg-muted text-muted-foreground dark:bg-neutral-700 dark:text-neutral-400",
                   )}

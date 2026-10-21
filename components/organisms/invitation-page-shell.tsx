@@ -6,6 +6,10 @@ import {
   OnboardingBrandPanel,
   OnboardingBrandPoint,
 } from "@/components/molecules/onboarding-brand-panel";
+import {
+  OnboardingMobileHero,
+  OnboardingScene3d,
+} from "@/components/molecules/onboarding-scene-3d";
 import { AcceptInvitationClient } from "@/components/organisms/accept-invitation-client";
 import { JoinInvitationForm } from "@/components/organisms/join-invitation-form";
 import { pageTitleClass } from "@/lib/page-typography";
@@ -49,6 +53,7 @@ export function InvitationPageShell({
     <main className="grid min-h-svh grid-cols-1 bg-card lg:h-svh lg:grid-cols-2 lg:overflow-hidden">
       <OnboardingBrandPanel
         eyebrow="Invitation"
+        scene={<OnboardingScene3d focus="welcome" />}
         title={
           inviterName ? (
             <>
@@ -72,26 +77,29 @@ export function InvitationPageShell({
           />
           <OnboardingBrandPoint
             icon={<Gauge className="size-4.5" />}
+            tone="coral"
             title="Une note claire sur 100"
             text="Critère par critère, avec ce qui vous a fait gagner ou perdre des points."
           />
           <OnboardingBrandPoint
             icon={<MessageSquareQuote className="size-4.5" />}
+            tone="amber"
             title="Un coaching personnel"
             text="Ce qu'attend votre prospect, et la phrase à dire au prochain rendez-vous."
           />
         </div>
       </OnboardingBrandPanel>
 
-      <section className="flex min-h-0 items-center justify-center overflow-y-auto px-6 py-10 sm:px-10">
+      <section className="flex min-h-0 items-center justify-center overflow-y-auto bg-[radial-gradient(55%_45%_at_100%_0%,rgba(255,138,91,0.09),transparent),radial-gradient(50%_40%_at_0%_100%,rgba(108,77,255,0.08),transparent)] px-6 py-10 sm:px-10">
         <div className="w-full max-w-md space-y-7">
           <header className="space-y-2">
-            <div className="mb-6 flex items-center gap-2.25 lg:hidden">
+            <div className="mb-5 flex items-center gap-2.25 lg:hidden">
               <SalesTimeLogoMark size="sm" />
               <span className="text-[15px] font-bold tracking-tight text-foreground">
                 Sales Time
               </span>
             </div>
+            <OnboardingMobileHero focus="welcome" />
             <p className="text-brand text-xs font-semibold tracking-[0.14em] uppercase">
               Invitation · {organizationName}
             </p>
