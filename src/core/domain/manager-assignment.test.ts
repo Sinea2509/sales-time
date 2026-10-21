@@ -204,12 +204,12 @@ describe("managerFromInvitation", () => {
     invitedRole: "MEMBER" as const,
     inviteeUserId: "invite",
     currentManagerUserId: null,
-    inviterUserId: "thomas",
+    inviterUserId: "manager-a",
     inviterRole: "ADMIN" as const,
   };
 
   it("rattache un commercial invité au manager qui l'a invité", () => {
-    expect(managerFromInvitation(base)).toBe("thomas");
+    expect(managerFromInvitation(base)).toBe("manager-a");
   });
 
   it("ne rattache pas un manager invité", () => {
@@ -218,7 +218,7 @@ describe("managerFromInvitation", () => {
 
   it("ne remplace jamais un rattachement déjà déclaré", () => {
     expect(
-      managerFromInvitation({ ...base, currentManagerUserId: "cedric" }),
+      managerFromInvitation({ ...base, currentManagerUserId: "manager-b" }),
     ).toBeNull();
   });
 
