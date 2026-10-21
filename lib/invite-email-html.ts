@@ -2,8 +2,20 @@
 /** Placeholder remplacé par le lien d’acceptation unique pour chaque destinataire à l’envoi. */
 export const INVITE_LINK_PLACEHOLDER = "{{INVITATION_LINK}}";
 
-/** Message d’invitation par défaut (HTML). Réexporté depuis `onboarding-defaults` sous le nom historique. */
-export const DEFAULT_INVITE_MESSAGE_HTML = `<p>Salut, on lance Sales Time dans l'équipe. C'est un coach commercial IA qui va t'aider à gagner du temps sur tes CR, tes mails de suivi, et te donner des feedbacks concrets.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscris-toi pour démarrer</a></p>`;
+/**
+ * Message d’invitation par défaut (HTML). Réexporté depuis `onboarding-defaults` sous le nom historique.
+ *
+ * Au vouvoiement depuis le 21 octobre 2026 (demande de Thomas), comme le
+ * reste du mail.
+ */
+export const DEFAULT_INVITE_MESSAGE_HTML = `<p>Bonjour, nous lançons Sales Time dans l'équipe. C'est un coach commercial IA qui va vous aider à gagner du temps sur vos comptes rendus et vos mails de suivi, et vous donner des retours concrets après chaque rendez-vous.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscrivez-vous pour démarrer</a></p>`;
+
+/*
+  L'ancien message par défaut, au tutoiement. Un brouillon d'onboarding
+  enregistré tel quel avant le changement reprend le nouveau texte : personne
+  ne l'avait écrit, il n'y a rien à préserver.
+*/
+const PREVIOUS_DEFAULT_INVITE_MESSAGE_HTML = `<p>Salut, on lance Sales Time dans l'équipe. C'est un coach commercial IA qui va t'aider à gagner du temps sur tes CR, tes mails de suivi, et te donner des feedbacks concrets.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscris-toi pour démarrer</a></p>`;
 
 function escapeHtml(s: string): string {
   return s
@@ -26,7 +38,9 @@ export function coerceStoredInviteMessageToHtml(
   raw: string | null | undefined,
 ): string {
   const s = raw?.trim() ?? "";
-  if (!s) return DEFAULT_INVITE_MESSAGE_HTML;
+  if (!s || s === PREVIOUS_DEFAULT_INVITE_MESSAGE_HTML) {
+    return DEFAULT_INVITE_MESSAGE_HTML;
+  }
   if (s.includes("<")) return s;
   return escapePlainToParagraphs(s);
 }
@@ -128,6 +142,11 @@ export function buildInvitationEmailHtml(opts: {
   bodyHtml: string;
   inviterName?: string | null;
   expiresAt?: Date | null;
+  /**
+   * Le titre de l'encadré du message. Par défaut, « Le mot de » la personne
+   * qui invite ; un message écrit par l'application en donne un autre.
+   */
+  bodyLabel?: string;
 }): string {
   const trimmed = opts.bodyHtml.trim();
   // Les liens du message, sans style à eux, prennent la couleur de la marque
@@ -159,9 +178,11 @@ export function buildInvitationEmailHtml(opts: {
 <div style="width:48px;height:48px;line-height:48px;border-radius:24px;background:#EDE8FF;color:#5B3DF5;font-family:${FONT};font-size:17px;font-weight:700;text-align:center;">${escapeHtml(initials(inviterRaw))}</div>
 </td>`
     : "";
-  const quoteLabel = inviter
-    ? `Le mot de ${inviter}`
-    : "Le message de l’équipe";
+  const quoteLabel = opts.bodyLabel
+    ? escapeHtml(opts.bodyLabel)
+    : inviter
+      ? `Le mot de ${inviter}`
+      : "Le message de l’équipe";
 
   return `<!DOCTYPE html>
 <html lang="fr">

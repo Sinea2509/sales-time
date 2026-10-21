@@ -72,7 +72,7 @@ export function InviteMessageRichEditor({
       .chain()
       .focus()
       .insertContent(
-        `<a href="${INVITE_LINK_PLACEHOLDER}">Inscris-toi pour démarrer</a>`,
+        `<a href="${INVITE_LINK_PLACEHOLDER}">Inscrivez-vous pour démarrer</a>`,
       )
       .run();
   }, [editor]);

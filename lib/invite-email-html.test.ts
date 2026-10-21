@@ -1,6 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   buildInvitationEmailHtml,
+  coerceStoredInviteMessageToHtml,
+  DEFAULT_INVITE_MESSAGE_HTML,
+  INVITE_LINK_PLACEHOLDER,
   invitationEmailSubject,
 } from "./invite-email-html";
 
@@ -83,5 +86,39 @@ describe("la mise en forme du mail d'invitation", () => {
     expect(anonymous).toContain("Vous êtes invité à rejoindre Sinéa");
     expect(anonymous).toContain("un membre de l’équipe vous a invité");
     expect(anonymous).not.toContain("Le mot de");
+  });
+});
+
+describe("le message d'invitation par défaut", () => {
+  it("vouvoie l'invité", () => {
+    expect(DEFAULT_INVITE_MESSAGE_HTML).toContain("vous aider");
+    expect(DEFAULT_INVITE_MESSAGE_HTML).toContain(
+      "Inscrivez-vous pour démarrer",
+    );
+    expect(DEFAULT_INVITE_MESSAGE_HTML).not.toMatch(/\b(t'|tes|te|toi)\b/u);
+  });
+
+  it("remplace l'ancien message par défaut, au tutoiement, enregistré tel quel", () => {
+    const previous = `<p>Salut, on lance Sales Time dans l'équipe. C'est un coach commercial IA qui va t'aider à gagner du temps sur tes CR, tes mails de suivi, et te donner des feedbacks concrets.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscris-toi pour démarrer</a></p>`;
+    expect(coerceStoredInviteMessageToHtml(previous)).toBe(
+      DEFAULT_INVITE_MESSAGE_HTML,
+    );
+  });
+
+  it("garde un message écrit par l'équipe", () => {
+    const own = "<p>Salut l'équipe, on y va !</p>";
+    expect(coerceStoredInviteMessageToHtml(own)).toBe(own);
+  });
+
+  it("titre autrement un message écrit par l'application", () => {
+    const html = buildInvitationEmailHtml({
+      organizationName: "Sinéa",
+      inviteLink: LINK,
+      bodyHtml: "<p>Votre compte n'existe pas encore.</p>",
+      inviterName: "Thomas Vincent",
+      bodyLabel: "À savoir",
+    });
+    expect(html).toContain(">À savoir</div>");
+    expect(html).not.toContain("Le mot de Thomas Vincent");
   });
 });

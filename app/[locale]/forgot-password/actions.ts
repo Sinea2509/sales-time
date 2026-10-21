@@ -65,6 +65,7 @@ export async function forgotPasswordAction(
             "<p>Vous avez demandé un nouveau mot de passe, mais votre compte Sales Time n'existe pas encore : il suffit de le créer avec le bouton ci-dessous, en choisissant votre mot de passe.</p>",
           inviterName: invitation.inviterName,
           expiresAt: invitation.expiresAt,
+          bodyLabel: "À savoir",
         }),
       });
     }
