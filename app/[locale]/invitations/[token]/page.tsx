@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { pageTitleClass } from "@/lib/page-typography";
-import { AcceptInvitationClient } from "@/components/organisms/accept-invitation-client";
-import { JoinInvitationForm } from "@/components/organisms/join-invitation-form";
+import {
+  InvitationPageShell,
+  type InvitationPageMode,
+} from "@/components/organisms/invitation-page-shell";
 import { organizationMembershipRoleLabel } from "@/src/core/domain/organization-membership-role";
 
 type Props = { params: Promise<{ token: string }> };
-
-const buttonLinkClass =
-  "bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center rounded-md px-4 text-sm font-medium";
 
 function frenchDate(date: Date): string {
   return date.toLocaleDateString("fr-FR", {
@@ -53,86 +52,23 @@ export default async function InvitationPage({ params }: Props) {
   }
 
   const principal = await deps.auth.getAuthenticatedPrincipal();
-  const role = organizationMembershipRoleLabel(inv.role).toLowerCase();
-  const inviter = inv.inviterName?.trim();
-  const signInHref = `/sign-in?next=/invitations/${encodeURIComponent(token)}`;
+  const mode: InvitationPageMode = principal
+    ? principal.email.toLowerCase() === inv.email.toLowerCase()
+      ? { kind: "accept" }
+      : { kind: "otherAccount", principalEmail: principal.email }
+    : inv.accountExists
+      ? { kind: "signIn" }
+      : { kind: "join" };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
-      <div className="w-full max-w-md space-y-6 rounded-xl border border-border p-8 shadow-sm">
-        <div className="space-y-2 text-center">
-          <h1 className={pageTitleClass}>
-            Rejoignez {inv.organizationName} sur Sales Time
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            {inviter ? (
-              <>
-                <span className="font-medium text-foreground">{inviter}</span>{" "}
-                vous invite
-              </>
-            ) : (
-              "Vous êtes invité"
-            )}{" "}
-            en tant que{" "}
-            <span className="font-medium text-foreground">{role}</span>. Sales
-            Time analyse vos rendez-vous et vous dit où progresser.
-          </p>
-        </div>
-
-        {principal ? (
-          principal.email.toLowerCase() === inv.email.toLowerCase() ? (
-            <AcceptInvitationClient token={token} />
-          ) : (
-            <div className="space-y-3 text-center text-sm">
-              <p className="text-muted-foreground">
-                Vous êtes connecté avec{" "}
-                <span className="font-mono text-foreground">
-                  {principal.email}
-                </span>
-                , mais l&apos;invitation est pour{" "}
-                <span className="font-mono text-foreground">{inv.email}</span>.
-              </p>
-              <form action="/sign-out" method="POST">
-                <button
-                  type="submit"
-                  className="text-primary font-medium underline"
-                >
-                  Me déconnecter pour continuer
-                </button>
-              </form>
-            </div>
-          )
-        ) : inv.accountExists ? (
-          <div className="space-y-3 text-center text-sm">
-            <p className="text-muted-foreground">
-              Vous avez déjà un compte Sales Time avec{" "}
-              <span className="font-mono text-foreground">{inv.email}</span>.
-              Connectez-vous pour rejoindre l&apos;équipe.
-            </p>
-            <Link href={signInHref} className={buttonLinkClass}>
-              Me connecter et rejoindre {inv.organizationName}
-            </Link>
-            <Link
-              href="/forgot-password"
-              className="text-muted-foreground block text-xs underline"
-            >
-              Mot de passe oublié ?
-            </Link>
-          </div>
-        ) : (
-          <JoinInvitationForm
-            token={token}
-            inviteEmail={inv.email}
-            organizationName={inv.organizationName}
-          />
-        )}
-
-        {inv.expiresAt ? (
-          <p className="text-muted-foreground text-center text-xs">
-            Invitation valable jusqu&apos;au {frenchDate(inv.expiresAt)}.
-          </p>
-        ) : null}
-      </div>
-    </div>
+    <InvitationPageShell
+      token={token}
+      organizationName={inv.organizationName}
+      roleLabel={organizationMembershipRoleLabel(inv.role).toLowerCase()}
+      inviterName={inv.inviterName?.trim() || null}
+      email={inv.email}
+      expiresAtLabel={inv.expiresAt ? frenchDate(inv.expiresAt) : null}
+      mode={mode}
+    />
   );
 }

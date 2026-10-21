@@ -114,5 +114,6 @@ export async function registerFromInvitationAction(
     reason: "Inscription via invitation organisation",
   });
 
-  redirect("/company");
+  /* Le nouvel inscrit commence par le guide de démarrage. */
+  redirect("/bienvenue");
 }

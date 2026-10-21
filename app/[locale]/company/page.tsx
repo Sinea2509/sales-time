@@ -235,7 +235,10 @@ export default async function DashboardHomePage({
         description={`Votre activité des ${statsWindowLabel(statsWindowDays, statsWindowRange)}, et ce qui mérite votre attention aujourd'hui.`}
       />
       {meetingsEver === 0 ? (
-        <WelcomeFirstSteps newMeetingHref="/company/rendez-vous/nouveau" />
+        <WelcomeFirstSteps
+          newMeetingHref="/company/rendez-vous/nouveau"
+          guideHref="/bienvenue"
+        />
       ) : null}
       {!home ? null : (
         <DashboardHomeShell

@@ -113,7 +113,11 @@ export function JoinInvitationForm({
           connecter.
         </p>
       </div>
-      <Button type="submit" className="w-full" disabled={isPending}>
+      <Button
+        type="submit"
+        className="bg-brand text-brand-foreground hover:bg-brand-hover h-11 w-full"
+        disabled={isPending}
+      >
         {isPending
           ? "Création du compte…"
           : `Créer mon compte et rejoindre ${organizationName}`}

@@ -124,8 +124,9 @@ jest.mock("@/lib/application-deps", () => {
       logPlatformAction: mocks.logPlatformActionMock,
     },
   };
-  (graph as { __invitationTestMocks?: InvitationDepsMocks }).__invitationTestMocks =
-    mocks;
+  (
+    graph as { __invitationTestMocks?: InvitationDepsMocks }
+  ).__invitationTestMocks = mocks;
   return { getApplicationDeps: () => graph };
 });
 
@@ -140,9 +141,11 @@ const {
   findPendingByTokenForPreviewMock,
   registerFromOrganizationInvitationMock,
   createSessionRecordMock,
-} = (getApplicationDeps() as unknown as {
-  __invitationTestMocks: InvitationDepsMocks;
-}).__invitationTestMocks;
+} = (
+  getApplicationDeps() as unknown as {
+    __invitationTestMocks: InvitationDepsMocks;
+  }
+).__invitationTestMocks;
 
 function form(entries: Record<string, string>): FormData {
   const fd = new FormData();
@@ -277,7 +280,7 @@ describe("registerFromInvitationAction", () => {
     expect(result?.message).toContain("connecté en tant que");
   });
 
-  it("registers from invitation and redirects to company", async () => {
+  it("inscrit l'invité, avec un seul mot de passe, et l'envoie vers le guide de démarrage", async () => {
     hashPasswordMock.mockResolvedValue("hash");
     registerFromOrganizationInvitationMock.mockResolvedValue({
       ok: true,
@@ -293,10 +296,9 @@ describe("registerFromInvitationAction", () => {
           firstName: "Jane",
           lastName: "Doe",
           password: "password12",
-          confirmPassword: "password12",
         }),
       ),
-    ).rejects.toThrow("REDIRECT:/company");
+    ).rejects.toThrow("REDIRECT:/bienvenue");
     expect(setSessionCookieMock).toHaveBeenCalled();
     expect(setActiveOrganizationCookieMock).toHaveBeenCalledWith(ORG_ID);
   });

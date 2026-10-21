@@ -1,23 +1,29 @@
+import Link from "next/link";
+import { FileAudio, Gauge, Sparkles } from "lucide-react";
 import { BrandCtaLink } from "@/components/molecules/brand-cta-link";
-import { ContentCard } from "@/components/molecules/content-card";
 
 type Props = {
   /** Où déposer un rendez-vous. */
   newMeetingHref: string;
+  /** Le guide de démarrage, pour le revoir. */
+  guideHref: string;
 };
 
 const STEPS = [
   {
-    title: "Déposez votre premier rendez-vous",
-    text: "Le transcript de Teams, Zoom ou Meet, ou l'enregistrement audio. Lancez l'enregistrement dès le bonjour : votre ouverture compte dans la note.",
+    icon: FileAudio,
+    title: "Déposez un rendez-vous",
+    text: "Transcript Teams, Zoom, Meet ou enregistrement audio.",
   },
   {
-    title: "Recevez votre analyse en quelques minutes",
-    text: "Votre note sur 100 critère par critère, ce qui fait choisir votre prospect et comment il communique, ses objections, et votre coaching.",
+    icon: Gauge,
+    title: "Recevez votre analyse",
+    text: "Votre note sur 100, votre prospect, ses objections.",
   },
   {
-    title: "Progressez d'un rendez-vous à l'autre",
-    text: "Chaque fiche vous dit où gagner des points, avec la phrase à dire la prochaine fois. Votre tableau de bord suit votre progression.",
+    icon: Sparkles,
+    title: "Progressez",
+    text: "La phrase à dire la prochaine fois, critère par critère.",
   },
 ] as const;
 
@@ -28,33 +34,49 @@ const STEPS = [
  * sans rien qui dise par où commencer. Cette carte disparaît d'elle-même dès
  * le premier rendez-vous déposé.
  */
-export function WelcomeFirstSteps({ newMeetingHref }: Props) {
+export function WelcomeFirstSteps({ newMeetingHref, guideHref }: Props) {
   return (
-    <ContentCard
-      title="Bienvenue sur Sales Time"
-      description="Trois étapes pour recevoir votre premier coaching."
-    >
-      <ol className="space-y-4">
-        {STEPS.map((step, index) => (
-          <li key={step.title} className="flex gap-3">
-            <span
-              aria-hidden
-              className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
-            >
-              {index + 1}
-            </span>
-            <div className="space-y-1">
-              <p className="text-sm font-medium">{step.title}</p>
-              <p className="text-muted-foreground text-sm">{step.text}</p>
+    <section className="from-brand/10 via-brand-soft to-card relative overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br p-6 sm:p-8">
+      <div className="max-w-2xl space-y-2">
+        <p className="text-brand text-xs font-semibold tracking-[0.14em] uppercase">
+          Premiers pas
+        </p>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          Votre premier coaching est à un rendez-vous près
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          Déposez un rendez-vous : l&apos;analyse arrive en quelques minutes, et
+          vous recevez un mail dès qu&apos;elle est prête.
+        </p>
+      </div>
+      <ol className="mt-6 grid gap-3 sm:grid-cols-3">
+        {STEPS.map(({ icon: Icon, title, text }, index) => (
+          <li
+            key={title}
+            className="rounded-xl border border-border/70 bg-card/80 p-4 shadow-xs backdrop-blur"
+          >
+            <div className="mb-3 flex items-center gap-2">
+              <span className="bg-brand text-brand-foreground flex size-7 items-center justify-center rounded-lg text-xs font-semibold">
+                {index + 1}
+              </span>
+              <Icon className="text-brand size-4" aria-hidden />
             </div>
+            <p className="text-sm font-semibold">{title}</p>
+            <p className="text-muted-foreground mt-1 text-sm">{text}</p>
           </li>
         ))}
       </ol>
-      <div className="mt-6">
-        <BrandCtaLink href={newMeetingHref}>
+      <div className="mt-6 flex flex-wrap items-center gap-4">
+        <BrandCtaLink href={newMeetingHref} size="md">
           Déposer mon premier rendez-vous
         </BrandCtaLink>
+        <Link
+          href={guideHref}
+          className="text-brand text-sm font-medium hover:underline"
+        >
+          Revoir le guide de démarrage
+        </Link>
       </div>
-    </ContentCard>
+    </section>
   );
 }
