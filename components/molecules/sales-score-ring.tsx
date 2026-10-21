@@ -61,7 +61,8 @@ export function SalesScoreRing({
           strokeLinecap="round"
           strokeDasharray={c.toFixed(1)}
           strokeDashoffset={offset.toFixed(1)}
-          className="transition-[stroke-dashoffset] duration-1000 ease-out motion-reduce:transition-none"
+          className="st-ring transition-[stroke-dashoffset] duration-1000 ease-out motion-reduce:transition-none"
+          style={{ "--st-ring-length": c.toFixed(1) } as React.CSSProperties}
         />
       </svg>
       <span

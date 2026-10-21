@@ -38,7 +38,7 @@ export function BarRow({
       </span>
       <span className="bg-border block h-[9px] overflow-hidden rounded-full">
         <span
-          className="block h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none"
+          className="st-bar block h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none"
           style={{ width: `${width}%`, background: color ?? "var(--brand)" }}
         />
       </span>

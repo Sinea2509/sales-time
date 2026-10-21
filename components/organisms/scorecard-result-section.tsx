@@ -142,7 +142,7 @@ function BlockDetails({
         <span className="text-[13.4px] font-semibold">{block.name}</span>
         <span className="block h-[11px] overflow-hidden rounded-[6px] bg-border">
           <span
-            className="block h-full rounded-[6px]"
+            className="st-bar block h-full rounded-[6px]"
             style={{ width: `${block.percent}%`, background: color }}
           />
         </span>

@@ -313,7 +313,7 @@ function StepContent({
               </div>
               <div className="bg-muted h-2 overflow-hidden rounded-full">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#7B5CFF] via-[#B26BFF] to-[#FF7A8A] shadow-[0_0_10px_rgba(178,107,255,0.45)]"
+                  className="st-bar h-full rounded-full bg-gradient-to-r from-[#7B5CFF] via-[#B26BFF] to-[#FF7A8A] shadow-[0_0_10px_rgba(178,107,255,0.45)]"
                   style={{ width: `${(b.weight / max) * 100}%` }}
                 />
               </div>
@@ -432,7 +432,7 @@ export function MemberWelcomeGuide({
       <OnboardingBrandPanel
         eyebrow={`Étape ${current} sur ${total}`}
         title={panel.title}
-        scene={<OnboardingScene3d focus={FOCUS[current]} />}
+        scene={<OnboardingScene3d key={current} focus={FOCUS[current]} />}
       >
         <div className="mt-2 space-y-5">
           {panel.points.map((p, i) => (
@@ -472,7 +472,7 @@ export function MemberWelcomeGuide({
             className="mb-8"
           />
 
-          <div className="flex-1 space-y-5">
+          <div key={current} className="st-enter flex-1 space-y-5">
             <h1 className={pageTitleClass}>{heading}</h1>
             <StepContent
               step={current}

@@ -100,7 +100,7 @@ function OpportunityRow({
                 les données.
               */}
               <span
-                className={`block h-full rounded-full ${salesScoreBarClass(score)}`}
+                className={`st-bar block h-full rounded-full ${salesScoreBarClass(score)}`}
                 style={{ width: `${score}%` }}
               />
             </span>
