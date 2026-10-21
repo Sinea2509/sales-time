@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { getOrgMeetingFormOptionsAction } from "@/app/[locale]/company/rendez-vous/actions";
 import { BrandCtaButton } from "@/components/molecules/brand-cta-button";
-import { MeetingCreateForm } from "@/components/organisms/meeting-create-form";
+import { MeetingDepositFlow } from "@/components/organisms/meeting-deposit-flow";
 import {
   Dialog,
   DialogContent,
@@ -83,12 +83,12 @@ export function MeetingCreateDialog({
           <DialogHeader className="shrink-0 border-b px-4 py-4">
             <DialogTitle>Analyser un rendez-vous</DialogTitle>
             <DialogDescription>
-              Renseignez les informations du RDV et le transcript pour lancer
-              l&apos;analyse SONCAS / DISC / KISS.
+              Déposez la conversation : Sales Time remplit la fiche, vous
+              vérifiez, l&apos;analyse démarre.
             </DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            <MeetingCreateForm
+            <MeetingDepositFlow
               key={formOptions.meetingTypeOptions.join("|")}
               variant="dialog"
               meetingTypeOptions={formOptions.meetingTypeOptions}

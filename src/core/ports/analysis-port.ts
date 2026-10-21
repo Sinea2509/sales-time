@@ -10,6 +10,7 @@ import type { ProspectProfileGenerated } from "@/src/core/domain/prospect-profil
 import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod";
 import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
 import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
+import type { MeetingFactsSuggestion } from "@/src/core/domain/meeting-prefill";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import type { SalesProfileScores } from "@/src/core/domain/sales-profile-from-meetings";
 import type { TeamCoachingRecommendations } from "@/src/core/domain/team-coaching-recommendations-zod";
@@ -210,6 +211,17 @@ export interface AnalysisPort {
     text: string;
     usage?: { inputTokens?: number; outputTokens?: number };
   }>;
+
+  /**
+   * Ce qui se lit dans une conversation pour remplir la fiche du rendez-vous :
+   * le prospect, le type de rendez-vous, le résultat, un montant cité.
+   */
+  suggestMeetingFacts(input: {
+    systemPrompt: string;
+    model: string;
+    transcriptExcerpt: string;
+    meetingTypeOptions: readonly string[];
+  }): Promise<MeetingFactsSuggestion>;
 
   /**
    * La matière du compte rendu de visite, lue dans le transcript.

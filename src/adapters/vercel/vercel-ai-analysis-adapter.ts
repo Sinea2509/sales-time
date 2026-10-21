@@ -19,6 +19,7 @@ import { prospectProfileGeneratedSchema } from "@/src/core/domain/prospect-profi
 import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import { visitReportExtractionSchema } from "@/src/core/domain/visit-report-zod";
+import { meetingFactsSuggestionSchema } from "@/src/core/domain/meeting-prefill";
 import { teamCoachingRecommendationsSchema } from "@/src/core/domain/team-coaching-recommendations-zod";
 import type {
   AnalysisPort,
@@ -464,6 +465,35 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
         outputTokens: usage?.outputTokens,
       },
     };
+  }
+
+  async suggestMeetingFacts(input: {
+    systemPrompt: string;
+    model: string;
+    transcriptExcerpt: string;
+    meetingTypeOptions: readonly string[];
+  }) {
+    const system = withDataScopeSystemPrompt(input.systemPrompt);
+    const prompt = [
+      "Types de rendez-vous proposés par l'organisation :",
+      input.meetingTypeOptions.length > 0
+        ? input.meetingTypeOptions.map((t) => `- ${t}`).join("\n")
+        : "(aucun : rends null pour le type)",
+      "",
+      buildDelimitedMeetingUserContent({
+        transcript: input.transcriptExcerpt,
+        notes: null,
+      }),
+    ].join("\n");
+    const { object } = await generateObject({
+      model: input.model,
+      ...stableCallSettings(input.model),
+      schema: meetingFactsSuggestionSchema,
+      system,
+      prompt,
+      maxOutputTokens: 400,
+    });
+    return object;
   }
 
   async extractVisitReport(input: {
