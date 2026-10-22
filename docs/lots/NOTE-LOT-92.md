@@ -1,10 +1,16 @@
 # Note du lot 92 : la fiabilité de la note
 
-Branche `lot-92`, sur `main` après le lot 80i, avec les deux commits du
-lot-80j repris dessus (pull request #18, qui se ferme sans fusion). Le lot
-répond à l'audit du 10 octobre 2026 (`AUDIT-NOTATION-RESTITUTION.md`) et à
-la décision de Thomas le même jour : « enlève le SONCAS, garde 30, 90 et
-12 mois, et lance le lot 92 ».
+Branche `lot-92`, codée le 10 octobre sur le lot 80i puis rebâtie le
+22 octobre sur `main` après le lot 80v (lots 80j à 80v fusionnés entre
+temps depuis l'autre poste). Le lot répond à l'audit du 10 octobre 2026
+(`AUDIT-NOTATION-RESTITUTION.md`) et à la décision de Thomas le même jour :
+« enlève le SONCAS, garde 30, 90 et 12 mois, et lance le lot 92 ».
+
+Avec le lot 80k, les « quatre preuves exigées » pour 4 points (effectif,
+date acceptée, décideur nommé, raison de l'échec) remplacent l'ancien
+« chiffre exigé » ; ce lot les fait lire dans les paroles du prospect
+seulement, jamais dans les notes, et comme un nombre ne se remplace plus
+dans une citation, la preuve est de fait lue dans le transcript.
 
 ## 1. Le commercial est reconnu, ou la note le dit
 
@@ -102,8 +108,6 @@ suffit à le faire reconnaître.
   grille (« Consigne d'origine », puis « Publier ») : elle dit au modèle
   que les citations font trois mots au moins, recopient les nombres
   exactement et ne servent qu'à un critère.
-- Fermer la pull request #18 (lot-80j) sans la fusionner : ses commits sont
-  dans ce lot.
 - Vérifier que chaque commercial a son prénom et son nom dans son profil,
   tels qu'ils apparaissent dans les transcripts Teams.
 
