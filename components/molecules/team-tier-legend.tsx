@@ -16,7 +16,7 @@ import { RANKING_TIERS, tierRangeLabel } from "@/src/core/domain/team-ranking";
  */
 export function TeamTierLegend({
   className,
-  label = "Paliers :",
+  label = "Médailles :",
 }: {
   className?: string;
   /** Intitulé qui précède les insignes. `null` pour n'afficher que les insignes. */
@@ -33,7 +33,7 @@ export function TeamTierLegend({
       ) : null}
       <ul
         className="flex flex-wrap items-center gap-1.5"
-        aria-label="Paliers de note"
+        aria-label="Médailles"
       >
         {RANKING_TIERS.map((tier) => (
           <li key={tier.id} title={tierRangeLabel(tier)}>

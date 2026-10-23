@@ -92,8 +92,8 @@ function momentPointsTable(caption: string): ScoringTable {
 
 function tiersTable(): ScoringTable {
   return {
-    caption: "Le palier affiché au commercial",
-    head: ["SalesScore", "Palier"],
+    caption: "La médaille affichée au commercial",
+    head: ["SalesScore", "Médaille"],
     rows: scoreBands({ max: SCORECARD_TOTAL, pointsParUnite: 1 }).map((b) => [
       libelleTranche(b),
       b.tier.nom,
@@ -217,8 +217,8 @@ const OVERVIEWS: Partial<
     ],
     tables: [
       {
-        caption: "La note de conduite et son palier",
-        head: ["Note sur 10", "Palier"],
+        caption: "La note de conduite et sa médaille",
+        head: ["Note sur 10", "Médaille"],
         rows: coachingScoreBands().map((b) => [libelleTranche(b), b.tier.nom]),
       },
     ],

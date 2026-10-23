@@ -268,7 +268,7 @@ export function MeetingDetailShell({
           />
           <MeetingDetailTabs tabs={tabs} />
         </div>
-        <MeetingDetailRail {...rail} />
+        <MeetingDetailRail {...rail} meetingId={meeting.id} />
       </div>
     </div>
   );

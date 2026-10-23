@@ -140,14 +140,14 @@ describe("avertissementDeCadrage", () => {
   it("dit lesquels des chiffres affichés sont concernés", () => {
     /*
       La page pose trois lectures collectives au-dessus du tableau : un
-      classement, une moyenne et des paliers. Prévenir du périmètre sans dire
+      classement, une moyenne et des médailles. Prévenir du périmètre sans dire
       qu'il les commande toutes les trois laisserait le lecteur croire que seule
       la liste est en cause, et sa moyenne juste.
     */
     const phrase = avertissementDeCadrage("organization") ?? "";
     expect(phrase).toContain("classement");
     expect(phrase).toContain("moyenne");
-    expect(phrase).toContain("paliers");
+    expect(phrase).toContain("médailles");
   });
 
   it("parle exactement quand le périmètre ne filtre pas", () => {

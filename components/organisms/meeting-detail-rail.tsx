@@ -1,4 +1,5 @@
 import { ToneChip } from "@/components/atoms/tone-chip";
+import { MedalReveal } from "@/components/molecules/medal-reveal";
 import { SalesScoreRing } from "@/components/molecules/sales-score-ring";
 import { Card, CardContent } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
@@ -19,6 +20,8 @@ const dateShort = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export type MeetingDetailRailProps = {
+  /** Pour que la médaille ne fasse son entrée qu'une fois par rendez-vous. */
+  meetingId?: string;
   salesScore: number | null;
   scorePending: boolean;
   gridName: string | null;
@@ -97,6 +100,14 @@ function ScoreCard(props: MeetingDetailRailProps) {
                 : "Sans grille pour ce type de rendez-vous : le rendez-vous n'est pas noté."}
             </p>
           </div>
+          {props.meetingId && !props.scorePending ? (
+            <div className="ml-auto shrink-0 pl-1">
+              <MedalReveal
+                score={props.salesScore}
+                meetingId={props.meetingId}
+              />
+            </div>
+          ) : null}
         </div>
         <dl className="mt-3.5 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-[12.6px]">
           <dt className="text-muted-foreground whitespace-nowrap">

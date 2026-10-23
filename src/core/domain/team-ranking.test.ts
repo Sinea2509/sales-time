@@ -255,8 +255,8 @@ describe("libellés", () => {
   });
 
   it("borne chaque palier de façon lisible", () => {
-    expect(tierRangeLabel(RANKING_TIERS[0]!)).toBe("Démarrage : 0 à 1,9");
-    expect(tierRangeLabel(RANKING_TIERS[3]!)).toBe("Excellence : 4 à 5");
+    expect(tierRangeLabel(RANKING_TIERS[0]!)).toBe("Bronze : 0 à 1,9");
+    expect(tierRangeLabel(RANKING_TIERS[3]!)).toBe("Diamant : 4 à 5");
   });
 
   it("accorde le nombre de rendez-vous dans l'explication", () => {
@@ -274,9 +274,11 @@ describe("libellés", () => {
     );
   });
 
-  it("annonce que le palier est retenu, pas seulement le rang", () => {
-    expect(unrankedExplanation("sans-note", 0, 3)).toContain("palier");
-    expect(unrankedExplanation("volume-insuffisant", 1, 3)).toContain("palier");
+  it("annonce que la médaille est retenue, pas seulement le rang", () => {
+    expect(unrankedExplanation("sans-note", 0, 3)).toContain("médaille");
+    expect(unrankedExplanation("volume-insuffisant", 1, 3)).toContain(
+      "médaille",
+    );
   });
 
   it("n'utilise aucun tiret cadratin", () => {
@@ -294,31 +296,31 @@ describe("libellés", () => {
   });
 });
 
-describe("vocabulaire des paliers", () => {
+describe("vocabulaire des médailles", () => {
   /**
-   * Le palier s'affiche à côté du rang, et sur les mêmes écrans que les leviers
-   * SONCAS et les profils DISC des prospects. Un palier qui reprendrait un mot
-   * déjà pris ferait porter deux sens au même mot : le lecteur ne pourrait plus
-   * savoir lequel il lit. Ces deux tests gardent la décision de nommage, qui ne
-   * se voit qu'à l'écran et se perdrait sans eux.
+   * Décision de Thomas du 23 octobre 2026 : les paliers deviennent des
+   * médailles. « Argent » est aussi un levier SONCAS affiché sur les mêmes
+   * écrans : c'est pourquoi une phrase écrit toujours l'intitulé complet, que
+   * ces tests gardent distinct de tout mot SONCAS ou DISC.
    */
-  it("n'emprunte aucun mot au vocabulaire SONCAS ou DISC", () => {
+  it("nomme les quatre médailles dans l'ordre", () => {
+    expect(RANKING_TIERS.map((t) => t.nom)).toEqual([
+      "Bronze",
+      "Argent",
+      "Or",
+      "Diamant",
+    ]);
+  });
+
+  it("écrit dans les phrases un intitulé qui n'emprunte rien à SONCAS ou DISC", () => {
     const dejaPris = new Set(
       [...Object.values(SONCAS_LABEL_FR), ...Object.values(DISC_LABEL_FR)].map(
         (mot) => mot.toLowerCase(),
       ),
     );
     RANKING_TIERS.forEach((tier) => {
-      expect(dejaPris.has(tier.nom.toLowerCase())).toBe(false);
-    });
-  });
-
-  it("ne nomme aucun palier d'après une place de podium", () => {
-    // Un palier est absolu et peut être partagé ; le rang, lui, est relatif et
-    // s'affiche dans la colonne voisine. « 3e place · Or » se contredirait.
-    const podium = ["or", "argent", "bronze", "1er", "premier", "première"];
-    RANKING_TIERS.forEach((tier) => {
-      expect(podium).not.toContain(tier.nom.toLowerCase());
+      expect(tier.intitule.startsWith("médaille")).toBe(true);
+      expect(dejaPris.has(tier.intitule.toLowerCase())).toBe(false);
     });
   });
 

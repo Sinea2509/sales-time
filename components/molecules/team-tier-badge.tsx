@@ -1,3 +1,4 @@
+import { Medal } from "@/components/atoms/medal";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import {
@@ -7,43 +8,31 @@ import {
 } from "@/src/core/domain/team-ranking";
 
 /**
- * Les paliers sont une grandeur ordonnée, donc leur couleur l'est aussi : une
- * seule teinte, du clair au foncé, plutôt que quatre teintes concurrentes qui
- * feraient croire à quatre catégories sans ordre.
- *
- * Les quatre marches sont espacées régulièrement en clarté perçue (OKLCH 0,943 ·
- * 0,702 · 0,491 · 0,283 en thème clair) et non prises au hasard dans la rampe :
- * l'écart de contraste entre deux marches voisines vaut 2,40 · 2,56 · 2,10, si
- * bien qu'aucune paire ne se confond. Le thème sombre reprend la même progression
- * en miroir, du plus sombre au plus clair, mesurée sur le fond zinc-900 : 1,67 ·
- * 1,56 · 2,06.
- *
- * Chaque encre a été calculée sur son fond, pas choisie à l'œil : 7,71 · 5,36 ·
- * 7,29 · 15,28 en clair, 8,21 · 7,71 · 5,88 · 5,36 en sombre, toutes au-dessus du
- * seuil AA de 4,5.
- *
- * Enfin le nom du palier est toujours écrit à côté, si bien que la couleur
- * renforce l'ordre sans jamais porter seule l'information.
+ * La couleur de chaque médaille, du bronze au diamant : un fond pâle du métal
+ * et une encre sombre de la même teinte, lisible au seuil AA. Le nom de la
+ * médaille et son dessin sont toujours à côté : la couleur renforce, elle ne
+ * porte jamais seule l'information.
  *
  * Exporté parce que la piste de répartition peint ses pastilles avec ces mêmes
- * quatre marches : le manager y reconnaît d'un coup d'œil les paliers qu'il lit
- * une ligne plus bas dans le tableau. Une seconde échelle recopiée à côté
- * finirait par en dériver, et deux violets voisins qui ne veulent pas dire la
- * même chose sur le même écran, c'est pire que pas de couleur du tout.
+ * couleurs : le manager y reconnaît d'un coup d'œil les médailles qu'il lit une
+ * ligne plus bas dans le tableau.
+ *
+ * Décision de Thomas du 23 octobre 2026 : les paliers deviennent des médailles,
+ * et la rampe de violets laisse place aux métaux.
  */
 export const TEAM_TIER_CLASS: Record<RankingTierId, string> = {
   demarrage:
-    "bg-violet-100 text-violet-800 ring-violet-300 dark:bg-violet-950 dark:text-violet-300 dark:ring-violet-800",
+    "bg-[#F6E1CF] text-[#6B3A17] ring-[#D9A27A] dark:bg-[#3A2416] dark:text-[#F3C9A7] dark:ring-[#7E4A28]",
   progression:
-    "bg-violet-400 text-violet-950 ring-violet-500 dark:bg-violet-800 dark:text-violet-100 dark:ring-violet-700",
+    "bg-[#ECEFF4] text-[#3D4557] ring-[#B6BECC] dark:bg-[#272B34] dark:text-[#D8DDE6] dark:ring-[#5B6476]",
   maitrise:
-    "bg-violet-700 text-white ring-violet-800 dark:bg-violet-600 dark:text-white dark:ring-violet-500",
+    "bg-[#FFF0C2] text-[#6B4A00] ring-[#E8BE4F] dark:bg-[#3A2C08] dark:text-[#FFDD84] dark:ring-[#8A6512]",
   excellence:
-    "bg-violet-950 text-white ring-violet-800 dark:bg-violet-400 dark:text-violet-950 dark:ring-violet-300",
+    "bg-[#E4F6FD] text-[#3A21A8] ring-[#9FD8F0] dark:bg-[#1E1A3D] dark:text-[#C9EEFC] dark:ring-[#5B3DF5]",
 };
 
 const CHIP_BASE =
-  "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap";
+  "inline-flex items-center gap-1 rounded-full py-0.5 pr-2 pl-1 text-xs font-semibold ring-1 ring-inset whitespace-nowrap";
 
 export function TeamTierBadge({
   tier,
@@ -63,12 +52,12 @@ export function TeamTierBadge({
       <span
         className={cn(
           CHIP_BASE,
-          "bg-muted text-foreground ring-border dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700",
+          "bg-muted text-foreground ring-border pl-2 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700",
           className,
         )}
         title={
           unavailableTitle ??
-          "Palier non décerné : ce membre n'est pas au classement."
+          "Médaille non décernée : ce membre n'est pas au classement."
         }
       >
         {VALEUR_NON_CALCULABLE}
@@ -81,6 +70,7 @@ export function TeamTierBadge({
       className={cn(CHIP_BASE, TEAM_TIER_CLASS[tier.id], className)}
       title={tierRangeLabel(tier)}
     >
+      <Medal tier={tier.id} size="xs" />
       {tier.nom}
     </span>
   );
