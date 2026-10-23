@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
   FileText,
   LayoutDashboard,
   Mail,
@@ -10,16 +9,10 @@ import {
 } from "lucide-react";
 
 export const landingHeroStats = [
-  { value: "30 s", label: "Pour une première analyse" },
+  { value: "42 min", label: "Temps moyen économisé après chaque RDV" },
   { value: "5+", label: "Frameworks (KISS, DISC…)" },
   { value: "100%", label: "Données restent les vôtres" },
   { value: "24/7", label: "Disponible après chaque RDV" },
-] as const;
-
-export const landingTrustItems = [
-  "Essai gratuit",
-  "Pas de carte bancaire",
-  "Équipes B2B",
 ] as const;
 
 export const landingCtaTrustItems = [
@@ -57,34 +50,22 @@ export const landingPerspectiveTabs: LandingPerspectiveTab[] = [
     id: "commercial",
     label: "Commercial",
     icon: User,
-    title: "Gagnez du Temps Utile Commercial",
-    description:
-      "Compte rendu structuré, coaching KISS, mail de suivi prêt à envoyer, profil DISC et SONCAS, sans repasser des heures sur le CRM.",
+    title:
+      "Réduisez drastiquement votre temps administratif, optimisez votre Temps Utile Commercial (TUC)",
+    description: "Un outil créé par des Sales, pour des Sales.",
     bullets: [
-      "Synthèse du RDV en 30 secondes",
-      "Coaching personnalisé selon le profil prospect",
-      "Mail de relance généré et modifiable",
-      "Dashboard : TAM, tendances, next actions",
+      "Compte rendu de RDV structuré",
+      "Coaching KISS",
+      "Mail de suivi prêt à envoyer",
+      "Profil DISC et SONCAS de votre interlocuteur",
+      "Préparation automatique du prochain RDV",
+      "Sans repasser des heures sur le CRM",
     ],
   },
   {
     id: "manager",
     label: "Manager",
     icon: Users,
-    title: "Pilotez la qualité sans micro-management",
-    description:
-      "Vue équipe sur le volume de RDV coachés, les axes de coaching collectifs et les signaux de risque, sans lire chaque note individuellement.",
-    bullets: [
-      "Dashboard équipe : TAM agrégé, volume, DISC",
-      "Profil de chaque commercial et axes à coacher",
-      "Signaux de risque sur les deals en cours",
-      "Répartition DISC et SONCAS de l'équipe",
-    ],
-  },
-  {
-    id: "direction",
-    label: "Direction",
-    icon: BarChart3,
     title: "Mesurez le ROI commercial avec clarté",
     description:
       "Indicateurs consolidés : TUC, TAM, volume et thématiques récurrentes. Un argument ROI clair pour piloter l'investissement commercial.",
@@ -107,7 +88,7 @@ export const landingHowSteps = [
   },
   {
     step: "02",
-    title: "L'IA génère la fiche RDV",
+    title: "Notre IA génère la fiche RDV",
     description:
       "Synthèse, coaching KISS, profil DISC/SONCAS avec verbatims et mail de suivi, en quelques secondes.",
     icon: Sparkles,
@@ -123,13 +104,13 @@ export const landingHowSteps = [
 
 export const landingFeatureCards = [
   {
-    title: "Fiche RDV analysée",
+    title: "Reporting de RDV structuré",
     description:
       "Métadonnées, synthèse du contexte et des enjeux, pistes de solution, prête à partager ou à archiver dans votre CRM.",
     icon: FileText,
   },
   {
-    title: "Coaching KISS personnalisé",
+    title: "Débriefing, recommandations et coaching personnalisé après le RDV",
     description:
       "Recommandations adaptées au profil du prospect : ce qu'il faut garder, améliorer, arrêter et commencer, golden question incluse.",
     icon: Sparkles,
@@ -150,14 +131,14 @@ export const landingFeatureCards = [
 
 export const landingTestimonial = {
   quote:
-    "On a enfin un fil conducteur après les RDV : la synthèse et le mail de relance nous font gagner un créneau entier chaque semaine.",
+    "On a enfin un fil conducteur après les RDV : la synthèse et le mail de relance nous font gagner une demi-journée entière chaque semaine.",
   name: "Directrice commerciale",
   role: "PME logiciel · 14 commerciaux",
   initials: "ML",
   stats: [
-    { value: "~4h", label: "Temps libéré / semaine" },
+    { value: "~4h", label: "Temps libéré / semaine / commercial" },
     { value: "120+", label: "RDV coachés / mois" },
-    { value: "92%", label: "Adoption équipe" },
+    { value: "100%", label: "Adoption équipe" },
   ],
 } as const;
 

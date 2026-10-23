@@ -19,16 +19,16 @@ export type LandingTestimonialSlide = {
 export const landingTestimonialSlides: LandingTestimonialSlide[] = [
   {
     quote:
-      "On a enfin un fil conducteur après les RDV : la synthèse et le mail de relance nous font gagner un créneau entier chaque semaine.",
+      "On a enfin un fil conducteur après les RDV : la synthèse et le mail de relance nous font gagner une demi-journée entière chaque semaine.",
     role: "Directrice commerciale",
     context: "PME logiciel · 14 commerciaux",
     initials: "ML",
     portrait:
       "from-zinc-400 via-zinc-500 to-zinc-700 dark:from-zinc-600 dark:via-zinc-700 dark:to-zinc-900",
     kpis: [
-      { label: "Temps libéré", value: "~4 h" },
+      { label: "Temps libéré / semaine / commercial", value: "~4 h" },
       { label: "RDV coachés / mois", value: "120+" },
-      { label: "Adoption équipe", value: "92 %" },
+      { label: "Adoption équipe", value: "100 %" },
     ],
   },
   {
