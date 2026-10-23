@@ -45,6 +45,16 @@ export type TalkShareHints = {
 const TIMESTAMP = String.raw`\d{1,2}:\d{2}(?::\d{2})?`;
 /** « Lisa ANDROLUS   0:03 » : le nom puis l'horodatage, rien d'autre (Teams, Zoom, Meet). */
 const NAME_THEN_TIMESTAMP = new RegExp(`^\\s*(.{1,60}?)\\s+${TIMESTAMP}\\s*$`);
+/**
+ * « Paul Martin   0:03Bonjour à tous… » : le nom, l'horodatage et la réplique
+ * sur une seule ligne. Un export Teams collé ou importé perd parfois le saut
+ * de ligne après l'horodatage. Deux espaces au moins séparent le nom de
+ * l'horodatage, comme dans Teams : « on se voit à 10:30 demain » ne se lit pas
+ * comme une prise de parole.
+ */
+const NAME_TIMESTAMP_TEXT = new RegExp(
+  `^\\s*(.{1,60}?)\\s{2,}${TIMESTAMP}(?!\\d)\\s*(.*)$`,
+);
 /** Un horodatage en tête de ligne : « [00:03] », « 00:03 - ». */
 const LEADING_TIMESTAMP = new RegExp(
   `^\\s*[\\[(]?${TIMESTAMP}[\\])]?\\s*[-–]?\\s*`,
@@ -120,6 +130,10 @@ function readSpeakerLine(line: string): SpeakerLine | null {
   const teams = NAME_THEN_TIMESTAMP.exec(line);
   if (teams && isSpeakerLabel(teams[1])) {
     return { label: teams[1].trim(), spoken: "" };
+  }
+  const glued = NAME_TIMESTAMP_TEXT.exec(line);
+  if (glued && isSpeakerLabel(glued[1])) {
+    return { label: glued[1].trim(), spoken: glued[2] };
   }
   const withTimestamp = NAME_TIMESTAMP_COLON.exec(line);
   if (withTimestamp && isSpeakerLabel(withTimestamp[1])) {
