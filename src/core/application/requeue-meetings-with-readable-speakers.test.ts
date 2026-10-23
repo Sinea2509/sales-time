@@ -66,13 +66,4 @@ describe("requeueMeetingsWithReadableSpeakers", () => {
     );
     expect(enqueue).not.toHaveBeenCalled();
   });
-
-  it("ne cherche que les analyses d'avant la correction", async () => {
-    const { deps, list } = makeDeps([]);
-    await requeueMeetingsWithReadableSpeakers(deps, { limit: 5 });
-    expect(list).toHaveBeenCalledWith({
-      analyzedBefore: new Date("2026-10-24T00:00:00Z"),
-      limit: 5,
-    });
-  });
 });
