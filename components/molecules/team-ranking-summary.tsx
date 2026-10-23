@@ -256,7 +256,7 @@ export function TeamRankingSummary({
           </div>
           {palier == null ? null : (
             <span className="mt-0.5 inline-flex items-center rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-xs font-semibold whitespace-nowrap">
-              Palier {palier.nom}
+              Médaille : {palier.nom}
             </span>
           )}
         </div>

@@ -31,6 +31,12 @@ export type RankingTier = {
   readonly id: RankingTierId;
   /** Nom du palier. Un nom, jamais un adjectif : il ne s'accorde avec personne. */
   readonly nom: string;
+  /**
+   * La médaille en toutes lettres, pour les phrases : « médaille d'argent »,
+   * jamais « Argent » seul, qui est aussi le nom d'un levier SONCAS affiché
+   * sur les mêmes écrans.
+   */
+  readonly intitule: string;
   /** Borne basse incluse, sur l'échelle /5 affichée au manager. */
   readonly minNoteOn5: number;
   /** Borne haute exclue. `null` sur le dernier palier, qui monte jusqu'à 5. */
@@ -42,21 +48,47 @@ export type RankingTier = {
  * bornes SalesScore 40, 60 et 80 sur l'échelle 0–100, puisque la note affichée
  * vaut le SalesScore divisé par 20.
  *
- * Les noms nomment un niveau atteint, jamais une place sur un podium. Une série
- * de médailles serait plus flatteuse, mais elle mentirait deux fois sur le même
- * écran. « Or » veut dire premier partout ailleurs, alors qu'un palier est
- * absolu et se décerne à tous ceux qui sont dans la tranche, pendant que la
- * colonne voisine annonce le vrai rang : on lirait « 3e place · Or » sur la même
- * ligne. Et « Argent » est déjà le nom d'un levier SONCAS, affiché sur les mêmes
- * écrans, si bien que le même mot y désignerait un niveau de performance et une
- * motivation d'achat. Tout nom ajouté ici doit donc être vérifié contre le
- * vocabulaire SONCAS, DISC et les types de rendez-vous avant d'être retenu.
+ * Des médailles, depuis la décision de Thomas du 23 octobre 2026 : Bronze,
+ * Argent, Or, Diamant, comme dans sa méthode SEED HUNTER. Les anciens noms
+ * (Démarrage, Progression, Maîtrise, Excellence) avaient été choisis pour
+ * éviter deux confusions, que l'écran désamorce désormais :
+ * - « Or » se lit comme une première place, alors qu'une médaille se décerne à
+ *   tous ceux qui sont dans la tranche. Le rang garde donc sa colonne et ses
+ *   trophées, distincts de la médaille, qui s'affiche toujours avec son dessin.
+ * - « Argent » est aussi un levier SONCAS. Dans une phrase, on écrit donc
+ *   l'intitulé (« médaille d'argent »), jamais le nom seul.
+ * Les identifiants internes gardent les anciens noms : ils ne s'affichent pas,
+ * et les changer n'apporterait que du risque.
  */
 export const RANKING_TIERS: readonly RankingTier[] = [
-  { id: "demarrage", nom: "Démarrage", minNoteOn5: 0, maxNoteOn5: 2 },
-  { id: "progression", nom: "Progression", minNoteOn5: 2, maxNoteOn5: 3 },
-  { id: "maitrise", nom: "Maîtrise", minNoteOn5: 3, maxNoteOn5: 4 },
-  { id: "excellence", nom: "Excellence", minNoteOn5: 4, maxNoteOn5: null },
+  {
+    id: "demarrage",
+    nom: "Bronze",
+    intitule: "médaille de bronze",
+    minNoteOn5: 0,
+    maxNoteOn5: 2,
+  },
+  {
+    id: "progression",
+    nom: "Argent",
+    intitule: "médaille d'argent",
+    minNoteOn5: 2,
+    maxNoteOn5: 3,
+  },
+  {
+    id: "maitrise",
+    nom: "Or",
+    intitule: "médaille d'or",
+    minNoteOn5: 3,
+    maxNoteOn5: 4,
+  },
+  {
+    id: "excellence",
+    nom: "Diamant",
+    intitule: "médaille diamant",
+    minNoteOn5: 4,
+    maxNoteOn5: null,
+  },
 ];
 
 /**
@@ -341,11 +373,11 @@ export function unrankedExplanation(
   minScoredMeetings: number,
 ): string {
   if (reason === "sans-note") {
-    return "Aucun rendez-vous noté sur la période : pas de score, donc ni rang ni palier.";
+    return "Aucun rendez-vous noté sur la période : pas de score, donc ni rang ni médaille.";
   }
   const compte =
     scoredMeetings <= 1
       ? `${scoredMeetings} rendez-vous noté`
       : `${scoredMeetings} rendez-vous notés`;
-  return `${compte} sur la période, en dessous du seuil de ${minScoredMeetings} : le score reste affiché, le rang et le palier attendent le volume.`;
+  return `${compte} sur la période, en dessous du seuil de ${minScoredMeetings} : le score reste affiché, le rang et la médaille attendent le volume.`;
 }

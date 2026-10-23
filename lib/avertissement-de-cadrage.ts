@@ -33,5 +33,5 @@ export function avertissementDeCadrage(
   comparisonGroup: TeamScopeGroup,
 ): string | null {
   if (comparisonGroup === "team") return null;
-  return "Personne ne vous est rattaché pour l'instant : « équipe » désigne donc ici l'organisation entière. Le classement, la moyenne et les paliers comptent tous ses membres.";
+  return "Personne ne vous est rattaché pour l'instant : « équipe » désigne donc ici l'organisation entière. Le classement, la moyenne et les médailles comptent tous ses membres.";
 }

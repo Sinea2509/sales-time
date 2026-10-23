@@ -263,9 +263,9 @@ export function MonEquipeSection({
                 </DataTableHead>
                 <DataTableHead
                   className="hidden px-4 py-3.5 @min-[580px]:table-cell dark:text-zinc-400"
-                  title={`Palier atteint sur l'échelle de 0 à 5. Deux membres peuvent partager un palier sans partager une place. Au-dessous de ${monEquipe.ranking.minScoredMeetings} rendez-vous notés, la note est affichée mais le palier n'est pas décerné.`}
+                  title={`Médaille obtenue : bronze sous 40, argent de 40 à 59, or de 60 à 79, diamant à partir de 80. Plusieurs membres peuvent avoir la même médaille sans partager une place. Au-dessous de ${monEquipe.ranking.minScoredMeetings} rendez-vous notés, la note est affichée mais la médaille n'est pas décernée.`}
                 >
-                  Palier
+                  Médaille
                 </DataTableHead>
                 <DataTableHead
                   className="hidden px-4 py-3.5 @min-[940px]:table-cell dark:text-zinc-400"
