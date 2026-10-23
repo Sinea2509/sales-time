@@ -1,3 +1,5 @@
+import { PrismaOrganizationFeaturesRepository } from "@/src/adapters/prisma/prisma-organization-features-repository";
+import type { OrganizationFeaturesRepositoryPort } from "@/src/core/ports/organization-features-repository-port";
 import { prisma } from "@/lib/prisma";
 import { PrismaAdminSearchRepository } from "@/src/adapters/prisma/prisma-admin-search-repository";
 import { PrismaPlatformHealthRepository } from "@/src/adapters/prisma/prisma-platform-health-repository";
@@ -96,6 +98,7 @@ export type ApplicationDeps = {
   feedbacks: FeedbackRepositoryPort;
   notifications: NotificationRepositoryPort;
   organizationQuota: OrganizationQuotaRepositoryPort;
+  organizationFeatures: OrganizationFeaturesRepositoryPort;
   aiSummaryCache: AiSummaryCacheRepositoryPort;
   demoTenant: DemoTenantPort;
 };
@@ -135,6 +138,7 @@ export function makeApplicationDeps(): ApplicationDeps {
     feedbacks: new PrismaFeedbackRepository(prisma),
     notifications: new PrismaNotificationRepository(prisma),
     organizationQuota: new PrismaOrganizationQuotaRepository(prisma),
+    organizationFeatures: new PrismaOrganizationFeaturesRepository(prisma),
     aiSummaryCache: new PrismaAiSummaryCacheRepository(prisma),
     demoTenant: new PrismaDemoTenantAdapter(prisma),
   };

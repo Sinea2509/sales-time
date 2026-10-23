@@ -1,3 +1,4 @@
+import { MeetingPipedriveTab } from "@/components/organisms/meeting-pipedrive-tab";
 import { ToneChip } from "@/components/atoms/tone-chip";
 import { InfoCard } from "@/components/molecules/info-card";
 import { MeetingAnalysisProgressCard } from "@/components/molecules/meeting-analysis-progress-card";
@@ -70,6 +71,8 @@ export type MeetingDetailShellProps = {
    * scorecard dit ce que KISS dit, en plus détaillé.
    */
   showSellerCoaching: boolean;
+  /** Onglet Pipedrive (méthode SEED), pour les organisations qui ont la fonctionnalité. */
+  pipedriveBlocks?: boolean;
   canEdit?: boolean;
   processingLooksSlow?: boolean;
   processingLooksStuck?: boolean;
@@ -112,6 +115,7 @@ export function MeetingDetailShell({
   objectionsResult,
   transcriptSourceLabel,
   showSellerCoaching,
+  pipedriveBlocks = false,
   canEdit = false,
   processingLooksSlow = false,
   processingLooksStuck = false,
@@ -197,6 +201,15 @@ export function MeetingDetailShell({
         <CoachingReserved what="Défis et coaching" />
       ),
     },
+    ...(pipedriveBlocks
+      ? [
+          {
+            id: "pipedrive" as const,
+            label: "Pipedrive",
+            panel: <MeetingPipedriveTab meetingId={meeting.id} />,
+          },
+        ]
+      : []),
     {
       id: "email",
       label: "E-mail",

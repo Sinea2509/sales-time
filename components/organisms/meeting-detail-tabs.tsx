@@ -9,6 +9,7 @@ export type MeetingDetailTabId =
   | "soncas"
   | "disc"
   | "kiss"
+  | "pipedrive"
   | "email"
   | "transcript";
 

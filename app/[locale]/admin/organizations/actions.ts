@@ -1,4 +1,5 @@
 "use server";
+import { isOrganizationFeatureId } from "@/src/core/domain/organization-features";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -183,5 +184,49 @@ export async function deleteOrganizationAction(
   await deps.backoffice.deleteOrganizationById(orgId);
 
   revalidatePath("/admin/organizations");
+  return { ok: true };
+}
+
+const setFeatureSchema = z.object({
+  organizationId: z.string().min(1),
+  feature: z
+    .string()
+    .refine(isOrganizationFeatureId, "Fonctionnalité inconnue."),
+  enabled: z.boolean(),
+});
+
+/** Active ou retire une fonctionnalité réservée pour une organisation. */
+export async function setOrganizationFeatureAction(
+  raw: z.input<typeof setFeatureSchema>,
+): Promise<ActionResult> {
+  const deps = getApplicationDeps();
+  const gate = await requireSuperAdminActor(deps);
+  if (!gate.ok) return gate;
+
+  const parsed = setFeatureSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0].message };
+  }
+  const { organizationId, feature, enabled } = parsed.data;
+  if (!isOrganizationFeatureId(feature)) {
+    return { ok: false, message: "Fonctionnalité inconnue." };
+  }
+
+  const org = await deps.backoffice.findOrganizationById(organizationId);
+  if (!org) return { ok: false, message: "Organisation introuvable." };
+
+  await deps.organizationFeatures.setFeature({
+    organizationId,
+    feature,
+    enabled,
+  });
+  await deps.backoffice.createSuperAdminAuditLog({
+    actorUserId: gate.actorUserId,
+    organizationId,
+    action: "SET_ORGANIZATION_FEATURE",
+    reason: `${enabled ? "Activé" : "Retiré"} : ${feature}`,
+  });
+
+  revalidatePath(`/admin/organizations/${organizationId}`);
   return { ok: true };
 }
