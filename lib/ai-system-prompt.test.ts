@@ -3,11 +3,14 @@ import {
   DISC_MOMENTS_INSTRUCTION,
   SONCAS_MOMENTS_INSTRUCTION,
   FRENCH_QUALITY_INSTRUCTION,
+  COACH_VOICE_INSTRUCTION,
   FRENCH_TYPOGRAPHY_INSTRUCTION,
   KISS_SELLER_SKILLS_INSTRUCTION,
   withDataScopeSystemPrompt,
   withDiscSystemPrompt,
   withKissSystemPrompt,
+  withObjectionsSystemPrompt,
+  withProspectProfileSystemPrompt,
   withScorecardSystemPrompt,
   withSoncasSystemPrompt,
 } from "./ai-system-prompt";
@@ -398,5 +401,47 @@ describe("withScorecardSystemPrompt", () => {
 
     expect(avant.endsWith("\n\n")).toBe(true);
     expect(avant.endsWith("\n\n\n")).toBe(false);
+  });
+});
+
+/*
+  Retour de Thomas du 21 octobre 2026 : les analyses que le commercial lit sur
+  lui-même lui parlent en coach, au vouvoiement. La règle est jointe hors de la
+  consigne éditable, pour qu'aucune réécriture ne la fasse sauter ; le compte
+  rendu de visite, lui, reste neutre.
+*/
+describe("la voix du coach", () => {
+  it("parle au commercial, au vouvoiement, et commence par ce qui a marché", () => {
+    expect(COACH_VOICE_INSTRUCTION).toContain("au vouvoiement");
+    expect(COACH_VOICE_INSTRUCTION).toContain(
+      "N'écris jamais « le commercial »",
+    );
+    expect(COACH_VOICE_INSTRUCTION).toContain(
+      "Commence par ce qui a vraiment marché",
+    );
+  });
+
+  it("est jointe au SalesScore, au coaching, aux objections et au profil du prospect", () => {
+    expect(
+      withScorecardSystemPrompt("CONSIGNE", DEFAULT_SCORECARD_GRID),
+    ).toContain(COACH_VOICE_INSTRUCTION);
+    expect(withKissSystemPrompt("CONSIGNE")).toContain(COACH_VOICE_INSTRUCTION);
+    expect(withObjectionsSystemPrompt("CONSIGNE")).toContain(
+      COACH_VOICE_INSTRUCTION,
+    );
+    expect(
+      withProspectProfileSystemPrompt({
+        soncasMarkdown: "S",
+        discMarkdown: "D",
+        objectionsMarkdown: "O",
+        contextBlocks: [],
+      }),
+    ).toContain(COACH_VOICE_INSTRUCTION);
+  });
+
+  it("n'est pas jointe au compte rendu de visite, qui reste neutre", () => {
+    expect(withDataScopeSystemPrompt("CONSIGNE")).not.toContain(
+      COACH_VOICE_INSTRUCTION,
+    );
   });
 });

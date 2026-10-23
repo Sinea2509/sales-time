@@ -23,6 +23,31 @@ export const FRENCH_TYPOGRAPHY_INSTRUCTION =
   "Typographie : n'emploie jamais le tiret cadratin (—) comme ponctuation. Sépare les propositions par une virgule, un deux-points, un point-virgule ou un point. Le tiret demi-cadratin (–) ne sert qu'aux intervalles chiffrés, « 0–100 » par exemple. N'ouvre aucune ligne par un tiret : les puces sont posées par le produit, pas par toi.";
 
 /**
+ * La voix du coach, jointe à toute analyse que le commercial lit sur lui-même :
+ * le SalesScore, le coaching KISS, les objections et le profil du prospect.
+ *
+ * Retour de Thomas du 21 octobre 2026 : « on ne dirait pas qu'un coach nous
+ * parle, c'est une analyse froide ». Les consignes éditables disaient déjà
+ * « coach et allié », mais rien n'imposait de parler au commercial : les
+ * textes décrivaient « le commercial » à la troisième personne, comme un
+ * rapport. La règle vit ici, avec le reste du contrat non modifiable, pour
+ * qu'une consigne réécrite ne la fasse pas sauter. Le vouvoiement est le choix
+ * de Thomas, le même que dans les mails et l'application.
+ *
+ * Le compte rendu de visite n'est pas concerné : il se colle dans un CRM, et
+ * doit rester neutre.
+ */
+export const COACH_VOICE_INSTRUCTION = `## La voix du coach (règle du produit, elle l'emporte sur toute consigne de ton plus haut)
+Tu es le coach du commercial : quelqu'un qui est de son côté, qui l'aide à progresser et qui le lui dit. Tout ce que tu écris pour lui, il le lit sur lui-même, après son rendez-vous.
+- Parle-lui directement, au vouvoiement : « vous avez obtenu… », « la prochaine fois, essayez… ». N'écris jamais « le commercial » pour parler de lui. Le prospect se nomme par son nom quand le transcript le donne (« Madame Martin »), sinon « votre interlocuteur ».
+- Cela vaut pour chaque champ rédigé qu'il lit : le résumé de la note, le brief, chaque puce, chaque explication, chaque suggestion. Quand une consigne plus haut écrit « ce que le commercial a obtenu » ou « le commercial a… », elle te dit de quoi parler ; toi, tu l'écris en t'adressant à lui : « vous avez obtenu… ». Seuls les champs qui recopient les mots du transcript gardent la troisième personne.
+- Commence par ce qui a vraiment marché, avec le moment précis qui le montre. Un point fort réel, jamais un compliment de principe. Le brief du coach et le résumé de la note s'ouvrent ainsi, par une phrase qui commence par « Vous » et qui nomme une réussite de CE rendez-vous (sur le modèle de « Vous avez obtenu [ce qui a marché], et c'était le bon geste. », jamais recopié tel quel).
+- Puis ce qui reste à travailler, présenté comme une marge de progrès et non comme une faute : « vous pouvez aller plus loin en… », « il vous reste à… ».
+- Finis par du concret : la phrase exacte à dire la prochaine fois, entre guillemets, telle qu'il la dirait à voix haute.
+- Phrases courtes, une idée par phrase, mots de tous les jours. Évite le jargon d'analyste (« levier », « critère », « grille », « relevé ») dans les phrases qui s'adressent à lui, et les formules administratives (« il est recommandé de », « il convient de »). Ne répète pas « nous vous suggérons » d'une puce à l'autre.
+- Bienveillant, jamais complaisant : un manque se dit franchement, avec le moyen de progresser.`;
+
+/**
  * La définition des six notes du commercial, jointe à toute analyse KISS.
  *
  * Elle vit ici plutôt que dans la consigne KISS par défaut parce qu'un
@@ -169,6 +194,7 @@ export function withObjectionsSystemPrompt(systemMarkdown: string): string {
   return [
     withDataScopeSystemPrompt(systemMarkdown),
     OBJECTIONS_TREATMENT_INSTRUCTION,
+    COACH_VOICE_INSTRUCTION,
   ].join("\n\n");
 }
 
@@ -211,6 +237,7 @@ export function withProspectProfileSystemPrompt(input: {
     "# Lecture 3 : les objections, dans le champ `objections`",
     input.objectionsMarkdown.trim(),
     OBJECTIONS_TREATMENT_INSTRUCTION,
+    COACH_VOICE_INSTRUCTION,
     ...(context.length > 0
       ? [PROSPECT_PROFILE_CONTEXT_HEADING, ...context]
       : []),
@@ -232,6 +259,7 @@ export function withKissSystemPrompt(systemMarkdown: string): string {
     KISS_COHERENCE_INSTRUCTION,
     KISS_SELLER_SKILLS_INSTRUCTION,
     coachingScoreScaleInstruction(),
+    COACH_VOICE_INSTRUCTION,
   ].join("\n\n");
 }
 
@@ -252,6 +280,7 @@ export function withScorecardSystemPrompt(
 ): string {
   return [
     withDataScopeSystemPrompt(systemMarkdown),
+    COACH_VOICE_INSTRUCTION,
     scorecardGridInstruction(grid),
   ].join("\n\n");
 }

@@ -22,6 +22,7 @@ export function kissStopWithTalkShare<T extends { stop: string[] }>(
     /parle|parlé|parole|monologue/i.test(s),
   );
   if (alreadySaid) return result;
-  const bullet = `Le commercial a parlé ${talkShare.commercialPct} % du temps, au-delà du plafond de ${TALK_SHARE_CEILING_PCT} %, avec une prise de parole de ${talkShare.longestCommercialRunWords} mots d'affilée. Nous vous suggérons de couper ces longs passages par une question au prospect, pour qu'il parle davantage que vous.`;
+  // Dans la voix du coach, comme le reste du coaching (retour du 21 octobre 2026).
+  const bullet = `Vous avez parlé ${talkShare.commercialPct} % du temps, au-delà des ${TALK_SHARE_CEILING_PCT} % qui laissent la place à votre interlocuteur, avec une prise de parole de ${talkShare.longestCommercialRunWords} mots d'affilée. La prochaine fois, coupez ces longs passages par une question : c'est à lui de parler le plus.`;
   return { ...result, stop: [bullet, ...result.stop] };
 }

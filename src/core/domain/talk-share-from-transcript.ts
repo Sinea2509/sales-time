@@ -409,11 +409,12 @@ export function listeningMeasure(share: TalkShare): {
   const level = listeningLevelFromTalkShare(share.commercialPct);
   return {
     level,
-    learned: `Le commercial a parlé ${share.commercialPct} % du temps, ${share.prospectLabel} ${share.prospectPct} %. Sa plus longue prise de parole fait ${share.longestCommercialRunWords} mots.`,
+    // Dans la voix du coach, comme le reste du relevé (retour du 21 octobre 2026).
+    learned: `Vous avez parlé ${share.commercialPct} % du temps, ${share.prospectLabel} ${share.prospectPct} %. Votre plus longue prise de parole fait ${share.longestCommercialRunWords} mots.`,
     missing:
       level >= 4
         ? ""
-        : `Laisser davantage parler le prospect : le niveau 4 demande 40 % de parole au plus pour le commercial.`,
+        : `Laissez davantage parler votre interlocuteur : le niveau 4 demande 40 % de parole au plus de votre côté.`,
   };
 }
 
