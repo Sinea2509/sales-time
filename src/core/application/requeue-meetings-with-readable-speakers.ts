@@ -3,16 +3,9 @@ import type { AnalysisJobRepositoryPort } from "@/src/core/ports/analysis-job-re
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 
 /**
- * La date de la correction du lecteur de transcript : les exports Teams dont
- * la réplique suit l'horodatage sur la même ligne se lisent depuis le
- * 23 octobre 2026. Seules les analyses antérieures sont reprises : une analyse
- * plus récente a déjà profité de la correction, ce qui exclut toute boucle.
- */
-export const SPEAKERS_READER_FIXED_AT = new Date("2026-10-24T00:00:00Z");
-
-/**
- * Remet en file, une seule fois, les rendez-vous dont l'analyse n'avait pas
- * distingué les intervenants mais dont le transcript se lit désormais. Leur
+ * Remet en file les rendez-vous dont la dernière analyse n'avait pas distingué
+ * les intervenants mais dont le transcript se lit désormais. La nouvelle
+ * analyse les distingue : le rendez-vous ne revient donc pas une seconde fois. Leur
  * écoute et leur questionnement sont alors mesurés, sans que personne n'ait à
  * relancer quoi que ce soit.
  *
@@ -24,10 +17,9 @@ export async function requeueMeetingsWithReadableSpeakers(
     analysisJobs: AnalysisJobRepositoryPort;
     meetings: MeetingRepositoryPort;
   },
-  input: { limit: number; analyzedBefore?: Date },
+  input: { limit: number },
 ): Promise<number> {
   const candidates = await deps.analysisJobs.listMeetingsWithUnreadSpeakers({
-    analyzedBefore: input.analyzedBefore ?? SPEAKERS_READER_FIXED_AT,
     limit: input.limit,
   });
 

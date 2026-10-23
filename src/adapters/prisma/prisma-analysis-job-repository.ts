@@ -4,6 +4,9 @@ import type {
   AnalysisJobRow,
 } from "@/src/core/ports/analysis-job-repository-port";
 
+/** « Nom   0:03Texte » : une réplique Teams avec son horodatage sur la même ligne. */
+const SAME_LINE_TEAMS_TURN_SQL = String.raw`\S {2,}[0-9]{1,2}:[0-9]{2}(:[0-9]{2})?[^0-9[:space:]]`;
+
 function mapJob(row: {
   id: string;
   organizationId: string;
@@ -208,29 +211,40 @@ export class PrismaAnalysisJobRepository implements AnalysisJobRepositoryPort {
   }
 
   async listMeetingsWithUnreadSpeakers(input: {
-    analyzedBefore: Date;
     limit: number;
   }): Promise<
     Array<{ id: string; organizationId: string; transcript: string }>
   > {
-    return this.db.meeting.findMany({
-      where: {
-        status: "READY",
-        analyses: {
-          some: {
-            kind: "SCORECARD",
-            createdAt: { lt: input.analyzedBefore },
-            result: { path: ["speakers"], equals: "none" },
-          },
-          none: { kind: "SCORECARD", createdAt: { gte: input.analyzedBefore } },
-        },
-        analysisJobs: {
-          none: { status: { in: ["QUEUED", "PROCESSING"] } },
-        },
-      },
-      select: { id: true, organizationId: true, transcript: true },
-      orderBy: { meetingAt: "desc" },
-      take: input.limit,
-    });
+    /*
+      Seule la scorecard la plus récente compte : une ancienne analyse sans
+      intervenants, remplacée depuis par une analyse qui les distingue, ne
+      doit plus rien déclencher. Une scorecard sans le champ `speakers`
+      (antérieure à ce champ) n'est reprise que si le transcript a des
+      répliques Teams sur une seule ligne, le cas corrigé.
+    */
+    return this.db.$queryRaw<
+      Array<{ id: string; organizationId: string; transcript: string }>
+    >`
+      WITH latest AS (
+        SELECT DISTINCT ON ("meetingId") "meetingId", result->>'speakers' AS speakers
+        FROM "MeetingAnalysis"
+        WHERE kind = 'SCORECARD'
+        ORDER BY "meetingId", "createdAt" DESC
+      )
+      SELECT m.id, m."organizationId", m.transcript
+      FROM "Meeting" m
+      JOIN latest l ON l."meetingId" = m.id
+      WHERE m.status = 'READY'
+        AND (
+          l.speakers = 'none'
+          OR (l.speakers IS NULL AND m.transcript ~ ${SAME_LINE_TEAMS_TURN_SQL})
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM "AnalysisJob" j
+          WHERE j."meetingId" = m.id AND j.status IN ('QUEUED', 'PROCESSING')
+        )
+      ORDER BY m."meetingAt" DESC
+      LIMIT ${input.limit}
+    `;
   }
 }
