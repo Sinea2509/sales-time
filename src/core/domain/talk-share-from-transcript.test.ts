@@ -99,6 +99,38 @@ describe("talkShareFromTranscript, transcripts réels", () => {
     expect(share?.commercialPct).toBe(64);
   });
 
+  it("lit le format Teams quand la réplique suit l'horodatage sur la même ligne", () => {
+    // Un export Teams importé perd parfois le saut de ligne : « Lisa ANDROLUS   0:03Je suis dans. »
+    const glued = teams.replace(/( {3}\d{1,2}:\d{2})\n/g, "$1");
+    expect(glued).toContain("Lisa ANDROLUS   0:03Je suis dans.");
+    const share = talkShareFromTranscript(glued);
+    expect(share?.commercialLabel).toBe("Cédric Laigneau");
+    expect(share?.prospectLabel).toBe("Lisa ANDROLUS");
+    expect(share?.commercialPct).toBe(64);
+  });
+
+  it("lit un nom au format « NOM, Prénom » collé à sa réplique", () => {
+    const share = talkShareFromTranscript(
+      [
+        "Paul Martin a commencé la transcription",
+        "DURAND, Sophie   0:03Nous avons vingt managers de proximité.",
+        "Paul Martin   0:20Comment les accompagnez-vous aujourd'hui ?",
+        "DURAND, Sophie   0:35Surtout sur le terrain, au fil de l'eau.",
+        "Paul Martin   0:59Qu'est-ce qui coince le plus pour eux ?",
+      ].join("\n"),
+    );
+    expect(share?.commercialLabel).toBe("Paul Martin");
+    expect(share?.prospectLabel).toBe("DURAND, Sophie");
+  });
+
+  it("ne prend pas une heure dans une phrase pour une prise de parole", () => {
+    expect(
+      talkShareFromTranscript(
+        "Rendez-vous fixé à 10:30 demain avec le directeur, puis bilan.",
+      ),
+    ).toBeNull();
+  });
+
   it("ne prend ni l'horodatage pour un nom, ni « 2 options : » pour un intervenant", () => {
     const share = talkShareFromTranscript(teams);
     expect(share?.commercialLabel).not.toMatch(/\d/);
