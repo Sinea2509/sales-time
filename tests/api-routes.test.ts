@@ -229,7 +229,11 @@ describe("GET /api/cron/process-analysis-jobs", () => {
       new Request("http://localhost/api/cron/process-analysis-jobs"),
     );
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true, processed: 1 });
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      processed: 1,
+      remeasured: 0,
+    });
     expect(processAnalysisJobsMock).toHaveBeenCalled();
   });
 });

@@ -206,4 +206,31 @@ export class PrismaAnalysisJobRepository implements AnalysisJobRepositoryPort {
 
     return stuckMeetings.length;
   }
+
+  async listMeetingsWithUnreadSpeakers(input: {
+    analyzedBefore: Date;
+    limit: number;
+  }): Promise<
+    Array<{ id: string; organizationId: string; transcript: string }>
+  > {
+    return this.db.meeting.findMany({
+      where: {
+        status: "READY",
+        analyses: {
+          some: {
+            kind: "SCORECARD",
+            createdAt: { lt: input.analyzedBefore },
+            result: { path: ["speakers"], equals: "none" },
+          },
+          none: { kind: "SCORECARD", createdAt: { gte: input.analyzedBefore } },
+        },
+        analysisJobs: {
+          none: { status: { in: ["QUEUED", "PROCESSING"] } },
+        },
+      },
+      select: { id: true, organizationId: true, transcript: true },
+      orderBy: { meetingAt: "desc" },
+      take: input.limit,
+    });
+  }
 }

@@ -39,4 +39,16 @@ export interface AnalysisJobRepositoryPort {
     staleBefore: Date;
     limit: number;
   }): Promise<number>;
+
+  /**
+   * Les rendez-vous analysés avant `analyzedBefore` dont la scorecard n'a pas
+   * distingué les intervenants, sans tâche en cours : candidats à une nouvelle
+   * mesure quand le lecteur de transcript a été corrigé.
+   */
+  listMeetingsWithUnreadSpeakers(input: {
+    analyzedBefore: Date;
+    limit: number;
+  }): Promise<
+    Array<{ id: string; organizationId: string; transcript: string }>
+  >;
 }

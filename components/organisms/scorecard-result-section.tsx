@@ -106,7 +106,7 @@ function CriterionRow({
             {lost.evidence}
           </p>
           <p className="mt-2 rounded-r-lg border-l-[3px] border-emerald-600 bg-emerald-50 px-3 py-2 text-[12.8px] leading-relaxed dark:bg-emerald-950/40">
-            <b>Notre suggestion :</b> {lost.whatToSayInstead}
+            <b>Mon conseil :</b> {lost.whatToSayInstead}
           </p>
         </div>
       ) : criterion.evidence.length > 0 ? (
@@ -222,8 +222,8 @@ function PointsToGain({
             <h2 className={cardTitleClass}>Où gagner des points</h2>
             <p className="text-muted-foreground mt-1 max-w-[64ch] text-xs leading-relaxed">
               Les critères où ce rendez-vous laisse le plus de marge, du plus
-              important au moins important. Chacun porte notre suggestion pour
-              la prochaine fois.
+              important au moins important. Pour chacun, mon conseil pour la
+              prochaine fois.
             </p>
           </div>
           <span className="flex-1" />
@@ -267,7 +267,7 @@ function PointsToGain({
                   {p.evidence}
                 </p>
                 <p className="rounded-r-lg border-l-[3px] border-emerald-600 bg-emerald-50 px-3 py-2 text-[12.8px] leading-relaxed dark:bg-emerald-950/40">
-                  <b>Notre suggestion :</b> {p.whatToSayInstead}
+                  <b>Mon conseil :</b> {p.whatToSayInstead}
                 </p>
               </div>
             );
@@ -328,11 +328,11 @@ export function ScorecardResultSection({
             </ToneChip>
             <span className="text-[12.5px] leading-relaxed">
               {result.speakers === "guessed"
-                ? "Le transcript ne dit pas qui est le commercial : il a été deviné à l'ordre de parole. L'écoute, les questions, le côté des citations et les plafonds n'ont donc pas été mesurés sur ce rendez-vous."
-                : "Le transcript ne distingue pas ses intervenants. L'écoute, les questions, le côté des citations et les plafonds n'ont donc pas été mesurés sur ce rendez-vous."}{" "}
-              Un transcript où chaque réplique commence par « Commercial : » ou
-              « Prospect : », ou qui porte le nom du commercial tel qu&apos;il
-              est écrit dans son profil, le permet.
+                ? "Ce transcript ne dit pas qui vous êtes : je vous ai reconnu à l'ordre de parole. Je n'ai donc mesuré ni votre écoute, ni vos questions sur ce rendez-vous."
+                : "Je n'ai pas pu distinguer qui parle dans ce transcript. Je n'ai donc mesuré ni votre écoute, ni vos questions sur ce rendez-vous."}{" "}
+              Pour que je le fasse, chaque réplique doit commencer par «
+              Commercial : » ou « Prospect : », ou porter votre nom tel
+              qu&apos;il est écrit dans votre profil.
             </span>
           </CardContent>
         </Card>
@@ -353,17 +353,17 @@ export function ScorecardResultSection({
                 Comment la note est calculée
               </summary>
               <p className="text-muted-foreground mt-1.5">
-                Chaque critère vaut de 0 à 4 points. Le coach relève deux choses
-                : le commercial a-t-il abordé le thème, puis l&apos;a-t-il
-                creusé, et qu&apos;a-t-il obtenu du prospect. Un thème seulement
-                abordé rapporte 1 ou 2 points ; un thème creusé avec une réponse
-                précise en rapporte 4. La formulation de la question ne compte
-                pas, seul le thème compte. Chaque citation est vérifiée dans le
-                transcript, avec la personne qui l&apos;a dite, et ne peut que
-                faire baisser le relevé, jamais le monter. L&apos;écoute et les
-                questions se mesurent sur le transcript, quand le commercial y
-                est reconnu. Le même transcript analysé deux fois avec la même
-                consigne reçoit la même note.
+                Chaque critère vaut de 0 à 4 points. Je regarde deux choses :
+                avez-vous abordé le thème, l&apos;avez-vous creusé, et
+                qu&apos;avez-vous obtenu de votre interlocuteur ? Un thème
+                seulement abordé rapporte 1 ou 2 points ; un thème creusé avec
+                une réponse précise en rapporte 4. La formulation de la question
+                ne compte pas, seul le thème compte. Je vérifie chaque citation
+                dans le transcript, avec la personne qui l&apos;a dite : une
+                citation introuvable fait baisser la note, jamais monter. Votre
+                écoute et vos questions se mesurent sur le transcript, quand je
+                vous y reconnais. Le même transcript relu deux fois reçoit la
+                même note.
               </p>
             </details>
           </div>

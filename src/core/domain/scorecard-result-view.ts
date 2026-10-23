@@ -10,7 +10,7 @@ import {
 } from "./scorecard-score";
 import { tierFromSalesScore, type RankingTier } from "./team-ranking";
 import {
-  SCORECARD_EXPLORED_LABEL,
+  SCORECARD_EXPLORED_SCREEN_LABEL,
   SCORECARD_OBTAINED_LABEL,
 } from "./scorecard-coverage";
 
@@ -124,17 +124,17 @@ function preuvesParCle(
   return parCle;
 }
 
-/** « Sujet creusé avec relance, information partielle » : le relevé en mots. */
+/** « Thème creusé, avec relance, information partielle » : le relevé en mots. */
 function couverture(entry: ScorecardCriterionResult | undefined): string {
   if (entry?.unobservable) {
     return "Non observable dans ce transcript : ce critère ne compte pas dans la note";
   }
   if (!entry?.explored || !entry.obtained) return "";
   if (entry.capped) {
-    const base = `${SCORECARD_EXPLORED_LABEL[entry.explored]}, ${SCORECARD_OBTAINED_LABEL[entry.obtained]} ; plafonné : ${entry.capped}`;
+    const base = `${SCORECARD_EXPLORED_SCREEN_LABEL[entry.explored]}, ${SCORECARD_OBTAINED_LABEL[entry.obtained]} ; plafonné : ${entry.capped}`;
     return base.charAt(0).toUpperCase() + base.slice(1);
   }
-  const texte = `${SCORECARD_EXPLORED_LABEL[entry.explored]}, ${SCORECARD_OBTAINED_LABEL[entry.obtained]}${entry.unproven ? " ; aucune citation retrouvée dans le transcript, le niveau reste à 1" : ""}`;
+  const texte = `${SCORECARD_EXPLORED_SCREEN_LABEL[entry.explored]}, ${SCORECARD_OBTAINED_LABEL[entry.obtained]}${entry.unproven ? " ; aucune citation retrouvée dans le transcript, le niveau reste à 1" : ""}`;
   return texte.charAt(0).toUpperCase() + texte.slice(1);
 }
 

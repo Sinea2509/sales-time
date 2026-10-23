@@ -422,6 +422,11 @@ describe("la voix du coach", () => {
     );
   });
 
+  it("lui parle en « je », sans jamais le nommer à la troisième personne", () => {
+    expect(COACH_VOICE_INSTRUCTION).toContain("Parle en « je »");
+    expect(COACH_VOICE_INSTRUCTION).toContain("ni son prénom ou son nom");
+  });
+
   it("est jointe au SalesScore, au coaching, aux objections et au profil du prospect", () => {
     expect(
       withScorecardSystemPrompt("CONSIGNE", DEFAULT_SCORECARD_GRID),
