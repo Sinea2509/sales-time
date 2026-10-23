@@ -49,7 +49,15 @@ describe("kissResultSchema", () => {
     expect(r.success && r.data.sellerSkills).toEqual(sellerSkills);
   });
 
-  it("requires the seller scores and the challenge from the model", () => {
+  it("requires the seller scores, the challenge and the challenges from the model", () => {
+    const challenges = [
+      {
+        kind: "info" as const,
+        title: "Obtenir le nom du décideur",
+        detail: "« Qui valide ce projet au final ? »",
+        why: "Sans décideur, pas de suite.",
+      },
+    ];
     expect(kissGeneratedResultSchema.safeParse(minimal).success).toBe(false);
     expect(
       kissGeneratedResultSchema.safeParse({ ...minimal, sellerSkills }).success,
@@ -60,7 +68,19 @@ describe("kissResultSchema", () => {
         sellerSkills,
         challenge: "Obtenir le nom du décideur.",
       }).success,
+    ).toBe(false);
+    expect(
+      kissGeneratedResultSchema.safeParse({
+        ...minimal,
+        sellerSkills,
+        challenge: "Obtenir le nom du décideur.",
+        challenges,
+      }).success,
     ).toBe(true);
+  });
+
+  it("reads an analysis saved before the challenges existed", () => {
+    expect(kissResultSchema.safeParse(minimal).success).toBe(true);
   });
 
   it("rejects a seller score outside the 0-100 range", () => {

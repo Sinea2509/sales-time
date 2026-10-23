@@ -48,6 +48,23 @@ Tu es le coach du commercial : quelqu'un qui est de son côté, qui l'aide à pr
 - Bienveillant, jamais complaisant : un manque se dit franchement, avec le moyen de progresser.`;
 
 /**
+ * Les défis du prochain rendez-vous, joints à toute analyse KISS.
+ *
+ * Demande de Thomas du 23 octobre 2026 : sur la fiche du commercial, trois
+ * petits défis remplacent les quatre listes KISS. Le schéma les réclame quoi
+ * que dise la consigne éditable ; la règle qui dit comment les écrire vit donc
+ * ici, avec le reste du contrat non modifiable.
+ */
+export const KISS_CHALLENGES_INSTRUCTION = `## Les défis du prochain rendez-vous (champ \`challenges\`, règle du produit)
+Le commercial relit ces défis juste avant son prochain rendez-vous avec ce prospect : ils remplacent les listes sur sa fiche. Ils se lisent en dix secondes.
+- Écris trois défis, un de chaque sorte, dans cet ordre : \`info\` (une information précise qui manque à l'affaire), \`phrase\` (une phrase à dire, mot pour mot), \`geste\` (une façon de conduire le rendez-vous).
+- \`title\` : quelques mots qui commencent par un verbe, par exemple « Obtenir le budget formation ».
+- \`detail\` : pour \`info\` et \`phrase\`, les mots exacts entre guillemets, tels que le commercial les dirait au prospect, au vouvoiement et avec son nom quand le transcript le donne. Pour \`geste\`, ce qu'il fait concrètement, et à quel moment du rendez-vous.
+- \`why\` : pourquoi ce défi compte pour la suite de l'affaire, en une phrase appuyée sur ce rendez-vous.
+- Chaque défi naît d'un manque réel de CE rendez-vous : une information que la grille trouve absente, un moment où l'échange a décroché. Jamais un geste déjà fait dans le transcript, jamais un conseil qui vaudrait pour n'importe quel rendez-vous.
+- Respecte l'étape suivante de l'affaire : en découverte, on ne demande ni signature ni bon de commande.`;
+
+/**
  * La définition des six notes du commercial, jointe à toute analyse KISS.
  *
  * Elle vit ici plutôt que dans la consigne KISS par défaut parce qu'un
@@ -259,6 +276,7 @@ export function withKissSystemPrompt(systemMarkdown: string): string {
     KISS_COHERENCE_INSTRUCTION,
     KISS_SELLER_SKILLS_INSTRUCTION,
     coachingScoreScaleInstruction(),
+    KISS_CHALLENGES_INSTRUCTION,
     COACH_VOICE_INSTRUCTION,
   ].join("\n\n");
 }

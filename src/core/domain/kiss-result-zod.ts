@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { meetingChallengesSchema } from "./meeting-challenges";
 
 /**
  * Les six compétences du commercial, notées 0–100 sur un rendez-vous.
@@ -42,6 +43,11 @@ export const kissGeneratedResultSchema = z.object({
   coachingScoreJustification: z.string().min(1).max(2000),
   summary: z.string().min(1).max(4000),
   sellerSkills: sellerSkillScoresSchema,
+  /**
+   * Les défis du prochain rendez-vous, affichés à la place des quatre listes
+   * sur la fiche du commercial (demande de Thomas du 23 octobre 2026).
+   */
+  challenges: meetingChallengesSchema,
 });
 
 /**
@@ -56,6 +62,8 @@ export const kissGeneratedResultSchema = z.object({
 export const kissResultSchema = kissGeneratedResultSchema.extend({
   sellerSkills: sellerSkillScoresSchema.optional(),
   challenge: z.string().max(500).optional(),
+  // Absents des analyses d'avant le 23 octobre 2026 : la fiche les en tire.
+  challenges: meetingChallengesSchema.optional(),
 });
 
 export type KissAnalysisResult = z.infer<typeof kissResultSchema>;

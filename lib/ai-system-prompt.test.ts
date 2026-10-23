@@ -5,6 +5,7 @@ import {
   FRENCH_QUALITY_INSTRUCTION,
   COACH_VOICE_INSTRUCTION,
   FRENCH_TYPOGRAPHY_INSTRUCTION,
+  KISS_CHALLENGES_INSTRUCTION,
   KISS_SELLER_SKILLS_INSTRUCTION,
   withDataScopeSystemPrompt,
   withDiscSystemPrompt,
@@ -443,5 +444,16 @@ describe("la voix du coach", () => {
     expect(withDataScopeSystemPrompt("CONSIGNE")).not.toContain(
       COACH_VOICE_INSTRUCTION,
     );
+  });
+});
+
+describe("les défis du prochain rendez-vous", () => {
+  it("sont demandés à chaque analyse KISS, en trois sortes, mot pour mot", () => {
+    const prompt = withKissSystemPrompt("CONSIGNE");
+    expect(prompt).toContain(KISS_CHALLENGES_INSTRUCTION);
+    expect(KISS_CHALLENGES_INSTRUCTION).toContain("`info`");
+    expect(KISS_CHALLENGES_INSTRUCTION).toContain("`phrase`");
+    expect(KISS_CHALLENGES_INSTRUCTION).toContain("`geste`");
+    expect(KISS_CHALLENGES_INSTRUCTION).toContain("mots exacts");
   });
 });
