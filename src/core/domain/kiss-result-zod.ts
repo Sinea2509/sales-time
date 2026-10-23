@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { meetingChallengesSchema } from "./meeting-challenges";
+import {
+  challengeReviewModelSchema,
+  challengeReviewSchema,
+  meetingChallengesSchema,
+} from "./meeting-challenges";
 
 /**
  * Les six compétences du commercial, notées 0–100 sur un rendez-vous.
@@ -48,6 +52,12 @@ export const kissGeneratedResultSchema = z.object({
    * sur la fiche du commercial (demande de Thomas du 23 octobre 2026).
    */
   challenges: meetingChallengesSchema,
+  /**
+   * Le bilan des défis du rendez-vous précédent avec ce contact, une liste
+   * vide quand il n'y en avait pas. Le produit le vérifie avant de le
+   * montrer (`reviewPreviousChallenges`).
+   */
+  previousChallengesReview: challengeReviewModelSchema,
 });
 
 /**
@@ -64,6 +74,9 @@ export const kissResultSchema = kissGeneratedResultSchema.extend({
   challenge: z.string().max(500).optional(),
   // Absents des analyses d'avant le 23 octobre 2026 : la fiche les en tire.
   challenges: meetingChallengesSchema.optional(),
+  previousChallengesReview: challengeReviewModelSchema.optional(),
+  // Le bilan vérifié par le produit, celui que la fiche affiche.
+  challengesReview: z.array(challengeReviewSchema).optional(),
 });
 
 export type KissAnalysisResult = z.infer<typeof kissResultSchema>;

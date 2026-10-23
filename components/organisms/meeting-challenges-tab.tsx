@@ -1,5 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import { Visual3d, type Visual3dName } from "@/components/atoms/visual-3d";
+import { ChallengesReviewCard } from "@/components/molecules/challenges-review-card";
 import { KissResultView } from "@/components/molecules/kiss-result-view";
 import { Card, CardContent } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
@@ -42,10 +43,12 @@ const KIND: Record<
  * aussi la synthèse d'équipe du manager.
  */
 export function MeetingChallengesTab({
+  meetingId,
   kiss,
   challenge,
   pending,
 }: {
+  meetingId: string;
   kiss: KissAnalysisResult | null;
   /** Le défi porté par la scorecard, pour les analyses anciennes. */
   challenge: string | null;
@@ -75,6 +78,13 @@ export function MeetingChallengesTab({
 
   return (
     <div className="space-y-4">
+      {kiss.challengesReview?.length ? (
+        <ChallengesReviewCard
+          review={kiss.challengesReview}
+          meetingId={meetingId}
+        />
+      ) : null}
+
       <div>
         <h2 className={cardTitleClass}>Défis du prochain rendez-vous</h2>
         <p className="text-muted-foreground mt-1 text-sm">

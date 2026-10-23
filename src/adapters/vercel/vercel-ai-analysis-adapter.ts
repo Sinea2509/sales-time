@@ -20,6 +20,7 @@ import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import { visitReportExtractionSchema } from "@/src/core/domain/visit-report-zod";
 import { meetingFactsSuggestionSchema } from "@/src/core/domain/meeting-prefill";
+import type { MeetingChallenge } from "@/src/core/domain/meeting-challenges";
 import { teamCoachingRecommendationsSchema } from "@/src/core/domain/team-coaching-recommendations-zod";
 import type {
   AnalysisPort,
@@ -126,12 +127,14 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     model: string;
     priorSoncasResult?: unknown;
     priorDiscResult?: unknown;
+    previousChallenges?: readonly MeetingChallenge[];
   }) {
     const userPrompt = buildKissUserPrompt({
       transcript: input.transcript,
       notes: input.notes,
       priorSoncasResult: input.priorSoncasResult,
       priorDiscResult: input.priorDiscResult,
+      previousChallenges: input.previousChallenges,
     });
     const systemPrompt = withKissSystemPrompt(input.systemMarkdown);
 
