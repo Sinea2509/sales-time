@@ -75,6 +75,7 @@ describe("kissResultSchema", () => {
         sellerSkills,
         challenge: "Obtenir le nom du décideur.",
         challenges,
+        previousChallengesReview: [],
       }).success,
     ).toBe(true);
   });

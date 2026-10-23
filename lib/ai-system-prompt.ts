@@ -65,6 +65,18 @@ Le commercial relit ces défis juste avant son prochain rendez-vous avec ce pros
 - Respecte l'étape suivante de l'affaire : en découverte, on ne demande ni signature ni bon de commande.`;
 
 /**
+ * Le bilan des défis laissés au rendez-vous précédent, joint à toute analyse
+ * KISS (demande de Thomas du 23 octobre 2026). Le produit vérifie chaque
+ * preuve avant de montrer un défi relevé.
+ */
+export const KISS_CHALLENGES_REVIEW_INSTRUCTION = `## Les défis du rendez-vous précédent (champ \`previousChallengesReview\`, règle du produit)
+Quand un bloc \`<previous_challenges>\` est présent, il contient les défis laissés au commercial après son rendez-vous précédent avec ce prospect. Pour chacun, par son numéro, dis s'il a été relevé dans CE rendez-vous :
+- \`releve\` : le commercial l'a fait pleinement (la question posée et la réponse obtenue, la phrase dite, le geste fait) ;
+- \`partiel\` : il l'a amorcé sans aller au bout ;
+- \`non_releve\` : il ne l'a pas fait.
+\`evidence\` recopie exactement les mots du transcript qui le prouvent, trois mots au moins ; laisse-le vide pour un défi non relevé. Le produit cherche chaque citation dans le transcript : une citation introuvable fait perdre un cran au défi. Sans bloc \`<previous_challenges>\`, rends une liste vide.`;
+
+/**
  * La définition des six notes du commercial, jointe à toute analyse KISS.
  *
  * Elle vit ici plutôt que dans la consigne KISS par défaut parce qu'un
@@ -277,6 +289,7 @@ export function withKissSystemPrompt(systemMarkdown: string): string {
     KISS_SELLER_SKILLS_INSTRUCTION,
     coachingScoreScaleInstruction(),
     KISS_CHALLENGES_INSTRUCTION,
+    KISS_CHALLENGES_REVIEW_INSTRUCTION,
     COACH_VOICE_INSTRUCTION,
   ].join("\n\n");
 }

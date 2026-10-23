@@ -1,3 +1,7 @@
+import {
+  previousChallengesPromptBlock,
+  type MeetingChallenge,
+} from "@/src/core/domain/meeting-challenges";
 /** Strips zero-width / unusual control chars that can smuggle prompt-like content. */
 export function sanitizeMeetingTextForAi(text: string): string {
   return text.replace(
@@ -37,6 +41,8 @@ export function buildKissUserPrompt(input: {
   notes: string | null;
   priorSoncasResult?: unknown;
   priorDiscResult?: unknown;
+  /** Les défis laissés au rendez-vous précédent avec ce contact, à vérifier. */
+  previousChallenges?: readonly MeetingChallenge[];
 }): string {
   const base = buildDelimitedMeetingUserContent({
     transcript: input.transcript,
@@ -59,5 +65,9 @@ export function buildKissUserPrompt(input: {
       "</disc_profile>",
     );
   }
+  const previous = previousChallengesPromptBlock(
+    input.previousChallenges ?? [],
+  );
+  if (previous) extra.push("", previous);
   return [base, ...extra].join("\n");
 }

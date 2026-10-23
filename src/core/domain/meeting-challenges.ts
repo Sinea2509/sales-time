@@ -117,3 +117,110 @@ export function challengesForDisplay(
   }
   return derived;
 }
+
+/*
+  La vérification des défis, au rendez-vous suivant avec le même contact.
+
+  Demande de Thomas du 23 octobre 2026. Le modèle dit, pour chaque défi
+  laissé la fois précédente, s'il a été relevé, avec les mots du transcript
+  qui le prouvent ; le produit vérifie ces mots. Comme pour la grille (lot
+  92), dans le doute on ne monte pas : un défi n'est relevé que si sa preuve
+  se retrouve dans le transcript.
+*/
+export const CHALLENGE_REVIEW_STATUSES = [
+  "releve",
+  "partiel",
+  "non_releve",
+] as const;
+
+export type ChallengeReviewStatus = (typeof CHALLENGE_REVIEW_STATUSES)[number];
+
+/** Ce que le modèle rend pour les défis du rendez-vous précédent. */
+export const challengeReviewModelSchema = z
+  .array(
+    z.object({
+      number: z
+        .number()
+        .int()
+        .min(1)
+        .max(3)
+        .describe("Le numéro du défi dans le bloc <previous_challenges>."),
+      status: z
+        .enum(CHALLENGE_REVIEW_STATUSES)
+        .describe(
+          "releve : fait pleinement ; partiel : amorcé mais incomplet ; non_releve : pas fait.",
+        ),
+      evidence: z
+        .string()
+        .max(300)
+        .describe(
+          "Les mots du transcript qui le prouvent, recopiés exactement (trois mots au moins). Vide si le défi n'a pas été relevé.",
+        ),
+    }),
+  )
+  .max(3);
+
+export type ChallengeReviewFromModel = z.infer<
+  typeof challengeReviewModelSchema
+>[number];
+
+/** Un défi du rendez-vous précédent, tel que la fiche l'affiche. */
+export const challengeReviewSchema = z.object({
+  kind: z.enum(MEETING_CHALLENGE_KINDS),
+  title: z.string(),
+  detail: z.string(),
+  status: z.enum(CHALLENGE_REVIEW_STATUSES),
+  evidence: z.string(),
+  /** La date du rendez-vous qui avait laissé ce défi, en ISO. */
+  fromMeetingAt: z.string(),
+});
+
+export type ChallengeReview = z.infer<typeof challengeReviewSchema>;
+
+/**
+ * Le bloc qui donne au modèle les défis du rendez-vous précédent, numérotés.
+ * Vide quand il n'y en a pas.
+ */
+export function previousChallengesPromptBlock(
+  previous: readonly MeetingChallenge[],
+): string {
+  if (previous.length === 0) return "";
+  return [
+    "<previous_challenges>",
+    ...previous.map((c, i) => `${i + 1}. (${c.kind}) ${c.title} : ${c.detail}`),
+    "</previous_challenges>",
+  ].join("\n");
+}
+
+/**
+ * Le bilan des défis précédents : chaque défi reçoit son statut, rabaissé
+ * quand la preuve citée ne se retrouve pas dans le transcript. Un défi que le
+ * modèle n'a pas évalué compte comme non relevé.
+ */
+export function reviewPreviousChallenges(input: {
+  previous: readonly MeetingChallenge[];
+  fromModel: readonly ChallengeReviewFromModel[];
+  /** Vrai si l'extrait se retrouve dans le transcript de ce rendez-vous. */
+  isInTranscript: (excerpt: string) => boolean;
+  fromMeetingAt: Date;
+}): ChallengeReview[] {
+  return input.previous.map((challenge, index) => {
+    const said = input.fromModel.find((r) => r.number === index + 1);
+    const evidence = said?.evidence.trim() ?? "";
+    const proven = evidence.length > 0 && input.isInTranscript(evidence);
+    // Sans preuve retrouvée, un cran de moins : « relevé » devient « en
+    // partie », « en partie » devient « pas encore ».
+    let status: ChallengeReviewStatus = said?.status ?? "non_releve";
+    if (!proven) {
+      status = status === "releve" ? "partiel" : "non_releve";
+    }
+    return {
+      kind: challenge.kind,
+      title: challenge.title,
+      detail: challenge.detail,
+      status,
+      evidence: proven ? evidence : "",
+      fromMeetingAt: input.fromMeetingAt.toISOString(),
+    };
+  });
+}

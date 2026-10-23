@@ -1,4 +1,8 @@
 import {
+  loadPreviousChallenges,
+  withChallengesReview,
+} from "@/src/core/application/load-previous-challenges";
+import {
   withDiscSystemPrompt,
   withKissSystemPrompt,
   withObjectionsSystemPrompt,
@@ -588,6 +592,12 @@ export async function runMeetingAnalysis(
     const scorecardRead = scorecardResultSchema.safeParse(
       priorScorecard?.result,
     );
+    // Les défis du rendez-vous précédent avec ce contact, que ce coaching
+    // vérifie (demande de Thomas du 23 octobre 2026).
+    const previousChallenges = await loadPreviousChallenges(deps, {
+      organizationId: input.organizationId,
+      meeting,
+    });
 
     const kissSystemMarkdown = composeAnalysisSystemMarkdown(prompt.markdown, [
       analysisSystemBlock(
@@ -613,6 +623,7 @@ export async function runMeetingAnalysis(
       notes: meeting.notes,
       priorSoncasResult: priorSoncas?.result,
       priorDiscResult: priorDisc?.result,
+      previousChallenges: previousChallenges?.challenges,
     });
     const logBase = {
       organizationId: input.organizationId,
@@ -638,6 +649,7 @@ export async function runMeetingAnalysis(
             model,
             priorSoncasResult: priorSoncas?.result,
             priorDiscResult: priorDisc?.result,
+            previousChallenges: previousChallenges?.challenges,
           });
           return { result: o.result, usage: o.usage ?? null };
         },
@@ -656,7 +668,11 @@ export async function runMeetingAnalysis(
         promptVersionId: promptVersion.id,
         organizationPromptVersionId,
         model,
-        result: kissStopWithTalkShare(out.result, talkShare),
+        result: withChallengesReview(
+          kissStopWithTalkShare(out.result, talkShare),
+          previousChallenges,
+          transcriptForAnalysis,
+        ),
       });
       return { ok: true, analysisId: row.id };
     } catch (e) {

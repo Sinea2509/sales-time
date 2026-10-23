@@ -186,6 +186,7 @@ export function MeetingDetailShell({
       label: "Défis",
       panel: showSellerCoaching ? (
         <MeetingChallengesTab
+          meetingId={meeting.id}
           kiss={kissResult}
           challenge={
             kissResult?.challenge ?? scorecardResult?.challenge ?? null

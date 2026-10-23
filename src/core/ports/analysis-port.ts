@@ -11,6 +11,7 @@ import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod"
 import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
 import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
 import type { MeetingFactsSuggestion } from "@/src/core/domain/meeting-prefill";
+import type { MeetingChallenge } from "@/src/core/domain/meeting-challenges";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import type { SalesProfileScores } from "@/src/core/domain/sales-profile-from-meetings";
 import type { TeamCoachingRecommendations } from "@/src/core/domain/team-coaching-recommendations-zod";
@@ -81,6 +82,8 @@ export interface AnalysisPort {
     /** Latest SONCAS / DISC structured results for this meeting, when already analyzed. */
     priorSoncasResult?: unknown;
     priorDiscResult?: unknown;
+    /** Les défis laissés au rendez-vous précédent avec ce contact, à vérifier. */
+    previousChallenges?: readonly MeetingChallenge[];
   }): Promise<{ result: KissAnalysisResult; rawText?: string } & AiCallTrace>;
 
   /**
