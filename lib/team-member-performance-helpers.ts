@@ -1,6 +1,3 @@
-import { meetingEtapeDisplayLabel } from "@/src/core/domain/meeting-etape-display";
-import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-port";
-
 /*
   `postureLabelFromMeetings` vivait ici : elle prenait le levier SONCAS
   dominant le plus fréquent chez les prospects rencontrés et l'affichait sous
@@ -9,28 +6,6 @@ import type { RecentMeetingListRow } from "@/src/core/ports/meeting-repository-p
   comparées à celles de son équipe, dans
   `src/core/domain/seller-skill-signature.ts`.
 */
-
-export function countMeetingTypes(meetings: RecentMeetingListRow[]): {
-  decouverte: number;
-  proposition: number;
-} {
-  let decouverte = 0;
-  let proposition = 0;
-  for (const m of meetings) {
-    const label = meetingEtapeDisplayLabel({
-      meetingType: m.meetingType,
-      pipelineStage: m.pipelineStage,
-    })
-      .normalize("NFD")
-      .replace(/\p{M}/gu, "")
-      .toLowerCase();
-    if (label.includes("decouverte")) decouverte += 1;
-    else if (label.includes("proposition") || label.includes("closing")) {
-      proposition += 1;
-    }
-  }
-  return { decouverte, proposition };
-}
 
 export function performanceParagraphText(
   text: string | undefined,
