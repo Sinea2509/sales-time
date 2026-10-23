@@ -89,6 +89,8 @@ export type AdminOrganizationDetail = {
   createdAt: Date;
   memberships: AdminOrgDetailMembership[];
   meetings: AdminOrgDetailMeeting[];
+  /** Fonctionnalités réservées activées (voir `ORGANIZATION_FEATURES`). */
+  enabledFeatures: string[];
   counts: {
     memberships: number;
     meetings: number;

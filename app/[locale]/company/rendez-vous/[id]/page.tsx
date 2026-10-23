@@ -1,3 +1,4 @@
+import { hasOrganizationFeature } from "@/src/core/domain/organization-features";
 import { notFound, redirect } from "next/navigation";
 import { MeetingDetailShell } from "@/components/organisms/meeting-detail-shell";
 import { getApplicationDeps } from "@/lib/application-deps";
@@ -76,27 +77,33 @@ export default async function RendezVousDetailPage({
   const canViewSellerCoaching = isSeller || actor.canManageOrganization;
 
   const since = new Date(new Date().getTime() - THIRTY_DAYS_MS);
-  const [contact, sellerMembership, sellerMeetings30d, teamMeetings30d] =
-    await Promise.all([
-      deps.contacts.findById({ id: meeting.personId, organizationId }),
-      actor.canManageOrganization && !isSeller
-        ? deps.organizationTeam.findMembershipForManagerView(
-            organizationId,
-            meeting.sellerUserId,
-          )
-        : Promise.resolve(null),
-      deps.meetings.listRecentMeetingsForDashboard({
-        organizationId,
-        sellerUserId: meeting.sellerUserId,
-        meetingAtSince: since,
-        limit: 200,
-      }),
-      deps.meetings.listRecentMeetingsForDashboard({
-        organizationId,
-        meetingAtSince: since,
-        limit: 1000,
-      }),
-    ]);
+  const [
+    contact,
+    sellerMembership,
+    sellerMeetings30d,
+    teamMeetings30d,
+    enabledFeatures,
+  ] = await Promise.all([
+    deps.contacts.findById({ id: meeting.personId, organizationId }),
+    actor.canManageOrganization && !isSeller
+      ? deps.organizationTeam.findMembershipForManagerView(
+          organizationId,
+          meeting.sellerUserId,
+        )
+      : Promise.resolve(null),
+    deps.meetings.listRecentMeetingsForDashboard({
+      organizationId,
+      sellerUserId: meeting.sellerUserId,
+      meetingAtSince: since,
+      limit: 200,
+    }),
+    deps.meetings.listRecentMeetingsForDashboard({
+      organizationId,
+      meetingAtSince: since,
+      limit: 1000,
+    }),
+    deps.organizationFeatures.listEnabledFeatures(organizationId),
+  ]);
 
   const soncas = meeting.analyses.find((a) => a.kind === "SONCAS");
   const disc = meeting.analyses.find((a) => a.kind === "DISC");
@@ -260,6 +267,10 @@ export default async function RendezVousDetailPage({
             : null
       }
       showSellerCoaching={canViewSellerCoaching}
+      pipedriveBlocks={hasOrganizationFeature(
+        enabledFeatures,
+        "pipedrive_blocks",
+      )}
       canEdit={canEdit}
       processingLooksSlow={isMeetingAnalysisSlow({
         status: meeting.status,

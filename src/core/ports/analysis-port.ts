@@ -1,3 +1,4 @@
+import type { PipedriveExtraction } from "@/src/core/domain/pipedrive-blocks";
 import type {
   DiscMomentsOutput,
   SoncasMomentsOutput,
@@ -246,4 +247,17 @@ export interface AnalysisPort {
     soncasSummary: string | null;
     discSummary: string | null;
   }): Promise<VisitReportExtraction>;
+
+  /**
+   * Les faits du rendez-vous pour les blocs Pipedrive (méthode SEED). Le
+   * produit compose les blocs, voir `composePipedriveBlocks`.
+   */
+  extractPipedriveBlocks(input: {
+    systemPrompt: string;
+    model: string;
+    contextJson: string;
+    transcript: string;
+    notes: string | null;
+    previousReport: string | null;
+  }): Promise<PipedriveExtraction>;
 }

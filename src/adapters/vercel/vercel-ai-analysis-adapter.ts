@@ -1,3 +1,4 @@
+import { pipedriveExtractionSchema } from "@/src/core/domain/pipedrive-blocks";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import {
@@ -542,6 +543,38 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       experimental_repairText: repairOverlongFields,
       system,
       schema: visitReportExtractionSchema,
+      prompt,
+      maxOutputTokens: 6000,
+    });
+    return object;
+  }
+
+  async extractPipedriveBlocks(input: {
+    systemPrompt: string;
+    model: string;
+    contextJson: string;
+    transcript: string;
+    notes: string | null;
+    previousReport: string | null;
+  }) {
+    const prompt = [
+      "Contexte du rendez-vous (JSON) :",
+      input.contextJson,
+      "",
+      input.previousReport?.trim()
+        ? `<previous_report>\n${input.previousReport.trim()}\n</previous_report>\n`
+        : "",
+      buildDelimitedMeetingUserContent({
+        transcript: input.transcript,
+        notes: input.notes,
+      }),
+    ].join("\n");
+    const { object } = await generateObject({
+      model: input.model,
+      ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
+      system: withDataScopeSystemPrompt(input.systemPrompt),
+      schema: pipedriveExtractionSchema,
       prompt,
       maxOutputTokens: 6000,
     });
