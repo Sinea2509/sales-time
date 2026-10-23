@@ -7,12 +7,14 @@ import type {
 import { salesScoreForMeeting } from "@/src/core/domain/dashboard-sales-score";
 import { normalizePersonDisplayKey } from "@/src/core/domain/person-normalize";
 import { outreachPriorityScore } from "@/src/core/domain/person-outreach-priority";
+import { memberDisplayName } from "@/src/core/domain/weekly-manager-digest";
 import type {
   MeetingAnalysisKind,
   MeetingAnalysisRow,
   MeetingDetailWithAnalyses,
   MeetingRepositoryPort,
   MeetingRow,
+  MeetingRowWithSeller,
   PersonOutreachSummaryRow,
   RecentMeetingListRow,
 } from "@/src/core/ports/meeting-repository-port";
@@ -186,11 +188,19 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   async findMeetingByIdForOrg(input: {
     id: string;
     organizationId: string;
-  }): Promise<MeetingRow | null> {
+  }): Promise<MeetingRowWithSeller | null> {
     const row = await this.db.meeting.findFirst({
       where: { id: input.id, organizationId: input.organizationId },
+      include: {
+        seller: { select: { firstName: true, lastName: true, email: true } },
+      },
     });
-    return row ? mapMeeting(row) : null;
+    if (!row) return null;
+    const { seller, ...meeting } = row;
+    return {
+      ...mapMeeting(meeting),
+      sellerName: seller ? memberDisplayName(seller) : null,
+    };
   }
 
   async listMeetingsForOrg(input: {
@@ -340,7 +350,6 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
         hasKiss: kinds.has("KISS"),
         salesScore: salesScoreForMeeting({
           scorecardResult: scorecard?.result ?? null,
-          soncasResult: soncas?.result ?? null,
         }),
       };
       if (input.includeLatestSoncasResult === true) {

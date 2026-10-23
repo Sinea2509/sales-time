@@ -25,7 +25,10 @@ import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-me
 import { computeScorecardScore } from "@/src/core/domain/scorecard-score";
 import { keepKnownScorecardKeys } from "@/src/core/domain/scorecard-evidence-rule";
 import { levelScorecardObservations } from "@/src/core/domain/scorecard-coverage";
-import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
+import {
+  scorecardResultSchema,
+  type ScorecardSpeakers,
+} from "@/src/core/domain/scorecard-result-zod";
 import { meetingAnalysisContext } from "@/src/core/domain/meeting-analysis-context";
 import { kissStopWithTalkShare } from "@/src/core/domain/kiss-talk-share-stop";
 import { markObjectionsVerbatim } from "@/src/core/domain/objections-verbatim";
@@ -157,19 +160,37 @@ export async function runMeetingAnalysis(
   /*
     Qui a dit quoi, quand le transcript le distingue : une preuve sur le
     prospect se cherche dans ses paroles à lui, jamais dans celles du
-    commercial.
+    commercial. Le produit donne tout ce qu'il sait pour le reconnaître : le
+    nom du commercial du rendez-vous et celui du prospect.
   */
-  const speakerHints = { prospectNames: [meeting.prospectName] };
-  const sides = transcriptSides(transcriptForAnalysis, speakerHints);
+  const speakerHints = {
+    sellerName: meeting.sellerName,
+    prospectNames: [meeting.prospectName],
+  };
+  const sidesRead = transcriptSides(transcriptForAnalysis, speakerHints);
+  /*
+    Quand le commercial n'a été que deviné (le premier à parler, ou celui qui
+    pose le plus de questions), rien de ce qui dépend de son côté ne
+    s'applique : ni le côté des citations, ni l'écoute, ni les questions, ni
+    les plafonds. Une inversion des rôles retournerait toute la note sans que
+    personne le voie. Le régime est enregistré avec la note, et la fiche le
+    dit.
+  */
+  const speakers: ScorecardSpeakers = !sidesRead
+    ? "none"
+    : sidesRead.rolesRecognized
+      ? "recognized"
+      : "guessed";
+  const sides = speakers === "recognized" ? sidesRead : null;
   /* Les questions du commercial et ses longs passages en début de rendez-vous, mesurés. */
-  const conversation = sellerConversationMeasures(
-    transcriptForAnalysis,
-    speakerHints,
-  );
-  const talkShare = talkShareFromTranscript(
-    transcriptForAnalysis,
-    speakerHints,
-  );
+  const conversation =
+    speakers === "recognized"
+      ? sellerConversationMeasures(transcriptForAnalysis, speakerHints)
+      : null;
+  const talkShare =
+    speakers === "recognized"
+      ? talkShareFromTranscript(transcriptForAnalysis, speakerHints)
+      : null;
   const grid = scorecardGridForMeeting({
     meetingType: meeting.meetingType,
     pipelineStage: meeting.pipelineStage,
@@ -488,7 +509,8 @@ export async function runMeetingAnalysis(
                 : {}),
             },
             conversationCaps(conversation),
-            openingNotRecorded(transcriptForAnalysis, speakerHints)
+            speakers === "recognized" &&
+              openingNotRecorded(transcriptForAnalysis, speakerHints)
               ? new Set([FRAMING_CRITERION_KEY])
               : new Set(),
           ),
@@ -511,6 +533,7 @@ export async function runMeetingAnalysis(
           */
           result: {
             ...checked,
+            speakers,
             gridId: grid.id,
             gridName: grid.name,
             overallScore,

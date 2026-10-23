@@ -104,7 +104,11 @@ export async function runProspectProfileAnalysis(
     sourceType: meeting.sourceType,
   });
   const evidenceSource = [transcript, meeting.notes ?? ""].join("\n");
-  const speakerHints = { prospectNames: [meeting.prospectName] };
+  /* Le nom du commercial aide à le reconnaître, comme pour la grille (lot 92). */
+  const speakerHints = {
+    sellerName: meeting.sellerName,
+    prospectNames: [meeting.prospectName],
+  };
   const sides = transcriptSides(transcript, speakerHints);
 
   const systemPrompt = withProspectProfileSystemPrompt({
