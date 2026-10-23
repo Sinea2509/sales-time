@@ -15,22 +15,24 @@ const mockedRunAll = runAllMeetingAnalysesForOrg as jest.MockedFunction<
   typeof runAllMeetingAnalysesForOrg
 >;
 
-function makeDeps(over: {
-  job?: {
-    id: string;
-    meetingId: string;
-    organizationId: string;
-    attempts: number;
-    maxAttempts: number;
-  } | null;
-  meeting?: {
-    id: string;
-    organizationId: string;
-    sellerUserId: string;
-    personId: string;
-    prospectName: string;
-  } | null;
-} = {}) {
+function makeDeps(
+  over: {
+    job?: {
+      id: string;
+      meetingId: string;
+      organizationId: string;
+      attempts: number;
+      maxAttempts: number;
+    } | null;
+    meeting?: {
+      id: string;
+      organizationId: string;
+      sellerUserId: string;
+      personId: string;
+      prospectName: string;
+    } | null;
+  } = {},
+) {
   const job = over.job ?? {
     id: "job_1",
     meetingId: "meet_1",
@@ -139,6 +141,59 @@ describe("processAnalysisJobs", () => {
       }),
     );
     expect(deps.analysisJobs.markJobDone).toHaveBeenCalledWith("job_1");
+  });
+
+  it("ne commence pas une deuxième analyse quand la première a pris trop de temps", async () => {
+    const job = {
+      id: "job_1",
+      meetingId: "meet_1",
+      organizationId: "org_1",
+      attempts: 1,
+      maxAttempts: 3,
+    };
+    let now = 1_000_000;
+    const clock = jest.spyOn(Date, "now").mockImplementation(() => now);
+    mockedRunAll.mockImplementation(async () => {
+      now += 200_000; // une longue analyse : plus de trois minutes
+      return { ok: true };
+    });
+    const deps = makeDeps({ job });
+    deps.analysisJobs.dequeueNextJob = jest
+      .fn()
+      .mockResolvedValueOnce(job)
+      .mockResolvedValueOnce({ ...job, id: "job_2", meetingId: "meet_2" })
+      .mockResolvedValue(null);
+
+    const result = await processAnalysisJobs(deps as never, {
+      workerId: "w1",
+    });
+    clock.mockRestore();
+
+    expect(result.processed).toBe(1);
+    expect(deps.analysisJobs.dequeueNextJob).toHaveBeenCalledTimes(1);
+  });
+
+  it("enchaîne les analyses rapides dans le même passage", async () => {
+    const job = {
+      id: "job_1",
+      meetingId: "meet_1",
+      organizationId: "org_1",
+      attempts: 1,
+      maxAttempts: 3,
+    };
+    mockedRunAll.mockResolvedValue({ ok: true });
+    const deps = makeDeps({ job });
+    deps.analysisJobs.dequeueNextJob = jest
+      .fn()
+      .mockResolvedValueOnce(job)
+      .mockResolvedValueOnce({ ...job, id: "job_2", meetingId: "meet_2" })
+      .mockResolvedValue(null);
+
+    const result = await processAnalysisJobs(deps as never, {
+      workerId: "w1",
+    });
+
+    expect(result.processed).toBe(2);
   });
 
   it("marks job failed when analysis step fails", async () => {
