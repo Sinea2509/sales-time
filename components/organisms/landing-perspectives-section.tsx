@@ -6,14 +6,12 @@ import { LandingCheckBullet } from "@/components/atoms/landing-check-bullet";
 import { LandingSectionHeading } from "@/components/molecules/landing-section-heading";
 import { LandingPerspectiveDirectionVisual } from "@/components/molecules/landing-perspective-direction-visual";
 import { LandingPerspectiveKissVisual } from "@/components/molecules/landing-perspective-kiss-visual";
-import { LandingPerspectiveManagerVisual } from "@/components/molecules/landing-perspective-manager-visual";
 import { landingPerspectiveTabs } from "@/lib/landing-content";
 import { cn } from "@/lib/utils";
 
 const visuals = {
   commercial: LandingPerspectiveKissVisual,
-  manager: LandingPerspectiveManagerVisual,
-  direction: LandingPerspectiveDirectionVisual,
+  manager: LandingPerspectiveDirectionVisual,
 } as const;
 
 export function LandingPerspectivesSection() {
@@ -26,7 +24,7 @@ export function LandingPerspectivesSection() {
       <div className="mx-auto max-w-[1160px] px-6 sm:px-10">
         <div className="mb-11 flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">
           <LandingSectionHeading
-            label="Une plateforme, trois regards"
+            label="Une plateforme, deux regards"
             title={
               <>
                 Conçu pour <em>chaque niveau</em>

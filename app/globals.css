@@ -223,6 +223,38 @@
   html {
     @apply font-sans;
   }
+  /*
+    La main au survol de tout ce qui se clique. Tailwind 4 a retiré ce
+    curseur des boutons ; Thomas veut voir d'un coup d'œil ce qui est
+    cliquable (23 octobre 2026). Ce qui est désactivé le dit aussi.
+  */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="link"],
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="menuitemcheckbox"],
+  [role="option"],
+  [role="switch"],
+  a[href],
+  summary,
+  select:not(:disabled),
+  label:has(> input[type="checkbox"]:not(:disabled)),
+  label:has(> input[type="radio"]:not(:disabled)),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  tr[data-href],
+  [data-clickable] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"],
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
   /* Lucide default stroke is 2; slightly finer reads sharper at 16–20px */
   svg.lucide {
     stroke-width: 1.65;
