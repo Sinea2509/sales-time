@@ -145,7 +145,7 @@ export function MeetingObjectionsTab({
                   <b>Effet obtenu :</b> {o.effect}
                 </p>
                 <p className="mt-2.5 rounded-r-lg border-l-[3px] border-emerald-600 bg-emerald-50 px-3 py-2 text-[12.8px] leading-relaxed dark:bg-emerald-950/40">
-                  <b>Notre suggestion :</b> {o.suggestion}
+                  <b>Mon conseil :</b> {o.suggestion}
                 </p>
               </article>
             ))}

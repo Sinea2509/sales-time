@@ -96,5 +96,5 @@ Dans \`criteria\`, chaque critère a son propre champ, nommé par sa clé : remp
 ${blocs}
 
 ## Les points perdus
-Dans \`pointsLost\`, choisis 3 à 5 critères où le rendez-vous laisse le plus de marge, parmi ceux qui ne sont pas à \`creuse\` + \`exploitable\`, en commençant par ceux qui comptent le plus pour la suite de cette affaire. Pour chacun, \`evidence\` dit ce que le transcript montre à cet endroit, et \`whatToSayInstead\` donne la phrase que le commercial pourrait dire, en français correct et naturel, écrite comme il la dirait à voix haute à ce prospect. Ne suggère jamais ce que le relevé montre déjà fait.`;
+Dans \`pointsLost\`, choisis 3 à 5 critères où le rendez-vous laisse le plus de marge, parmi ceux qui ne sont pas à \`creuse\` + \`exploitable\`, en commençant par ceux qui comptent le plus pour la suite de cette affaire. Pour chacun, \`evidence\` dit ce que le transcript montre à cet endroit, en s'adressant au commercial (« vous n'avez pas… », jamais « le commercial n'a pas… »), et \`whatToSayInstead\` donne la phrase que le commercial pourrait dire, en français correct et naturel, écrite comme il la dirait à voix haute à ce prospect. Ne suggère jamais ce que le relevé montre déjà fait.`;
 }

@@ -60,6 +60,19 @@ export const SCORECARD_EXPLORED_LABEL: Record<ScorecardExplored, string> = {
   creuse: "sujet creusé avec relance",
 };
 
+/**
+ * Les mêmes crans, tels que le coach les dit au commercial sur sa fiche : il
+ * lui parle, il ne parle pas de lui (demande de Thomas du 23 octobre 2026).
+ */
+export const SCORECARD_EXPLORED_SCREEN_LABEL: Record<
+  ScorecardExplored,
+  string
+> = {
+  non: "thème que vous n'avez pas abordé",
+  aborde: "thème abordé, sans relance",
+  creuse: "thème creusé, avec relance",
+};
+
 export const SCORECARD_OBTAINED_LABEL: Record<ScorecardObtained, string> = {
   rien: "rien d'utile obtenu",
   partiel: "information partielle",

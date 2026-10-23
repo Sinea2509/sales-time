@@ -88,7 +88,8 @@ export function MeetingChallengesTab({
       <div>
         <h2 className={cardTitleClass}>Défis du prochain rendez-vous</h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          Trois défis à relire juste avant d&apos;entrer en rendez-vous.
+          Relisez-les juste avant d&apos;entrer : au prochain rendez-vous, je
+          vérifierai ceux que vous avez relevés.
         </p>
       </div>
 

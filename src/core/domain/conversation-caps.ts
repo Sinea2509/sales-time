@@ -46,19 +46,21 @@ export function questioningMeasure(
   if (total === 0) {
     return {
       level: 0,
-      learned: "Le commercial n'a posé aucune question.",
-      missing: "Poser des questions ouvertes pour faire parler le prospect.",
+      learned: "Vous n'avez posé aucune question.",
+      missing:
+        "Posez des questions ouvertes pour faire parler votre interlocuteur.",
     };
   }
   const { max } = questioningCap(questions);
   const pct = Math.round((100 * questions.open) / total);
-  const learned = `Le commercial a posé ${total} questions : ${questions.open} ouvertes (${pct} %), ${questions.closed} fermées et ${questions.tag} de simple vérification.`;
+  // Dans la voix du coach, comme la mesure de l'écoute (demande de Thomas du 23 octobre 2026).
+  const learned = `Vous avez posé ${total} questions : ${questions.open} ouvertes (${pct} %), ${questions.closed} fermées et ${questions.tag} de simple vérification.`;
   const missing =
     max >= 4
       ? ""
       : questions.open < 8 && pct >= 55
-        ? "Poser au moins huit questions ouvertes sur le rendez-vous."
-        : `Faire passer les questions ouvertes de ${pct} % à au moins ${max >= 3 ? 55 : 40} % : remplacer les questions fermées et les « vous voyez ? » par des « comment », « qu'est-ce qui », « par exemple ? ».`;
+        ? "Posez au moins huit questions ouvertes sur le rendez-vous."
+        : `Faites passer vos questions ouvertes de ${pct} % à au moins ${max >= 3 ? 55 : 40} % : remplacez les questions fermées et les « vous voyez ? » par des « comment », « qu'est-ce qui », « par exemple ? ».`;
   return { level: max, learned, missing };
 }
 

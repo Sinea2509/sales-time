@@ -3,6 +3,7 @@ import { verifyCronSecret } from "@/lib/cron-auth";
 import { checkAiGatewayConfigured } from "@/lib/env";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { processAnalysisJobs } from "@/src/core/application/process-analysis-jobs";
+import { requeueMeetingsWithReadableSpeakers } from "@/src/core/application/requeue-meetings-with-readable-speakers";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -24,10 +25,20 @@ export async function GET(request: Request) {
   }
 
   const deps = getApplicationDeps();
+  /*
+    Les rendez-vous analysés avant une correction du lecteur de transcript
+    sont remis en file une fois, puis traités ici comme les autres.
+  */
+  const remeasured = await requeueMeetingsWithReadableSpeakers(deps, {
+    limit: 10,
+  }).catch((cause) => {
+    console.error("process-analysis-jobs: remeasure failed", cause);
+    return 0;
+  });
   const workerId = `cron-${Date.now()}`;
   const result = await processAnalysisJobs(deps, {
     workerId,
   });
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result, remeasured });
 }

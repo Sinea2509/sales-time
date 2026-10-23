@@ -144,8 +144,8 @@ function TalkShareCard({ share }: { share: TalkShare | null }) {
       <CardContent className="pt-6">
         <h2 className={cardTitleClass}>Répartition de la parole</h2>
         <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-          Sur le temps où quelqu&apos;un parle. Le plafond de{" "}
-          {TALK_SHARE_CEILING_PCT} % vaut pour le commercial : c&apos;est une
+          Sur le temps où quelqu&apos;un parle. Visez au plus{" "}
+          {TALK_SHARE_CEILING_PCT} % de parole de votre côté : c&apos;est une
           limite, pas un objectif.
         </p>
         {share ? (
@@ -189,12 +189,12 @@ function TalkShareCard({ share }: { share: TalkShare | null }) {
               ) : (
                 <ToneChip tone="ok">Sous le plafond</ToneChip>
               )}{" "}
-              La plus longue prise de parole d&apos;affilée du commercial fait{" "}
+              Votre plus longue prise de parole d&apos;affilée fait{" "}
               {share.longestCommercialRunWords.toLocaleString("fr-FR")} mots.
               {share.rolesBasis === "questions"
-                ? " Le commercial a été reconnu à ses questions, faute de nom ou de rôle dans le transcript."
+                ? " Je vous ai reconnu à vos questions, faute de nom ou de rôle dans le transcript."
                 : share.rolesBasis === "order"
-                  ? " Les rôles ont été déduits de l'ordre de parole."
+                  ? " Je vous ai reconnu à l'ordre de parole."
                   : ""}
             </p>
           </>
