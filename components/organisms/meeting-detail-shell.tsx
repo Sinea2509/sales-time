@@ -1,3 +1,4 @@
+import { MeetingReanalyzeButton } from "@/components/organisms/meeting-reanalyze-button";
 import { ToneChip } from "@/components/atoms/tone-chip";
 import { InfoCard } from "@/components/molecules/info-card";
 import { MeetingAnalysisProgressCard } from "@/components/molecules/meeting-analysis-progress-card";
@@ -225,10 +226,15 @@ export function MeetingDetailShell({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <MeetingDetailHeader {...header} status={meeting.status} />
         {canEdit ? (
-          <MeetingEditButton
-            meetingId={meeting.id}
-            prospectName={meeting.prospectName}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            {meeting.status === "READY" ? (
+              <MeetingReanalyzeButton meetingId={meeting.id} />
+            ) : null}
+            <MeetingEditButton
+              meetingId={meeting.id}
+              prospectName={meeting.prospectName}
+            />
+          </div>
         ) : null}
       </div>
 

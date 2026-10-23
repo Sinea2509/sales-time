@@ -158,3 +158,66 @@ export async function generateFollowUpEmailAction(meetingId: string) {
     return { ok: false as const, error: "FAILED" as const, message };
   }
 }
+
+/**
+ * Relance l'analyse d'un rendez-vous déjà analysé, pour qu'il profite d'une
+ * règle corrigée (la mesure de l'écoute sur les transcripts Teams, par
+ * exemple). Demande de Thomas du 23 octobre 2026.
+ *
+ * Comme une modification du transcript, la relance consomme une analyse
+ * d'essai, et le compte rendu est effacé pour être réécrit avec les nouvelles
+ * notes.
+ */
+export async function reanalyzeMeetingAction(meetingId: string) {
+  const parsed = meetingIdSchema.safeParse(meetingId);
+  if (!parsed.success) {
+    return { ok: false as const, error: "VALIDATION" as const };
+  }
+
+  const actor = await requireAnalysisActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
+
+  const access = await requireMeetingMutationAccess(
+    actor.deps.meetings,
+    actor,
+    parsed.data,
+  );
+  if (!access.ok) {
+    return { ok: false as const, error: access.error };
+  }
+  if (access.meeting.status === "PROCESSING") {
+    return { ok: false as const, error: "ALREADY_RUNNING" as const };
+  }
+
+  const left = await actor.deps.organizationQuota.getTrialAnalysesLeft(
+    actor.organizationId,
+  );
+  if (left <= 0) {
+    return { ok: false as const, error: "QUOTA_EXHAUSTED" as const };
+  }
+  await actor.deps.organizationQuota.decrementTrialAnalysesLeft(
+    actor.organizationId,
+  );
+
+  await actor.deps.meetings.updateMeetingVisitReportDraft({
+    id: parsed.data,
+    organizationId: actor.organizationId,
+    visitReportDraft: null,
+  });
+  await actor.deps.meetings.updateMeetingStatus({
+    id: parsed.data,
+    organizationId: actor.organizationId,
+    status: "PROCESSING",
+    errorMessage: null,
+  });
+  await actor.deps.analysisJobs.enqueueMeetingAnalysis({
+    organizationId: actor.organizationId,
+    meetingId: parsed.data,
+  });
+  scheduleAnalysisJobsAfterResponse();
+
+  revalidatePath(`/company/rendez-vous/${parsed.data}`);
+  revalidatePath("/company/analyse");
+  revalidatePath("/company");
+  return { ok: true as const };
+}
