@@ -26,6 +26,8 @@ export type TeamMemberPerformanceProfile = {
   performanceStop: string | null;
   fingerprint: string;
   meetingCount: number;
+  /** Vrai quand les trois textes viennent de l'IA, et non d'une phrase de repli. */
+  hasSummary: boolean;
 };
 
 type Deps = {
@@ -125,5 +127,6 @@ export async function getTeamMemberPerformanceProfile(
     ),
     fingerprint: meetingsFingerprint,
     meetingCount: meetings.length,
+    hasSummary: performanceSummary != null,
   };
 }
