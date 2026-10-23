@@ -19,7 +19,7 @@ import {
 import { MeetingDiscTab } from "@/components/organisms/meeting-disc-tab";
 import { MeetingEditButton } from "@/components/organisms/meeting-edit-trigger";
 import { MeetingEmailTab } from "@/components/organisms/meeting-email-tab";
-import { MeetingKissTab } from "@/components/organisms/meeting-kiss-tab";
+import { MeetingChallengesTab } from "@/components/organisms/meeting-challenges-tab";
 import { MeetingObjectionsTab } from "@/components/organisms/meeting-objections-tab";
 import { MeetingSoncasTab } from "@/components/organisms/meeting-soncas-tab";
 import { MeetingSynthesisSection } from "@/components/organisms/meeting-synthesis-section";
@@ -183,9 +183,9 @@ export function MeetingDetailShell({
     },
     {
       id: "kiss",
-      label: "KISS",
+      label: "Défis",
       panel: showSellerCoaching ? (
-        <MeetingKissTab
+        <MeetingChallengesTab
           kiss={kissResult}
           challenge={
             kissResult?.challenge ?? scorecardResult?.challenge ?? null
@@ -193,7 +193,7 @@ export function MeetingDetailShell({
           pending={pending}
         />
       ) : (
-        <CoachingReserved what="Coaching KISS" />
+        <CoachingReserved what="Défis et coaching" />
       ),
     },
     {

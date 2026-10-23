@@ -10,7 +10,10 @@ export type Visual3dName =
   | "c4-aucun-contact"
   | "c5-recherche-vide"
   | "c6-invitation-expiree"
-  | "c7-erreur";
+  | "c7-erreur"
+  | "b3-coaching"
+  | "b8-prospect"
+  | "b9-objections";
 
 type Props = {
   name: Visual3dName;
