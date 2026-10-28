@@ -137,7 +137,7 @@ function scorecardOverview(): AnalysisScoringOverview {
       "Le questionnement (E2) est mesuré sur les questions du commercial, rangées en ouvertes, fermées et de simple vérification : 4 points avec au moins 55 % de questions ouvertes et au moins huit d'entre elles, 3 points à partir de 40 %, sinon 2 points, et 0 sans aucune question.",
       "La personnalisation (E3) ne dépasse pas 2 points quand le commercial déroule plus de 250 mots d'affilée dans le premier tiers du rendez-vous.",
       "Le même transcript, avec la même consigne et le même modèle, reçoit la même note.",
-      "Un rendez-vous sans grille (un type autre que la découverte) n'est pas noté : il n'entre ni dans la moyenne ni dans le classement.",
+      "Un rendez-vous sans grille (un type autre que la découverte et le suivi : démo, proposition, négociation) n'est pas noté : il n'entre ni dans la moyenne ni dans le classement.",
       "Pour une bonne note : couvrir les cinq blocs ; relancer chaque réponse vague jusqu'à obtenir un nom, un chiffre, une date ou un exemple ; repartir avec une date ferme et un engagement du prospect ; parler moins de 40 % du temps. Le tableau « Critère par critère » donne, pour chacun, ce qu'il faut obtenir et des questions qui y mènent.",
     ],
     tables: [
