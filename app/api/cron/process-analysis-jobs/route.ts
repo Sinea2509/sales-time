@@ -4,6 +4,7 @@ import { checkAiGatewayConfigured } from "@/lib/env";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { processAnalysisJobs } from "@/src/core/application/process-analysis-jobs";
 import { requeueMeetingsWithReadableSpeakers } from "@/src/core/application/requeue-meetings-with-readable-speakers";
+import { requeueUnscoredFollowUpMeetings } from "@/src/core/application/requeue-unscored-follow-up-meetings";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -35,10 +36,20 @@ export async function GET(request: Request) {
     console.error("process-analysis-jobs: remeasure failed", cause);
     return 0;
   });
+  /*
+    Les démos, propositions et négociations analysées avant la grille de suivi
+    n'ont pas de score : elles sont remises en file une fois pour être notées.
+  */
+  const rescored = await requeueUnscoredFollowUpMeetings(deps, {
+    limit: 5,
+  }).catch((cause) => {
+    console.error("process-analysis-jobs: rescore failed", cause);
+    return 0;
+  });
   const workerId = `cron-${Date.now()}`;
   const result = await processAnalysisJobs(deps, {
     workerId,
   });
 
-  return NextResponse.json({ ok: true, ...result, remeasured });
+  return NextResponse.json({ ok: true, ...result, remeasured, rescored });
 }

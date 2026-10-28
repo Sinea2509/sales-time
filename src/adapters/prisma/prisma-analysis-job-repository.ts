@@ -247,4 +247,50 @@ export class PrismaAnalysisJobRepository implements AnalysisJobRepositoryPort {
       LIMIT ${input.limit}
     `;
   }
+
+  async listUnscoredMeetingsNotQueuedSince(input: {
+    notQueuedSince: Date;
+    limit: number;
+  }): Promise<
+    Array<{
+      id: string;
+      organizationId: string;
+      meetingType: string | null;
+      pipelineStage: string | null;
+    }>
+  > {
+    /*
+      Aucune scorecard, et aucune analyse mise en file depuis la date donnée.
+      La remise en file crée elle-même une analyse : un rendez-vous n'est donc
+      repris qu'une fois, même si sa notation échoue de nouveau. Un rendez-vous
+      sans type ni étape reçoit la grille par défaut et n'a rien à rattraper.
+    */
+    return this.db.$queryRaw<
+      Array<{
+        id: string;
+        organizationId: string;
+        meetingType: string | null;
+        pipelineStage: string | null;
+      }>
+    >`
+      SELECT m.id, m."organizationId", m."meetingType", m."pipelineStage"
+      FROM "Meeting" m
+      WHERE m.status = 'READY'
+        AND (m."meetingType" IS NOT NULL OR m."pipelineStage" IS NOT NULL)
+        AND NOT EXISTS (
+          SELECT 1 FROM "MeetingAnalysis" a
+          WHERE a."meetingId" = m.id AND a.kind = 'SCORECARD'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM "AnalysisJob" j
+          WHERE j."meetingId" = m.id
+            AND (
+              j.status IN ('QUEUED', 'PROCESSING')
+              OR j."createdAt" >= ${input.notQueuedSince}
+            )
+        )
+      ORDER BY m."meetingAt" DESC
+      LIMIT ${input.limit}
+    `;
+  }
 }

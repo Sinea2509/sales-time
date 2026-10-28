@@ -50,4 +50,21 @@ export interface AnalysisJobRepositoryPort {
   }): Promise<
     Array<{ id: string; organizationId: string; transcript: string }>
   >;
+
+  /**
+   * Les rendez-vous prêts, typés, sans aucune scorecard, qu'aucune analyse
+   * n'a remis en file depuis `notQueuedSince` : candidats à une notation
+   * quand leur type a reçu une grille entre-temps.
+   */
+  listUnscoredMeetingsNotQueuedSince(input: {
+    notQueuedSince: Date;
+    limit: number;
+  }): Promise<
+    Array<{
+      id: string;
+      organizationId: string;
+      meetingType: string | null;
+      pipelineStage: string | null;
+    }>
+  >;
 }
