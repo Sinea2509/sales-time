@@ -5,18 +5,18 @@
 
 /** Primary page title (h1 or equivalent). */
 export const pageTitleClass =
-  "text-foreground text-2xl font-semibold tracking-tight sm:text-3xl";
+  "font-heading text-foreground text-2xl font-extrabold tracking-[-0.03em] sm:text-3xl";
 
 /** Section heading outside cards (h2), same visual rank as a main card title. */
 export const sectionHeadingClass =
-  "text-foreground text-lg font-semibold leading-tight tracking-tight";
+  "font-heading text-foreground text-lg font-bold leading-tight tracking-[-0.02em]";
 
 /**
  * Primary title inside a card header. Overrides CardTitle defaults on `size="sm"`
  * cards (`group-data-[size=sm]/card:text-sm`).
  */
 export const cardTitleClass =
-  "text-foreground text-lg font-semibold leading-tight tracking-tight group-data-[size=sm]/card:text-lg";
+  "font-heading text-foreground text-lg font-bold leading-tight tracking-[-0.02em] group-data-[size=sm]/card:text-lg";
 
 /** Subsection title inside a card (h3). */
 export const cardSubsectionTitleClass =

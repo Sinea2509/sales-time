@@ -47,9 +47,9 @@ export function PanelTabs<Id extends string>({
               aria-controls={`panneau-${tab.id}`}
               onClick={() => setActive(tab.id)}
               className={cn(
-                "-mb-px border-b-2 px-3 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors",
+                "-mb-px border-b-2 px-2.5 py-2.5 text-[13.5px] font-semibold whitespace-nowrap transition-colors",
                 selected
-                  ? "border-brand text-brand-hover dark:text-brand-muted"
+                  ? "border-brand font-bold text-foreground [border-image:linear-gradient(90deg,var(--brand),var(--brand-deep))_1]"
                   : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
