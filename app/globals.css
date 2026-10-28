@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-texte, var(--font-geist-sans));
+  --font-sans: var(--font-texte);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-titres, var(--font-geist-sans));
+  --font-heading: var(--font-titres);
   --color-night: var(--night);
   --color-night-raised: var(--night-raised);
   --color-brand-deep: var(--brand-deep);
