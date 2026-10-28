@@ -16,6 +16,7 @@ import {
   VISIT_REPORT_METHOD_NOTE,
   VISIT_REPORT_TITLE,
   visitReportWithoutSellerCoaching,
+  visitReportEssentials,
   type VisitReportInput,
 } from "./visit-report";
 import {
@@ -200,6 +201,8 @@ describe("composeVisitReport", () => {
       .filter((line, i, all) => isVisitReportHeading(line, all[i - 1]));
     expect(titles).toEqual([
       VISIT_REPORT_TITLE,
+      "L'ESSENTIEL",
+      "DÉTAIL DU RENDEZ-VOUS",
       "PARTICIPANTS",
       "HISTORIQUE DU COMPTE",
       "EN UNE PHRASE",
@@ -690,6 +693,8 @@ describe("les retours de la relecture du 24 septembre", () => {
       .filter((line, i, all) => isVisitReportHeading(line, all[i - 1]));
     expect(titles).toEqual([
       VISIT_REPORT_TITLE,
+      "L'ESSENTIEL",
+      "DÉTAIL DU RENDEZ-VOUS",
       "PARTICIPANTS",
       "HISTORIQUE DU COMPTE",
       "EN UNE PHRASE",
@@ -789,9 +794,14 @@ describe("l'en-tête et les moments, comme la maquette", () => {
 describe("isCurrentVisitReport", () => {
   it("reconnaît la forme d'aujourd'hui et rejette celle d'avant le lot 80a", () => {
     expect(
-      isCurrentVisitReport("COMPTE RENDU DE VISITE\nMenuiseries Vermont"),
+      isCurrentVisitReport(
+        "COMPTE RENDU DE VISITE\nMenuiseries Vermont\n\nL'ESSENTIEL\n- En une phrase : un premier échange.",
+      ),
     ).toBe(true);
-    expect(isCurrentVisitReport("  COMPTE RENDU DE VISITE")).toBe(true);
+    // Retour du 28 octobre 2026 : un compte rendu sans l'essentiel se réécrit.
+    expect(
+      isCurrentVisitReport("COMPTE RENDU DE VISITE\nMenuiseries Vermont"),
+    ).toBe(false);
     expect(
       isCurrentVisitReport(
         "Compte-rendu de visite · Claire Morel · 24/09/2026",
@@ -1006,5 +1016,45 @@ describe("withDatesFromTranscript, jour de la semaine collé à un mot", () => {
       "Cédric : Les mardis je ne peux pas. Le 4 novembre, peut-être.",
     );
     expect(out.prochainRendezVous.quand).toBe(VISIT_REPORT_DATE_TO_FIX);
+  });
+});
+
+describe("l'essentiel du compte rendu (retour du 28 octobre 2026)", () => {
+  const text = composeVisitReport(input());
+  const essentials = visitReportEssentials(text) ?? "";
+
+  it("s'ouvre sur six lignes à coller dans le CRM", () => {
+    expect(essentials).toContain("L'ESSENTIEL");
+    expect(essentials).toContain(
+      "- En une phrase : Un rendez-vous de découverte solide sur le besoin",
+    );
+    expect(essentials).toContain("- Besoin : Déclencheur et besoin exprimé");
+    expect(essentials).toContain(
+      "- Prochain rendez-vous : Le 7 octobre en fin de matinée · Présenter la proposition au directeur général",
+    );
+    expect(essentials).toContain("- À faire : Envoyer le récapitulatif");
+    expect(essentials).toMatch(/- Qualification : Décideur /);
+  });
+
+  it("s'arrête avant le détail, qui reste dans le texte complet", () => {
+    expect(essentials).not.toContain("PARTICIPANTS");
+    expect(text).toContain("DÉTAIL DU RENDEZ-VOUS");
+    expect(text).toContain("PARTICIPANTS");
+    expect(essentials.split("\n").length).toBeLessThanOrEqual(12);
+  });
+
+  it("retire la qualification, tirée de la grille, pour un membre sans accès au coaching", () => {
+    expect(visitReportWithoutSellerCoaching(text)).not.toContain(
+      "- Qualification :",
+    );
+    expect(visitReportWithoutSellerCoaching(text)).toContain(
+      "- Prochain rendez-vous :",
+    );
+  });
+
+  it("ne trouve pas d'essentiel dans un compte rendu d'avant", () => {
+    expect(
+      visitReportEssentials("COMPTE RENDU DE VISITE\n\nPARTICIPANTS"),
+    ).toBeNull();
   });
 });

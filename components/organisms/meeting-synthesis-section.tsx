@@ -3,7 +3,10 @@
 import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { isVisitReportHeading } from "@/src/core/domain/visit-report";
+import {
+  isVisitReportHeading,
+  visitReportEssentials,
+} from "@/src/core/domain/visit-report";
 import { cn } from "@/lib/utils";
 
 type WritingState = "idle" | "writing" | "done" | "failed";
@@ -33,7 +36,7 @@ export function MeetingSynthesisSection({
 }) {
   const [written, setWritten] = useState("");
   const [writingState, setWritingState] = useState<WritingState>("idle");
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"essentiel" | "tout" | null>(null);
   const [folded, setFolded] = useState(true);
 
   useEffect(() => {
@@ -69,14 +72,24 @@ export function MeetingSynthesisSection({
   const writing = writingState === "writing";
   const text = (writingState === "done" ? written : meetingSynthesis).trim();
   const canCopy = isAiText && text.length > 0;
-  const lines = text.split("\n");
-  const foldable = isAiText && lines.length > 14;
+  /*
+    Retour de Thomas du 28 octobre 2026 : le compte rendu complet était
+    « presque plus long que le transcript ». La fiche montre et copie
+    d'abord l'essentiel ; le détail est à un clic. Un compte rendu d'avant
+    cette rubrique n'a pas d'essentiel : il se replie comme avant.
+  */
+  const essentials = isAiText ? visitReportEssentials(text) : null;
+  const shown = essentials && folded ? essentials : text;
+  const lines = shown.split("\n");
+  const foldable = isAiText && (essentials != null || lines.length > 14);
 
-  async function copyReport() {
+  async function copyReport(what: "essentiel" | "tout") {
     if (!canCopy) return;
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
+    await navigator.clipboard.writeText(
+      what === "essentiel" && essentials ? essentials : text,
+    );
+    setCopied(what);
+    window.setTimeout(() => setCopied(null), 2000);
   }
 
   return (
@@ -94,22 +107,25 @@ export function MeetingSynthesisSection({
         <Button
           type="button"
           disabled={!canCopy}
-          aria-label={copied ? "Compte rendu copié" : "Copier le compte rendu"}
-          onClick={() => void copyReport()}
+          onClick={() => void copyReport("essentiel")}
         >
-          {copied ? (
+          {copied === "essentiel" ? (
             <Check className="size-4" aria-hidden />
           ) : (
             <Copy className="size-4" aria-hidden />
           )}
-          {copied ? "Compte rendu copié" : "Copier le compte rendu"}
+          {copied === "essentiel"
+            ? "Copié"
+            : essentials
+              ? "Copier l'essentiel"
+              : "Copier le compte rendu"}
         </Button>
       </div>
 
       <div
         className={cn(
           "relative px-5 pt-3 pb-4",
-          foldable && folded && "max-h-80 overflow-hidden",
+          foldable && folded && !essentials && "max-h-80 overflow-hidden",
         )}
       >
         {writing ? (
@@ -150,7 +166,7 @@ export function MeetingSynthesisSection({
             )}
           </div>
         )}
-        {foldable && folded ? (
+        {foldable && folded && !essentials ? (
           <div
             aria-hidden
             className="from-card/0 to-card pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b"
@@ -168,10 +184,22 @@ export function MeetingSynthesisSection({
       {isAiText ? (
         <div className="bg-muted/40 flex flex-wrap items-center gap-3 border-t px-5 py-2.5">
           <span className="text-muted-foreground text-xs">
-            {text.length.toLocaleString("fr-FR")} caractères, généré à partir du
-            transcript, de la scorecard et des profils.
+            {essentials
+              ? `L'essentiel ci-dessus. Le détail complet fait ${text.length.toLocaleString("fr-FR")} caractères, tiré du transcript, de la scorecard et des profils.`
+              : `${text.length.toLocaleString("fr-FR")} caractères, généré à partir du transcript, de la scorecard et des profils.`}
           </span>
           <span className="flex-1" />
+          {essentials ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={!canCopy}
+              onClick={() => void copyReport("tout")}
+            >
+              {copied === "tout" ? "Copié" : "Copier tout"}
+            </Button>
+          ) : null}
           {foldable ? (
             <Button
               type="button"
@@ -179,7 +207,13 @@ export function MeetingSynthesisSection({
               size="sm"
               onClick={() => setFolded((f) => !f)}
             >
-              {folded ? "Tout afficher" : "Replier"}
+              {essentials
+                ? folded
+                  ? "Voir le détail"
+                  : "Masquer le détail"
+                : folded
+                  ? "Tout afficher"
+                  : "Replier"}
             </Button>
           ) : null}
         </div>
