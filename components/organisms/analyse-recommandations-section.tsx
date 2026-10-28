@@ -161,33 +161,35 @@ export function AnalyseRecommandationsSection({
       </Card>
 
       <div className="flex flex-col gap-4">
-        <Card className="flex flex-col border-border shadow-sm dark:border-neutral-800">
+        <Card className="flex flex-col border-t-4 border-border border-t-[#33D1B5] bg-gradient-to-br from-[#33D1B5]/10 via-card to-card shadow-sm dark:border-neutral-800 dark:border-t-[#33D1B5]">
           <IconCardHeader
             icon={LineChart}
             title={progressTitle}
             description={progressSubtitle}
-            iconWrapClassName="bg-sky-100 dark:bg-sky-500/15"
-            iconClassName="text-sky-600 dark:text-sky-400"
+            iconWrapClassName="bg-[#33D1B5]/18"
+            iconClassName="text-[#0B6E5C] dark:text-[#9EEEDF]"
           />
           <CardContent className="flex-1">
             <DotBulletList
               items={visibleProgressBullets}
+              itemClassName="bg-[#33D1B5]/10 dark:bg-[#33D1B5]/12"
               emptyMessage={progressEmptyMessage}
             />
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col border-border shadow-sm dark:border-neutral-800">
+        <Card className="flex flex-col border-t-4 border-border border-t-[#6C4DFF] bg-gradient-to-br from-[#6C4DFF]/8 via-card to-card shadow-sm dark:border-neutral-800 dark:border-t-[#6C4DFF]">
           <IconCardHeader
             icon={Play}
             title={improvementTitle}
             description={improvementSubtitle}
-            iconWrapClassName="bg-violet-100 dark:bg-violet-500/15"
-            iconClassName="fill-violet-600 text-violet-600 dark:fill-violet-400 dark:text-violet-400"
+            iconWrapClassName="bg-[#6C4DFF]/12"
+            iconClassName="fill-[#6C4DFF] text-[#6C4DFF] dark:fill-[#C9BDFF] dark:text-[#C9BDFF]"
           />
           <CardContent className="flex-1">
             <DotBulletList
               items={improvementBullets}
+              itemClassName="bg-[#6C4DFF]/8 dark:bg-[#6C4DFF]/14"
               emptyMessage={improvementEmptyMessage}
             />
           </CardContent>
