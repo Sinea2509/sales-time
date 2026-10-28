@@ -190,7 +190,7 @@ async function KeyTakeaways({
       texte:
         firstSentence(coaching.improvementBullets[0]) ??
         firstSentence(fromSummary?.performanceStop),
-      accent: "border-l-[#6C4DFF]",
+      accent: "border-l-brand",
     },
   ];
   const shown = items.filter((i) => i.texte);

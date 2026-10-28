@@ -42,7 +42,7 @@ export function LandingPerspectivesSection() {
                 className={cn(
                   "inline-flex items-center gap-1.75 rounded-[9px] border px-4 py-2.25 font-medium whitespace-nowrap transition-all",
                   index === activeIndex
-                    ? "border-brand bg-brand text-brand-foreground shadow-[0_2px_10px_rgba(108,77,255,0.3)] [&_svg]:opacity-100"
+                    ? "border-brand bg-brand text-brand-foreground shadow-[0_2px_10px_rgba(79,85,240,0.3)] [&_svg]:opacity-100"
                     : "border-border bg-transparent text-muted-foreground hover:border-border [&_svg]:opacity-50",
                 )}
               >

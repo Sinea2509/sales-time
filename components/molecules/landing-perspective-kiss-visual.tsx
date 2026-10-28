@@ -19,9 +19,9 @@ export function LandingPerspectiveKissVisual() {
     },
     {
       key: "START",
-      color: "#6C4DFF",
-      bg: "rgba(108,77,255,0.06)",
-      border: "rgba(108,77,255,0.2)",
+      color: "#4F55F0",
+      bg: "rgba(79,85,240,0.06)",
+      border: "rgba(79,85,240,0.2)",
       text: "Créer de l'urgence via des benchmarks sectoriels.",
     },
     {

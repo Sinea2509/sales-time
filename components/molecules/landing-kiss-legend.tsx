@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 const kissLegendItems = [
   { key: "KEEP", label: "À conserver", color: "#16A34A" },
   { key: "IMPROVE", label: "À améliorer", color: "#0284C7" },
-  { key: "START", label: "À démarrer", color: "#6C4DFF" },
+  { key: "START", label: "À démarrer", color: "#4F55F0" },
   { key: "STOP", label: "À arrêter", color: "#DC2626" },
 ] as const;
 

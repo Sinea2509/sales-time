@@ -10,9 +10,9 @@ export function LandingCtaSection() {
       id="cta"
       className="relative overflow-hidden bg-[#06060A] py-[100px]"
     >
-      <LandingGridOverlay className="bg-[linear-gradient(rgba(108,77,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(108,77,255,0.035)_1px,transparent_1px)]" />
+      <LandingGridOverlay className="bg-[linear-gradient(rgba(79,85,240,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(79,85,240,0.035)_1px,transparent_1px)]" />
       <div
-        className="pointer-events-none absolute top-1/2 left-1/2 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse,rgba(108,77,255,0.18)_0%,transparent_65%)]"
+        className="pointer-events-none absolute top-1/2 left-1/2 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse,rgba(79,85,240,0.18)_0%,transparent_65%)]"
         aria-hidden
       />
       <div className="relative z-[2] mx-auto max-w-[1160px] px-6 text-center sm:px-10">
@@ -29,7 +29,7 @@ export function LandingCtaSection() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/sign-up"
-              className="inline-flex h-12 items-center rounded-xl bg-brand px-6 text-[15px] font-semibold text-brand-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_4px_16px_rgba(108,77,255,0.4)] transition-[filter,transform] hover:brightness-108 hover:-translate-y-px"
+              className="inline-flex h-12 items-center rounded-xl bg-brand px-6 text-[15px] font-semibold text-brand-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_4px_16px_rgba(79,85,240,0.4)] transition-[filter,transform] hover:brightness-108 hover:-translate-y-px"
             >
               Essayer Gratuitement
             </Link>

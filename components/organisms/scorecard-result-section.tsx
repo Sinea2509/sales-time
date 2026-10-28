@@ -13,29 +13,16 @@ import {
 } from "@/src/core/domain/scorecard-result-view";
 
 /**
- * Une couleur par bloc de la grille, du contexte à l'engagement. Les
- * lettres sont écrites à côté ; la couleur ne fait que retrouver un bloc
- * d'un coup d'œil d'un endroit de la fiche à l'autre.
+ * Un bloc se retrouve à sa lettre, d'un endroit de la fiche à l'autre. Elle
+ * est en bleu nuit et la barre en bleu de marque, pour tous les blocs : une
+ * couleur par bloc faisait de la fiche un sapin de Noël (retour de Thomas du
+ * 28 octobre 2026).
  */
-const BLOCK_COLORS = ["#6C4DFF", "#2F6FB5", "#C08A1E", "#2E9E5B", "#C93B3B"];
-
-function blockColor(index: number): string {
-  return BLOCK_COLORS[index % BLOCK_COLORS.length] ?? BLOCK_COLORS[0];
-}
-
-function BlockLetter({
-  letter,
-  color,
-  size = 26,
-}: {
-  letter: string;
-  color: string;
-  size?: number;
-}) {
+function BlockLetter({ letter, size = 26 }: { letter: string; size?: number }) {
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-md text-[12.5px] font-extrabold text-white"
-      style={{ width: size, height: size, background: color }}
+      className="bg-night flex shrink-0 items-center justify-center rounded-md text-[12.5px] font-extrabold text-white"
+      style={{ width: size, height: size }}
       aria-hidden
     >
       {letter}
@@ -46,11 +33,9 @@ function BlockLetter({
 function CriterionRow({
   criterion,
   lost,
-  color,
 }: {
   criterion: ScorecardBlockView["criteria"][number];
   lost: ScorecardPointLostView | undefined;
-  color: string;
 }) {
   return (
     <div className="border-b border-dashed border-border py-2.5 last:border-b-0">
@@ -95,17 +80,12 @@ function CriterionRow({
         </div>
       ) : null}
       {lost ? (
-        <div
-          className="mt-2 rounded-r-lg bg-muted/40 px-3.5 py-2.5"
-          style={{ borderLeft: `3px solid ${color}` }}
-        >
-          <p className="text-[11.5px] font-bold" style={{ color }}>
-            Ce qui a manqué
-          </p>
+        <div className="mt-2 rounded-lg bg-muted/50 px-3.5 py-2.5">
+          <p className="text-[11.5px] font-bold">Ce qui a manqué</p>
           <p className="text-muted-foreground mt-1.5 text-[12.8px] leading-relaxed">
             {lost.evidence}
           </p>
-          <p className="mt-2 rounded-r-lg border-l-[3px] border-emerald-600 bg-emerald-50 px-3 py-2 text-[12.8px] leading-relaxed dark:bg-emerald-950/40">
+          <p className="bg-brand-soft mt-2 rounded-lg px-3 py-2 text-[12.8px] leading-relaxed">
             <b>Mon conseil :</b> {lost.whatToSayInstead}
           </p>
         </div>
@@ -124,26 +104,23 @@ function CriterionRow({
 
 function BlockDetails({
   block,
-  index,
   lostByKey,
 }: {
   block: ScorecardBlockView;
-  index: number;
   lostByKey: ReadonlyMap<string, ScorecardPointLostView>;
 }) {
-  const color = blockColor(index);
   const missing = block.criteria.filter((c) =>
     lostByKey.has(c.key.toUpperCase()),
   ).length;
   return (
     <details className="group rounded-lg border border-border bg-card open:border-border open:shadow-sm">
       <summary className="grid cursor-pointer list-none grid-cols-[26px_minmax(120px,1.35fr)_minmax(90px,1fr)_62px_16px] items-center gap-3 px-3.5 py-3 hover:bg-muted/40 [&::-webkit-details-marker]:hidden">
-        <BlockLetter letter={block.key} color={color} />
+        <BlockLetter letter={block.key} />
         <span className="text-[13.4px] font-semibold">{block.name}</span>
         <span className="block h-[11px] overflow-hidden rounded-[6px] bg-border">
           <span
-            className="st-bar block h-full rounded-[6px]"
-            style={{ width: `${block.percent}%`, background: color }}
+            className="st-bar bg-brand block h-full rounded-[6px]"
+            style={{ width: `${block.percent}%` }}
           />
         </span>
         <span className="text-right text-[12.5px] font-bold tabular-nums">
@@ -179,7 +156,6 @@ function BlockDetails({
               key={criterion.key}
               criterion={criterion}
               lost={lostByKey.get(criterion.key.toUpperCase())}
-              color={color}
             />
           ))
         )}
@@ -191,11 +167,9 @@ function BlockDetails({
 function PointsToGain({
   points,
   levels,
-  colorByKey,
 }: {
   points: readonly ScorecardPointLostView[];
   levels: ReadonlyMap<string, number>;
-  colorByKey: ReadonlyMap<string, string>;
 }) {
   if (points.length === 0) {
     return (
@@ -233,7 +207,6 @@ function PointsToGain({
         </div>
         <div className="grid gap-3">
           {points.map((p) => {
-            const color = colorByKey.get(p.key) ?? BLOCK_COLORS[0];
             const level = levels.get(p.key) ?? 0;
             return (
               <div
@@ -241,32 +214,26 @@ function PointsToGain({
                 className="rounded-lg border border-border px-3.5 py-3"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <BlockLetter
-                    letter={p.key.charAt(0)}
-                    color={color}
-                    size={22}
-                  />
+                  <BlockLetter letter={p.key.charAt(0)} size={22} />
                   <b className="text-[12.5px]">
                     {p.key}, {p.label}
                   </b>
                   <ToneChip>
                     niveau {level} sur {SCORECARD_LEVEL_MAX}
                   </ToneChip>
-                  <ToneChip className="bg-card" tone="neutral">
-                    <span style={{ color }}>
-                      +{SCORECARD_LEVEL_MAX - level}{" "}
-                      {plurielFr(
-                        SCORECARD_LEVEL_MAX - level,
-                        "point possible",
-                        "points possibles",
-                      )}
-                    </span>
+                  <ToneChip>
+                    +{SCORECARD_LEVEL_MAX - level}{" "}
+                    {plurielFr(
+                      SCORECARD_LEVEL_MAX - level,
+                      "point possible",
+                      "points possibles",
+                    )}
                   </ToneChip>
                 </div>
                 <p className="text-muted-foreground my-2 text-[12.8px] leading-relaxed">
                   {p.evidence}
                 </p>
-                <p className="rounded-r-lg border-l-[3px] border-emerald-600 bg-emerald-50 px-3 py-2 text-[12.8px] leading-relaxed dark:bg-emerald-950/40">
+                <p className="bg-brand-soft rounded-lg px-3 py-2 text-[12.8px] leading-relaxed">
                   <b>Mon conseil :</b> {p.whatToSayInstead}
                 </p>
               </div>
@@ -296,18 +263,16 @@ export function ScorecardResultSection({
   const view = scorecardResultView(result);
   const lostByKey = new Map(view.pointsLost.map((p) => [p.key, p]));
   const levels = new Map<string, number>();
-  const colorByKey = new Map<string, string>();
-  view.blocks.forEach((block, i) => {
+  for (const block of view.blocks) {
     for (const c of block.criteria) {
       levels.set(c.key.toUpperCase(), c.level);
-      colorByKey.set(c.key.toUpperCase(), blockColor(i));
     }
-  });
+  }
 
   return (
     <div className="space-y-4">
       {gridAssumed ? (
-        <Card className="border-amber-200 bg-amber-50 shadow-none dark:border-amber-800 dark:bg-amber-950/40">
+        <Card className="bg-muted/60 border-border shadow-none">
           <CardContent className="flex flex-wrap items-center gap-3 pt-6">
             <ToneChip tone="warn">Grille par défaut</ToneChip>
             <span className="text-[12.5px] leading-relaxed">
@@ -319,7 +284,7 @@ export function ScorecardResultSection({
       ) : null}
 
       {result.speakers === "guessed" || result.speakers === "none" ? (
-        <Card className="border-amber-200 bg-amber-50 shadow-none dark:border-amber-800 dark:bg-amber-950/40">
+        <Card className="bg-muted/60 border-border shadow-none">
           <CardContent className="flex flex-wrap items-center gap-3 pt-6">
             <ToneChip tone="warn">
               {result.speakers === "guessed"
@@ -369,11 +334,10 @@ export function ScorecardResultSection({
           </div>
           <p className={cn("text-[13.5px] leading-relaxed")}>{view.summary}</p>
           <div className="grid gap-2.5">
-            {view.blocks.map((block, i) => (
+            {view.blocks.map((block) => (
               <BlockDetails
                 key={block.key}
                 block={block}
-                index={i}
                 lostByKey={lostByKey}
               />
             ))}
@@ -381,11 +345,7 @@ export function ScorecardResultSection({
         </CardContent>
       </Card>
 
-      <PointsToGain
-        points={view.pointsLost}
-        levels={levels}
-        colorByKey={colorByKey}
-      />
+      <PointsToGain points={view.pointsLost} levels={levels} />
     </div>
   );
 }

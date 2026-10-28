@@ -32,7 +32,7 @@ export type MeetingDetailHeaderProps = {
 /**
  * L'en-tête nomme le rendez-vous comme on en parle : « Groupe Vermont,
  * rendez-vous de découverte », en deux tons, le client à l'encre et la nature
- * du rendez-vous en dégradé. La ligne du dessous porte les faits ; le score,
+ * du rendez-vous en gris bleuté. La ligne du dessous porte les faits ; le score,
  * lui, vit dans la colonne de droite, à côté de ce qu'il explique.
  */
 export function MeetingDetailHeader({
@@ -76,7 +76,7 @@ export function MeetingDetailHeader({
       <div className="min-w-0">
         <h1 className={cn(pageTitleClass, "text-[26px] sm:text-[30px]")}>
           {company || prospectName}
-          <span className="st-text-gradient">{kind}</span>
+          <span className="st-title-quiet">{kind}</span>
         </h1>
         <p className="text-muted-foreground mt-1 max-w-[78ch] text-[13px]">
           {facts.join(" · ")}

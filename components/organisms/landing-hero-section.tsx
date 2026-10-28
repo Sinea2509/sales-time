@@ -14,7 +14,7 @@ export function LandingHeroSection() {
     >
       <LandingGridOverlay />
       <div
-        className="pointer-events-none absolute top-[-80px] left-1/2 h-[600px] w-[1000px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_50%_30%,rgba(108,77,255,0.22)_0%,transparent_68%)]"
+        className="pointer-events-none absolute top-[-80px] left-1/2 h-[600px] w-[1000px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_50%_30%,rgba(79,85,240,0.22)_0%,transparent_68%)]"
         aria-hidden
       />
 
@@ -39,7 +39,7 @@ export function LandingHeroSection() {
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/sign-up"
-              className="inline-flex h-12 items-center gap-2 rounded-xl bg-brand px-6 text-[15px] font-semibold text-brand-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_4px_16px_rgba(108,77,255,0.4)] transition-[filter,transform] hover:brightness-108 hover:-translate-y-px"
+              className="inline-flex h-12 items-center gap-2 rounded-xl bg-brand px-6 text-[15px] font-semibold text-brand-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_4px_16px_rgba(79,85,240,0.4)] transition-[filter,transform] hover:brightness-108 hover:-translate-y-px"
             >
               <Play className="size-3.5 fill-current" strokeWidth={2.2} />
               Essayer Gratuitement
