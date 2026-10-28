@@ -1,14 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireAnalysisActor } from "@/lib/analysis-server-context";
 import { scheduleAnalysisJobsAfterResponse } from "@/app/[locale]/company/rendez-vous/schedule-analysis-jobs";
 import { requireMeetingMutationAccess } from "@/lib/meeting-mutation-access";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
 import { generateFollowUpEmailForMeeting } from "@/src/core/application/generate-follow-up-email";
 import { loadResolvedFollowUpEmailPreferences } from "@/src/core/application/load-resolved-follow-up-email-preferences";
+import { reviseFollowUpEmail } from "@/src/core/application/revise-follow-up-email";
 import { runAllMeetingAnalysesForOrg } from "@/src/core/application/run-all-meeting-analyses-for-org";
 import {
+  composeFollowUpEmailDraft,
   formatFollowUpEmailBody,
   formatFollowUpEmailDraft,
 } from "@/src/core/domain/format-follow-up-email-draft";
@@ -156,5 +159,65 @@ export async function generateFollowUpEmailAction(meetingId: string) {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return { ok: false as const, error: "FAILED" as const, message };
+  }
+}
+
+const reviseEmailSchema = z.object({
+  meetingId: meetingIdSchema,
+  subject: z.string().max(300),
+  body: z.string().trim().min(1).max(8000),
+  instruction: z.string().trim().min(2).max(500),
+});
+
+/**
+ * Retouche le mail proposé selon la demande du commercial, puis l'enregistre.
+ * Même accès que la génération du mail.
+ */
+export async function reviseFollowUpEmailAction(
+  raw: z.input<typeof reviseEmailSchema>,
+) {
+  const parsed = reviseEmailSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false as const, error: "VALIDATION" as const };
+  }
+
+  const actor = await requireAnalysisActor();
+  if (!actor.ok) return { ok: false as const, error: actor.error };
+
+  const access = await requireMeetingMutationAccess(
+    actor.deps.meetings,
+    actor,
+    parsed.data.meetingId,
+  );
+  if (!access.ok) return { ok: false as const, error: access.error };
+
+  const meeting = await actor.deps.meetings.findMeetingDetailWithAnalyses({
+    id: parsed.data.meetingId,
+    organizationId: actor.organizationId,
+  });
+  if (!meeting) return { ok: false as const, error: "NOT_FOUND" as const };
+
+  try {
+    const revised = await reviseFollowUpEmail(
+      { analysis: actor.deps.analysis, prompts: actor.deps.prompts },
+      {
+        meeting,
+        subject: parsed.data.subject,
+        body: parsed.data.body,
+        instruction: parsed.data.instruction,
+      },
+    );
+    await actor.deps.meetings.updateMeetingFollowUpDraft({
+      id: parsed.data.meetingId,
+      organizationId: actor.organizationId,
+      followUpEmailDraft: composeFollowUpEmailDraft(
+        revised.subject,
+        revised.body,
+      ),
+    });
+    revalidatePath(`/company/rendez-vous/${parsed.data.meetingId}`);
+    return { ok: true as const, subject: revised.subject, body: revised.body };
+  } catch {
+    return { ok: false as const, error: "FAILED" as const };
   }
 }
