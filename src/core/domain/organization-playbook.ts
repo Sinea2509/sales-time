@@ -25,6 +25,14 @@ const LIST_LIMITS = {
   competitors: { items: 12, length: 120 },
   qualificationCriteria: { items: 12, length: 200 },
   redLines: { items: 12, length: 200 },
+  /*
+    Les clients déjà accompagnés et la thématique réalisée, une ligne chacun
+    (« Transdev · Management de proximité »). La préparation d'un rendez-vous
+    y cherche des exemples proches du prospect (méthode Seed de Sinéa, 28
+    octobre 2026). Ils n'entrent pas dans le bloc des analyses, qu'ils
+    alourdiraient sans servir.
+  */
+  clientReferences: { items: 80, length: 200 },
 } as const;
 
 export const ORGANIZATION_PLAYBOOK_TEXT_LIMITS = TEXT_LIMITS;
@@ -52,6 +60,11 @@ export const organizationPlaybookFullFormSchema = z.object({
   ),
   pricingRules: z.string().max(TEXT_LIMITS.pricingRules),
   redLines: listSchema(LIST_LIMITS.redLines.items, LIST_LIMITS.redLines.length),
+  // Facultative à l'enregistrement : un formulaire d'avant cette liste reste valide.
+  clientReferences: listSchema(
+    LIST_LIMITS.clientReferences.items,
+    LIST_LIMITS.clientReferences.length,
+  ).default([]),
 });
 
 /**
@@ -81,6 +94,10 @@ export const organizationPlaybookJsonSchema = z.object({
     LIST_LIMITS.redLines.items,
     LIST_LIMITS.redLines.length,
   ).optional(),
+  clientReferences: listSchema(
+    LIST_LIMITS.clientReferences.items,
+    LIST_LIMITS.clientReferences.length,
+  ).optional(),
 });
 
 export type OrganizationPlaybookJson = z.infer<
@@ -96,6 +113,7 @@ export type OrganizationPlaybookForm = {
   qualificationCriteria: string[];
   pricingRules: string;
   redLines: string[];
+  clientReferences: string[];
 };
 
 export type OrganizationPlaybookTextKey =
@@ -108,7 +126,8 @@ export type OrganizationPlaybookListKey =
   | "differentiators"
   | "competitors"
   | "qualificationCriteria"
-  | "redLines";
+  | "redLines"
+  | "clientReferences";
 
 const TEXT_KEYS: OrganizationPlaybookTextKey[] = [
   "offer",
@@ -122,6 +141,7 @@ const LIST_KEYS: OrganizationPlaybookListKey[] = [
   "competitors",
   "qualificationCriteria",
   "redLines",
+  "clientReferences",
 ];
 
 export function emptyOrganizationPlaybookForm(): OrganizationPlaybookForm {
@@ -134,6 +154,7 @@ export function emptyOrganizationPlaybookForm(): OrganizationPlaybookForm {
     qualificationCriteria: [],
     pricingRules: "",
     redLines: [],
+    clientReferences: [],
   };
 }
 
