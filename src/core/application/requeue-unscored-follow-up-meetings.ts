@@ -33,11 +33,12 @@ export async function requeueUnscoredFollowUpMeetings(
   },
   input: { limit: number },
 ): Promise<number> {
-  const candidates =
-    await deps.analysisJobs.listUnscoredMeetingsNotQueuedSince({
+  const candidates = await deps.analysisJobs.listUnscoredMeetingsNotQueuedSince(
+    {
       notQueuedSince: FOLLOW_UP_GRID_LIVE_SINCE,
       limit: CANDIDATES_READ,
-    });
+    },
+  );
 
   let requeued = 0;
   for (const meeting of candidates) {
