@@ -39,9 +39,12 @@ export async function GET(request: Request) {
   /*
     Les démos, propositions et négociations analysées avant la grille de suivi
     n'ont pas de score : elles sont remises en file une fois pour être notées.
+    Une par passage, traitée juste en dessous : une analyse complète occupe à
+    peu près un passage, et un rendez-vous remis en file sans être traité
+    resterait affiché « en cours », puis « bloqué », jusqu'aux suivants.
   */
   const rescored = await requeueUnscoredFollowUpMeetings(deps, {
-    limit: 5,
+    limit: 1,
   }).catch((cause) => {
     console.error("process-analysis-jobs: rescore failed", cause);
     return 0;
