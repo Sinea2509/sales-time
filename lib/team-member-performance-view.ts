@@ -2,7 +2,6 @@ import { buildMeetingDigestsForAiSummary } from "@/lib/meeting-ai-digest";
 import { getEnv } from "@/lib/env";
 import { kissMarkdownAppendixForAudience } from "@/lib/kiss-org-appendix-for-analysis";
 import { prospectInitials } from "@/lib/prospect-initials";
-import { countMeetingTypes } from "@/lib/team-member-performance-helpers";
 import { etapeVocabularyFromOptions } from "@/lib/meeting-etape-pill";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
@@ -252,7 +251,14 @@ export async function loadTeamMemberPerformanceView(
   const teamSalesProfile = aggregateTeamSalesProfileFromMeetings(meetings);
   const previousSalesProfile =
     aggregateTeamSalesProfileFromMeetings(previousMeetings);
-  const coachingBullets = await summarizeTeamCoachingRecommendations(deps, {
+  /*
+    Les quatre textes écrits par l'IA ne bloquent plus la fiche : ils partent
+    ensemble, et la page les attend chacun à sa place. Avant, elle les
+    attendait l'un après l'autre, et un manager patientait quinze secondes
+    quand les rendez-vous de la personne venaient de changer (mesuré le 23
+    octobre 2026). Chaque texte qui échoue rend sa valeur vide.
+  */
+  const coaching = summarizeTeamCoachingRecommendations(deps, {
     meetings,
     previousMeetings,
     teamSalesProfile,
@@ -268,35 +274,38 @@ export async function loadTeamMemberPerformanceView(
       organizationId: orgId,
       sellerUserId,
     },
-  });
-  const { progressBullets, improvementBullets } = coachingBullets;
+  })
+    .then(({ progressBullets, improvementBullets }) => ({
+      progressBullets,
+      improvementBullets,
+    }))
+    .catch(() => ({ progressBullets: [], improvementBullets: [] }));
 
-  const { decouverte, proposition } = countMeetingTypes(meetings);
   const nameLine = memberNameLine(member.user);
 
   const meetingDigests = buildMeetingDigestsForAiSummary(meetings);
   const meetingsFingerprint = teamMemberMeetingsFingerprint(meetings);
-  const performanceProfile = await getTeamMemberPerformanceProfile(deps, {
+  const performance = getTeamMemberPerformanceProfile(deps, {
     organizationId: orgId,
     sellerUserId,
     sellerDisplayName: nameLine,
     statsWindowDays,
     statsWindowRange,
-  });
-  let relationalAffinity: SellerRelationalAffinitySummary | null = null;
-  if (aiEnabled && meetingDigests.length > 0) {
-    relationalAffinity = await getCachedSellerRelationalAffinity(deps, {
-      organizationId: orgId,
-      sellerUserId,
-      sellerDisplayName: nameLine,
-      statsWindowDays,
-      meetings,
-    });
-  }
+  }).catch(() => null);
+  const affinity: Promise<SellerRelationalAffinitySummary | null> =
+    aiEnabled && meetingDigests.length > 0
+      ? getCachedSellerRelationalAffinity(deps, {
+          organizationId: orgId,
+          sellerUserId,
+          sellerDisplayName: nameLine,
+          statsWindowDays,
+          meetings,
+        }).catch(() => null)
+      : Promise.resolve(null);
 
   const kissSellerRollup = buildKissTeamRollupFromMeetings(meetings);
-  const kissSellerStrengthsNarrative = aiEnabled
-    ? await getCachedOrgKissRollupNarrative(deps, {
+  const kissNarrative: Promise<string | null> = aiEnabled
+    ? getCachedOrgKissRollupNarrative(deps, {
         organizationId: orgId,
         statsWindowDays,
         meetingsFingerprint,
@@ -308,8 +317,8 @@ export async function loadTeamMemberPerformanceView(
           audience,
         ),
         organizationPlaybookMarkdown,
-      })
-    : null;
+      }).catch(() => null)
+    : Promise.resolve(null);
 
   const discAffinityBars = aggregateDiscAffinityBarsFromMeetings(meetings);
   const soncasAffinityBars = aggregateSoncasAffinityBarsFromMeetings(meetings);
@@ -331,7 +340,6 @@ export async function loadTeamMemberPerformanceView(
       statsWindowDays,
       statsWindowRange,
       disabledStatsDays,
-      performanceFingerprint: performanceProfile.fingerprint,
       nameLine,
       initials: prospectInitials(nameLine),
       /*
@@ -355,12 +363,7 @@ export async function loadTeamMemberPerformanceView(
       comparisonGroup: teamScopeGroup(input.teamUserIds),
       horsEquipeDuManager,
       nbRdvs: home.nbRdvs,
-      decouverte,
-      proposition,
       tamMinutesAvg: home.avgDurationMin,
-      performanceForces: performanceProfile.performanceForces,
-      performanceAxes: performanceProfile.performanceAxes,
-      performanceStop: performanceProfile.performanceStop,
       discBarItems: discBarSource.map((d) => ({
         key: d.key,
         label: d.label,
@@ -375,9 +378,7 @@ export async function loadTeamMemberPerformanceView(
       })),
       discAnalyzedMeetings,
       soncasAnalyzedMeetings,
-      discAffinityText: relationalAffinity?.discAffinity ?? null,
-      soncasAffinityText: relationalAffinity?.soncasAffinity ?? null,
-      kissSellerStrengthsNarrative,
+      aiTexts: { performance, coaching, affinity, kissNarrative },
       kissSellerRollup,
       qualificationPotentialPoints,
       etapeOrder,
@@ -387,8 +388,6 @@ export async function loadTeamMemberPerformanceView(
       profileHistory,
       salesProfileRdvCount: teamSalesProfile.rdvCount,
       rdvSurLaPeriode: meetings.length,
-      progressBullets,
-      improvementBullets,
       home,
     },
   };
