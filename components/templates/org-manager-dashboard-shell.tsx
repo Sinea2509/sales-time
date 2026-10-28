@@ -90,7 +90,7 @@ export function OrgManagerDashboardShell(props: Props) {
       <OrgDashboardShellFrame
         {...props}
         workspaceBadgeLabel={tWorkspace("managerBadge")}
-        workspaceBadgeClassName="border-brand/30 bg-brand/5 text-brand"
+        workspaceBadgeClassName="border-transparent bg-[#e7e9ff] text-[#3b3fb8]"
         navGroups={navGroups}
         superAdminNavLabel={tNav("superAdmin")}
         emptyOrganizationHint={tWorkspace("emptyOrganizationHint")}

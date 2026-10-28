@@ -43,21 +43,18 @@ export type MeetingDetailRailProps = {
   };
 };
 
+/** Un écart sur la carte du score, en bleu nuit : des teintes claires, lisibles sur la nuit. */
 function Delta({ value, unit }: { value: number | null; unit: string }) {
   if (value == null) {
-    return (
-      <span className="text-muted-foreground text-xs font-semibold">
-        nouveau
-      </span>
-    );
+    return <span className="text-xs font-semibold text-white/70">nouveau</span>;
   }
   const rounded = Math.round(value * 10) / 10;
   const cls =
     rounded > 0
-      ? "text-emerald-700 dark:text-emerald-400"
+      ? "text-emerald-300"
       : rounded < 0
-        ? "text-red-700 dark:text-red-400"
-        : "text-muted-foreground";
+        ? "text-rose-300"
+        : "text-white/70";
   const arrow = rounded > 0 ? "▲" : rounded < 0 ? "▼" : "◆";
   return (
     <span className={cn("text-xs font-semibold tabular-nums", cls)}>
@@ -79,22 +76,23 @@ function ScoreCard(props: MeetingDetailRailProps) {
       : null;
 
   return (
-    <Card>
+    <Card className="dark st-night">
       <CardContent className="pt-6">
         <div className="flex items-center gap-4">
           <SalesScoreRing
             score={props.salesScore}
             pending={props.scorePending}
+            track="rgb(255 255 255 / 0.14)"
           />
           <div className="min-w-0">
-            <p className="text-muted-foreground text-[10.5px] font-bold tracking-[.09em] uppercase">
+            <p className="text-[10.5px] font-bold tracking-[.09em] text-white/70 uppercase">
               SalesScore
             </p>
             <p className="mt-0.5 text-[12.5px] font-semibold">
               sur 100
               {props.gridName ? `, grille ${props.gridName.toLowerCase()}` : ""}
             </p>
-            <p className="text-muted-foreground mt-0.5 text-[11.5px]">
+            <p className="mt-0.5 text-[11.5px] text-white/70">
               {props.gridName
                 ? "La note de la grille, sur ses critères."
                 : "Sans grille pour ce type de rendez-vous : le rendez-vous n'est pas noté."}
@@ -110,26 +108,26 @@ function ScoreCard(props: MeetingDetailRailProps) {
           ) : null}
         </div>
         <dl className="mt-3.5 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-[12.6px]">
-          <dt className="text-muted-foreground whitespace-nowrap">
+          <dt className="whitespace-nowrap text-white/70">
             Sa moyenne, 30 jours
           </dt>
           <dd className="text-right font-medium tabular-nums">
             {props.sellerAverage30d ?? VALEUR_NON_CALCULABLE}
           </dd>
-          <dt className="text-muted-foreground whitespace-nowrap">
+          <dt className="whitespace-nowrap text-white/70">
             Ce rendez-vous vs sa moyenne
           </dt>
           <dd className="text-right">
             <Delta value={ecartPerso} unit=" pt" />
           </dd>
-          <dt className="text-muted-foreground whitespace-nowrap">
+          <dt className="whitespace-nowrap text-white/70">
             Vs moyenne de l&apos;équipe
           </dt>
           <dd className="text-right">
             <Delta value={ecartEquipe} unit=" pt" />
           </dd>
         </dl>
-        <p className="text-muted-foreground mt-2.5 text-[11.5px] leading-[1.55]">
+        <p className="mt-2.5 text-[11.5px] leading-[1.55] text-white/70">
           Un rendez-vous isolé ne fait pas une tendance : l&apos;écart se lit
           sur plusieurs rendez-vous.
         </p>

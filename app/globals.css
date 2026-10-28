@@ -7,9 +7,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-texte, var(--font-geist-sans));
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-sans);
+  --font-heading: var(--font-titres, var(--font-geist-sans));
+  --color-night: var(--night);
+  --color-night-raised: var(--night-raised);
+  --color-brand-deep: var(--brand-deep);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -68,25 +71,28 @@
 
 :root {
   /*
-    Charte « Encre et papier froid », celle de la maquette validée le 2 et le
-    8 septembre. Elle remplace « Ivoire et Encre » : même construction, un
-    papier légèrement teinté qui se détache des cartes blanches, une encre
-    presque noire, mais la teinte passe du chaud au froid. Les neutres sont
-    tirés vers le violet de la marque, très faiblement, pour que le papier
-    porte la marque au lieu de la contredire. Tout reste en mode clair. La
-    marque ne bouge pas : #6c4dff reste la couleur des actions. Contrastes
-    mesurés : encre 18:1 sur la page, muted 6,7:1 sur la page et 6,4:1 sur le gris, marque 5,07:1
-    sur blanc.
+    Charte « 4 bis », choisie par Thomas le 28 octobre 2026. Elle remplace
+    « Encre et papier froid » : la sobriété d'un outil bancaire (bleu nuit,
+    titres en deux tons) réchauffée par un coach humain (bleu vif, pastels,
+    formes très arrondies, visuels 3D). Le bleu nuit porte la structure : le
+    menu, l'encre, la carte du score. Le bleu vif porte les actions, en
+    dégradé vers le violet. Contrastes mesurés : encre 17:1 sur la page,
+    muted 5,6:1 sur la page et 6,1:1 sur blanc, marque 5,4:1 sur blanc, blanc
+    5,4:1 sur la marque.
   */
-  --background: #f6f6fb;
-  --foreground: #0c0c14;
+  --background: #f4f5fa;
+  --foreground: #0e0f2e;
   --card: #ffffff;
-  --card-foreground: #0c0c14;
+  --card-foreground: #0e0f2e;
   --popover: #ffffff;
-  --popover-foreground: #0c0c14;
-  --primary: #1e1e2e;
+  --popover-foreground: #0e0f2e;
+  --primary: #0e0f2e;
   --primary-foreground: oklch(0.985 0 0);
-  --brand: #6c4dff;
+  --night: #0e0f2e;
+  --night-raised: #1b1e5c;
+  --brand: #4f55f0;
+  /* L'autre bout du dégradé des actions ; le blanc y tient 5,6:1. */
+  --brand-deep: #7048e8;
   /*
     Encre posée sur un aplat de marque, exactement comme --primary-foreground
     se pose sur --primary. Elle manquait, et les trente-deux endroits qui
@@ -96,8 +102,8 @@
     sur le bouton « Choisir ce plan »), là où 4,5:1 est le minimum.
   */
   --brand-foreground: oklch(0.985 0 0);
-  --brand-hover: #5a3fd9;
-  --brand-muted: #c4b5fd;
+  --brand-hover: #3f45d6;
+  --brand-muted: #c9ccff;
   --brand-soft: color-mix(in srgb, var(--brand) 12%, transparent);
   --brand-ring: color-mix(in srgb, var(--brand) 30%, transparent);
   /*
@@ -108,16 +114,16 @@
     lecture clair vers foncé.
   */
   --gold: #c08a1e;
-  --secondary: #f1f1f7;
-  --secondary-foreground: #0c0c14;
-  --muted: #f1f1f7;
-  --muted-foreground: #56556c;
-  --accent: #f1f1f7;
-  --accent-foreground: #0c0c14;
+  --secondary: #eef0f7;
+  --secondary-foreground: #0e0f2e;
+  --muted: #eef0f7;
+  --muted-foreground: #5b5f86;
+  --accent: #eef0ff;
+  --accent-foreground: #0e0f2e;
   --destructive: #b3261e;
-  --border: #e8e8f0;
-  --input: #e8e8f0;
-  --ring: #a9a8bd;
+  --border: #e3e6f2;
+  --input: #dadded;
+  --ring: #8e93ff;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -134,31 +140,30 @@
   --chart-ink: var(--muted-foreground);
   --chart-axis: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
   --chart-grid: var(--border);
-  --radius: 0.625rem;
+  --radius: 0.875rem;
   /*
-    La colonne de navigation est blanche, comme les cartes, séparée de la page
-    par un filet. L'entrée active prend un fond de marque très clair et une
-    encre de marque foncée, comme dans la maquette : c'est la seule couleur de
-    la colonne, tout le reste est encre et gris.
+    La colonne de navigation est en bleu nuit, d'un dégradé posé plus bas,
+    avec une encre claire (13:1). L'entrée active est une pastille de marque
+    en dégradé : c'est la seule couleur vive de la colonne.
   */
-  --sidebar: #ffffff;
-  --sidebar-foreground: #0c0c14;
-  --sidebar-primary: #1e1e2e;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: #f1f1f7;
-  --sidebar-accent-foreground: #0c0c14;
-  --sidebar-border: #e8e8f0;
-  --sidebar-ring: #a9a8bd;
-  --app-shell-surface: #f6f6fb;
-  --app-shell-sidebar-bg: #ffffff;
-  --app-shell-sidebar-text: #0c0c14;
-  --app-shell-sidebar-muted: #56556c;
-  --app-shell-sidebar-border: #e8e8f0;
-  --app-shell-sidebar-hover-bg: #f4f4f9;
-  --app-shell-sidebar-active-bg: #f1edff;
-  --app-shell-sidebar-active-text: #4a31c4;
-  --app-shell-sidebar-accent: #6c4dff;
-  --app-shell-sidebar-card-bg: #fafafd;
+  --sidebar: #0e0f2e;
+  --sidebar-foreground: #d9dbf2;
+  --sidebar-primary: #4f55f0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in srgb, #ffffff 9%, transparent);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: color-mix(in srgb, #ffffff 12%, transparent);
+  --sidebar-ring: #8e93ff;
+  --app-shell-surface: #f4f5fa;
+  --app-shell-sidebar-bg: #0e0f2e;
+  --app-shell-sidebar-text: #d9dbf2;
+  --app-shell-sidebar-muted: #a9add6;
+  --app-shell-sidebar-border: color-mix(in srgb, #ffffff 12%, transparent);
+  --app-shell-sidebar-hover-bg: color-mix(in srgb, #ffffff 8%, transparent);
+  --app-shell-sidebar-active-bg: #4f55f0;
+  --app-shell-sidebar-active-text: #ffffff;
+  --app-shell-sidebar-accent: #4f55f0;
+  --app-shell-sidebar-card-bg: #1b1e5c;
 }
 
 .dark {
@@ -170,12 +175,13 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --brand: #8b7cff;
+  --brand: #8e93ff;
+  --brand-deep: #b39bff;
   /* L'aplat s'éclaircit ici, donc l'encre s'assombrit : même bascule que
-     --primary-foreground juste au-dessus. Sur #8b7cff, elle tient 5,49:1. */
+     --primary-foreground juste au-dessus. Sur #8e93ff, elle tient 5,2:1. */
   --brand-foreground: oklch(0.205 0 0);
-  --brand-hover: #a294ff;
-  --brand-muted: #c4b5fd;
+  --brand-hover: #a5a9ff;
+  --brand-muted: #c9ccff;
   --brand-soft: color-mix(in srgb, var(--brand) 18%, transparent);
   --brand-ring: color-mix(in srgb, var(--brand) 35%, transparent);
   --secondary: oklch(0.269 0 0);
@@ -363,6 +369,87 @@
   .st-ring {
     animation: none;
   }
+}
+
+/*
+  Les surfaces de la charte 4 bis. La page porte des halos doux, le menu un
+  dégradé de bleu nuit, l'entrée active une pastille de marque qui luit. Ces
+  images se posent par-dessus les couleurs des jetons : un navigateur qui ne
+  les dessine pas garde des aplats lisibles.
+*/
+[data-slot="sidebar-inset"] {
+  background-image:
+    radial-gradient(
+      56rem 32rem at 100% -10%,
+      color-mix(in srgb, var(--brand) 14%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      44rem 30rem at 45% 110%,
+      rgb(255 186 150 / 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      32rem 24rem at 12% 45%,
+      rgb(255 158 199 / 0.1),
+      transparent 60%
+    );
+}
+
+[data-slot="sidebar"],
+[data-slot="sidebar-inner"] {
+  background-image:
+    radial-gradient(
+      18rem 14rem at 0% 0%,
+      color-mix(in srgb, var(--brand) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      16rem 16rem at 100% 100%,
+      rgb(210 80 143 / 0.2),
+      transparent 70%
+    ),
+    linear-gradient(180deg, #16184f 0%, var(--night) 55%, #0a0b24 100%);
+}
+
+[data-sidebar="menu-button"][data-active] {
+  background-image: linear-gradient(135deg, var(--brand), var(--brand-deep));
+  box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--brand) 80%, transparent);
+}
+
+/* La fin d'un titre en deux tons : « Maison Leroux, rendez-vous de découverte ». */
+.st-text-gradient {
+  background-image: linear-gradient(90deg, var(--brand), #8a5cf6 55%, #d2508f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dark .st-text-gradient {
+  background-image: linear-gradient(90deg, #8e93ff, #b39bff 55%, #ff9ec7);
+}
+
+/*
+  La carte en bleu nuit, pour ce qui se lit d'un coup d'œil : le score d'un
+  rendez-vous. Son texte passe en blanc, et ce qui est atténué ailleurs l'est
+  ici par l'opacité : le gris de la page serait illisible sur la nuit.
+*/
+.st-night {
+  border-color: transparent;
+  background-color: var(--night);
+  background-image:
+    radial-gradient(
+      15rem 11rem at 12% 0%,
+      rgb(123 92 255 / 0.35),
+      transparent 70%
+    ),
+    radial-gradient(
+      14rem 11rem at 100% 100%,
+      rgb(255 158 199 / 0.2),
+      transparent 70%
+    ),
+    linear-gradient(150deg, var(--night-raised) 0%, var(--night) 65%);
+  color: #ffffff;
+  box-shadow: 0 18px 40px -18px rgb(14 15 46 / 0.6);
 }
 
 /*
