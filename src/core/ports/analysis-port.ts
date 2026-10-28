@@ -9,7 +9,10 @@ import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
 import type { ScorecardGeneratedResult } from "@/src/core/domain/scorecard-result-zod";
 import type { ObjectionsAnalysisResult } from "@/src/core/domain/objections-result-zod";
 import type { ProspectProfileGenerated } from "@/src/core/domain/prospect-profile-zod";
-import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod";
+import type {
+  FollowUpEmailResult,
+  FollowUpEmailRevision,
+} from "@/src/core/domain/follow-up-email-zod";
 import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
 import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
 import type { MeetingFactsSuggestion } from "@/src/core/domain/meeting-prefill";
@@ -277,4 +280,11 @@ export interface AnalysisPort {
     model: string;
     userPrompt: string;
   }): Promise<ProspectResearch>;
+
+  /** Retouche un mail selon la demande du commercial. */
+  reviseFollowUpEmail(input: {
+    systemPrompt: string;
+    model: string;
+    userContent: string;
+  }): Promise<FollowUpEmailRevision>;
 }

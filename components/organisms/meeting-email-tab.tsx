@@ -13,11 +13,14 @@ export function MeetingEmailTab({
     <Card>
       <CardContent className="space-y-4 pt-6">
         <div>
-          <h2 className={cardTitleClass}>E-mail de suivi proposé</h2>
+          <h2 className={cardTitleClass}>
+            Le mail qui accompagne votre prochain rendez-vous
+          </h2>
           <p className="text-muted-foreground mt-1 max-w-[64ch] text-xs leading-relaxed">
-            Rédigé depuis le transcript et vos préférences de ton. Relisez,
-            ajustez, envoyez depuis votre messagerie : le produit propose un
-            brouillon, il n&apos;envoie rien à votre place.
+            Il reprend ce que vous avez retenu et propose ou confirme le
+            prochain rendez-vous, avec sa date quand elle a été dite.
+            Retouchez-le en un clic avec le coach, puis envoyez-le depuis votre
+            messagerie : rien ne part sans vous.
           </p>
         </div>
         <MeetingFollowUpEmailBlock

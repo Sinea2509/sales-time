@@ -46,6 +46,7 @@ describe("meetingContextBlock", () => {
       [
         "<meeting>",
         "meetingDate: jeudi 24 septembre 2026",
+        "meetingDateIs: la date du rendez-vous qui vient d'avoir lieu, jamais celle du prochain",
         "prospectName: Claire Morel",
         "prospectCompany: Atelier Morel",
         "meetingType: Découverte",
