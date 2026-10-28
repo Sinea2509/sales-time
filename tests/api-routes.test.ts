@@ -233,6 +233,7 @@ describe("GET /api/cron/process-analysis-jobs", () => {
       ok: true,
       processed: 1,
       remeasured: 0,
+      rescored: 0,
     });
     expect(processAnalysisJobsMock).toHaveBeenCalled();
   });
