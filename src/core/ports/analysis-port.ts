@@ -1,3 +1,4 @@
+import type { ProspectResearch } from "@/src/core/domain/prospect-research";
 import type { PipedriveExtraction } from "@/src/core/domain/pipedrive-blocks";
 import type {
   DiscMomentsOutput,
@@ -8,7 +9,10 @@ import type { ScorecardGrid } from "@/src/core/domain/scorecard-grid";
 import type { ScorecardGeneratedResult } from "@/src/core/domain/scorecard-result-zod";
 import type { ObjectionsAnalysisResult } from "@/src/core/domain/objections-result-zod";
 import type { ProspectProfileGenerated } from "@/src/core/domain/prospect-profile-zod";
-import type { FollowUpEmailResult } from "@/src/core/domain/follow-up-email-zod";
+import type {
+  FollowUpEmailResult,
+  FollowUpEmailRevision,
+} from "@/src/core/domain/follow-up-email-zod";
 import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
 import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
 import type { MeetingFactsSuggestion } from "@/src/core/domain/meeting-prefill";
@@ -260,4 +264,27 @@ export interface AnalysisPort {
     notes: string | null;
     previousReport: string | null;
   }): Promise<PipedriveExtraction>;
+
+  /**
+   * Une recherche web factuelle, par un modèle qui cherche en ligne : le texte
+   * trouvé et les adresses consultées.
+   */
+  researchOnWeb(input: {
+    model: string;
+    prompt: string;
+  }): Promise<{ text: string; sources: string[] }>;
+
+  /** La fiche de préparation d'un premier rendez-vous, rangée à partir de la recherche. */
+  structureProspectResearch(input: {
+    systemPrompt: string;
+    model: string;
+    userPrompt: string;
+  }): Promise<ProspectResearch>;
+
+  /** Retouche un mail selon la demande du commercial. */
+  reviseFollowUpEmail(input: {
+    systemPrompt: string;
+    model: string;
+    userContent: string;
+  }): Promise<FollowUpEmailRevision>;
 }

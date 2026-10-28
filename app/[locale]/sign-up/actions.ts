@@ -7,7 +7,6 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { generateOpaqueToken } from "@/lib/auth/tokens";
 import { setSessionCookie, setActiveOrganizationCookie } from "@/lib/auth/session-cookie";
 import { tryNormalizeWebsiteForOrgKey } from "@/lib/website/normalize-website";
-import { verifyWebsiteReachable } from "@/lib/website/verify-website-reachable";
 import { USER_PROFILE_ROLES } from "@/src/core/domain/user-profile-role";
 
 const profileRoleSchema = z.enum(USER_PROFILE_ROLES);
@@ -76,15 +75,6 @@ export async function signUpAction(
     return { ok: false, message: hint };
   }
 
-  const reachable = await verifyWebsiteReachable(websiteNorm.value);
-  if (!reachable.ok) {
-    return {
-      ok: false,
-      message:
-        "Nous n'avons pas pu joindre ce site web. Vérifiez l'adresse ou réessayez plus tard.",
-    };
-  }
-
   const deps = getApplicationDeps();
   const passwordHash = await hashPassword(parsed.data.password);
   const reg = await deps.registration.registerNewUser({
@@ -98,13 +88,6 @@ export async function signUpAction(
   });
 
   if (!reg.ok) {
-    if (reg.error === "EMAIL_DOMAIN_MISMATCH") {
-      return {
-        ok: false,
-        message:
-          "Votre adresse e-mail doit correspondre au domaine du site web de l'entreprise. Utilisez une adresse professionnelle ou demandez une invitation à votre administrateur.",
-      };
-    }
     return {
       ok: false,
       message: "Un compte existe déjà avec cet e-mail.",

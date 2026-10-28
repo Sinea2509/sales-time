@@ -195,6 +195,45 @@ export function withDataScopeSystemPrompt(systemMarkdown: string): string {
 }
 
 /**
+ * L'objet du mail proposé après un rendez-vous, joint à toute consigne de mail.
+ *
+ * Retour de Thomas du 28 octobre 2026 : le mail de Sales Time disait « merci,
+ * j'ai bien compris votre besoin, à la prochaine », alors que le mail utile
+ * est celui qui accompagne la proposition du prochain rendez-vous, avec sa
+ * date. La règle vit ici, et non dans la consigne modifiable, pour l'emporter
+ * sur les versions déjà enregistrées.
+ */
+export const FOLLOW_UP_EMAIL_PURPOSE_INSTRUCTION = `## L'objet du mail (règle du produit, elle l'emporte sur toute consigne plus haut)
+Ce mail accompagne la proposition du prochain rendez-vous : c'est l'invitation qui part avec le rendez-vous, pas un simple remerciement.
+- subject : annonce le PROCHAIN rendez-vous et son objet, avec sa date telle que le transcript la donne (sur le modèle « Notre rendez-vous de [jour] : [objet] ») ; sinon « Proposition de rendez-vous : [objet] ». La date du bloc <meeting> est celle du rendez-vous qui vient d'avoir lieu : elle ne va jamais dans l'objet.
+- greeting : la formule d'appel, puis une seule phrase de remerciement.
+- painPoints : deux phrases au plus, ce que le commercial a retenu, avec les mots du prospect.
+- proposedSolutions : ce que le prochain rendez-vous apportera au prospect (ce qui y sera présenté, décidé ou construit), relié à ses enjeux.
+- nextSteps : le cœur du mail. Quand le prochain rendez-vous est fixé dans le transcript, donne en une ligne claire sa date, son heure, son format (visio ou sur place, et le lieu) et les participants, tels que le transcript les dit, puis ce que chacun prépare. Quand il n'est pas fixé, propose de le fixer sans inventer de date (demande les disponibilités du prospect, ou propose « la semaine prochaine » si c'est ce qui a été dit) et dis ce que ce rendez-vous permettra.
+- Le jour du prochain rendez-vous s'écrit exactement comme le transcript le dit (« vendredi à onze heures ») : n'y ajoute jamais un quantième ni un mois que le transcript ne donne pas, et ne le rapproche jamais de la date du bloc <meeting>.
+- N'invente jamais une date, une heure, un lieu ou un participant absents du transcript.`;
+
+/** Consigne du mail proposé, plus l'objet fixé par le produit. */
+export function withFollowUpEmailSystemPrompt(systemMarkdown: string): string {
+  return withDataScopeSystemPrompt(
+    [systemMarkdown, FOLLOW_UP_EMAIL_PURPOSE_INSTRUCTION].join("\n\n"),
+  );
+}
+
+/**
+ * La consigne qui retouche un mail à la demande du commercial (« plus court »,
+ * « plus formel », « ajoute que… »), sans repasser par ChatGPT.
+ */
+export const FOLLOW_UP_EMAIL_REVISION_SYSTEM_PROMPT = `Tu retouches un e-mail commercial B2B en français, à la demande du commercial qui va l'envoyer.
+
+Règles :
+- Applique la demande, et seulement elle. Le reste du mail ne change pas de sens.
+- Garde exactement les faits, les dates, les heures, les lieux, les noms, les chiffres et la signature du mail. N'en invente aucun : si la demande en réclame un que ni le mail ni le transcript ne donnent, laisse une marque entre crochets à compléter, comme [date à confirmer].
+- Garde le vouvoiement ou le tutoiement du mail, sauf si la demande dit de le changer.
+- Pas d'émoji, pas de formule creuse (« n'hésitez pas », « je reste à votre disposition »).
+- subject : l'objet retouché, ou le même si la demande ne le touche pas. body : le corps complet, formule d'appel et signature comprises, en texte simple.`;
+
+/**
  * Consigne SONCAS éditable, plus l'échelle des six leviers.
  *
  * Un enrobage à part plutôt qu'une ligne ajoutée à `withDataScopeSystemPrompt` :

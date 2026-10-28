@@ -29,6 +29,7 @@ const fullForm = () => ({
   qualificationCriteria: ["Budget validé"],
   pricingRules: "Pas de remise supérieure à 10 pour cent",
   redLines: ["Ne jamais promettre une date de mise en service"],
+  clientReferences: [],
 });
 
 describe("organization-playbook : schémas", () => {

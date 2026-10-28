@@ -65,16 +65,25 @@ export class PrismaRegistrationRepository implements RegistrationRepositoryPort 
       return { ok: false, error: "EMAIL_TAKEN" };
     }
 
-    if (
-      !emailDomainMatchesOrgWebsite(input.email, input.signupWebsiteNormalized)
-    ) {
-      return { ok: false, error: "EMAIL_DOMAIN_MISMATCH" };
-    }
+    /*
+      Le site web identifie l'entreprise ; l'adresse e-mail prouve qu'on y
+      travaille. Seule une adresse du même domaine rejoint une entreprise déjà
+      inscrite. Une autre adresse ne bloque plus l'inscription (demande de
+      Thomas du 23 octobre 2026) : elle crée sa propre entreprise, sans la clé
+      de site web, pour que personne ne puisse réserver le site d'une vraie
+      entreprise et y voir arriver ses salariés. On y entre sur invitation.
+    */
+    const domainMatches = emailDomainMatchesOrgWebsite(
+      input.email,
+      input.signupWebsiteNormalized,
+    );
 
-    const existingOrg = await this.db.organization.findUnique({
-      where: { websiteNormalized: input.signupWebsiteNormalized },
-      include: { settings: true },
-    });
+    const existingOrg = domainMatches
+      ? await this.db.organization.findUnique({
+          where: { websiteNormalized: input.signupWebsiteNormalized },
+          include: { settings: true },
+        })
+      : null;
 
     if (existingOrg) {
       try {
@@ -129,7 +138,9 @@ export class PrismaRegistrationRepository implements RegistrationRepositoryPort 
       data: {
         email: input.email,
         passwordHash: input.passwordHash,
-        signupWebsiteNormalized: input.signupWebsiteNormalized,
+        signupWebsiteNormalized: domainMatches
+          ? input.signupWebsiteNormalized
+          : null,
         firstName: input.firstName,
         lastName: input.lastName,
         profileRole: input.profileRole,

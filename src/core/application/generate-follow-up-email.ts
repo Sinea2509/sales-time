@@ -42,6 +42,8 @@ export function meetingContextBlock(
     "meeting",
     [
       `meetingDate: ${meetingDate.format(meeting.meetingAt)}`,
+      // Le modèle collait cette date au jour du prochain rendez-vous (« vendredi 21 octobre ») : elle est nommée pour ce qu'elle est.
+      "meetingDateIs: la date du rendez-vous qui vient d'avoir lieu, jamais celle du prochain",
       `prospectName: ${meeting.prospectName}`,
       meeting.prospectCompany
         ? `prospectCompany: ${meeting.prospectCompany}`
@@ -92,7 +94,10 @@ export async function generateFollowUpEmailForMeeting(
     kind: "FOLLOW_UP_EMAIL",
     organizationId: input.organizationId,
   });
-  const model = await resolvePromptGatewayModel(deps.prompts, "FOLLOW_UP_EMAIL");
+  const model = await resolvePromptGatewayModel(
+    deps.prompts,
+    "FOLLOW_UP_EMAIL",
+  );
 
   const { result } = await deps.analysis.generateFollowUpEmail({
     systemMarkdown: prompt.markdown,

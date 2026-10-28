@@ -18,7 +18,7 @@ export type RegisterNewUserResult =
       organizationId: string;
       flow: "join_existing_organization";
     }
-  | { ok: false; error: "EMAIL_TAKEN" | "EMAIL_DOMAIN_MISMATCH" };
+  | { ok: false; error: "EMAIL_TAKEN" };
 
 export type RegisterFromOrganizationInvitationInput = {
   tokenPlaintext: string;

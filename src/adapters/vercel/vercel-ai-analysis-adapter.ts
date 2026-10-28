@@ -1,3 +1,4 @@
+import { prospectResearchSchema } from "@/src/core/domain/prospect-research";
 import { pipedriveExtractionSchema } from "@/src/core/domain/pipedrive-blocks";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
@@ -17,7 +18,10 @@ import {
 } from "@/src/core/domain/scorecard-grid";
 import { objectionsGeneratedResultSchema } from "@/src/core/domain/objections-result-zod";
 import { prospectProfileGeneratedSchema } from "@/src/core/domain/prospect-profile-zod";
-import { followUpEmailResultSchema } from "@/src/core/domain/follow-up-email-zod";
+import {
+  followUpEmailResultSchema,
+  followUpEmailRevisionSchema,
+} from "@/src/core/domain/follow-up-email-zod";
 import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import { visitReportExtractionSchema } from "@/src/core/domain/visit-report-zod";
 import { meetingFactsSuggestionSchema } from "@/src/core/domain/meeting-prefill";
@@ -32,6 +36,7 @@ import type {
 } from "@/src/core/ports/analysis-port";
 import {
   withDataScopeSystemPrompt,
+  withFollowUpEmailSystemPrompt,
   withDiscSystemPrompt,
   withKissSystemPrompt,
   withObjectionsSystemPrompt,
@@ -276,7 +281,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     userContent: string;
     model: string;
   }) {
-    const systemPrompt = withDataScopeSystemPrompt(input.systemMarkdown);
+    const systemPrompt = withFollowUpEmailSystemPrompt(input.systemMarkdown);
     const userPrompt = input.userContent;
 
     const { object, usage } = await generateObject({
@@ -296,6 +301,22 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
         outputTokens: usage?.outputTokens,
       },
     };
+  }
+
+  async reviseFollowUpEmail(input: {
+    systemPrompt: string;
+    model: string;
+    userContent: string;
+  }) {
+    const { object } = await generateObject({
+      model: input.model,
+      ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
+      schema: followUpEmailRevisionSchema,
+      system: withDataScopeSystemPrompt(input.systemPrompt),
+      prompt: input.userContent,
+    });
+    return object;
   }
 
   async summarizeOrgKissRollup(input: {
@@ -545,6 +566,35 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       schema: visitReportExtractionSchema,
       prompt,
       maxOutputTokens: 6000,
+    });
+    return object;
+  }
+
+  async researchOnWeb(input: { model: string; prompt: string }) {
+    const result = await generateText({
+      model: input.model,
+      prompt: input.prompt,
+      maxOutputTokens: 2500,
+    });
+    const sources = (result.sources ?? []).flatMap((s) =>
+      s.sourceType === "url" ? [s.url] : [],
+    );
+    return { text: result.text, sources };
+  }
+
+  async structureProspectResearch(input: {
+    systemPrompt: string;
+    model: string;
+    userPrompt: string;
+  }) {
+    const { object } = await generateObject({
+      model: input.model,
+      ...stableCallSettings(input.model),
+      experimental_repairText: repairOverlongFields,
+      system: withDataScopeSystemPrompt(input.systemPrompt),
+      schema: prospectResearchSchema,
+      prompt: input.userPrompt,
+      maxOutputTokens: 4000,
     });
     return object;
   }

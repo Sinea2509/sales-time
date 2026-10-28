@@ -208,17 +208,15 @@ jest.mock("@/lib/application-deps", () => {
       });
       if (existing)
         return { ok: false as const, error: "EMAIL_TAKEN" as const };
-      if (
-        !emailDomainMatchesOrgWebsite(
-          input.email,
-          input.signupWebsiteNormalized,
-        )
-      ) {
-        return { ok: false as const, error: "EMAIL_DOMAIN_MISMATCH" as const };
-      }
-      const existingOrg = await prismaMock.organization.findUnique({
-        where: { websiteNormalized: input.signupWebsiteNormalized },
-      });
+      const domainMatches = emailDomainMatchesOrgWebsite(
+        input.email,
+        input.signupWebsiteNormalized,
+      );
+      const existingOrg = domainMatches
+        ? await prismaMock.organization.findUnique({
+            where: { websiteNormalized: input.signupWebsiteNormalized },
+          })
+        : null;
       if (existingOrg) {
         const user = await prismaMock.user.create({
           data: {
@@ -252,7 +250,9 @@ jest.mock("@/lib/application-deps", () => {
         data: {
           email: input.email,
           passwordHash: input.passwordHash,
-          signupWebsiteNormalized: input.signupWebsiteNormalized,
+          signupWebsiteNormalized: domainMatches
+            ? input.signupWebsiteNormalized
+            : null,
           firstName: input.firstName,
           lastName: input.lastName,
           profileRole: input.profileRole as UserProfileRole,
@@ -713,50 +713,69 @@ describe("signUpAction", () => {
     expect(r?.message).toContain("entreprise");
   });
 
-  it("returns error when website host is not reachable", async () => {
+  function newUserMocks() {
+    prismaMock.user.findUnique.mockResolvedValue(null);
+    prismaMock.user.create.mockResolvedValue({
+      id: "user-new",
+      email: "new@gmail.com",
+    } as never);
+    hashPasswordMock.mockResolvedValue("hash");
+    createSessionRecordMock.mockResolvedValue(undefined);
+    setSessionCookieMock.mockResolvedValue(undefined);
+    setActiveOrganizationCookieMock.mockResolvedValue(undefined);
+  }
+
+  it("ne bloque plus l'inscription quand le site web ne répond pas", async () => {
+    newUserMocks();
+    prismaMock.organization.findUnique.mockResolvedValue(null);
     globalThis.fetch = jest
       .fn()
       .mockRejectedValue(new Error("network")) as typeof fetch;
-    const r = await signUpAction(
-      null,
-      form({
-        firstName: "Ada",
-        lastName: "Lovelace",
-        companyName: "Analytical Engines Ltd",
-        profileRole: "COMMERCIAL",
-        email: "a@b.co",
-        website: "https://example.com",
-        password: "password12",
-        confirmPassword: "password12",
-      }),
-    );
-    expect(r?.ok).toBe(false);
-    expect(r?.message).toMatch(/joindre|site web/i);
-    expect(prismaMock.user.create).not.toHaveBeenCalled();
+    await expect(
+      signUpAction(
+        null,
+        form({
+          firstName: "Ada",
+          lastName: "Lovelace",
+          companyName: "Analytical Engines Ltd",
+          profileRole: "COMMERCIAL",
+          email: "ada@example.com",
+          website: "https://example.com",
+          password: "password12",
+          confirmPassword: "password12",
+        }),
+      ),
+    ).rejects.toThrow(/REDIRECT/);
+    expect(prismaMock.user.create).toHaveBeenCalled();
   });
 
-  it("returns error when email domain does not match website", async () => {
+  it("crée sa propre entreprise, sans clé de site web, avec une adresse d'un autre domaine", async () => {
+    newUserMocks();
     prismaMock.organization.findUnique.mockResolvedValue(null);
-    prismaMock.user.findUnique.mockResolvedValue(null);
-    const r = await signUpAction(
-      null,
-      form({
-        firstName: "Ada",
-        lastName: "Lovelace",
-        companyName: "Analytical Engines Ltd",
-        profileRole: "COMMERCIAL",
-        email: "user@gmail.com",
-        website: "https://acme.com",
-        password: "password12",
-        confirmPassword: "password12",
+    await expect(
+      signUpAction(
+        null,
+        form({
+          firstName: "Ada",
+          lastName: "Lovelace",
+          companyName: "Analytical Engines Ltd",
+          profileRole: "COMMERCIAL",
+          email: "new@gmail.com",
+          website: "https://acme.com",
+          password: "password12",
+          confirmPassword: "password12",
+        }),
+      ),
+    ).rejects.toThrow(/REDIRECT/);
+    expect(prismaMock.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ signupWebsiteNormalized: null }),
       }),
     );
-    expect(r?.ok).toBe(false);
-    expect(r?.message).toMatch(/domaine|professionnelle|invitation/i);
-    expect(prismaMock.user.create).not.toHaveBeenCalled();
   });
 
-  it("returns error when email domain does not match existing organization website", async () => {
+  it("ne rejoint jamais une entreprise existante avec une adresse d'un autre domaine", async () => {
+    newUserMocks();
     prismaMock.organization.findUnique.mockImplementation(
       async ({ where }: { where: Record<string, unknown> }) => {
         if ("websiteNormalized" in where) {
@@ -765,23 +784,22 @@ describe("signUpAction", () => {
         return null;
       },
     );
-    prismaMock.user.findUnique.mockResolvedValue(null);
-    const r = await signUpAction(
-      null,
-      form({
-        firstName: "Ada",
-        lastName: "Lovelace",
-        companyName: "Analytical Engines Ltd",
-        profileRole: "COMMERCIAL",
-        email: "new@gmail.com",
-        website: "https://acme.com",
-        password: "password12",
-        confirmPassword: "password12",
-      }),
-    );
-    expect(r?.ok).toBe(false);
-    expect(r?.message).toMatch(/domaine|professionnelle|invitation/i);
-    expect(prismaMock.user.create).not.toHaveBeenCalled();
+    await expect(
+      signUpAction(
+        null,
+        form({
+          firstName: "Ada",
+          lastName: "Lovelace",
+          companyName: "Analytical Engines Ltd",
+          profileRole: "COMMERCIAL",
+          email: "new@gmail.com",
+          website: "https://acme.com",
+          password: "password12",
+          confirmPassword: "password12",
+        }),
+      ),
+    ).rejects.toThrow(/REDIRECT/);
+    expect(prismaMock.organizationMembership.create).not.toHaveBeenCalled();
   });
 
   it("joins existing organization when email subdomain matches website", async () => {
