@@ -85,6 +85,23 @@ function shortcuts(
  * Le choix est écrit dans l'adresse et dans un cookie : il s'applique ainsi à
  * toutes les pages du manager, et pas seulement à celle où il a été fait.
  */
+/*
+  Le champ de date ouvre son calendrier au clic, où qu'on clique, et montre la
+  main au survol : seule la petite icône le faisait, sans le dire (retour de
+  Thomas du 23 octobre 2026). `showPicker` manque sur les navigateurs
+  anciens, qui gardent leur comportement.
+*/
+const DATE_INPUT_CLASS =
+  "h-9 cursor-pointer rounded-md border border-border bg-background px-2 text-[13px] [&::-webkit-calendar-picker-indicator]:cursor-pointer";
+
+function openDatePicker(event: React.MouseEvent<HTMLInputElement>) {
+  try {
+    event.currentTarget.showPicker?.();
+  } catch {
+    // Le navigateur refuse d'ouvrir le calendrier : le champ reste saisissable.
+  }
+}
+
 export function DashboardStatsPeriodSelect(props: {
   value: StatsWindowDays;
   /** La période choisie au calendrier, quand c'en est une. */
@@ -213,7 +230,8 @@ export function DashboardStatsPeriodSelect(props: {
                   value={from}
                   max={to || undefined}
                   onChange={(e) => setFrom(e.target.value)}
-                  className="h-9 rounded-md border border-border bg-background px-2 text-[13px]"
+                  onClick={openDatePicker}
+                  className={DATE_INPUT_CLASS}
                 />
               </label>
               <label className="grid gap-1 text-[12px] font-medium">
@@ -223,7 +241,8 @@ export function DashboardStatsPeriodSelect(props: {
                   value={to}
                   min={from || undefined}
                   onChange={(e) => setTo(e.target.value)}
-                  className="h-9 rounded-md border border-border bg-background px-2 text-[13px]"
+                  onClick={openDatePicker}
+                  className={DATE_INPUT_CLASS}
                 />
               </label>
             </div>

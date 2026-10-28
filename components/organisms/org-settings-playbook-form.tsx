@@ -96,6 +96,7 @@ export function OrgSettingsPlaybookForm({
   const competitorsRef = useRef<ProcessStringListSectionHandle>(null);
   const qualificationRef = useRef<ProcessStringListSectionHandle>(null);
   const redLinesRef = useRef<ProcessStringListSectionHandle>(null);
+  const referencesRef = useRef<ProcessStringListSectionHandle>(null);
 
   const [differentiators, setDifferentiators] = useState<
     ProcessStringListItem[]
@@ -108,6 +109,9 @@ export function OrgSettingsPlaybookForm({
   );
   const [redLines, setRedLines] = useState<ProcessStringListItem[]>(() =>
     processItemsFromStrings("red", initial.redLines),
+  );
+  const [references, setReferences] = useState<ProcessStringListItem[]>(() =>
+    processItemsFromStrings("ref", initial.clientReferences),
   );
 
   /*
@@ -136,6 +140,7 @@ export function OrgSettingsPlaybookForm({
         qualificationCriteria: listValues(qualificationRef, qualification),
         pricingRules: pricingRules.trim(),
         redLines: listValues(redLinesRef, redLines),
+        clientReferences: listValues(referencesRef, references),
       });
       if (!r.ok) {
         setMessage({ type: "err", text: r.message });
@@ -278,6 +283,18 @@ export function OrgSettingsPlaybookForm({
         setItems={setRedLines}
         maxItems={LIST_LIMITS.redLines.items}
         maxLen={LIST_LIMITS.redLines.length}
+        canEdit={canEdit}
+      />
+
+      <ProcessStringListSection
+        ref={referencesRef}
+        label="Références clients"
+        addButtonLabel="+ Ajouter une référence"
+        draftPlaceholder="Client · thématique réalisée (ex. Transdev · Management de proximité)"
+        items={references}
+        setItems={setReferences}
+        maxItems={LIST_LIMITS.clientReferences.items}
+        maxLen={LIST_LIMITS.clientReferences.length}
         canEdit={canEdit}
       />
 

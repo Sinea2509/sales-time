@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { PrepareMeetingBriefingForm } from "@/components/organisms/prepare-meeting-briefing-form";
+import { PrepareMeetingModes } from "@/components/organisms/prepare-meeting-modes";
 import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getApplicationDeps } from "@/lib/application-deps";
@@ -30,9 +30,9 @@ export default async function PreparerRdvPage() {
     <div className="space-y-6">
       <PageHeaderSimple
         title="Préparer un RDV"
-        description="Synthèse de l'historique prospect, profils DISC/SONCAS et conseils pour la prochaine étape."
+        description="Un nouveau prospect : le web en munitions commerciales. Un prospect déjà rencontré : ce que vos rendez-vous ont appris."
       />
-      <PrepareMeetingBriefingForm pipelineStageOptions={pipelineStageOptions} />
+      <PrepareMeetingModes pipelineStageOptions={pipelineStageOptions} />
     </div>
   );
 }

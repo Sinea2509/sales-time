@@ -16,6 +16,11 @@
   ],
   "ignoreRegExpList": ["/data:image\\\\\\+svg[^\"']+/gi"],
   "words": [
+    "menuitemcheckbox",
+    "menuitemradio",
+    "linkedin",
+    "difficulte",
+    "Transdev",
     "Pipedrive",
     "pipedrive",
     "OPCO",

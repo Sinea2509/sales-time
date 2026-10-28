@@ -1,3 +1,4 @@
+import { Suspense, type ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalysePagePeriodFallback } from "@/components/molecules/analyse-page-period-fallback";
@@ -5,12 +6,12 @@ import { NavLinkButton } from "@/components/molecules/nav-link-button";
 import { PerformanceUnlockPanel } from "@/components/molecules/performance-unlock-panel";
 import { UnlockProgress } from "@/components/molecules/unlock-progress";
 import { statsWindowLabel } from "@/lib/stats-window-labels";
-import { formatDurationHoursMinutes } from "@/lib/format-duration-fr";
 import { AnalyseKpiCards } from "@/components/organisms/analyse-kpi-cards";
 import { AnalyseRecommandationsSection } from "@/components/organisms/analyse-recommandations-section";
 import { AnalyseStatistiquesGlobalesSection } from "@/components/organisms/analyse-statistiques-globales-section";
 import type { AnalysePriorityOpportunityRow } from "@/components/organisms/analyse-priority-opportunities-table";
 import { OrgAdminKissQuadrantGrid } from "@/components/organisms/org-admin-kiss-quadrant-grid";
+import { PanelTabs } from "@/components/organisms/panel-tabs";
 import type { SalesProfileScores } from "@/components/organisms/sales-profile-radar";
 import { ProfileAffinityHorizontalBars } from "@/components/molecules/profile-affinity-horizontal-bars";
 import {
@@ -22,12 +23,12 @@ import { SkillSignatureBadges } from "@/components/molecules/seller-skill-signat
 import { TeamMemberStanding } from "@/components/molecules/team-member-standing";
 import { TeamMemberPerformanceProfileCard } from "@/components/organisms/team-member-performance-profile-card";
 import type { TeamScopeGroup } from "@/lib/team-seller-scope";
-import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type {
   OrgAdminKissTeamRollup,
   TeamMemberStanding as TeamMemberStandingData,
 } from "@/src/core/application/get-org-admin-dashboard";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
+import { firstSentence } from "@/src/core/domain/first-sentence";
 import type { QualificationPotentialMatrixPoint } from "@/src/core/domain/meeting-analyse-matrices";
 import type { SalesProfilePeriodPoint } from "@/src/core/domain/sales-profile-history";
 import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signature";
@@ -44,29 +45,30 @@ import {
 } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 
-function statColumn({
-  value,
-  label,
-  title,
-}: {
-  value: string;
-  label: string;
-  title?: string;
-}) {
-  return (
-    <div
-      className="flex min-w-[4.5rem] flex-col items-start gap-1 sm:min-w-[5.5rem]"
-      title={title}
-    >
-      <span className="text-foreground text-2xl font-semibold tabular-nums tracking-tight">
-        {value}
-      </span>
-      <span className="text-muted-foreground max-w-[7rem] text-left text-[11px] font-medium leading-tight">
-        {label}
-      </span>
-    </div>
-  );
-}
+/**
+ * Les textes que l'IA écrit pour cette fiche, attendus chacun à sa place.
+ *
+ * La fiche s'affiche dès que ses chiffres sont prêts ; ces quatre textes
+ * arrivent ensuite, sans la bloquer (demande de Thomas du 23 octobre 2026,
+ * qui attendait quinze secondes en cliquant sur un membre). Chacun rend une
+ * valeur vide plutôt que d'échouer.
+ */
+export type TeamMemberAiTexts = {
+  performance: Promise<{
+    fingerprint: string;
+    performanceForces: string | null;
+    performanceAxes: string | null;
+    performanceStop: string | null;
+    hasSummary: boolean;
+  } | null>;
+  coaching: Promise<{
+    progressBullets: string[];
+    improvementBullets: string[];
+  }>;
+  affinity: Promise<{ discAffinity: string; soncasAffinity: string } | null>;
+  kissNarrative: Promise<string | null>;
+};
+
 export type TeamMemberPerformanceShellProps = {
   sellerUserId: string;
   /**
@@ -83,82 +85,33 @@ export type TeamMemberPerformanceShellProps = {
   perspective?: "manager" | "commercial";
   /**
    * L'adresse de la liste d'équipe, période et page de liste comprises.
-   *
-   * Elle est calculée par la page plutôt que fixée ici : le retour doit rendre
-   * au manager la vue qu'il avait, et cette vue tient dans la requête.
-   *
-   * Absente, le lien de retour ne s'affiche pas. C'est bien la présence d'une
-   * destination qui décide, et non le lecteur : le commercial qui lit sa propre
-   * fiche n'arrive de nulle part, il est chez lui.
+   * Absente, le lien de retour ne s'affiche pas : le commercial qui lit sa
+   * propre fiche n'arrive de nulle part, il est chez lui.
    */
   backHref?: string;
   statsWindowDays: StatsWindowDays;
   /** Les dates de la période quand elle a été choisie au calendrier. */
   statsWindowRange?: StatsWindowRange | null;
-  /**
-   * Périodes trop pauvres pour être choisies, options grisées du sélecteur.
-   *
-   * Elles portent sur ce commercial seul, comme tout le reste de la fiche.
-   * Absentes, le sélecteur annonce les trois périodes également disponibles, y
-   * compris celles où cette personne n'a conduit aucun rendez-vous : le manager
-   * y arrive alors sur des cartes vides, sans rien qui l'explique.
-   */
+  /** Périodes trop pauvres pour être choisies, pour ce commercial seul. */
   disabledStatsDays?: StatsWindowDays[];
-  performanceFingerprint: string;
   nameLine: string;
   initials: string;
   /**
-   * Ce qui distingue ce commercial du reste de son équipe : sa compétence la
-   * plus au-dessus de la moyenne, et la plus au-dessous.
-   *
-   * La fiche affichait auparavant une « Posture », qui valait le levier SONCAS
-   * dominant chez ses prospects : une description de son portefeuille, portée
-   * sous son nom à lui. Ces deux compétences-ci se notent sur le commercial,
-   * pendant l'analyse de chacun de ses rendez-vous coachés, et disent en deux
-   * mots ce que le radar plus bas dessine en six.
-   *
-   * `null` quand il n'y a rien à comparer, soit faute de rendez-vous coaché,
-   * soit faute de collègue coaché sur la période.
+   * Sa compétence la plus au-dessus de la moyenne de l'équipe, et la plus
+   * au-dessous. `null` faute de rendez-vous coaché ou de collègue à comparer.
    */
   skillSignature: SellerSkillSignature | null;
   /** Les rendez-vous coachés qui étayent ces deux compétences. */
   skillMeetings: number;
-  /**
-   * Place du commercial dans son équipe, telle que le tableau « Mon équipe »
-   * vient de l'annoncer. `null` quand la page ne peut pas la calculer.
-   */
+  /** Sa place dans l'équipe, comme sur « Mon équipe ». */
   standing: TeamMemberStandingData | null;
-  /**
-   * Le groupe sur lequel cette place a été calculée, tel que `teamScopeGroup`
-   * le nomme.
-   *
-   * Il vaut « équipe » dès qu'un périmètre a cadré le classement, et c'est le
-   * cas courant des deux écrans qui montent cette fiche. Il vaut
-   * « organisation » quand rien ne l'a cadré : un manager qui n'a encore
-   * personne de rattaché, un commercial dont le manager n'est pas déclaré. La
-   * fiche écrit alors « la moyenne de l'organisation », faute de quoi elle
-   * annoncerait une équipe là où elle a compté quarante personnes.
-   */
+  /** Le groupe sur lequel cette place a été calculée. */
   comparisonGroup?: TeamScopeGroup;
-  /**
-   * Ce commercial n'est pas rattaché au manager qui le regarde.
-   *
-   * La recherche globale liste tous les membres de l'organisation et conduit à
-   * cette fiche, que `findMembershipForManagerView` ouvre sans regarder les
-   * équipes. Sa place, son palier et son profil, eux, se mesurent par rapport à
-   * une équipe : hors de celle du lecteur, ils n'ont aucun terme de
-   * comparaison. La fiche l'écrit alors, au lieu de retirer les trois sans un
-   * mot.
-   */
+  /** Ce commercial n'est pas rattaché au manager qui le regarde. */
   horsEquipeDuManager?: boolean;
   nbRdvs: number;
-  decouverte: number;
-  proposition: number;
   /** TAM : temps d'appel moyen (min) sur les RDV connectés de la fenêtre. */
   tamMinutesAvg: number | null;
-  performanceForces: string | null;
-  performanceAxes: string | null;
-  performanceStop: string | null;
   discBarItems: { key: string; label: string; pct: number; barClass: string }[];
   soncasBarItems: {
     key: string;
@@ -168,9 +121,6 @@ export type TeamMemberPerformanceShellProps = {
   }[];
   discAnalyzedMeetings: number;
   soncasAnalyzedMeetings: number;
-  discAffinityText: string | null;
-  soncasAffinityText: string | null;
-  kissSellerStrengthsNarrative: string | null;
   kissSellerRollup: OrgAdminKissTeamRollup;
   qualificationPotentialPoints: QualificationPotentialMatrixPoint[];
   /** Le vocabulaire d'étapes de l'organisation, qui range les filtres de la matrice. */
@@ -178,31 +128,215 @@ export type TeamMemberPerformanceShellProps = {
   priorityOpportunities: AnalysePriorityOpportunityRow[];
   salesProfile: SalesProfileScores | null;
   previousSalesProfile: SalesProfileScores | null;
-  /**
-   * La trajectoire du profil sur plusieurs périodes, la plus ancienne d'abord.
-   *
-   * Optionnel parce que la courbe demande un historique que tous les appelants
-   * ne chargent pas : sans lui la fiche garde sa croissance chiffrée, qui dit le
-   * dernier pas, et se passe du chemin.
-   */
+  /** La trajectoire du profil sur plusieurs périodes, la plus ancienne d'abord. */
   profileHistory?: SalesProfilePeriodPoint[];
-  /**
-   * Les rendez-vous qui portent un profil de vente, c'est-à-dire ceux dont
-   * l'analyse a pu noter le commercial. Sert aux recommandations.
-   */
+  /** Les rendez-vous dont l'analyse a pu noter le commercial. */
   salesProfileRdvCount: number;
-  /**
-   * Tous les rendez-vous du commercial sur la période, analysés ou non.
-   *
-   * La matrice recevait `salesProfileRdvCount` : elle annonçait donc le nombre
-   * de rendez-vous notés là où elle dessine les rendez-vous qualifiés, deux
-   * ensembles qui ne se recouvrent pas.
-   */
+  /** Tous les rendez-vous du commercial sur la période, analysés ou non. */
   rdvSurLaPeriode: number;
-  progressBullets: string[];
-  improvementBullets: string[];
   home: OrgDashboardHome;
+  aiTexts: TeamMemberAiTexts;
 };
+
+/** La place d'un texte que le coach est en train d'écrire. */
+function AiTextPlaceholder({ lines = 3 }: { lines?: number }) {
+  return (
+    <div className="space-y-2" aria-busy="true" aria-label="Le coach rédige">
+      {Array.from({ length: lines }, (_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "bg-muted h-3.5 animate-pulse rounded",
+            i === lines - 1 ? "w-2/3" : "w-full",
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * « À retenir » : trois phrases en tête de fiche, avant tout détail. La fiche
+ * s'ouvrait sur trois paragraphes ; on y lit maintenant d'un coup d'œil le
+ * point fort, la priorité et quoi dire au prochain point.
+ */
+async function KeyTakeaways({
+  aiTexts,
+  luParSonManager,
+}: {
+  aiTexts: TeamMemberAiTexts;
+  luParSonManager: boolean;
+}) {
+  const [performance, coaching] = await Promise.all([
+    aiTexts.performance,
+    aiTexts.coaching,
+  ]);
+  const fromSummary = performance?.hasSummary ? performance : null;
+  const items: { titre: string; texte: string | null; accent: string }[] = [
+    {
+      titre: luParSonManager ? "Son point fort" : "Votre point fort",
+      texte: firstSentence(fromSummary?.performanceForces),
+      accent: "border-l-[#33D1B5]",
+    },
+    {
+      titre: "À travailler en priorité",
+      texte: firstSentence(fromSummary?.performanceAxes),
+      accent: "border-l-[#FFB547]",
+    },
+    {
+      titre: luParSonManager
+        ? "À lui dire au prochain point"
+        : "Pour votre prochain rendez-vous",
+      texte:
+        firstSentence(coaching.improvementBullets[0]) ??
+        firstSentence(fromSummary?.performanceStop),
+      accent: "border-l-[#6C4DFF]",
+    },
+  ];
+  const shown = items.filter((i) => i.texte);
+  if (shown.length === 0) return null;
+  return (
+    <section aria-label="À retenir" className="grid gap-3 md:grid-cols-3">
+      {shown.map((i) => (
+        <div
+          key={i.titre}
+          className={cn(
+            "rounded-xl border border-l-4 border-border bg-card p-4 shadow-sm dark:border-zinc-800",
+            i.accent,
+          )}
+        >
+          <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.12em] uppercase">
+            {i.titre}
+          </p>
+          <p className="mt-1.5 text-sm leading-relaxed">{i.texte}</p>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function KeyTakeawaysPlaceholder() {
+  return (
+    <div className="grid gap-3 md:grid-cols-3">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="rounded-xl border border-border bg-card p-4 dark:border-zinc-800"
+        >
+          <AiTextPlaceholder lines={2} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+async function PerformanceProfile({
+  aiTexts,
+  sellerUserId,
+  statsWindowDays,
+  statsWindowRange,
+}: {
+  aiTexts: TeamMemberAiTexts;
+  sellerUserId: string;
+  statsWindowDays: StatsWindowDays;
+  statsWindowRange: StatsWindowRange | null;
+}) {
+  const performance = await aiTexts.performance;
+  if (!performance) return null;
+  return (
+    <TeamMemberPerformanceProfileCard
+      key={performance.fingerprint}
+      sellerUserId={sellerUserId}
+      statsWindowDays={statsWindowDays}
+      statsWindowRange={statsWindowRange}
+      initialFingerprint={performance.fingerprint}
+      initialPerformance={{
+        performanceForces: performance.performanceForces,
+        performanceAxes: performance.performanceAxes,
+        performanceStop: performance.performanceStop,
+      }}
+    />
+  );
+}
+
+async function Recommandations({
+  aiTexts,
+  ...props
+}: Omit<
+  Parameters<typeof AnalyseRecommandationsSection>[0],
+  "progressBullets" | "improvementBullets"
+> & { aiTexts: TeamMemberAiTexts }) {
+  const { progressBullets, improvementBullets } = await aiTexts.coaching;
+  return (
+    <AnalyseRecommandationsSection
+      {...props}
+      progressBullets={progressBullets}
+      improvementBullets={improvementBullets}
+    />
+  );
+}
+
+async function AffinityText({
+  aiTexts,
+  grille,
+}: {
+  aiTexts: TeamMemberAiTexts;
+  grille: "disc" | "soncas";
+}) {
+  const affinity = await aiTexts.affinity;
+  const text = (
+    grille === "disc" ? affinity?.discAffinity : affinity?.soncasAffinity
+  )?.trim();
+  if (!text) return null;
+  return (
+    <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
+      {text}
+    </p>
+  );
+}
+
+async function KissNarrative({ aiTexts }: { aiTexts: TeamMemberAiTexts }) {
+  const text = (await aiTexts.kissNarrative)?.trim();
+  if (!text) return null;
+  return <p className={cn(cardProseBodyClass, "max-w-3xl")}>{text}</p>;
+}
+
+function AffinityCard({
+  title,
+  intro,
+  guide,
+  analyzed,
+  unlocks,
+  bars,
+}: {
+  title: string;
+  intro: string;
+  guide: ReactNode;
+  analyzed: number;
+  unlocks: string;
+  bars: ReactNode;
+}) {
+  return (
+    <CardHeader className="gap-2 pb-3">
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <CardTitle className={cardTitleClass}>{title}</CardTitle>
+        {guide}
+      </div>
+      <p className="text-muted-foreground text-xs leading-relaxed">{intro}</p>
+      <div className="pt-3">
+        {analyzed >= MIN_RDV_FOR_STATS ? (
+          bars
+        ) : (
+          <UnlockProgress
+            current={analyzed}
+            target={MIN_RDV_FOR_STATS}
+            unlocks={unlocks}
+          />
+        )}
+      </div>
+    </CardHeader>
+  );
+}
 
 export function TeamMemberPerformanceShell({
   sellerUserId,
@@ -211,7 +345,6 @@ export function TeamMemberPerformanceShell({
   statsWindowDays,
   statsWindowRange = null,
   disabledStatsDays,
-  performanceFingerprint,
   nameLine,
   initials,
   skillSignature,
@@ -220,19 +353,10 @@ export function TeamMemberPerformanceShell({
   comparisonGroup = "team",
   horsEquipeDuManager = false,
   nbRdvs,
-  decouverte,
-  proposition,
-  tamMinutesAvg,
-  performanceForces,
-  performanceAxes,
-  performanceStop,
   discBarItems,
   soncasBarItems,
   discAnalyzedMeetings,
   soncasAnalyzedMeetings,
-  discAffinityText,
-  soncasAffinityText,
-  kissSellerStrengthsNarrative,
   kissSellerRollup,
   qualificationPotentialPoints,
   etapeOrder,
@@ -242,9 +366,8 @@ export function TeamMemberPerformanceShell({
   profileHistory,
   salesProfileRdvCount,
   rdvSurLaPeriode,
-  progressBullets,
-  improvementBullets,
   home,
+  aiTexts,
 }: TeamMemberPerformanceShellProps) {
   const luParSonManager = perspective === "manager";
   /*
@@ -260,75 +383,204 @@ export function TeamMemberPerformanceShell({
   );
   const enConstruction = analyzed < MIN_RDV_FOR_STATS;
   const pageVide = nbRdvs === 0;
-  const unlockPanel = enConstruction ? (
-    <PerformanceUnlockPanel
-      analyzed={analyzed}
-      deposited={nbRdvs}
-      profileThreshold={MIN_RDV_FOR_STATS}
-      perspective={luParSonManager ? "manager" : "commercial"}
-      newMeetingHref={
-        luParSonManager ? undefined : "/company/rendez-vous/nouveau"
-      }
-      periodLabel={statsWindowLabel(statsWindowDays, statsWindowRange)}
-    />
-  ) : null;
+
+  /*
+    Refonte du 23 octobre 2026 (« la page d'un membre est nulle et pas
+    ergonomique ») : la fiche faisait cinq écrans, ses chiffres clés
+    n'arrivaient qu'au quatrième et le choix de la période y figurait deux
+    fois. Elle s'ouvre maintenant sur l'essentiel, chiffres et trois phrases à
+    retenir, et range le détail dans quatre onglets.
+  */
+  const tabs = [
+    {
+      id: "competences" as const,
+      label: "Compétences",
+      panel: (
+        <div className="space-y-6">
+          <Suspense
+            fallback={
+              <Card>
+                <CardContent className="pt-6">
+                  <AiTextPlaceholder lines={6} />
+                </CardContent>
+              </Card>
+            }
+          >
+            <Recommandations
+              aiTexts={aiTexts}
+              salesProfile={salesProfile}
+              previousSalesProfile={previousSalesProfile}
+              profileHistory={profileHistory}
+              rdvCount={salesProfileRdvCount}
+              isOrgAdmin={luParSonManager}
+              sellerScoped={luParSonManager}
+              statsWindowDays={statsWindowDays}
+            />
+          </Suspense>
+          <Suspense
+            fallback={
+              <Card>
+                <CardContent className="pt-6">
+                  <AiTextPlaceholder lines={5} />
+                </CardContent>
+              </Card>
+            }
+          >
+            <PerformanceProfile
+              aiTexts={aiTexts}
+              sellerUserId={sellerUserId}
+              statsWindowDays={statsWindowDays}
+              statsWindowRange={statsWindowRange}
+            />
+          </Suspense>
+        </div>
+      ),
+    },
+    {
+      id: "coaching" as const,
+      label: "Coaching",
+      panel: (
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <p className="text-muted-foreground text-sm">
+              {luParSonManager
+                ? "Ce que le coach lui a dit après ses rendez-vous, réuni par thème."
+                : "Ce que le coach vous a dit après vos rendez-vous, réuni par thème."}
+            </p>
+            <GuideKiss className="shrink-0" />
+          </div>
+          <Suspense fallback={<AiTextPlaceholder lines={3} />}>
+            <KissNarrative aiTexts={aiTexts} />
+          </Suspense>
+          <OrgAdminKissQuadrantGrid
+            rollup={kissSellerRollup}
+            presentation={
+              luParSonManager ? "managerMemberProfile" : "sellerSelf"
+            }
+          />
+        </section>
+      ),
+    },
+    {
+      id: "clients" as const,
+      label: luParSonManager ? "Ses clients" : "Vos clients",
+      panel: (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card
+            size="sm"
+            className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          >
+            <AffinityCard
+              title="Affinité par profil DISC"
+              intro={
+                luParSonManager
+                  ? "Les styles de communication avec lesquels ce commercial obtient ses meilleurs rendez-vous. Touchez un profil pour savoir comment s'y adapter."
+                  : "Les styles de communication avec lesquels vous obtenez vos meilleurs rendez-vous. Touchez un profil pour savoir comment s'y adapter."
+              }
+              guide={
+                <GuideDeGrille
+                  grille={GRILLE_DISC}
+                  className="mt-0.5 shrink-0"
+                />
+              }
+              analyzed={discAnalyzedMeetings}
+              unlocks={
+                luParSonManager ? "ses affinités DISC" : "vos affinités DISC"
+              }
+              bars={
+                <ProfileAffinityHorizontalBars
+                  items={discBarItems}
+                  grilleCle="disc"
+                />
+              }
+            />
+            <CardContent className="pt-0">
+              <Suspense fallback={<AiTextPlaceholder lines={3} />}>
+                <AffinityText aiTexts={aiTexts} grille="disc" />
+              </Suspense>
+            </CardContent>
+          </Card>
+          <Card
+            size="sm"
+            className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          >
+            <AffinityCard
+              title="Affinité par profil SONCAS"
+              intro={
+                luParSonManager
+                  ? "Les motivations d'achat que ce commercial active le mieux. Touchez un levier pour savoir comment l'activer."
+                  : "Les motivations d'achat que vous activez le mieux. Touchez un levier pour savoir comment l'activer."
+              }
+              guide={
+                <GuideDeGrille
+                  grille={GRILLE_SONCAS}
+                  className="mt-0.5 shrink-0"
+                />
+              }
+              analyzed={soncasAnalyzedMeetings}
+              unlocks={
+                luParSonManager
+                  ? "ses affinités SONCAS"
+                  : "vos affinités SONCAS"
+              }
+              bars={
+                <ProfileAffinityHorizontalBars
+                  items={soncasBarItems}
+                  grilleCle="soncas"
+                />
+              }
+            />
+            <CardContent className="pt-0">
+              <Suspense fallback={<AiTextPlaceholder lines={3} />}>
+                <AffinityText aiTexts={aiTexts} grille="soncas" />
+              </Suspense>
+            </CardContent>
+          </Card>
+        </div>
+      ),
+    },
+    {
+      id: "rendez-vous" as const,
+      label: luParSonManager ? "Ses rendez-vous" : "Vos rendez-vous",
+      panel: (
+        <AnalyseStatistiquesGlobalesSection
+          qualificationPotentialPoints={qualificationPotentialPoints}
+          priorityOpportunities={priorityOpportunities}
+          rdvSurLaPeriode={rdvSurLaPeriode}
+          etapeOrder={etapeOrder}
+        />
+      ),
+    },
+  ];
+
   return (
-    <div className="space-y-8">
-      {/*
-        Cette fiche n'avait aucun chemin de retour : on y entrait depuis le
-        tableau « Mon équipe », et on en ressortait par le bouton du navigateur
-        ou par le menu latéral, lequel ramène à la première page de la liste.
-        Le lien nomme sa destination plutôt que de dire « Retour », qui ne
-        promet rien de vérifiable, et il emporte la période et la page de liste
-        pour rendre la vue telle qu'elle était.
-      */}
+    <div className="space-y-6">
       {backHref ? (
         <NavLinkButton
           href={backHref}
           variant="ghost"
           size="sm"
-          // Le retrait annule le remplissage gauche du bouton : la flèche se
-          // pose alors sur la même verticale que la pastille d'initiales
-          // au-dessous, au lieu d'être décalée de dix pixels vers l'intérieur.
+          // Le retrait aligne la flèche sur la pastille d'initiales au-dessous.
           className="-ml-2.5"
         >
           <ArrowLeft aria-hidden="true" />
           Retour à l&apos;équipe
         </NavLinkButton>
       ) : null}
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
-        <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:gap-4">
-          <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-muted text-xl font-semibold text-foreground shadow-sm ring-1 ring-border/80 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-700/80">
+
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex items-start gap-4">
+          <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-muted text-lg font-semibold text-foreground shadow-sm ring-1 ring-border/80 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-700/80">
             {initials}
           </span>
-          <div className="flex max-w-md flex-col items-center gap-1.5 text-center sm:items-start sm:text-left">
-            {/*
-              Chez le manager, ce nom est le titre de la page : c'est la seule
-              chose que la fiche annonce en haut, et elle le disait dans un
-              paragraphe, laissant l'écran sans titre de niveau un. Chez le
-              commercial, la page porte déjà le sien, « Ma performance » : son
-              propre nom y redescend d'un rang, où il ne fait plus que
-              confirmer de qui l'on parle.
-            */}
+          <div className="flex max-w-xl flex-col gap-1.5">
             {luParSonManager ? (
               <h1 className={pageTitleClass}>{nameLine}</h1>
             ) : (
               <p className={sectionHeadingClass}>{nameLine}</p>
             )}
-            {/*
-              Hors de l'équipe du lecteur, ces deux blocs ne disparaissent plus
-              en silence. La place et le palier se mesurent par rapport à une
-              équipe, celle-ci n'en fournit pas ; quant à l'insigne de profil,
-              il annonçait « n. c. » en expliquant « aucun rendez-vous coaché »,
-              ce qui est faux : la colonne de droite en compte peut-être douze.
-              Ils ne servent simplement pas de comparaison ici.
-
-              La phrase reprend la mise en forme de « Hors classement. » juste
-              à côté, dont elle est le voisin le plus proche : même cause dite
-              au lecteur, même façon de la dire.
-            */}
             {horsEquipeDuManager ? (
-              <p className="text-muted-foreground mt-1 max-w-prose text-xs leading-relaxed">
+              <p className="text-muted-foreground max-w-prose text-xs leading-relaxed">
                 <span className="font-medium text-foreground dark:text-zinc-300">
                   Hors de votre équipe.
                 </span>{" "}
@@ -341,240 +593,62 @@ export function TeamMemberPerformanceShell({
                 <SkillSignatureBadges
                   signature={skillSignature}
                   skillMeetings={skillMeetings}
-                  className="mt-0.5 justify-center sm:justify-start"
                 />
                 {standing ? (
                   <TeamMemberStanding
                     standing={standing}
                     comparisonGroup={comparisonGroup}
                     echelle={perspective === "commercial" ? "sur100" : "sur5"}
-                    className="mt-1 items-center sm:items-start"
                   />
                 ) : null}
               </>
             )}
           </div>
         </div>
-
-        {pageVide ? (
-          <AnalysePagePeriodFallback
-            value={statsWindowDays}
-            range={statsWindowRange}
-            disabledDays={disabledStatsDays}
-          />
-        ) : (
-          <div className="flex flex-1 flex-wrap items-start justify-center gap-8 self-start border-t border-border pt-6 sm:justify-end sm:border-t-0 sm:pt-0 lg:min-w-0 dark:border-zinc-800">
-            {statColumn({
-              value: String(nbRdvs),
-              label: "RDV",
-              title:
-                "Nombre total de rendez-vous sur la période, toutes étapes confondues. Les deux compteurs suivants en sont des sous-ensembles : leur somme peut être inférieure au total, les autres étapes n'y figurant pas.",
-            })}
-            {statColumn({
-              value: String(decouverte),
-              label: "RDV Découverte",
-              title:
-                "Rendez-vous de la période dont l'étape est « Découverte ». Sous-ensemble du total.",
-            })}
-            {statColumn({
-              value: String(proposition),
-              label: "RDV Proposition",
-              title:
-                "Rendez-vous de la période dont l'étape est « Proposition ». Sous-ensemble du total.",
-            })}
-            {statColumn({
-              value:
-                tamMinutesAvg != null
-                  ? formatDurationHoursMinutes(tamMinutesAvg)
-                  : VALEUR_NON_CALCULABLE,
-              label: "TAM",
-              title:
-                tamMinutesAvg == null
-                  ? "Non calculable : aucun rendez-vous connecté avec une durée renseignée sur la période."
-                  : luParSonManager
-                    ? "Temps d'appel moyen sur les rendez-vous connectés de ce commercial, c'est-à-dire ceux dont la durée est renseignée."
-                    : "Temps d'appel moyen sur vos rendez-vous connectés, c'est-à-dire ceux dont la durée est renseignée.",
-            })}
-          </div>
-        )}
+        {/* Le seul choix de période de la fiche : tout ce qui suit en dépend. */}
+        <AnalysePagePeriodFallback
+          value={statsWindowDays}
+          range={statsWindowRange}
+          disabledDays={disabledStatsDays}
+        />
       </div>
 
-      {unlockPanel}
+      {enConstruction ? (
+        <PerformanceUnlockPanel
+          analyzed={analyzed}
+          deposited={nbRdvs}
+          profileThreshold={MIN_RDV_FOR_STATS}
+          perspective={luParSonManager ? "manager" : "commercial"}
+          newMeetingHref={
+            luParSonManager ? undefined : "/company/rendez-vous/nouveau"
+          }
+          periodLabel={statsWindowLabel(statsWindowDays, statsWindowRange)}
+        />
+      ) : null}
 
       {pageVide ? null : (
         <>
-          <TeamMemberPerformanceProfileCard
-            key={performanceFingerprint}
-            sellerUserId={sellerUserId}
-            statsWindowDays={statsWindowDays}
-            statsWindowRange={statsWindowRange}
-            initialFingerprint={performanceFingerprint}
-            initialPerformance={{
-              performanceForces,
-              performanceAxes,
-              performanceStop,
-            }}
+          <AnalyseKpiCards
+            home={home}
+            isOrgAdmin={luParSonManager}
+            sellerScoped={luParSonManager}
+            echelle={luParSonManager ? "sur5" : "sur100"}
           />
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card
-              size="sm"
-              className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <CardHeader className="gap-2 pb-3">
-                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-                  <CardTitle className={cardTitleClass}>
-                    Affinité relationnelle par profil DISC
-                  </CardTitle>
-                  <GuideDeGrille
-                    grille={GRILLE_DISC}
-                    className="mt-0.5 shrink-0"
-                  />
-                </div>
-                <p className="text-muted-foreground text-xs leading-relaxed">
-                  Les styles de communication avec lesquels ce commercial
-                  obtient ses meilleurs rendez-vous. Touchez un profil pour
-                  savoir comment s&apos;y adapter.
-                </p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {discAnalyzedMeetings >= MIN_RDV_FOR_STATS ? (
-                  <ProfileAffinityHorizontalBars
-                    items={discBarItems}
-                    grilleCle="disc"
-                  />
-                ) : (
-                  <UnlockProgress
-                    current={discAnalyzedMeetings}
-                    target={MIN_RDV_FOR_STATS}
-                    unlocks={
-                      luParSonManager
-                        ? "ses affinités DISC"
-                        : "vos affinités DISC"
-                    }
-                  />
-                )}
-                {discAffinityText?.trim() ? (
-                  <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
-                    {discAffinityText.trim()}
-                  </p>
-                ) : null}
-              </CardContent>
-            </Card>
-            <Card
-              size="sm"
-              className="border-border bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <CardHeader className="gap-2 pb-3">
-                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-                  <CardTitle className={cardTitleClass}>
-                    Affinité relationnelle par profil SONCAS
-                  </CardTitle>
-                  <GuideDeGrille
-                    grille={GRILLE_SONCAS}
-                    className="mt-0.5 shrink-0"
-                  />
-                </div>
-                <p className="text-muted-foreground text-xs leading-relaxed">
-                  Les motivations d&apos;achat que ce commercial active le
-                  mieux. Touchez un levier pour savoir comment l&apos;activer.
-                </p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {soncasAnalyzedMeetings >= MIN_RDV_FOR_STATS ? (
-                  <ProfileAffinityHorizontalBars
-                    items={soncasBarItems}
-                    grilleCle="soncas"
-                  />
-                ) : (
-                  <UnlockProgress
-                    current={soncasAnalyzedMeetings}
-                    target={MIN_RDV_FOR_STATS}
-                    unlocks={
-                      luParSonManager
-                        ? "ses affinités SONCAS"
-                        : "vos affinités SONCAS"
-                    }
-                  />
-                )}
-                {soncasAffinityText?.trim() ? (
-                  <p className="text-muted-foreground mt-5 border-t border-border pt-5 text-sm leading-relaxed whitespace-pre-wrap dark:border-zinc-800">
-                    {soncasAffinityText.trim()}
-                  </p>
-                ) : null}
-              </CardContent>
-            </Card>
+          <div className="space-y-3">
+            <h2 className={sectionHeadingClass}>À retenir</h2>
+            <Suspense fallback={<KeyTakeawaysPlaceholder />}>
+              <KeyTakeaways
+                aiTexts={aiTexts}
+                luParSonManager={luParSonManager}
+              />
+            </Suspense>
           </div>
 
-          <section className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-              <h2 className={sectionHeadingClass}>Coaching KISS</h2>
-              <GuideKiss className="shrink-0" />
-            </div>
-            {kissSellerStrengthsNarrative?.trim() ? (
-              <p className={cn(cardProseBodyClass, "max-w-3xl")}>
-                {kissSellerStrengthsNarrative.trim()}
-              </p>
-            ) : null}
-            <OrgAdminKissQuadrantGrid
-              rollup={kissSellerRollup}
-              presentation={
-                luParSonManager ? "managerMemberProfile" : "sellerSelf"
-              }
-            />
-          </section>
-
-          <section className="space-y-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className={sectionHeadingClass}>Performance</h2>
-              <AnalysePagePeriodFallback
-                value={statsWindowDays}
-                range={statsWindowRange}
-                disabledDays={disabledStatsDays}
-              />
-            </div>
-
-            {/*
-          Les deux drapeaux ne décrivent pas le lecteur mais ce qu'il regarde :
-          « un administrateur » et « un commercial en particulier ». Ils sont
-          donc vrais ensemble ou faux ensemble ici, le commercial qui se lit
-          lui-même n'étant ni l'un ni l'autre.
-        */}
-            <AnalyseKpiCards
-              home={home}
-              isOrgAdmin={luParSonManager}
-              sellerScoped={luParSonManager}
-              echelle={luParSonManager ? "sur5" : "sur100"}
-            />
-
-            <div className="space-y-4">
-              <h3 className={sectionHeadingClass}>Statistiques globales</h3>
-              <AnalyseStatistiquesGlobalesSection
-                qualificationPotentialPoints={qualificationPotentialPoints}
-                priorityOpportunities={priorityOpportunities}
-                rdvSurLaPeriode={rdvSurLaPeriode}
-                etapeOrder={etapeOrder}
-                statsWindowDays={statsWindowDays}
-                statsWindowRange={statsWindowRange}
-                disabledStatsDays={disabledStatsDays}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className={sectionHeadingClass}>Recommandations</h3>
-              <AnalyseRecommandationsSection
-                salesProfile={salesProfile}
-                previousSalesProfile={previousSalesProfile}
-                profileHistory={profileHistory}
-                rdvCount={salesProfileRdvCount}
-                progressBullets={progressBullets}
-                improvementBullets={improvementBullets}
-                isOrgAdmin={luParSonManager}
-                sellerScoped={luParSonManager}
-                statsWindowDays={statsWindowDays}
-              />
-            </div>
-          </section>
+          <PanelTabs
+            tabs={tabs}
+            label={luParSonManager ? "Fiche du commercial" : "Ma fiche"}
+          />
         </>
       )}
     </div>

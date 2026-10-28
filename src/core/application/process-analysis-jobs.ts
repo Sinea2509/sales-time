@@ -21,6 +21,16 @@ const STALE_MINUTES = 10;
 */
 const RECONCILE_MINUTES = 6;
 const JOBS_PER_RUN = 3;
+/*
+  Une analyse complète d'un long rendez-vous prend jusqu'à quatre minutes
+  (la scorecard seule, plus de deux), et la fonction qui traite la file est
+  coupée à cinq. Une analyse commencée trop tard est tuée en plein travail,
+  reste « en cours » et repart l'heure suivante pour être coupée encore :
+  constaté le 23 octobre 2026 sur deux rendez-vous de François. Au-delà de ce
+  délai depuis le début du passage, on n'en commence plus : la suivante
+  attend le passage d'après.
+*/
+const NEW_JOB_CUTOFF_MS = 40_000;
 
 export type ProcessAnalysisJobsResult = {
   processed: number;
@@ -46,6 +56,7 @@ export async function processAnalysisJobs(
   },
   input: { workerId: string },
 ): Promise<ProcessAnalysisJobsResult> {
+  const startedAt = Date.now();
   const staleBefore = new Date(Date.now() - STALE_MINUTES * 60_000);
   const releasedStale =
     await deps.analysisJobs.releaseStaleProcessingJobs(staleBefore);
@@ -61,6 +72,7 @@ export async function processAnalysisJobs(
   let failed = 0;
 
   for (let i = 0; i < JOBS_PER_RUN; i += 1) {
+    if (i > 0 && Date.now() - startedAt > NEW_JOB_CUTOFF_MS) break;
     const job = await deps.analysisJobs.dequeueNextJob(input.workerId);
     if (!job) break;
 

@@ -1,3 +1,4 @@
+import type { ProspectResearch } from "@/src/core/domain/prospect-research";
 import type { PipedriveExtraction } from "@/src/core/domain/pipedrive-blocks";
 import type {
   DiscMomentsOutput,
@@ -263,6 +264,22 @@ export interface AnalysisPort {
     notes: string | null;
     previousReport: string | null;
   }): Promise<PipedriveExtraction>;
+
+  /**
+   * Une recherche web factuelle, par un modèle qui cherche en ligne : le texte
+   * trouvé et les adresses consultées.
+   */
+  researchOnWeb(input: {
+    model: string;
+    prompt: string;
+  }): Promise<{ text: string; sources: string[] }>;
+
+  /** La fiche de préparation d'un premier rendez-vous, rangée à partir de la recherche. */
+  structureProspectResearch(input: {
+    systemPrompt: string;
+    model: string;
+    userPrompt: string;
+  }): Promise<ProspectResearch>;
 
   /** Retouche un mail selon la demande du commercial. */
   reviseFollowUpEmail(input: {
