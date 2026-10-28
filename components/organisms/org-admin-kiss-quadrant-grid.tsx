@@ -29,32 +29,34 @@ type KissQuadrant = {
 };
 
 /*
-  Les fonds colorés des quatre cases et de leurs conseils (retour de Thomas
-  du 28 octobre 2026 : « des fonds colorés sur les textes, pour que ce soit
-  plus punchy, agréable à parcourir »). Chaque case reprend la couleur de sa
-  pastille : la couleur dit la famille avant qu'on lise le titre.
+  Les fonds colorés des conseils de chaque case (retour de Thomas du
+  28 octobre 2026 : « des fonds colorés sur les textes, pour que ce soit plus
+  punchy, agréable à parcourir »). Chaque case reprend la couleur de sa
+  pastille : la couleur dit la famille avant qu'on lise le titre. La carte
+  elle-même ne se teinte plus et « Améliorer » prend le bleu de la marque :
+  avec la charte 4 bis, l'ensemble faisait trop de couleur (même jour).
 */
 const TONE: Record<
   KissQuadrant["key"],
   { card: string; item: string; count: string }
 > = {
   keep: {
-    card: "border-t-[#33D1B5] bg-gradient-to-br from-[#33D1B5]/12 via-card to-card",
+    card: "border-t-[#33D1B5]",
     item: "bg-[#33D1B5]/10 dark:bg-[#33D1B5]/12",
     count: "bg-[#33D1B5]/18 text-[#0B6E5C] dark:text-[#9EEEDF]",
   },
   improve: {
-    card: "border-t-[#6C4DFF] bg-gradient-to-br from-[#6C4DFF]/10 via-card to-card",
-    item: "bg-[#6C4DFF]/8 dark:bg-[#6C4DFF]/14",
-    count: "bg-[#6C4DFF]/12 text-[#4527D6] dark:text-[#C9BDFF]",
+    card: "border-t-brand",
+    item: "bg-brand/8 dark:bg-brand/14",
+    count: "bg-brand/12 text-brand-hover dark:text-brand-muted",
   },
   start: {
-    card: "border-t-[#FFB547] bg-gradient-to-br from-[#FFB547]/14 via-card to-card",
+    card: "border-t-[#FFB547]",
     item: "bg-[#FFB547]/12 dark:bg-[#FFB547]/12",
     count: "bg-[#FFB547]/18 text-[#8A5600] dark:text-[#FFD9A0]",
   },
   stop: {
-    card: "border-t-[#FF7A6B] bg-gradient-to-br from-[#FF7A6B]/12 via-card to-card",
+    card: "border-t-[#FF7A6B]",
     item: "bg-[#FF7A6B]/10 dark:bg-[#FF7A6B]/12",
     count: "bg-[#FF7A6B]/15 text-[#A93A2C] dark:text-[#FFB3A9]",
   },
@@ -81,7 +83,7 @@ const quadrantsTeam: readonly KissQuadrant[] = [
     subtitle: "Presque là, à affiner ensemble",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
-    iconWrapClass: "bg-[#6C4DFF]/12 text-[#4527D6] dark:text-[#C9BDFF]",
+    iconWrapClass: "bg-brand/12 text-brand-hover dark:text-brand-muted",
   },
   {
     key: "start" as const,
@@ -117,7 +119,7 @@ const quadrantsManagerMember: readonly KissQuadrant[] = [
     subtitle: "À améliorer ensemble, dès le prochain coaching",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
-    iconWrapClass: "bg-[#6C4DFF]/12 text-[#4527D6] dark:text-[#C9BDFF]",
+    iconWrapClass: "bg-brand/12 text-brand-hover dark:text-brand-muted",
   },
   {
     key: "start" as const,
@@ -160,7 +162,7 @@ const quadrantsSellerSelf: readonly KissQuadrant[] = [
     subtitle: "Presque acquis, à affiner d'un cran",
     bulletsKey: "improveBullets" as const,
     icon: TrendingUp,
-    iconWrapClass: "bg-[#6C4DFF]/12 text-[#4527D6] dark:text-[#C9BDFF]",
+    iconWrapClass: "bg-brand/12 text-brand-hover dark:text-brand-muted",
   },
   {
     key: "start" as const,

@@ -11,7 +11,7 @@ export function LandingHowSection() {
       className="relative scroll-mt-24 overflow-hidden bg-[#06060A] py-[88px]"
       aria-labelledby="how-heading"
     >
-      <LandingGridOverlay className="bg-[linear-gradient(rgba(108,77,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(108,77,255,0.035)_1px,transparent_1px)]" />
+      <LandingGridOverlay className="bg-[linear-gradient(rgba(79,85,240,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(79,85,240,0.035)_1px,transparent_1px)]" />
       <div className="relative mx-auto max-w-[1160px] px-6 sm:px-10">
         <LandingSectionHeading
           label="Simple par design"

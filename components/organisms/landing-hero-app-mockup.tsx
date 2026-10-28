@@ -20,7 +20,7 @@ type MockRow = {
 const mockRows: MockRow[] = [
   {
     initials: "AL",
-    color: "#6C4DFF",
+    color: "#4F55F0",
     name: "Antoine Lambert",
     company: "TechVision",
     stage: "Découverte",
@@ -36,7 +36,7 @@ const mockRows: MockRow[] = [
     name: "Pierre Charpentier",
     company: "InnovaGroup",
     stage: "Proposition",
-    stageBg: "rgba(108,77,255,0.15)",
+    stageBg: "rgba(79,85,240,0.15)",
     stageColor: "#BDB0FF",
     score: "56",
     scoreBg: "rgba(227,146,25,0.15)",
@@ -91,9 +91,9 @@ const kissCoachingItems = [
   },
   {
     key: "START",
-    color: "#6C4DFF",
-    bg: "rgba(108,77,255,0.06)",
-    border: "rgba(108,77,255,0.2)",
+    color: "#4F55F0",
+    bg: "rgba(79,85,240,0.06)",
+    border: "rgba(79,85,240,0.2)",
     text: "Créer de l'urgence via des benchmarks sectoriels.",
   },
   {
@@ -108,7 +108,7 @@ const kissCoachingItems = [
 export function LandingHeroAppMockup() {
   return (
     <div
-      className="relative z-[2] w-full max-w-[1000px] overflow-hidden rounded-t-[14px] border border-b-0 border-white/10 shadow-[0_-12px_60px_rgba(108,77,255,0.15),0_40px_80px_rgba(0,0,0,0.5)]"
+      className="relative z-[2] w-full max-w-[1000px] overflow-hidden rounded-t-[14px] border border-b-0 border-white/10 shadow-[0_-12px_60px_rgba(79,85,240,0.15),0_40px_80px_rgba(0,0,0,0.5)]"
       role="img"
       aria-label="Aperçu du tableau de bord Sales Time avec coaching KISS"
     >

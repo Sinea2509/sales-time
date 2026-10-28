@@ -161,7 +161,7 @@ export function AnalyseRecommandationsSection({
       </Card>
 
       <div className="flex flex-col gap-4">
-        <Card className="flex flex-col border-t-4 border-border border-t-[#33D1B5] bg-gradient-to-br from-[#33D1B5]/10 via-card to-card shadow-sm dark:border-neutral-800 dark:border-t-[#33D1B5]">
+        <Card className="flex flex-col border-t-4 border-border border-t-[#33D1B5] shadow-sm dark:border-neutral-800 dark:border-t-[#33D1B5]">
           <IconCardHeader
             icon={LineChart}
             title={progressTitle}
@@ -178,18 +178,18 @@ export function AnalyseRecommandationsSection({
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col border-t-4 border-border border-t-[#6C4DFF] bg-gradient-to-br from-[#6C4DFF]/8 via-card to-card shadow-sm dark:border-neutral-800 dark:border-t-[#6C4DFF]">
+        <Card className="border-t-brand dark:border-t-brand flex flex-col border-t-4 border-border shadow-sm dark:border-neutral-800">
           <IconCardHeader
             icon={Play}
             title={improvementTitle}
             description={improvementSubtitle}
-            iconWrapClassName="bg-[#6C4DFF]/12"
-            iconClassName="fill-[#6C4DFF] text-[#6C4DFF] dark:fill-[#C9BDFF] dark:text-[#C9BDFF]"
+            iconWrapClassName="bg-brand/12"
+            iconClassName="fill-brand text-brand dark:fill-brand-muted dark:text-brand-muted"
           />
           <CardContent className="flex-1">
             <DotBulletList
               items={improvementBullets}
-              itemClassName="bg-[#6C4DFF]/8 dark:bg-[#6C4DFF]/14"
+              itemClassName="bg-brand/8 dark:bg-brand/14"
               emptyMessage={improvementEmptyMessage}
             />
           </CardContent>

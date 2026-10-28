@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
+import { ToneChip } from "@/components/atoms/tone-chip";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
@@ -149,12 +150,12 @@ export function DashboardStatsPeriodSelect(props: {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {!range && lowData.has(props.value) ? (
-        <span
-          className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11.5px] font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
+        <ToneChip
+          tone="warn"
           title={`Moins de ${MIN_RDV_FOR_STATS} rendez-vous analysés sur la période : les chiffres sont indicatifs.`}
         >
           peu de données
-        </span>
+        </ToneChip>
       ) : null}
       <div
         role="group"

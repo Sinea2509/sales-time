@@ -74,7 +74,7 @@ export function PerformanceUnlockPanel({
   const pct = Math.min(analyzed / profileThreshold, 1) * 100;
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-brand/20 bg-[linear-gradient(135deg,rgba(108,77,255,0.10),rgba(255,138,91,0.06)_55%,transparent)] bg-card p-6 sm:p-8">
+    <section className="relative overflow-hidden rounded-3xl border border-brand/20 bg-[linear-gradient(135deg,rgba(79,85,240,0.08),transparent_60%)] bg-card p-6 sm:p-8">
       <Visual3d
         name={
           analyzed === 0 && deposited > 0
@@ -116,7 +116,7 @@ export function PerformanceUnlockPanel({
           className="mt-4 h-2.5 max-w-md overflow-hidden rounded-full bg-muted"
         >
           <div
-            className="st-bar h-full rounded-full bg-gradient-to-r from-[#7B5CFF] via-[#B26BFF] to-[#FF7A8A]"
+            className="st-bar from-brand to-brand-deep h-full rounded-full bg-gradient-to-r"
             style={{ width: `${pct}%` }}
           />
         </div>

@@ -91,8 +91,11 @@
   --night: #0e0f2e;
   --night-raised: #1b1e5c;
   --brand: #4f55f0;
-  /* L'autre bout du dégradé des actions ; le blanc y tient 5,6:1. */
-  --brand-deep: #7048e8;
+  /*
+    L'autre bout du dégradé des actions, un bleu plus profond et non un violet :
+    une seule teinte d'action dans tout l'outil. Le blanc y tient 7,3:1.
+  */
+  --brand-deep: #3a40d4;
   /*
     Encre posée sur un aplat de marque, exactement comme --primary-foreground
     se pose sur --primary. Elle manquait, et les trente-deux endroits qui
@@ -176,7 +179,7 @@
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --brand: #8e93ff;
-  --brand-deep: #b39bff;
+  --brand-deep: #a5a9ff;
   /* L'aplat s'éclaircit ici, donc l'encre s'assombrit : même bascule que
      --primary-foreground juste au-dessus. Sur #8e93ff, elle tient 5,2:1. */
   --brand-foreground: oklch(0.205 0 0);
@@ -228,6 +231,12 @@
   }
   html {
     @apply font-sans;
+  }
+  /* Les titres de la charte 4 bis, partout, landing comprise. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-titres);
   }
   /*
     La main au survol de tout ce qui se clique. Tailwind 4 a retiré ce
@@ -372,28 +381,19 @@
 }
 
 /*
-  Les surfaces de la charte 4 bis. La page porte des halos doux, le menu un
-  dégradé de bleu nuit, l'entrée active une pastille de marque qui luit. Ces
-  images se posent par-dessus les couleurs des jetons : un navigateur qui ne
-  les dessine pas garde des aplats lisibles.
+  Les surfaces de la charte 4 bis. La page porte un halo bleu très doux, le
+  menu un dégradé de bleu nuit, l'entrée active une pastille de marque qui
+  luit. Aucune autre teinte : les halos pêche et rose faisaient « sapin de
+  Noël » (retour de Thomas du 28 octobre 2026). Ces images se posent
+  par-dessus les couleurs des jetons : un navigateur qui ne les dessine pas
+  garde des aplats lisibles.
 */
 [data-slot="sidebar-inset"] {
-  background-image:
-    radial-gradient(
-      56rem 32rem at 100% -10%,
-      color-mix(in srgb, var(--brand) 14%, transparent),
-      transparent 60%
-    ),
-    radial-gradient(
-      44rem 30rem at 45% 110%,
-      rgb(255 186 150 / 0.18),
-      transparent 60%
-    ),
-    radial-gradient(
-      32rem 24rem at 12% 45%,
-      rgb(255 158 199 / 0.1),
-      transparent 60%
-    );
+  background-image: radial-gradient(
+    56rem 32rem at 100% -10%,
+    color-mix(in srgb, var(--brand) 10%, transparent),
+    transparent 60%
+  );
 }
 
 [data-slot="sidebar"],
@@ -401,12 +401,7 @@
   background-image:
     radial-gradient(
       18rem 14rem at 0% 0%,
-      color-mix(in srgb, var(--brand) 40%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      16rem 16rem at 100% 100%,
-      rgb(210 80 143 / 0.2),
+      color-mix(in srgb, var(--brand) 30%, transparent),
       transparent 70%
     ),
     linear-gradient(180deg, #16184f 0%, var(--night) 55%, #0a0b24 100%);
@@ -417,15 +412,16 @@
   box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--brand) 80%, transparent);
 }
 
-/* La fin d'un titre en deux tons : « Maison Leroux, rendez-vous de découverte ». */
-.st-text-gradient {
-  background-image: linear-gradient(90deg, var(--brand), #8a5cf6 55%, #d2508f);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/*
+  La fin d'un titre en deux tons, « Maison Leroux, rendez-vous de
+  découverte » : un gris bleuté, comme les titres en deux tons de la piste 3.
+  Il tient 3,4:1 sur la page, assez pour un titre de cette taille.
+*/
+.st-title-quiet {
+  color: #7e83a9;
 }
-.dark .st-text-gradient {
-  background-image: linear-gradient(90deg, #8e93ff, #b39bff 55%, #ff9ec7);
+.dark .st-title-quiet {
+  color: #a9add6;
 }
 
 /*
@@ -439,12 +435,7 @@
   background-image:
     radial-gradient(
       15rem 11rem at 12% 0%,
-      rgb(123 92 255 / 0.35),
-      transparent 70%
-    ),
-    radial-gradient(
-      14rem 11rem at 100% 100%,
-      rgb(255 158 199 / 0.2),
+      color-mix(in srgb, var(--brand) 28%, transparent),
       transparent 70%
     ),
     linear-gradient(150deg, var(--night-raised) 0%, var(--night) 65%);
