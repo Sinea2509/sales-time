@@ -17,6 +17,7 @@ import {
   VISIT_REPORT_TITLE,
   visitReportWithoutSellerCoaching,
   visitReportEssentials,
+  visitReportMilestones,
   type VisitReportInput,
 } from "./visit-report";
 import {
@@ -1019,6 +1020,20 @@ describe("withDatesFromTranscript, jour de la semaine collé à un mot", () => {
   });
 });
 
+describe("visitReportMilestones", () => {
+  it("lit les jalons de la grille de suivi sous ses propres clés", () => {
+    const suivi = visitReportMilestones("SUIVI");
+    expect(suivi.find((m) => m.key === "B4")?.label).toBe("Budget connu");
+    expect(suivi.find((m) => m.key === "C1")).toBeUndefined();
+  });
+
+  it("garde les jalons de la découverte pour ses grilles", () => {
+    expect(
+      visitReportMilestones("DECOUVERTE_V2").find((m) => m.key === "C1")?.label,
+    ).toBe("Décideur économique identifié");
+  });
+});
+
 describe("l'essentiel du compte rendu (retour du 28 octobre 2026)", () => {
   const text = composeVisitReport(input());
   const essentials = visitReportEssentials(text) ?? "";
@@ -1049,6 +1064,26 @@ describe("l'essentiel du compte rendu (retour du 28 octobre 2026)", () => {
     );
     expect(visitReportWithoutSellerCoaching(text)).toContain(
       "- Prochain rendez-vous :",
+    );
+  });
+
+  it("lit le décideur, le budget et le calendrier sous les clés de la grille de suivi", () => {
+    const suivi = composeVisitReport(
+      input({
+        scorecard: {
+          ...scorecard,
+          gridId: "SUIVI",
+          criteria: [
+            { key: "B3", level: 4, evidence: [] },
+            { key: "B4", level: 1, evidence: [] },
+            { key: "B5", level: 2, evidence: [] },
+            { key: "C1", level: 1, evidence: [] },
+          ],
+        },
+      }),
+    );
+    expect(visitReportEssentials(suivi)).toContain(
+      "- Qualification : Décideur acquis · budget à obtenir · calendrier partiel",
     );
   });
 

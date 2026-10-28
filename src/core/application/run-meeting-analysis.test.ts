@@ -1092,13 +1092,13 @@ describe("runMeetingAnalysis : scorecard", () => {
   });
 
   /*
-    Un closing n'a pas encore de grille. Le noter sur celle de découverte lui
+    Une revue de compte n'a pas de grille. La noter sur celle de découverte lui
     reprocherait de n'avoir pas fait le travail d'un premier rendez-vous ; ce
     score faux irait ensuite dans des moyennes. L'issue est donc distincte d'un
     échec, et rien n'est ni demandé au modèle ni enregistré.
   */
   it("ne note pas un type de rendez-vous sans grille", async () => {
-    const deps = harness({ meetingType: "Closing" });
+    const deps = harness({ meetingType: "Revue de compte" });
     const result = await lancer(deps);
 
     expect(result).toEqual({ ok: false, error: "NO_SCORECARD_GRID" });

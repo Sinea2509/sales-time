@@ -120,6 +120,31 @@ export const VISIT_REPORT_MILESTONES: readonly {
   { key: "D1", label: "Prochaine étape datée" },
 ];
 
+/**
+ * Les jalons lus dans la grille de suivi (démo, proposition, négociation).
+ * Les clés n'y disent pas la même chose qu'en découverte : C1 y est la
+ * réponse reliée aux besoins, pas le décideur. D'où une table par grille.
+ */
+const SUIVI_MILESTONES: readonly {
+  readonly key: string;
+  readonly label: string;
+}[] = [
+  { key: "B1", label: "Enjeu prioritaire reconfirmé" },
+  { key: "B2", label: "Critères de succès" },
+  { key: "B3", label: "Décideurs identifiés" },
+  { key: "B4", label: "Budget connu" },
+  { key: "B5", label: "Calendrier de décision" },
+  { key: "F1", label: "Prochaine étape datée" },
+  { key: "F3", label: "Décideurs associés à la suite" },
+];
+
+/** Les jalons de qualification de la grille qui a noté le rendez-vous. */
+export function visitReportMilestones(
+  gridId: string,
+): readonly { readonly key: string; readonly label: string }[] {
+  return gridId === "SUIVI" ? SUIVI_MILESTONES : VISIT_REPORT_MILESTONES;
+}
+
 const MILESTONE_ACQUIRED_LEVEL = 3;
 const MILESTONE_PARTIAL_LEVEL = 2;
 
@@ -579,7 +604,9 @@ function maturity(out: Lines, input: VisitReportInput): void {
   const labels = new Map(
     (grid ? scorecardCriteria(grid) : []).map((c) => [c.key, c.label]),
   );
-  const milestones = VISIT_REPORT_MILESTONES.filter((m) => labels.has(m.key));
+  const milestones = visitReportMilestones(scorecard.gridId).filter((m) =>
+    labels.has(m.key),
+  );
   if (milestones.length === 0) {
     out.push(
       "Non évaluée : la grille de ce rendez-vous ne porte pas de jalons de qualification.",
@@ -762,6 +789,13 @@ const ESSENTIAL_MILESTONES: readonly { key: string; label: string }[] = [
   { key: "C4", label: "calendrier" },
 ];
 
+/** Les mêmes trois jalons dans la grille de suivi, où C1 n'est plus le décideur. */
+const SUIVI_ESSENTIAL_MILESTONES: readonly { key: string; label: string }[] = [
+  { key: "B3", label: "décideur" },
+  { key: "B4", label: "budget" },
+  { key: "B5", label: "calendrier" },
+];
+
 function essentials(out: Lines, input: VisitReportInput): void {
   const x = input.extraction;
   out.title(ESSENTIALS_TITLE);
@@ -775,9 +809,13 @@ function essentials(out: Lines, input: VisitReportInput): void {
 
   if (input.scorecard) {
     const levels = scorecardLevelsByKey(input.scorecard.criteria);
-    const parts = ESSENTIAL_MILESTONES.filter((m) => levels.has(m.key)).map(
-      (m) => `${m.label} ${milestoneState(levels.get(m.key) ?? 0)}`,
-    );
+    const milestones =
+      input.scorecard.gridId === "SUIVI"
+        ? SUIVI_ESSENTIAL_MILESTONES
+        : ESSENTIAL_MILESTONES;
+    const parts = milestones
+      .filter((m) => levels.has(m.key))
+      .map((m) => `${m.label} ${milestoneState(levels.get(m.key) ?? 0)}`);
     if (parts.length > 0) {
       const sentence = parts.join(" · ");
       out.push(
