@@ -100,6 +100,10 @@ function meetingsRepository() {
   };
 }
 
+/** Un compte rendu au format d'aujourd'hui, avec sa rubrique « L'essentiel ». */
+const RAPPORT_ACTUEL =
+  "COMPTE RENDU DE VISITE\nMenuiseries Vermont\n\nL'ESSENTIEL\n- En une phrase : un premier échange.";
+
 describe("summarizeMeetingDetail", () => {
   afterEach(() => {
     const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
@@ -117,7 +121,7 @@ describe("summarizeMeetingDetail", () => {
         organizationId: "org_1",
         meeting: {
           ...meeting,
-          visitReportDraft: "COMPTE RENDU DE VISITE\nCompte-rendu CRM stocké.",
+          visitReportDraft: RAPPORT_ACTUEL,
         },
         discResult: null,
         soncasResult: null,
@@ -125,9 +129,7 @@ describe("summarizeMeetingDetail", () => {
       },
     );
     expect(result.fromAi).toBe(true);
-    expect(result.meetingSynthesis).toBe(
-      "COMPTE RENDU DE VISITE\nCompte-rendu CRM stocké.",
-    );
+    expect(result.meetingSynthesis).toBe(RAPPORT_ACTUEL);
   });
 
   it("ne rend pas un compte rendu enregistré dans l'ancienne forme : il est à réécrire", async () => {
@@ -481,11 +483,11 @@ describe("meetingVisitReportForPage", () => {
   it("rend le compte rendu enregistré, sans rien écrire", () => {
     withAiKey();
     const result = meetingVisitReportForPage({
-      meeting: { ...meeting, visitReportDraft: "COMPTE RENDU DE VISITE" },
+      meeting: { ...meeting, visitReportDraft: RAPPORT_ACTUEL },
       ...analyses,
     });
     expect(result).toMatchObject({
-      meetingSynthesis: "COMPTE RENDU DE VISITE",
+      meetingSynthesis: RAPPORT_ACTUEL,
       fromAi: true,
       needsWriting: false,
     });

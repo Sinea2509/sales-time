@@ -90,6 +90,14 @@ export type VisitReportInput = {
 
 export const VISIT_REPORT_TITLE = "COMPTE RENDU DE VISITE";
 
+/*
+  Retour de Thomas du 28 octobre 2026 : le compte rendu était « presque plus
+  long que le transcript ». Il s'ouvre désormais sur l'essentiel, six lignes à
+  coller dans le CRM, et le détail suit sous son propre titre pour qui le veut.
+*/
+const ESSENTIALS_TITLE = "L'essentiel";
+const DETAIL_TITLE = "Détail du rendez-vous";
+
 /**
  * Les jalons de qualification lus dans la grille de découverte.
  *
@@ -226,7 +234,11 @@ function quoteLine(quote: VisitReportQuote): string | null {
 
 /** Vrai quand un compte rendu enregistré a la forme d'aujourd'hui, et non celle d'avant le lot 80a. */
 export function isCurrentVisitReport(text: string | null | undefined): boolean {
-  return (text ?? "").trimStart().startsWith(VISIT_REPORT_TITLE);
+  const t = (text ?? "").trimStart();
+  return (
+    t.startsWith(VISIT_REPORT_TITLE) &&
+    t.includes(`\n${sectionTitle(ESSENTIALS_TITLE)}\n`)
+  );
 }
 
 function participantLine(p: VisitReportParticipant): string | null {
@@ -734,6 +746,95 @@ function quality(out: Lines, input: VisitReportInput): void {
   if (challenge) out.push(`Défi du commercial : ${challenge}`);
 }
 
+/** L'état d'un jalon de qualification, pour une ligne courte. */
+function milestoneState(level: number): string {
+  if (level >= MILESTONE_ACQUIRED_LEVEL) return "acquis";
+  if (level >= MILESTONE_PARTIAL_LEVEL) return "partiel";
+  return "à obtenir";
+}
+
+/** Le préfixe de la ligne tirée de la grille, que seuls le commercial et les managers lisent. */
+const QUALIFICATION_LINE_PREFIX = "- Qualification : ";
+
+const ESSENTIAL_MILESTONES: readonly { key: string; label: string }[] = [
+  { key: "C1", label: "décideur" },
+  { key: "C3", label: "budget" },
+  { key: "C4", label: "calendrier" },
+];
+
+function essentials(out: Lines, input: VisitReportInput): void {
+  const x = input.extraction;
+  out.title(ESSENTIALS_TITLE);
+  out.push(`- En une phrase : ${clean(x.enUnePhrase) || NOT_COVERED}`);
+
+  const besoins = x.themes
+    .map((t) => clean(t.titre))
+    .filter(Boolean)
+    .slice(0, 3);
+  if (besoins.length > 0) out.push(`- Besoin : ${besoins.join(" ; ")}`);
+
+  if (input.scorecard) {
+    const levels = scorecardLevelsByKey(input.scorecard.criteria);
+    const parts = ESSENTIAL_MILESTONES.filter((m) => levels.has(m.key)).map(
+      (m) => `${m.label} ${milestoneState(levels.get(m.key) ?? 0)}`,
+    );
+    if (parts.length > 0) {
+      const sentence = parts.join(" · ");
+      out.push(
+        `${QUALIFICATION_LINE_PREFIX}${sentence.charAt(0).toLocaleUpperCase("fr-FR")}${sentence.slice(1)}`,
+      );
+    }
+  }
+
+  const r = x.prochainRendezVous;
+  out.push(
+    clean(r.quand)
+      ? `- Prochain rendez-vous : ${clean(r.quand)}${clean(r.objectif) ? ` · ${clean(r.objectif)}` : ""}`
+      : "- Prochain rendez-vous : non fixé",
+  );
+
+  const steps = x.prochainesEtapes
+    .filter((s) => clean(s.action))
+    .slice(0, 3)
+    .map((s) =>
+      [clean(s.action), clean(s.echeance), clean(s.porteur)]
+        .filter(Boolean)
+        .join(" · "),
+    );
+  if (steps.length > 0) out.push(`- À faire : ${steps.join(" ; ")}`);
+
+  const source = input.objectionsAnalysis
+    ? objectionsFromAnalysis(input.objectionsAnalysis)
+    : x.objections;
+  const objectionsWithText = source.filter((o) => clean(o.objection));
+  const attention =
+    objectionsWithText.find((o) => /pas traitée|à moitié/.test(o.effet)) ??
+    objectionsWithText[0];
+  if (attention) {
+    const words = clean(attention.objection).replace(/^«\s*|\s*»$/g, "");
+    out.push(
+      (attention as { verbatim?: boolean }).verbatim === false
+        ? `- Point d'attention : ${words}`
+        : `- Point d'attention : « ${words} »`,
+    );
+  }
+}
+
+/**
+ * L'essentiel d'un compte rendu, sans son détail : ce que la fiche montre et
+ * copie d'abord. `null` pour un compte rendu d'avant cette rubrique.
+ */
+export function visitReportEssentials(report: string): string | null {
+  const lines = report.split("\n");
+  const detail = lines.findIndex(
+    (line, i) =>
+      line.trim() === sectionTitle(DETAIL_TITLE) &&
+      isVisitReportHeading(line, i > 0 ? lines[i - 1] : undefined),
+  );
+  if (detail < 0) return null;
+  return lines.slice(0, detail).join("\n").trim();
+}
+
 function methodNote(out: Lines): void {
   out.title("Note de méthode");
   out.push(VISIT_REPORT_METHOD_NOTE);
@@ -743,6 +844,8 @@ function methodNote(out: Lines): void {
 export function composeVisitReport(input: VisitReportInput): string {
   const out = new Lines();
   header(out, input);
+  essentials(out, input);
+  out.title(DETAIL_TITLE);
   participants(out, input);
   history(out, input);
   body(out, input);
@@ -807,6 +910,8 @@ export function visitReportWithoutSellerCoaching(report: string): string {
       skipping = SELLER_COACHING_TITLES.has(line.trim());
     }
     if (skipping) return;
+    // L'état des jalons de l'essentiel vient de la grille : il part avec elle.
+    if (line.startsWith(QUALIFICATION_LINE_PREFIX)) return;
     const withoutScore = line.replace(
       / · (grille \d+ sur 100|non noté sur une grille)$/,
       "",
