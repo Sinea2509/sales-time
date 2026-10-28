@@ -16,6 +16,7 @@ import {
   VISIT_REPORT_METHOD_NOTE,
   VISIT_REPORT_TITLE,
   visitReportWithoutSellerCoaching,
+  visitReportMilestones,
   type VisitReportInput,
 } from "./visit-report";
 import {
@@ -1006,5 +1007,19 @@ describe("withDatesFromTranscript, jour de la semaine collé à un mot", () => {
       "Cédric : Les mardis je ne peux pas. Le 4 novembre, peut-être.",
     );
     expect(out.prochainRendezVous.quand).toBe(VISIT_REPORT_DATE_TO_FIX);
+  });
+});
+
+describe("visitReportMilestones", () => {
+  it("lit les jalons de la grille de suivi sous ses propres clés", () => {
+    const suivi = visitReportMilestones("SUIVI");
+    expect(suivi.find((m) => m.key === "B4")?.label).toBe("Budget connu");
+    expect(suivi.find((m) => m.key === "C1")).toBeUndefined();
+  });
+
+  it("garde les jalons de la découverte pour ses grilles", () => {
+    expect(
+      visitReportMilestones("DECOUVERTE_V2").find((m) => m.key === "C1")?.label,
+    ).toBe("Décideur économique identifié");
   });
 });

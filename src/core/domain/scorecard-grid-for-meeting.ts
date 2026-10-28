@@ -60,6 +60,32 @@ const LIBELLES_DE_GRILLE: readonly {
       "r1",
     ],
   },
+  /*
+    Les rendez-vous qui suivent la découverte (retour de Thomas du 28
+    octobre 2026 : une démo restait sans note). « Suivi » seul n'y mène pas :
+    un « suivi client » ou une « revue de compte » n'est pas un rendez-vous de
+    vente.
+  */
+  {
+    gridId: "SUIVI",
+    libelles: [
+      "demo",
+      "demonstration",
+      "proposition",
+      "presentation",
+      "soutenance",
+      "negociation",
+      "closing",
+      "r2",
+      "r3",
+      "second rendez vous",
+      "deuxieme rendez vous",
+      "second rdv",
+      "deuxieme rdv",
+      "rendez vous de suivi",
+      "rdv de suivi",
+    ],
+  },
 ];
 
 /**
@@ -90,10 +116,11 @@ function grilleDuLibelle(normalise: string): ScorecardGrid | null {
  * fiche affiche le nom de la grille appliquée, si bien que le pari se voit.
  *
  * Un rendez-vous dont le type ne correspond à aucune grille n'est pas noté du
- * tout. Passer un closing dans la grille de découverte lui reprocherait de
- * n'avoir pas fait le travail d'un premier rendez-vous, avec un score bas à
- * l'appui, et ce score irait ensuite grossir des moyennes. Tant que la grille
- * de closing n'existe pas, l'absence de note est la seule réponse vraie.
+ * tout. Passer une revue de compte dans la grille de découverte lui
+ * reprocherait de n'avoir pas fait le travail d'un premier rendez-vous, avec un
+ * score bas à l'appui, et ce score irait ensuite grossir des moyennes. Les
+ * démos, propositions, négociations et closings ont leur propre grille de
+ * suivi depuis le 28 octobre 2026.
  *
  * Le type l'emporte sur l'étape du pipeline, et l'étape n'est lue que si le
  * type est vide, exactement comme le fait le libellé affiché sur la fiche. Un

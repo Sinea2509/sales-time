@@ -1,6 +1,7 @@
 import {
   DECOUVERTE_V2_GRID as DECOUVERTE_GRID,
   DEFAULT_SCORECARD_GRID,
+  SUIVI_GRID,
 } from "./scorecard-grid";
 import {
   normalizeMeetingLabel,
@@ -55,14 +56,27 @@ describe("scorecardGridForMeeting", () => {
     }
   });
 
-  it("ne note pas un rendez-vous d'un autre genre", () => {
+  it("note les rendez-vous qui suivent la découverte sur la grille de suivi", () => {
     for (const meetingType of [
-      "Closing",
-      "Négociation",
       "Démo",
+      "Démonstration produit",
       "Proposition",
+      "Négociation",
+      "Closing",
+      "Soutenance",
+      "R2",
+      "Second rendez-vous",
+      "RDV de suivi",
+    ]) {
+      expect(scorecardGridForMeeting({ meetingType })).toBe(SUIVI_GRID);
+    }
+  });
+
+  it("ne note pas un rendez-vous qui n'est pas un rendez-vous de vente", () => {
+    for (const meetingType of [
       "Revue de compte",
       "Suivi client",
+      "Point annuel",
     ]) {
       expect(scorecardGridForMeeting({ meetingType })).toBeNull();
     }
@@ -94,7 +108,7 @@ describe("scorecardGridForMeeting", () => {
         meetingType: "Démo",
         pipelineStage: "Découverte",
       }),
-    ).toBeNull();
+    ).toBe(SUIVI_GRID);
     expect(
       scorecardGridForMeeting({
         meetingType: "Découverte",
@@ -113,20 +127,36 @@ describe("scorecardGridForMeeting", () => {
     ).toBe(DEFAULT_SCORECARD_GRID);
   });
 
-  it("reconnaît les types livrés par défaut qui sont des découvertes", () => {
+  it("note tous les types livrés par défaut, sauf la revue de compte", () => {
     const notes = DEFAULT_MEETING_TYPES.filter(
       (meetingType) => scorecardGridForMeeting({ meetingType }) !== null,
     );
-    expect(notes).toStrictEqual(["Qualification", "Découverte"]);
+    expect(notes).toStrictEqual([
+      "Qualification",
+      "Découverte",
+      "Démo",
+      "Proposition",
+      "Négociation",
+      "Closing",
+    ]);
   });
 
-  it("ne tire aucune grille des étapes de pipeline livrées par défaut", () => {
-    // Elles qualifient l'affaire et non le rendez-vous : « Qualifié » dit
-    // qu'une qualification a eu lieu, pas que ce rendez-vous en était une. Un
-    // rendez-vous sans type dans une affaire ainsi rangée n'est donc pas noté,
-    // et c'est le type de rendez-vous qui reste le seul signal fiable.
-    for (const pipelineStage of DEFAULT_PIPELINE_STAGES) {
-      expect(scorecardGridForMeeting({ pipelineStage })).toBeNull();
-    }
+  it("ne tire des étapes livrées par défaut que la grille de suivi", () => {
+    // « Qualifié » dit qu'une qualification a eu lieu, pas que ce rendez-vous
+    // en était une : pas de note. « Démo / Proposition » et « Négociation »
+    // nomment au contraire le rendez-vous qu'on y tient.
+    const grilles = Object.fromEntries(
+      DEFAULT_PIPELINE_STAGES.map((pipelineStage) => [
+        pipelineStage,
+        scorecardGridForMeeting({ pipelineStage })?.id ?? null,
+      ]),
+    );
+    expect(grilles).toStrictEqual({
+      "Lead entrant": null,
+      Qualifié: null,
+      "Démo / Proposition": "SUIVI",
+      Négociation: "SUIVI",
+      Gagné: null,
+    });
   });
 });

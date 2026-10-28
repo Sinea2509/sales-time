@@ -16,6 +16,7 @@
   ],
   "ignoreRegExpList": ["/data:image\\\\\\+svg[^\"']+/gi"],
   "words": [
+    "deuxieme",
     "Pipedrive",
     "pipedrive",
     "OPCO",

@@ -89,8 +89,8 @@ export type ScorecardBlock = {
   readonly criteria: readonly ScorecardCriterion[];
 };
 
-/** Identifiant d'une grille. Le closing viendra s'ajouter ici. */
-export type ScorecardGridId = "DECOUVERTE" | "DECOUVERTE_V2";
+/** Identifiant d'une grille. */
+export type ScorecardGridId = "DECOUVERTE" | "DECOUVERTE_V2" | "SUIVI";
 
 export type ScorecardGrid = {
   readonly id: ScorecardGridId;
@@ -655,8 +655,344 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
   ],
 };
 
+/**
+ * La grille des rendez-vous qui suivent la découverte : démonstration,
+ * proposition, négociation.
+ *
+ * Retour de Thomas du 28 octobre 2026 : un rendez-vous typé « Démo » n'avait
+ * aucune note, la seule grille étant celle de la découverte. Six blocs,
+ * validés par Thomas : reprendre le contexte, valider les enjeux et la
+ * décision, présenter une réponse reliée aux besoins, traiter les
+ * objections, la posture, puis l'engagement vers la décision.
+ *
+ * La posture garde le bloc E et ses quatre clés : l'écoute, les questions,
+ * la personnalisation et le cadrage y sont mesurés par le produit exactement
+ * comme en découverte. L'engagement vient en dernier, comme la fin d'un
+ * rendez-vous. Les poids valent quatre fois le nombre de critères du bloc :
+ * un niveau vaut un point.
+ */
+export const SUIVI_GRID: ScorecardGrid = {
+  id: "SUIVI",
+  name: "Rendez-vous de suivi (démo, proposition, négociation)",
+  intent:
+    "Faire avancer une affaire déjà découverte : reprendre ce qui a été dit, montrer une réponse reliée aux besoins du prospect, lever ses objections et obtenir un engagement vers la décision.",
+  notExpected:
+    "Un rendez-vous de suivi ne refait pas toute la découverte : ne compte jamais comme un manque une question de découverte que le rendez-vous précédent a déjà traitée, et ne reproche pas de ne pas reposer ce que le prospect a déjà dit. Une proposition annoncée pour un prochain rendez-vous, avec sa date, n'est pas un manque.",
+  blocks: [
+    {
+      key: "A",
+      name: "Reprise du contexte",
+      weight: 12,
+      criteria: [
+        {
+          key: "A1",
+          label: "Rappel du rendez-vous précédent",
+          expected:
+            "Le commercial reprend ce qui a été dit et convenu au rendez-vous précédent (besoin, enjeux, engagements) et le fait valider par le prospect.",
+          lookFor:
+            "Le résumé du dernier échange en début de rendez-vous, et l'accord du prospect sur ce résumé.",
+          examples: [
+            "La dernière fois, vous m'aviez parlé de… C'est toujours d'actualité ?",
+          ],
+        },
+        {
+          key: "A2",
+          label: "Ce qui a changé depuis",
+          expected:
+            "Ce qui a bougé depuis le dernier échange (contexte, priorités, interlocuteurs, calendrier), dit par le prospect.",
+          lookFor:
+            "Les nouveautés : une réorganisation, un changement de priorité, une nouvelle personne dans le projet, un calendrier qui avance ou recule.",
+          examples: [
+            "Qu'est-ce qui a évolué de votre côté depuis notre échange ?",
+          ],
+        },
+        {
+          key: "A3",
+          label: "Suivi des engagements",
+          expected:
+            "Les engagements pris des deux côtés au rendez-vous précédent sont repris : ce qui a été envoyé, lu, transmis ou vérifié.",
+          lookFor:
+            "Les documents envoyés et lus, les informations promises par le prospect, les personnes qu'il devait consulter.",
+          examples: [
+            "Vous avez pu en parler avec votre directrice ?",
+            "Vous avez eu le temps de regarder le document que je vous ai envoyé ?",
+          ],
+        },
+      ],
+    },
+    {
+      key: "B",
+      name: "Enjeux et décision",
+      weight: 20,
+      criteria: [
+        {
+          key: "B1",
+          label: "Enjeu prioritaire reconfirmé",
+          expected:
+            "Le besoin et l'enjeu prioritaire redits par le prospect dans ce rendez-vous, avec ses mots.",
+          lookFor:
+            "Le moment où le prospect confirme ce qui compte le plus pour lui, ou le précise.",
+          examples: [
+            "Si on ne devait traiter qu'une chose, ce serait laquelle ?",
+          ],
+        },
+        {
+          key: "B2",
+          label: "Critères de succès",
+          fullMarkProof: "figure",
+          expected:
+            "Ce qui fera dire au prospect que le projet a réussi, chiffré ou daté quand c'est possible.",
+          lookFor:
+            "Les indicateurs, résultats attendus, échéances de réussite que le prospect formule.",
+          examples: ["À quoi verrez-vous dans six mois que ça a marché ?"],
+        },
+        {
+          key: "B3",
+          label: "Décideurs et circuit de validation",
+          fullMarkProof: "namedDecider",
+          expected:
+            "Qui décide et qui valide, nommément, les étapes de la décision, et la présence ou l'association des décideurs à la suite.",
+          lookFor:
+            "Les personnes qui signent, valident ou influencent, et comment le projet passera en interne.",
+          examples: [
+            "Qui d'autre doit valider avant de lancer ?",
+            "Comment allez-vous présenter le projet à votre direction ?",
+          ],
+        },
+        {
+          key: "B4",
+          label: "Budget et financement",
+          fullMarkProof: "figure",
+          expected:
+            "L'enveloppe ou la fourchette, son porteur, le mode de financement et la réaction du prospect au prix proposé.",
+          lookFor:
+            "Tout échange sur l'argent : budget, prix présenté, réaction, financement (prise en charge, enveloppe annuelle).",
+          examples: [
+            "Le montant que je vous ai présenté entre-t-il dans votre enveloppe ?",
+          ],
+        },
+        {
+          key: "B5",
+          label: "Calendrier de décision",
+          expected:
+            "Quand la décision sera prise et ce qui la commande (comité, cycle budgétaire, date de démarrage visée).",
+          lookFor:
+            "La date de décision, la date de démarrage souhaitée, les échéances qui pressent ou retardent.",
+          examples: ["Pour démarrer en janvier, quand devez-vous décider ?"],
+        },
+      ],
+    },
+    {
+      key: "C",
+      name: "Démonstration ou proposition",
+      weight: 20,
+      criteria: [
+        {
+          key: "C1",
+          label: "Réponse reliée aux besoins exprimés",
+          expected:
+            "Chaque élément montré ou proposé est rattaché à un besoin ou un enjeu que le prospect a exprimé, jamais une présentation catalogue.",
+          lookFor:
+            "Les moments où le commercial dit « vous m'aviez dit que… », puis montre la partie de son offre qui y répond.",
+          examples: [
+            "Vous m'aviez parlé de vos nouveaux managers : voici comment on les accompagne.",
+          ],
+        },
+        {
+          key: "C2",
+          label: "Preuves et exemples",
+          expected:
+            "Des cas clients, références ou résultats comparables, proches du prospect (secteur, taille, besoin).",
+          lookFor:
+            "Les exemples concrets, les clients cités, les résultats obtenus ailleurs.",
+          examples: [
+            "Un client de votre secteur avait le même sujet, voici ce qu'on a fait.",
+          ],
+        },
+        {
+          key: "C3",
+          label: "Validation au fil de la présentation",
+          expected:
+            "Le commercial vérifie régulièrement que ce qu'il montre répond aux attentes, et adapte la suite à la réponse.",
+          lookFor:
+            "Les questions de contrôle pendant la démonstration ou la proposition, et ce que le commercial en fait.",
+          examples: ["Est-ce que ça correspond à ce que vous aviez en tête ?"],
+        },
+        {
+          key: "C4",
+          label: "Valeur et retour sur investissement",
+          fullMarkProof: "figure",
+          expected:
+            "Le gain attendu ou le coût de l'inaction rapporté au prix, avec des chiffres du prospect.",
+          lookFor:
+            "Le lien entre l'investissement et ce qu'il rapporte ou évite : temps gagné, chiffre d'affaires, coûts, risques.",
+          examples: [
+            "Si on gagne une journée par commercial et par mois, ça représente quoi pour vous ?",
+          ],
+        },
+        {
+          key: "C5",
+          label: "Différenciation",
+          expected:
+            "Pourquoi cette offre plutôt qu'une autre (concurrent, solution interne, ne rien faire), dit en termes de ce qui compte pour le prospect.",
+          lookFor:
+            "La comparaison avec les alternatives que le prospect envisage et les raisons de choisir cette offre.",
+          examples: [
+            "Par rapport à ce que vous faites en interne, voici ce qui change.",
+          ],
+        },
+      ],
+    },
+    {
+      key: "D",
+      name: "Objections",
+      weight: 12,
+      criteria: [
+        {
+          key: "D1",
+          label: "Objections accueillies et explorées",
+          expected:
+            "Chaque réserve est accueillie sans se défendre et creusée par une question avant d'y répondre.",
+          lookFor:
+            "Les réserves du prospect (prix, timing, priorité, doute) et la question du commercial qui les fait préciser.",
+          examples: ["Qu'est-ce qui vous fait hésiter exactement ?"],
+        },
+        {
+          key: "D2",
+          label: "Réponses ancrées dans le besoin",
+          expected:
+            "Les réponses reprennent les mots, les enjeux et les chiffres du prospect, pas un argument générique.",
+          lookFor:
+            "Les réponses du commercial aux réserves, et leur lien avec ce que le prospect a dit.",
+        },
+        {
+          key: "D3",
+          label: "Objection levée et vérifiée",
+          expected:
+            "Après la réponse, le commercial vérifie que la réserve est levée, ou convient de ce qui la lèvera.",
+          lookFor:
+            "La question de vérification après une réponse, et l'accord du prospect ou l'action convenue.",
+          examples: ["Est-ce que ça répond à votre inquiétude ?"],
+        },
+      ],
+    },
+    {
+      key: "E",
+      name: "Posture et exécution",
+      weight: 16,
+      criteria: [
+        {
+          key: "E1",
+          label: "Ratio d'écoute",
+          expected:
+            "Le prospect parle au moins autant que le commercial, même pendant une démonstration ou une proposition.",
+          lookFor: "La part de parole du commercial, mesurée par le produit.",
+          measuredByProduct: true,
+        },
+        {
+          key: "E2",
+          label: "Qualité du questionnement",
+          expected:
+            "Au moins 55 % de questions ouvertes parmi les questions du commercial, et au moins huit questions ouvertes sur le rendez-vous.",
+          lookFor:
+            "Les questions du commercial, comptées par le produit : ouvertes, fermées, ou de simple vérification.",
+          examples: [
+            "Comment voyez-vous la mise en place chez vous ?",
+            "Qu'est-ce qui vous parle le plus dans ce qu'on vient de voir ?",
+          ],
+          measuredByProduct: true,
+        },
+        {
+          key: "E3",
+          label: "Personnalisation et valeur",
+          expected:
+            "Un discours branché sur ce que le prospect a dit, illustré d'exemples qui lui parlent, jamais un argumentaire déroulé tel quel.",
+          lookFor:
+            "Les moments où le commercial relie son offre à la situation du prospect. Un long passage du commercial dans le premier tiers du rendez-vous plafonne le critère.",
+        },
+        {
+          key: "E4",
+          label: "Cadrage et prise de lead",
+          canBeUnobservable: true,
+          expected:
+            "En ouverture, le commercial pose l'objectif, le déroulé et la durée du rendez-vous, obtient l'accord du prospect, puis garde la main sur le déroulé.",
+          lookFor:
+            "Le début du rendez-vous : objectif annoncé, ordre du jour, durée, question pour valider le cadre ; puis les transitions que le commercial mène.",
+          examples: [
+            "Je vous propose de commencer par ce qui a changé, puis je vous montre la proposition, ça vous va ?",
+          ],
+        },
+      ],
+    },
+    {
+      key: "F",
+      name: "Engagement et suite",
+      weight: 20,
+      criteria: [
+        {
+          key: "F1",
+          label: "Prochaine étape datée",
+          fullMarkProof: "acceptedDate",
+          expected:
+            "Une date ferme retenue par les deux parties pendant le rendez-vous. Des créneaux proposés à confirmer sont une information partielle.",
+          lookFor:
+            "Le prochain rendez-vous ou la prochaine échéance : date retenue, participants, objectif.",
+          examples: [
+            "On se cale un point avec votre directrice pour valider ?",
+          ],
+        },
+        {
+          key: "F2",
+          label: "Engagement du prospect",
+          expected: "Une action prise par le prospect lui-même, avec un délai.",
+          lookFor:
+            "Ce que le prospect s'engage à faire : présenter la proposition, réunir les décideurs, transmettre une information, revenir avec une réponse d'ici une date.",
+          examples: ["Vous pourriez la présenter à votre comité d'ici jeudi ?"],
+        },
+        {
+          key: "F3",
+          label: "Décideurs associés à la suite",
+          expected:
+            "Les personnes qui décident sont présentes ou explicitement associées à la prochaine étape.",
+          lookFor:
+            "L'invitation des décideurs au prochain échange, ou l'accord du prospect pour les y associer.",
+          examples: [
+            "Ce serait utile que votre directeur financier soit là la prochaine fois ?",
+          ],
+        },
+        {
+          key: "F4",
+          label: "Livrables annoncés",
+          expected:
+            "Ce que le commercial s'engage à produire ou envoyer (proposition ajustée, devis, planning, références), quand, et en quoi cela sert la décision.",
+          lookFor:
+            "Les engagements du commercial, datés, et leur usage pour le prospect.",
+          examples: [
+            "Je vous envoie la proposition ajustée demain pour votre comité.",
+          ],
+        },
+        {
+          key: "F5",
+          label: "Demande d'engagement",
+          expected:
+            "Le commercial demande où en est la décision et propose un accord, au moins de principe, adapté à l'étape de l'affaire.",
+          lookFor:
+            "La question de conclusion : position du prospect, accord de principe, conditions pour signer.",
+          examples: [
+            "Si on ajuste ces deux points, êtes-vous prêt à lancer ?",
+            "Où en êtes-vous dans votre décision ?",
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 /** Les grilles livrées avec le produit, dans l'ordre d'affichage. */
-export const SCORECARD_GRIDS: readonly ScorecardGrid[] = [DECOUVERTE_V2_GRID];
+export const SCORECARD_GRIDS: readonly ScorecardGrid[] = [
+  DECOUVERTE_V2_GRID,
+  SUIVI_GRID,
+];
 
 /**
  * Les grilles retirées, gardées pour relire les analyses qu'elles ont
