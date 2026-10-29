@@ -43,6 +43,9 @@ export function scorecardGridInstruction(grid: ScorecardGrid): string {
             criterion.canBeUnobservable
               ? "  Peut être non observable : le produit constate lui-même quand le transcript commence après ce moment, et sort alors le critère du calcul. Relève-le comme les autres."
               : null,
+            criterion.qualitative
+              ? "  Critère qualitatif : la parole du prospect est la preuve. Ce qu'il en dit clairement est `exploitable` sans chiffre, date ni nom, et un thème qu'il ouvre de lui-même compte comme abordé."
+              : null,
           ];
           return parts.filter(Boolean).join("\n");
         })
@@ -76,13 +79,14 @@ Pour chaque critère :
   - \`partiel\` : une information générale, vague ou incomplète.
   - \`exploitable\` : une information assez précise pour préparer la suite : un nom, un chiffre, une étape, une date, un exemple vécu.
 - **learned** : une phrase qui dit ce que le commercial sait maintenant sur ce thème, avec les faits du transcript (noms, chiffres, dates). Vide si rien.
-- **missing** : une phrase qui dit ce qui manque encore pour atteindre le niveau ${SCORECARD_LEVEL_MAX}. Vide si rien ne manque.
+- **missing** : une phrase qui dit ce qui manque encore pour atteindre le niveau ${SCORECARD_LEVEL_MAX}, en commençant directement par ce qui manque (« le montant de l'enveloppe et qui la porte », jamais « Il manque… »). Vide si rien ne manque.
 - **evidence** : 1 à 3 extraits recopiés mot pour mot, chacun avec \`who\` : \`commercial\` ou \`prospect\`, selon la personne qui l'a dit. Donne de préférence la question ou la relance du commercial ET la réponse du prospect. Un extrait est une phrase entière, ou un morceau de phrase qui a du sens seul, de trois mots au moins : ne le coupe jamais au milieu d'une idée. Les nombres se recopient exactement : un chiffre changé rend l'extrait introuvable. Un même extrait ne sert qu'à un seul critère : cite pour chaque critère le passage qui lui est propre. Aucun extrait quand le thème est absent.
 - **observable** : \`true\`, toujours. Le produit constate lui-même quand un moment n'est pas dans le transcript.
 
 Le produit vérifie chaque extrait dans le transcript et qui l'a dit, puis relit les deux crans au vu des extraits retrouvés, sans jamais les monter :
 - \`explored\` : « creusé » ne tient que si la relance se voit, la question ou la relance du commercial ET la réponse du prospect sur le thème, ou deux paroles du commercial sur le thème ; sinon le cran redescend à « abordé ».
 - \`obtained\` : « exploitable » ne tient que si une réponse du prospect donne quelque chose de précis (un nombre, une date ou une échéance, un nom de personne, de société ou de lieu) ; sinon le cran redescend à « partiel ». Sans aucune parole du prospect retrouvée, il baisse d'un cran. Un extrait tiré des notes du commercial ne vaut pas une parole du prospect.
+- Exception, un critère qualitatif : une parole du prospect retrouvée sur le thème suffit à le rendre « exploitable », et fait d'un thème qu'il a ouvert lui-même un thème « abordé ».
 Donne donc toujours, quand ils existent, la question du commercial et la réponse du prospect qui porte le fait le plus précis. Un extrait introuvable est retiré. Un critère sans aucun extrait ne dépasse pas le niveau 1.
 
 Le niveau que le produit en tire (colonnes : ${SCORECARD_EXPLORED.join(", ")}) :
@@ -96,5 +100,5 @@ Dans \`criteria\`, chaque critère a son propre champ, nommé par sa clé : remp
 ${blocs}
 
 ## Les points perdus
-Dans \`pointsLost\`, choisis 3 à 5 critères où le rendez-vous laisse le plus de marge, parmi ceux qui ne sont pas à \`creuse\` + \`exploitable\`, en commençant par ceux qui comptent le plus pour la suite de cette affaire. Pour chacun, \`evidence\` dit ce que le transcript montre à cet endroit, en s'adressant au commercial (« vous n'avez pas… », jamais « le commercial n'a pas… »), et \`whatToSayInstead\` donne la phrase que le commercial pourrait dire, en français correct et naturel, écrite comme il la dirait à voix haute à ce prospect. Ne suggère jamais ce que le relevé montre déjà fait.`;
+Dans \`pointsLost\`, choisis 3 à 5 critères où le rendez-vous laisse le plus de marge, parmi ceux qui ne sont pas à \`creuse\` + \`exploitable\`, en commençant par ceux qui comptent le plus pour la suite de cette affaire. Pour chacun, \`evidence\` dit ce qui a manqué à cet endroit, au vu du transcript, en s'adressant au commercial (« vous n'avez pas… », jamais « le commercial n'a pas… ») : la fiche l'affiche comme le manque du critère, sans répéter \`learned\`. Et \`whatToSayInstead\` donne la phrase que le commercial pourrait dire, en français correct et naturel, écrite comme il la dirait à voix haute à ce prospect. Ne suggère jamais ce que le relevé montre déjà fait.`;
 }

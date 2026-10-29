@@ -30,12 +30,14 @@ function BlockLetter({ letter, size = 26 }: { letter: string; size?: number }) {
   );
 }
 
+/**
+ * Un critère : ce qui a été obtenu, ce qui manque (une seule fois), les
+ * citations, puis « Mon conseil » à 2 sur 4 ou moins.
+ */
 function CriterionRow({
   criterion,
-  lost,
 }: {
   criterion: ScorecardBlockView["criteria"][number];
-  lost: ScorecardPointLostView | undefined;
 }) {
   return (
     <div className="border-b border-dashed border-border py-2.5 last:border-b-0">
@@ -79,17 +81,7 @@ function CriterionRow({
           ) : null}
         </div>
       ) : null}
-      {lost ? (
-        <div className="mt-2 rounded-lg bg-muted/50 px-3.5 py-2.5">
-          <p className="text-[11.5px] font-bold">Ce qui a manqué</p>
-          <p className="text-muted-foreground mt-1.5 text-[12.8px] leading-relaxed">
-            {lost.evidence}
-          </p>
-          <p className="bg-brand-soft mt-2 rounded-lg px-3 py-2 text-[12.8px] leading-relaxed">
-            <b>Mon conseil :</b> {lost.whatToSayInstead}
-          </p>
-        </div>
-      ) : criterion.evidence.length > 0 ? (
+      {criterion.evidence.length > 0 ? (
         <ul className="text-muted-foreground mt-1.5 space-y-1 text-xs leading-relaxed">
           {criterion.evidence.map((quote, index) => (
             <li key={`${index}-${quote}`} className="italic">
@@ -97,6 +89,11 @@ function CriterionRow({
             </li>
           ))}
         </ul>
+      ) : null}
+      {criterion.advice ? (
+        <p className="bg-brand-soft mt-2 rounded-lg px-3 py-2 text-[12.8px] leading-relaxed">
+          <b>Mon conseil :</b> {criterion.advice}
+        </p>
       ) : null}
     </div>
   );
@@ -152,11 +149,7 @@ function BlockDetails({
           </p>
         ) : (
           block.criteria.map((criterion) => (
-            <CriterionRow
-              key={criterion.key}
-              criterion={criterion}
-              lost={lostByKey.get(criterion.key.toUpperCase())}
-            />
+            <CriterionRow key={criterion.key} criterion={criterion} />
           ))
         )}
       </div>

@@ -207,7 +207,9 @@ export type ScorecardCap = { max: number; reason: string };
  *    « obtenue » sans parole du prospect retrouvée baisse d'un cran ; une
  *    information « exploitable » dont aucune parole du prospect ne donne
  *    rien de précis devient « partielle ». Une citation tirée des notes ne
- *    compte pas comme une parole ;
+ *    compte pas comme une parole. Seule exception, un critère qualitatif
+ *    (les freins et risques) : une parole du prospect suffit à le rendre
+ *    exploitable, et fait d'un thème qu'il a ouvert un thème abordé ;
  * 3. le niveau se lit dans la table ;
  * 4. un critère sans aucune citation ne dépasse pas le niveau 1 ;
  * 5. un critère qui exige un chiffre n'atteint pas 4 sans nombre dit par le
@@ -276,9 +278,23 @@ export function levelScorecardObservations(
         if (obtained !== "rien") obtained = LOWER_OBTAINED[obtained];
       } else if (
         obtained === "exploitable" &&
+        !criterion.qualitative &&
         !prospectProofs.some((p) => isConcrete(p.quote))
       ) {
         obtained = "partiel";
+      }
+      /*
+        Un critère qualitatif se prouve par la parole du prospect (voir
+        `ScorecardCriterion.qualitative`) : un frein qu'il donne de lui-même,
+        et que ses mots montrent, fait du thème un thème abordé.
+      */
+      if (
+        criterion.qualitative &&
+        explored === "non" &&
+        obtained !== "rien" &&
+        prospectProofs.length > 0
+      ) {
+        explored = "aborde";
       }
     }
     const fromTable = scorecardLevelFromCoverage(explored, obtained);
