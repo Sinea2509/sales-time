@@ -49,8 +49,8 @@ export function PerformanceUnlockPanel({
       at: 1,
       title: vous ? "Votre SalesScore et votre coaching" : "Son SalesScore",
       text: vous
-        ? "Dès le premier rendez-vous analysé : une note sur 100 et les phrases à dire la prochaine fois."
-        : "Dès le premier rendez-vous analysé : une note sur 100 et un coaching par rendez-vous.",
+        ? "Dès le premier rendez-vous analysé : un score sur 100 et les phrases à dire la prochaine fois."
+        : "Dès le premier rendez-vous analysé : un score sur 100 et un coaching par rendez-vous.",
       icon: Gauge,
       tone: "violet",
     },

@@ -78,7 +78,7 @@ function QualificationMatrixTooltipContent() {
       <p>
         <span className="text-muted-foreground">{SALES_SCORE_LABEL} : </span>
         <span className="font-medium tabular-nums">
-          {meta.salesScore ?? "Non noté"}
+          {meta.salesScore ?? "Sans score"}
         </span>
       </p>
       {/*

@@ -51,8 +51,8 @@ export function CommercialMonthFocusCards({
               </div>
               <p className="text-muted-foreground text-sm leading-relaxed">
                 {axis.lowMeetings > 0
-                  ? `Ce bloc reste sous les 60 % dans ${axis.lowMeetings} de vos ${axis.meetings} ${plurielFr(axis.meetings, "dernier rendez-vous noté", "derniers rendez-vous notés")}. C'est le premier levier de progression, devant tout le reste.`
-                  : `Ce bloc est le plus bas de votre grille, sans jamais tomber sous les 60 % sur vos ${axis.meetings} ${plurielFr(axis.meetings, "dernier rendez-vous noté", "derniers rendez-vous notés")} : c'est là que se gagnent les prochains points.`}
+                  ? `Ce bloc reste sous les 60 % dans ${axis.lowMeetings} de vos ${axis.meetings} ${plurielFr(axis.meetings, "dernier rendez-vous évalué", "derniers rendez-vous évalués")}. C'est le premier levier de progression, devant tout le reste.`
+                  : `Ce bloc est le plus bas de votre grille, sans jamais tomber sous les 60 % sur vos ${axis.meetings} ${plurielFr(axis.meetings, "dernier rendez-vous évalué", "derniers rendez-vous évalués")} : c'est là que se gagnent les prochains points.`}
               </p>
               {axis.exampleMeetingId ? (
                 <Link
@@ -91,7 +91,7 @@ export function CommercialMonthFocusCards({
                 ))}
               </div>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Ces compétences sont vos mieux notées sur vos{" "}
+                Ces compétences ont vos meilleurs scores sur vos{" "}
                 {strengths.meetings}{" "}
                 {plurielFr(
                   strengths.meetings,

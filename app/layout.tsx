@@ -35,7 +35,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Sales Time · Coach commercial IA",
+    default: "Sales Time · L'assistant commercial de votre équipe",
     template: "%s · Sales Time",
   },
   description:

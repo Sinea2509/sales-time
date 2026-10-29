@@ -91,7 +91,7 @@ describe("la mise en forme du mail d'invitation", () => {
 
 describe("le message d'invitation par défaut", () => {
   it("vouvoie l'invité", () => {
-    expect(DEFAULT_INVITE_MESSAGE_HTML).toContain("vous aider");
+    expect(DEFAULT_INVITE_MESSAGE_HTML).toContain("votre CRM");
     expect(DEFAULT_INVITE_MESSAGE_HTML).toContain(
       "Inscrivez-vous pour démarrer",
     );
@@ -100,6 +100,18 @@ describe("le message d'invitation par défaut", () => {
 
   it("remplace l'ancien message par défaut, au tutoiement, enregistré tel quel", () => {
     const previous = `<p>Salut, on lance Sales Time dans l'équipe. C'est un coach commercial IA qui va t'aider à gagner du temps sur tes CR, tes mails de suivi, et te donner des feedbacks concrets.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscris-toi pour démarrer</a></p>`;
+    expect(coerceStoredInviteMessageToHtml(previous)).toBe(
+      DEFAULT_INVITE_MESSAGE_HTML,
+    );
+  });
+
+  it("présente un assistant qui fait gagner du temps, plus un coach IA", () => {
+    expect(DEFAULT_INVITE_MESSAGE_HTML).toContain("assistant commercial");
+    expect(DEFAULT_INVITE_MESSAGE_HTML).not.toContain("coach commercial IA");
+  });
+
+  it("remplace l'ancien message du coach commercial IA, enregistré tel quel", () => {
+    const previous = `<p>Bonjour, nous lançons Sales Time dans l'équipe. C'est un coach commercial IA qui va vous aider à gagner du temps sur vos comptes rendus et vos mails de suivi, et vous donner des retours concrets après chaque rendez-vous.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscrivez-vous pour démarrer</a></p>`;
     expect(coerceStoredInviteMessageToHtml(previous)).toBe(
       DEFAULT_INVITE_MESSAGE_HTML,
     );

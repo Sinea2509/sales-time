@@ -23,7 +23,7 @@ export function membresClasses(n: number): string {
   return n <= 1 ? `${n} membre classé` : `${n} membres classés`;
 }
 
-/** « 1 RDV noté », « 8 RDV notés ». */
+/** « 1 RDV évalué », « 8 RDV évalués ». */
 export function rdvNotes(n: number): string {
-  return n <= 1 ? `${n} RDV noté` : `${n} RDV notés`;
+  return n <= 1 ? `${n} RDV évalué` : `${n} RDV évalués`;
 }

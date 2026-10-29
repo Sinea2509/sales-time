@@ -27,12 +27,12 @@ function horsClassement(ranking: TeamRankingSummaryData): string | null {
     raisons.push(
       `${membres(ranking.unrankedLowVolumeCount)} sous le seuil de ${
         ranking.minScoredMeetings
-      } rendez-vous notés`,
+      } rendez-vous évalués`,
     );
   }
   if (ranking.unrankedNoScoreCount > 0) {
     raisons.push(
-      `${membres(ranking.unrankedNoScoreCount)} sans aucun rendez-vous noté`,
+      `${membres(ranking.unrankedNoScoreCount)} sans aucun rendez-vous évalué`,
     );
   }
   return raisons.length === 0
@@ -145,7 +145,7 @@ function baseDeLaMoyenne(
     return `${effectif} · aucun membre classé pour l'instant`;
   }
   if (ranking.rankedCount === 1) {
-    return `${effectif} · note du seul membre classé`;
+    return `${effectif} · score du seul membre classé`;
   }
   return `${effectif} · moyenne des ${membresClasses(ranking.rankedCount)}`;
 }
@@ -164,9 +164,9 @@ function detailDeLaMoyenne(
     return "Aucun membre classé : la moyenne n'a pas de base de calcul.";
   }
   if (ranking.rankedCount === 1) {
-    return "Note du seul membre classé : avec une seule note, la moyenne est cette note.";
+    return "Score du seul membre classé : avec un seul score, la moyenne est ce score.";
   }
-  return `Moyenne des notes affichées des ${membres(
+  return `Moyenne des scores affichés des ${membres(
     ranking.rankedCount,
   )} au classement.`;
 }

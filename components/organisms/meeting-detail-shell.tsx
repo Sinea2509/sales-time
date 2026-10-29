@@ -84,7 +84,7 @@ function CoachingReserved({ what }: { what: string }) {
       <CardContent className="pt-6">
         <h2 className={cardTitleClass}>{what}</h2>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-          Cette lecture note le commercial. Elle est visible par le commercial
+          Cette lecture évalue le commercial. Elle est visible par le commercial
           assigné à ce rendez-vous et par les managers de l&apos;organisation.
         </p>
       </CardContent>
@@ -146,7 +146,7 @@ export function MeetingDetailShell({
             <p className="text-muted-foreground text-sm leading-relaxed">
               {pending
                 ? "La scorecard se remplit pendant l'analyse."
-                : "Ce type de rendez-vous n'a pas de grille de notation : la découverte et le suivi (démo, proposition, négociation) en ont une. Sans grille, le rendez-vous n'est pas noté : il ne compte ni dans la moyenne ni dans le classement."}
+                : "Ce type de rendez-vous n'a pas de grille de score : la découverte et le suivi (démo, proposition, négociation) en ont une. Sans grille, le rendez-vous n'a pas de score : il ne compte ni dans la moyenne ni dans le classement."}
             </p>
           </CardContent>
         </Card>

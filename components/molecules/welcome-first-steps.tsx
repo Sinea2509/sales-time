@@ -21,13 +21,13 @@ const STEPS = [
     icon: Gauge,
     tone: "coral",
     title: "Recevez votre analyse",
-    text: "Votre note sur 100, votre prospect, ses objections.",
+    text: "Votre score sur 100, l'analyse précise de votre interlocuteur, ses objections…",
   },
   {
     icon: Sparkles,
     tone: "amber",
-    title: "Progressez",
-    text: "La phrase à dire la prochaine fois, critère par critère.",
+    title: "Gagnez du temps, tout en progressant",
+    text: "Le compte rendu prêt pour votre CRM, et la phrase à dire la prochaine fois.",
   },
 ] as const;
 
@@ -37,6 +37,10 @@ const STEPS = [
  * Avant le 20 octobre 2026, un invité arrivait sur un tableau de bord vide,
  * sans rien qui dise par où commencer. Cette carte disparaît d'elle-même dès
  * le premier rendez-vous déposé.
+ *
+ * Elle parle de temps gagné avant de parler de coaching : Sales Time vend de
+ * la productivité au commercial, le coaching en est un moyen (retour de
+ * Thomas du 29 octobre 2026).
  */
 export function WelcomeFirstSteps({ newMeetingHref, guideHref }: Props) {
   return (
@@ -46,7 +50,7 @@ export function WelcomeFirstSteps({ newMeetingHref, guideHref }: Props) {
           Premiers pas
         </p>
         <h2 className="text-2xl font-semibold tracking-tight">
-          Votre premier coaching est à un rendez-vous près
+          Votre gain de productivité est à un rendez-vous près
         </h2>
         <p className="text-muted-foreground text-sm">
           Déposez un rendez-vous : l&apos;analyse arrive en quelques minutes, et

@@ -259,5 +259,6 @@ export async function submitOnboardingStep4(
     });
   }
 
-  redirect("/company");
+  /* Le guide de démarrage d'abord, puis le tableau de bord (retour de Thomas du 29 octobre 2026). */
+  redirect("/bienvenue");
 }

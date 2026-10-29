@@ -145,8 +145,8 @@ describe("essentielDuManager", () => {
       },
     });
     expect(p.aFaireAnalyser).toEqual([
-      "2 membres sans aucun rendez-vous noté sur la période",
-      "1 membre sous le seuil de 3 rendez-vous notés",
+      "2 membres sans aucun rendez-vous évalué sur la période",
+      "1 membre sous le seuil de 3 rendez-vous évalués",
     ]);
   });
 

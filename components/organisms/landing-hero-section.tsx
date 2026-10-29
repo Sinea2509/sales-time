@@ -19,17 +19,34 @@ export function LandingHeroSection() {
       />
 
       <div className="relative z-[2] flex w-full max-w-[1160px] flex-col items-center px-6 pt-[72px] pb-0 sm:px-10">
+        {/*
+          La promesse d'abord, en plus gros : Sales Time vend du temps au
+          commercial, le coaching en est un moyen (retour de Thomas du
+          29 octobre 2026).
+        */}
         <LandingReveal delay={1}>
-          <h1 className="max-w-[1040px] text-center text-[clamp(44px,5.5vw,76px)] leading-[1.06] font-extrabold tracking-tight text-white">
-            Le <em className="text-brand-muted not-italic">Sales coach</em> de
-            votre
+          <h1 className="max-w-[1100px] text-center text-[clamp(40px,4.6vw,66px)] leading-[1.06] font-extrabold tracking-tight text-balance text-white">
+            Vous vendez.
             <br />
-            équipe commerciale
+            <em className="text-brand-muted not-italic">Sales Time</em>{" "}
+            s&apos;occupe du reste.
           </h1>
         </LandingReveal>
 
         <LandingReveal delay={2}>
-          <p className="mt-5.5 max-w-[500px] text-center text-lg leading-[1.65] font-normal text-white/45">
+          <p className="mt-5 text-center text-[clamp(20px,2.2vw,28px)] leading-snug font-semibold tracking-tight text-balance text-white/85">
+            L&apos;assistant commercial de votre équipe
+          </p>
+          <p className="mx-auto mt-6 max-w-[620px] text-center text-base leading-[1.7] text-white/60">
+            <span className="font-semibold text-white/85">
+              La fin de la corvée administrative :
+            </span>{" "}
+            moins de reporting, moins de CRM à remplir, moins de propales à
+            préparer. Sales Time automatise vos tâches commerciales pour vous
+            rendre du temps à consacrer à vos clients. Plus de temps commercial
+            utile = plus de croissance, c&apos;est notre conviction.
+          </p>
+          <p className="mx-auto mt-4 max-w-[500px] text-center text-lg leading-[1.65] font-normal text-white/45">
             Chaque RDV devient un compte rendu structuré, un coaching
             personnalisé et un mail de suivi, en 5 secondes.
           </p>

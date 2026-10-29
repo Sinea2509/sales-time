@@ -6,16 +6,21 @@ export const INVITE_LINK_PLACEHOLDER = "{{INVITATION_LINK}}";
  * Message d’invitation par défaut (HTML). Réexporté depuis `onboarding-defaults` sous le nom historique.
  *
  * Au vouvoiement depuis le 21 octobre 2026 (demande de Thomas), comme le
- * reste du mail.
+ * reste du mail. Depuis le 29 octobre 2026, il présente un assistant qui fait
+ * gagner du temps, plus un « coach commercial IA ».
  */
-export const DEFAULT_INVITE_MESSAGE_HTML = `<p>Bonjour, nous lançons Sales Time dans l'équipe. C'est un coach commercial IA qui va vous aider à gagner du temps sur vos comptes rendus et vos mails de suivi, et vous donner des retours concrets après chaque rendez-vous.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscrivez-vous pour démarrer</a></p>`;
+export const DEFAULT_INVITE_MESSAGE_HTML = `<p>Bonjour, nous lançons Sales Time dans l'équipe. C'est un assistant commercial qui s'occupe de l'après-rendez-vous : compte rendu pour votre CRM, mail de suivi et conseils concrets, prêts en quelques minutes. Vous, vous vous concentrez sur la vente.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscrivez-vous pour démarrer</a></p>`;
 
 /*
-  L'ancien message par défaut, au tutoiement. Un brouillon d'onboarding
-  enregistré tel quel avant le changement reprend le nouveau texte : personne
-  ne l'avait écrit, il n'y a rien à préserver.
+  Les anciens messages par défaut : au tutoiement, puis le « coach commercial
+  IA ». Un brouillon d'onboarding enregistré tel quel avant un changement
+  reprend le nouveau texte : personne ne l'avait écrit, il n'y a rien à
+  préserver.
 */
-const PREVIOUS_DEFAULT_INVITE_MESSAGE_HTML = `<p>Salut, on lance Sales Time dans l'équipe. C'est un coach commercial IA qui va t'aider à gagner du temps sur tes CR, tes mails de suivi, et te donner des feedbacks concrets.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscris-toi pour démarrer</a></p>`;
+const PREVIOUS_DEFAULT_INVITE_MESSAGES_HTML: readonly string[] = [
+  `<p>Salut, on lance Sales Time dans l'équipe. C'est un coach commercial IA qui va t'aider à gagner du temps sur tes CR, tes mails de suivi, et te donner des feedbacks concrets.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscris-toi pour démarrer</a></p>`,
+  `<p>Bonjour, nous lançons Sales Time dans l'équipe. C'est un coach commercial IA qui va vous aider à gagner du temps sur vos comptes rendus et vos mails de suivi, et vous donner des retours concrets après chaque rendez-vous.</p><p><a href="${INVITE_LINK_PLACEHOLDER}">Inscrivez-vous pour démarrer</a></p>`,
+];
 
 function escapeHtml(s: string): string {
   return s
@@ -38,7 +43,7 @@ export function coerceStoredInviteMessageToHtml(
   raw: string | null | undefined,
 ): string {
   const s = raw?.trim() ?? "";
-  if (!s || s === PREVIOUS_DEFAULT_INVITE_MESSAGE_HTML) {
+  if (!s || PREVIOUS_DEFAULT_INVITE_MESSAGES_HTML.includes(s)) {
     return DEFAULT_INVITE_MESSAGE_HTML;
   }
   if (s.includes("<")) return s;
@@ -96,7 +101,7 @@ const NEXT_STEPS: readonly (readonly [string, string, string])[] = [
   [
     "#F2547A",
     "Recevez votre analyse",
-    "Une note sur 100, le profil de votre prospect et ses objections.",
+    "Un score sur 100, le profil de votre prospect et ses objections.",
   ],
   [
     "#F2902A",

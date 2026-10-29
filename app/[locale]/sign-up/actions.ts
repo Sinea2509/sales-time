@@ -120,7 +120,7 @@ export async function signUpAction(
 
   if (reg.flow === "join_existing_organization") {
     await setActiveOrganizationCookie(reg.organizationId);
-    redirect("/company");
+    redirect("/bienvenue");
   }
 
   redirect("/onboarding");

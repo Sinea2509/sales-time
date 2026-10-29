@@ -837,7 +837,7 @@ describe("signUpAction", () => {
           confirmPassword: "password12",
         }),
       ),
-    ).rejects.toThrow("REDIRECT:/company");
+    ).rejects.toThrow("REDIRECT:/bienvenue");
 
     expect(prismaMock.organizationMembership.create).toHaveBeenCalledWith({
       data: {
@@ -1562,7 +1562,7 @@ describe("onboarding steps", () => {
         ],
         inviteMessage: "<b>Hello</b>",
       }),
-    ).rejects.toThrow("REDIRECT:/company");
+    ).rejects.toThrow("REDIRECT:/bienvenue");
     expect(onboardingCompletionStep4Mock).toHaveBeenCalledWith(
       expect.objectContaining({
         inviteMessage: expect.any(String),
@@ -1588,7 +1588,7 @@ describe("onboarding steps", () => {
     expect(r.ok === false && r.message).toContain("erreur");
   });
 
-  it("submitOnboardingStep4 creates org and redirects to /company", async () => {
+  it("submitOnboardingStep4 creates org and redirects to the welcome guide", async () => {
     onboardingCompletionStep4Mock.mockResolvedValueOnce({
       ok: true,
       organizationId: "org-1",
@@ -1602,7 +1602,7 @@ describe("onboarding steps", () => {
       submitOnboardingStep4({
         invites: [{ email: "peer@b.co", role: "MEMBER" }],
       }),
-    ).rejects.toThrow("REDIRECT:/company");
+    ).rejects.toThrow("REDIRECT:/bienvenue");
 
     expect(setActiveOrganizationCookieMock).toHaveBeenCalledWith("org-1");
     expect(sendTransactionalEmailMock).toHaveBeenCalled();

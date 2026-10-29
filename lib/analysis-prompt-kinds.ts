@@ -51,8 +51,7 @@ export const ANALYSIS_PROMPT_TAB_META: Record<
   },
   SCORECARD: {
     label: "Scorecard RDV",
-    description:
-      "Notation critère par critère du RDV sur la grille de son type.",
+    description: "Score critère par critère du RDV sur la grille de son type.",
   },
   OBJECTIONS: {
     label: "Objections",

@@ -180,12 +180,12 @@ export function essentielDuManager(input: {
   const aFaireAnalyser: string[] = [];
   if (ranking.unrankedNoScoreCount > 0) {
     aFaireAnalyser.push(
-      `${membres(ranking.unrankedNoScoreCount)} sans aucun rendez-vous noté sur la période`,
+      `${membres(ranking.unrankedNoScoreCount)} sans aucun rendez-vous évalué sur la période`,
     );
   }
   if (ranking.unrankedLowVolumeCount > 0) {
     aFaireAnalyser.push(
-      `${membres(ranking.unrankedLowVolumeCount)} sous le seuil de ${ranking.minScoredMeetings} rendez-vous notés`,
+      `${membres(ranking.unrankedLowVolumeCount)} sous le seuil de ${ranking.minScoredMeetings} rendez-vous évalués`,
     );
   }
 

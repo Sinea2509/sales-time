@@ -543,7 +543,7 @@ export function SuperAdminPromptsEditor({
               Lecture seule : ces règles sont jointes à chaque analyse, quelle
               que soit la consigne publiée ou celle d&apos;une organisation.
               Pour la grille, c&apos;est ici que se lisent les critères et la
-              façon dont la note est calculée.
+              façon dont le score est calculé.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -52,7 +52,7 @@ function CriterionRow({
         </div>
         {criterion.unobservable ? (
           <span className="text-muted-foreground col-span-2 text-right text-[11.5px] font-semibold">
-            hors note
+            hors score
           </span>
         ) : (
           <>
@@ -139,7 +139,7 @@ function BlockDetails({
       </summary>
       <div className="border-t border-border px-3.5 pt-0.5 pb-3">
         <p className="text-muted-foreground mb-2.5 text-xs">
-          {block.criteria.length} critères, notés de 0 à {SCORECARD_LEVEL_MAX}{" "}
+          {block.criteria.length} critères, évalués de 0 à {SCORECARD_LEVEL_MAX}{" "}
           sur ce qui s&apos;entend dans le transcript.
           {missing > 0
             ? ` ${missing} ${plurielFr(missing, "critère a", "critères ont")} coûté des points sur ce rendez-vous.`
@@ -276,8 +276,8 @@ export function ScorecardResultSection({
           <CardContent className="flex flex-wrap items-center gap-3 pt-6">
             <ToneChip tone="warn">Grille par défaut</ToneChip>
             <span className="text-[12.5px] leading-relaxed">
-              Ce rendez-vous n&apos;a pas de type : il est noté sur la grille de
-              découverte. Renseignez le type pour que la grille suive.
+              Ce rendez-vous n&apos;a pas de type : il est évalué sur la grille
+              de découverte. Renseignez le type pour que la grille suive.
             </span>
           </CardContent>
         </Card>
@@ -315,7 +315,7 @@ export function ScorecardResultSection({
             </p>
             <details className="mt-2 max-w-[70ch] text-xs leading-relaxed">
               <summary className="text-brand cursor-pointer font-semibold">
-                Comment la note est calculée
+                Comment le score est calculé
               </summary>
               <p className="text-muted-foreground mt-1.5">
                 Chaque critère vaut de 0 à 4 points. Je regarde deux choses :
@@ -325,10 +325,10 @@ export function ScorecardResultSection({
                 une réponse précise en rapporte 4. La formulation de la question
                 ne compte pas, seul le thème compte. Je vérifie chaque citation
                 dans le transcript, avec la personne qui l&apos;a dite : une
-                citation introuvable fait baisser la note, jamais monter. Votre
+                citation introuvable fait baisser le score, jamais monter. Votre
                 écoute et vos questions se mesurent sur le transcript, quand je
-                vous y reconnais. Le même transcript relu deux fois reçoit la
-                même note.
+                vous y reconnais. Le même transcript relu deux fois reçoit le
+                même score.
               </p>
             </details>
           </div>

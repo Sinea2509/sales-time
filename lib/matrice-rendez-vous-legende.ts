@@ -29,8 +29,8 @@ export function matriceRendezVousLegende({
 
   if (pointsPlaces <= 0) {
     return rdvSurLaPeriode === 1
-      ? "Le rendez-vous de la période n'a pas de note de qualification ou pas de montant potentiel."
-      : `Aucun des ${rdvSurLaPeriode} RDV de la période n'a à la fois une note de qualification et un montant potentiel.`;
+      ? "Le rendez-vous de la période n'a pas de score de qualification ou pas de montant potentiel."
+      : `Aucun des ${rdvSurLaPeriode} RDV de la période n'a à la fois un score de qualification et un montant potentiel.`;
   }
 
   /*
@@ -51,6 +51,6 @@ export function matriceRendezVousLegende({
   */
   return (
     `${pointsPlaces} RDV ${plurielFr(pointsPlaces, "placé")} sur les ${rdvSurLaPeriode} de la période. ` +
-    `${ecartes} ${plurielFr(ecartes, "écarté")}, faute de note de qualification ou de montant potentiel.`
+    `${ecartes} ${plurielFr(ecartes, "écarté")}, faute de score de qualification ou de montant potentiel.`
   );
 }

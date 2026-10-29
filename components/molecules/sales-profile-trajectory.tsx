@@ -88,7 +88,7 @@ export function SalesProfileTrajectory({
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
         className="h-auto w-full"
         role="img"
-        aria-label={`Trajectoire de la note globale sur ${filled} périodes, de ${first.average} sur cent la plus ancienne à ${last.average} sur cent la plus récente. Échelle resserrée de ${bande.low} à ${bande.high}.`}
+        aria-label={`Trajectoire du score global sur ${filled} périodes, de ${first.average} sur cent la plus ancienne à ${last.average} sur cent la plus récente. Échelle resserrée de ${bande.low} à ${bande.high}.`}
         preserveAspectRatio="xMidYMid meet"
       >
         {/*
