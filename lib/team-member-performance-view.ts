@@ -35,6 +35,7 @@ import {
   disabledStatsWindowDays,
   partitionMeetingsByStatsWindow,
   statsWindowBounds,
+  widerStatsWindowWithMeetings,
   type StatsWindowDays,
   type StatsWindowRange,
 } from "@/src/core/domain/dashboard-stats-window";
@@ -155,6 +156,9 @@ export async function loadTeamMemberPerformanceView(
   if (!home) return { ok: false, raison: "tableau-indisponible" };
 
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
+  const widerStatsWindow = statsWindowRange
+    ? null
+    : widerStatsWindowWithMeetings(windowCounts, statsWindowDays);
 
   /*
     La fenêtre de chargement couvre les six périodes de la trajectoire, non plus
@@ -340,6 +344,7 @@ export async function loadTeamMemberPerformanceView(
       statsWindowDays,
       statsWindowRange,
       disabledStatsDays,
+      widerStatsWindow,
       nameLine,
       initials: prospectInitials(nameLine),
       /*

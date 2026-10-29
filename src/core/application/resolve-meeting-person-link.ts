@@ -8,6 +8,10 @@ export type ResolvedMeetingPersonLink = {
 /**
  * When no contact is selected, links the meeting to an existing contact whose
  * company name matches the typed prospect name (e.g. "Doha" → Margaux @ Doha).
+ *
+ * Avec `visibleTo`, le rapprochement ne se fait qu'avec les contacts de ce
+ * commercial : sinon un nom d'entreprise tapé rattacherait le rendez-vous au
+ * contact d'un collègue, et en afficherait le nom (voir `contactsVisibleTo`).
  */
 export async function resolveMeetingPersonLink(
   contacts: ContactRepositoryPort,
@@ -15,6 +19,7 @@ export async function resolveMeetingPersonLink(
     organizationId: string;
     personId: string | null;
     prospectName: string;
+    visibleTo?: string;
   },
 ): Promise<ResolvedMeetingPersonLink> {
   if (input.personId) {
@@ -28,6 +33,7 @@ export async function resolveMeetingPersonLink(
   const byCompany = await contacts.findUniqueByCompanyName({
     organizationId: input.organizationId,
     companyName: trimmed,
+    visibleTo: input.visibleTo,
   });
   if (byCompany) {
     return {

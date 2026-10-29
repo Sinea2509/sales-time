@@ -8,12 +8,15 @@ export async function listContactsForOrg(
     search?: string;
     limit: number;
     offset: number;
+    /** Restreint aux contacts de ce commercial (voir `contactsVisibleTo`). */
+    visibleTo?: string;
   },
 ) {
   const [rows, companyAliases] = await Promise.all([
     deps.contacts.listForOrg(input),
     deps.contacts.findProspectCompanyAliasByPersonId({
       organizationId: input.organizationId,
+      visibleTo: input.visibleTo,
     }),
   ]);
   return excludeProspectCompanyAliasContacts(rows, companyAliases);

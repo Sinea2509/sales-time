@@ -46,6 +46,8 @@ export async function createMeetingForOrg(
     sourceType?: MeetingSourceType;
     sourceBlobUrl?: string | null;
     enqueueAnalysis?: boolean;
+    /** Restreint le contact rattaché à ceux que voit l'auteur (voir `contactsVisibleTo`). */
+    visibleTo?: string;
   },
 ): Promise<CreateMeetingResult> {
   if (!input.organizationId) {
@@ -78,6 +80,7 @@ export async function createMeetingForOrg(
     const person = await deps.contacts.findById({
       id: explicitPersonId,
       organizationId: input.organizationId,
+      visibleTo: input.visibleTo,
     });
     if (!person) {
       return { ok: false, error: "INVALID_PERSON" };
@@ -88,12 +91,14 @@ export async function createMeetingForOrg(
     organizationId: input.organizationId,
     personId: explicitPersonId,
     prospectName: input.prospectName,
+    visibleTo: input.visibleTo,
   });
 
   if (resolvedPerson.personId && resolvedPerson.personId !== explicitPersonId) {
     const person = await deps.contacts.findById({
       id: resolvedPerson.personId,
       organizationId: input.organizationId,
+      visibleTo: input.visibleTo,
     });
     if (!person) {
       return { ok: false, error: "INVALID_PERSON" };

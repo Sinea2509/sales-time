@@ -35,6 +35,7 @@ import type { SellerSkillSignature } from "@/src/core/domain/seller-skill-signat
 import {
   MIN_RDV_FOR_STATS,
   type StatsWindowDays,
+  type StatsWindowPreset,
   type StatsWindowRange,
 } from "@/src/core/domain/dashboard-stats-window";
 import {
@@ -94,6 +95,8 @@ export type TeamMemberPerformanceShellProps = {
   statsWindowRange?: StatsWindowRange | null;
   /** Périodes trop pauvres pour être choisies, pour ce commercial seul. */
   disabledStatsDays?: StatsWindowDays[];
+  /** La période plus longue où apparaissent ses rendez-vous, quand celle-ci n'en a aucun. */
+  widerStatsWindow?: StatsWindowPreset | null;
   nameLine: string;
   initials: string;
   /**
@@ -345,6 +348,7 @@ export function TeamMemberPerformanceShell({
   statsWindowDays,
   statsWindowRange = null,
   disabledStatsDays,
+  widerStatsWindow = null,
   nameLine,
   initials,
   skillSignature,
@@ -610,6 +614,7 @@ export function TeamMemberPerformanceShell({
           value={statsWindowDays}
           range={statsWindowRange}
           disabledDays={disabledStatsDays}
+          widerWindow={widerStatsWindow}
         />
       </div>
 

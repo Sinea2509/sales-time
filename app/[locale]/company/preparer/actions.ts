@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireOrgActor } from "@/lib/analysis-server-context";
 import { prepareMeetingBriefing } from "@/src/core/application/prepare-meeting-briefing";
 import { researchProspect } from "@/src/core/application/research-prospect";
+import { contactsVisibleTo } from "@/src/core/domain/contact-visibility";
 
 const schema = z.object({
   personId: z.string().cuid(),
@@ -21,6 +22,7 @@ export async function prepareBriefingAction(input: z.infer<typeof schema>) {
     organizationId: actor.organizationId,
     personId: parsed.data.personId,
     targetStage: parsed.data.targetStage,
+    visibleTo: contactsVisibleTo(actor),
   });
 
   if (!result) return { ok: false as const, error: "NOT_FOUND" };

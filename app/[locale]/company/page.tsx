@@ -8,7 +8,10 @@ import { DashboardAdminShell } from "@/components/organisms/dashboard-admin-shel
 import { DashboardHomeShell } from "@/components/organisms/dashboard-home-shell";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { getEnv } from "@/lib/env";
-import { disabledStatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import {
+  disabledStatsWindowDays,
+  widerStatsWindowWithMeetings,
+} from "@/src/core/domain/dashboard-stats-window";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { organizationPlaybookMarkdownForAnalysis } from "@/lib/organization-playbook-for-analysis";
@@ -163,6 +166,9 @@ export default async function DashboardHomePage({
       redirectPath: "/company",
     });
   const disabledStatsDays = disabledStatsWindowDays(windowCounts);
+  const widerStatsWindow = statsWindowRange
+    ? null
+    : widerStatsWindowWithMeetings(windowCounts, statsWindowDays);
   // Le rang est relatif : il se calcule sur l'équipe du manager de ce
   // commercial, exactement le groupe que ce manager voit dans « Mon équipe ».
   // Sans ce cadrage, le même écran annoncerait une place que la fiche du
@@ -262,6 +268,7 @@ export default async function DashboardHomePage({
           meetingTypeOptions={meetingTypeOptions}
           pipelineStageOptions={pipelineStageOptions}
           disabledStatsDays={disabledStatsDays}
+          widerStatsWindow={widerStatsWindow}
         />
       )}
     </div>

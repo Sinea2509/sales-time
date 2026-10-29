@@ -13,7 +13,6 @@ import {
   withDatesFromTranscript,
   withQuotesFromTranscript,
   withMomentsFromTranscript,
-  VISIT_REPORT_METHOD_NOTE,
   VISIT_REPORT_TITLE,
   visitReportWithoutSellerCoaching,
   visitReportEssentials,
@@ -217,7 +216,6 @@ describe("composeVisitReport", () => {
       "PROCHAINES ÉTAPES",
       "CE QUI N'A PAS ÉTÉ COUVERT, ET LA QUESTION À POSER",
       "QUALITÉ DU RENDEZ-VOUS",
-      "NOTE DE MÉTHODE",
     ]);
   });
 
@@ -444,11 +442,10 @@ describe("composeVisitReport", () => {
     );
   });
 
-  it("finit sur la note de méthode, sans ligne vide en trop ni tiret cadratin", () => {
+  it("ne finit plus sur une note de méthode, ni ligne vide en trop ni tiret cadratin", () => {
     const text = composeVisitReport(input());
-    expect(text.endsWith(`NOTE DE MÉTHODE\n${VISIT_REPORT_METHOD_NOTE}`)).toBe(
-      true,
-    );
+    expect(text).not.toContain("NOTE DE MÉTHODE");
+    expect(text).not.toContain("faire bonne figure");
     expect(text).not.toContain("\n\n\n");
     expect(text).not.toContain("\u2014");
   });
@@ -706,7 +703,6 @@ describe("les retours de la relecture du 24 septembre", () => {
       "ENGAGEMENTS PRIS PENDANT LE RENDEZ-VOUS",
       "PROCHAIN RENDEZ-VOUS",
       "PROCHAINES ÉTAPES",
-      "NOTE DE MÉTHODE",
     ]);
     expect(text).toContain(
       "- 10 septembre 2026 · Découverte · Julien Arnaud\n",
@@ -810,6 +806,18 @@ describe("isCurrentVisitReport", () => {
     ).toBe(false);
     expect(isCurrentVisitReport("")).toBe(false);
     expect(isCurrentVisitReport(null)).toBe(false);
+  });
+
+  it("tient pour périmé un compte rendu qui porte encore la note de méthode (29 octobre 2026)", () => {
+    const current = composeVisitReport(input());
+    expect(isCurrentVisitReport(current)).toBe(true);
+    expect(
+      isCurrentVisitReport(
+        [current, "", "NOTE DE MÉTHODE", "Ce compte rendu ne reprend…"].join(
+          "\n",
+        ),
+      ),
+    ).toBe(false);
   });
 });
 

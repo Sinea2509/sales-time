@@ -25,7 +25,10 @@ import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type { TeamMemberStanding } from "@/src/core/application/get-org-admin-dashboard";
 import type { OrgDashboardHome } from "@/src/core/application/get-org-dashboard-home";
 import type { CoachingAction } from "@/src/core/domain/seller-action-plan";
-import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
+import type {
+  StatsWindowDays,
+  StatsWindowPreset,
+} from "@/src/core/domain/dashboard-stats-window";
 import { APP_TIME_ZONE } from "@/src/core/domain/app-time-zone";
 
 const dateShort = new Intl.DateTimeFormat("fr-FR", {
@@ -44,6 +47,7 @@ export function DashboardHomeShell({
   meetingTypeOptions,
   pipelineStageOptions,
   disabledStatsDays = [],
+  widerStatsWindow = null,
 }: {
   home: OrgDashboardHome;
   /** Place du commercial dans son équipe. `null` hors organisation ou hors équipe. */
@@ -57,6 +61,8 @@ export function DashboardHomeShell({
   meetingTypeOptions: string[];
   pipelineStageOptions: string[];
   disabledStatsDays?: StatsWindowDays[];
+  /** La période plus longue où apparaissent ses rendez-vous, quand celle-ci n'en a aucun. */
+  widerStatsWindow?: StatsWindowPreset | null;
 }) {
   return (
     <div className="space-y-8" data-feedback-id="dashboard-home">
@@ -84,6 +90,7 @@ export function DashboardHomeShell({
               value={home.statsWindowDays}
               range={home.statsWindowRange}
               disabledDays={disabledStatsDays}
+              widerWindow={widerStatsWindow}
             />
           </Suspense>
         </div>

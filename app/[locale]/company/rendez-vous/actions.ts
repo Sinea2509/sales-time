@@ -26,6 +26,7 @@ import { updateMeetingForOrg } from "@/src/core/application/update-meeting-for-o
 import { invalidateAiSummaryCacheForOrg } from "@/src/core/application/invalidate-ai-summary-cache-for-org";
 import { orgMeetingFormOptionsFromSettings } from "@/lib/org-meeting-form-options";
 import { parseWallClockInAppTimeZone } from "@/src/core/domain/app-time-zone";
+import { contactsVisibleTo } from "@/src/core/domain/contact-visibility";
 import { dateOnlyToWallClock } from "@/src/core/domain/transcript-header";
 
 const meetingOutcomeSchema = z.enum([
@@ -344,6 +345,7 @@ export async function createMeetingAction(formData: FormData) {
   const result = await createMeetingForOrg(actor.deps, {
     organizationId: actor.organizationId,
     sellerInternalUserId: actor.actorUserId,
+    visibleTo: contactsVisibleTo(actor),
     personId: parsed.data.personId,
     prospectName: parsed.data.prospectName,
     meetingAt: parsed.data.meetingAt,
@@ -535,6 +537,7 @@ export async function updateMeetingAction(formData: FormData) {
   const result = await updateMeetingForOrg(actor.deps, {
     organizationId: actor.organizationId,
     meetingId: parsedId.data,
+    visibleTo: contactsVisibleTo(actor),
     personId: parsed.data.personId,
     prospectName: parsed.data.prospectName,
     meetingAt: parsed.data.meetingAt,

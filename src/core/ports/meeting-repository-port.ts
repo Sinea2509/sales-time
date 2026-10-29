@@ -38,7 +38,11 @@ export type MeetingRow = {
 };
 
 /** Un rendez-vous et le nom affiché de son commercial, `null` s'il n'en a pas. */
-export type MeetingRowWithSeller = MeetingRow & { sellerName: string | null };
+export type MeetingRowWithSeller = MeetingRow & {
+  sellerName: string | null;
+  /** L'entreprise du contact, telle que le commercial l'a saisie. */
+  prospectCompany: string | null;
+};
 
 export type MeetingAnalysisRow = {
   id: string;
@@ -168,9 +172,11 @@ export interface MeetingRepositoryPort {
     limit?: number;
   }): Promise<MeetingRow[]>;
 
+  /** `sellerUserId` restreint aux rendez-vous de ce commercial ; absent, tous. */
   listMeetingsForPersonInOrg(input: {
     organizationId: string;
     personId: string;
+    sellerUserId?: string;
   }): Promise<MeetingRow[]>;
 
   createAnalysis(input: {

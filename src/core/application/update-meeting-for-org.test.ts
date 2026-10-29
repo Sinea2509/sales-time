@@ -65,6 +65,22 @@ describe("updateMeetingForOrg", () => {
     expect(result).toEqual({ ok: false, error: "INVALID_PERSON" });
   });
 
+  it("looks the contact up among those the editor can see", async () => {
+    const deps = makeDeps();
+    const result = await updateMeetingForOrg(deps as never, {
+      ...baseInput,
+      personId: "person_colleague",
+      visibleTo: "user_1",
+    });
+    expect(result).toEqual({ ok: false, error: "INVALID_PERSON" });
+    expect(deps.contacts.findById).toHaveBeenCalledWith({
+      id: "person_colleague",
+      organizationId: "org_1",
+      visibleTo: "user_1",
+    });
+    expect(deps.meetings.updateMeeting).not.toHaveBeenCalled();
+  });
+
   it("updates meeting with trimmed transcript and notes", async () => {
     const deps = makeDeps({ person: { id: "person_1" } });
     const result = await updateMeetingForOrg(deps as never, {

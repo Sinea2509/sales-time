@@ -25,6 +25,7 @@ import {
   composeAnalysisSystemMarkdown,
   KISS_PLATFORM_BLOCK_HEADING,
 } from "@/src/core/domain/analysis-system-markdown";
+import { referenceNamesInstruction } from "@/src/core/domain/reference-names";
 import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { computeScorecardScore } from "@/src/core/domain/scorecard-score";
 import { keepKnownScorecardKeys } from "@/src/core/domain/scorecard-evidence-rule";
@@ -205,6 +206,11 @@ export async function runMeetingAnalysis(
     grid,
     talkShare,
   };
+  /* Les noms saisis par le commercial font foi sur l'orthographe du transcript. */
+  const referenceNames = referenceNamesInstruction({
+    prospectName: meeting.prospectName,
+    prospectCompany: meeting.prospectCompany,
+  });
   /** Rend la réponse d'un appel identique déjà fait, sinon appelle le modèle. */
   const reuse = <T>(
     systemPrompt: string,
@@ -299,6 +305,7 @@ export async function runMeetingAnalysis(
         [
           input.organizationPlaybookMarkdown,
           meetingAnalysisContext(contextBase),
+          referenceNames,
         ],
       );
       /*
@@ -435,6 +442,7 @@ export async function runMeetingAnalysis(
           input.organizationPlaybookMarkdown,
           talkShare ? talkShareInstruction(talkShare) : null,
           conversationMeasuresInstruction(conversation),
+          referenceNames,
         ],
       );
       const systemPrompt = withScorecardSystemPrompt(
@@ -609,6 +617,7 @@ export async function runMeetingAnalysis(
         ...contextBase,
         scorecard: scorecardRead.success ? scorecardRead.data : null,
       }),
+      referenceNames,
     ]);
     /*
       Le même enrobage que celui appliqué par l'adaptateur, et non l'enrobage

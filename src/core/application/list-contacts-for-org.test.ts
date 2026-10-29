@@ -56,4 +56,31 @@ describe("listContactsForOrg", () => {
       offset: 0,
     });
   });
+
+  it("groups by company within the seller's own contacts only", async () => {
+    const contacts = {
+      listForOrg: jest
+        .fn<ContactRepositoryPort["listForOrg"]>()
+        .mockResolvedValue([
+          { id: "doha", displayName: "Doha", company: null, ...baseContact },
+        ]),
+      findProspectCompanyAliasByPersonId: jest
+        .fn<ContactRepositoryPort["findProspectCompanyAliasByPersonId"]>()
+        .mockResolvedValue(new Map()),
+    } as Pick<
+      ContactRepositoryPort,
+      "listForOrg" | "findProspectCompanyAliasByPersonId"
+    >;
+
+    const rows = await listContactsForOrg(
+      { contacts: contacts as ContactRepositoryPort },
+      { organizationId: "org-1", limit: 200, offset: 0, visibleTo: "user-1" },
+    );
+
+    expect(rows.map((r) => r.id)).toEqual(["doha"]);
+    expect(contacts.findProspectCompanyAliasByPersonId).toHaveBeenCalledWith({
+      organizationId: "org-1",
+      visibleTo: "user-1",
+    });
+  });
 });

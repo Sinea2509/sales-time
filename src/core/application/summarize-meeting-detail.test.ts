@@ -268,12 +268,17 @@ describe("summarizeMeetingDetail", () => {
       organizationId: "org_b",
     });
 
-    expect(extractVisitReport.mock.calls[0][0].systemMarkdown).toBe(
-      "Compte rendu à la manière de l'organisation A.",
-    );
-    expect(extractVisitReport.mock.calls[1][0].systemMarkdown).toBe(
-      DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN,
-    );
+    const first: string = extractVisitReport.mock.calls[0][0].systemMarkdown;
+    const second: string = extractVisitReport.mock.calls[1][0].systemMarkdown;
+    expect(
+      first.startsWith("Compte rendu à la manière de l'organisation A."),
+    ).toBe(true);
+    expect(
+      second.startsWith(DEFAULT_MEETING_DETAIL_SYNTHESIS_MARKDOWN.trim()),
+    ).toBe(true);
+    expect(second).not.toContain("organisation A");
+    // Les noms saisis par le commercial font foi (retour du 29 octobre 2026).
+    expect(first).toContain("## Noms de référence");
   });
 
   it("sends the transcript within the length limit, with the profiles to adapt to", async () => {

@@ -120,12 +120,17 @@ function ScoreCard(props: MeetingDetailRailProps) {
           <dd className="text-right">
             <Delta value={ecartPerso} unit=" pt" />
           </dd>
-          <dt className="whitespace-nowrap text-white/70">
-            Vs moyenne de l&apos;équipe
-          </dt>
-          <dd className="text-right">
-            <Delta value={ecartEquipe} unit=" pt" />
-          </dd>
+          {/* Sans équipe à laquelle se comparer, la ligne n'a pas de sens : elle disparaît. */}
+          {props.teamAverage30d != null ? (
+            <>
+              <dt className="whitespace-nowrap text-white/70">
+                Vs moyenne de l&apos;équipe
+              </dt>
+              <dd className="text-right">
+                <Delta value={ecartEquipe} unit=" pt" />
+              </dd>
+            </>
+          ) : null}
         </dl>
         <p className="mt-2.5 text-[11.5px] leading-[1.55] text-white/70">
           Un rendez-vous isolé ne fait pas une tendance : l&apos;écart se lit

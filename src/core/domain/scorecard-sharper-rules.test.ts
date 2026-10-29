@@ -362,4 +362,18 @@ describe("les trois règles du 6 octobre", () => {
       openingNotRecorded(avecOuverture, { prospectNames: ["Lisa Androlus"] }),
     ).toBe(false);
   });
+
+  it("garde le cadrage d'une visio ouverte par une vérification du son", () => {
+    const visio = [
+      "Lisa ANDROLUS   0:01",
+      "Allô ? Oui, je suis là.",
+      "Cédric Laigneau   0:03",
+      "Parfait, merci. Je vous propose de faire le point sur vos besoins.",
+      "Lisa ANDROLUS   0:08",
+      "Très bien.",
+    ].join("\n");
+    expect(
+      openingNotRecorded(visio, { prospectNames: ["Lisa Androlus"] }),
+    ).toBe(false);
+  });
 });

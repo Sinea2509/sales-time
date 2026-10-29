@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/molecules/page-header";
 import { getApplicationDeps } from "@/lib/application-deps";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { listContactsForOrg } from "@/src/core/application/list-contacts-for-org";
+import { contactsVisibleTo } from "@/src/core/domain/contact-visibility";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export default async function ContactsPage({ searchParams }: ContactsPageProps) 
       search: undefined,
       limit: 200,
       offset: 0,
+      visibleTo: contactsVisibleTo(actor),
     },
   );
 

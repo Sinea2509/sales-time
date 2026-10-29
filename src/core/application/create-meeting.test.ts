@@ -108,6 +108,22 @@ describe("createMeetingForOrg", () => {
     expect(result).toEqual({ ok: false, error: "INVALID_PERSON" });
   });
 
+  it("returns INVALID_PERSON for a colleague's contact the seller cannot see", async () => {
+    const deps = initDeps();
+    const result = await createMeetingForOrg(deps as never, {
+      ...baseInput,
+      personId: "person_colleague",
+      visibleTo: "user_1",
+    });
+    expect(result).toEqual({ ok: false, error: "INVALID_PERSON" });
+    expect(deps.contacts.findById).toHaveBeenCalledWith({
+      id: "person_colleague",
+      organizationId: "org_1",
+      visibleTo: "user_1",
+    });
+    expect(deps.meetings.createMeeting).not.toHaveBeenCalled();
+  });
+
   it("creates meeting with PROCESSING status and decrements quota by default", async () => {
     const deps = initDeps({ person: { id: "person_1" }, meetingId: "meet_99" });
     const result = await createMeetingForOrg(deps as never, {

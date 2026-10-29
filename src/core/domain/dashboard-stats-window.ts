@@ -58,6 +58,27 @@ export function disabledStatsWindowDays(
 }
 
 /**
+ * La première période plus longue qui compte un rendez-vous, quand celle
+ * affichée n'en compte aucun ; `null` sinon.
+ *
+ * Un commercial qui dépose en premier un enregistrement vieux de plus d'un
+ * mois voyait un tableau de bord à zéro sur 30 jours, sans savoir pourquoi
+ * (retour de Thomas du 29 octobre 2026). Le sélecteur lui propose alors la
+ * période où son rendez-vous apparaît. Une période choisie au calendrier n'est
+ * pas un préréglage : elle n'appelle pas de proposition.
+ */
+export function widerStatsWindowWithMeetings(
+  counts: Record<StatsWindowPreset, number>,
+  current: StatsWindowDays,
+): StatsWindowPreset | null {
+  const here = (counts as Record<number, number | undefined>)[current];
+  if (here === undefined || here > 0) return null;
+  return (
+    STATS_WINDOW_DAYS_OPTIONS.find((d) => d > current && counts[d] > 0) ?? null
+  );
+}
+
+/**
  * Aucune fenêtre n'atteint le seuil : le sélecteur de période n'a plus rien à
  * proposer, et un écran qui invite à changer de période propose l'impossible.
  *

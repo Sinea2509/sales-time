@@ -1,3 +1,4 @@
+import { contactsVisibleTo } from "@/src/core/domain/contact-visibility";
 import type { ContactRepositoryPort } from "@/src/core/ports/contact-repository-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
 import type { OrganizationTeamRepositoryPort } from "@/src/core/ports/organization-team-repository-port";
@@ -31,6 +32,10 @@ export async function searchOrgEntities(
       organizationId: input.organizationId,
       prefix: q,
       limit: 10,
+      visibleTo: contactsVisibleTo({
+        internalUserId: input.sellerUserId,
+        canManageOrganization: input.canManageOrganization,
+      }),
     }),
     input.canManageOrganization
       ? deps.organizationTeam.listMembersAndPendingInvitations(
