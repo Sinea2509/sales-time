@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@/lib/generated/prisma/client";
+import type { Prisma, PrismaClient } from "@/lib/generated/prisma/client";
 import { normalizePersonDisplayKey } from "@/src/core/domain/person-normalize";
 import type {
   ContactCreateInput,
@@ -32,6 +32,23 @@ function mapSummary(row: {
   };
 }
 
+/**
+ * Les contacts d'un commercial : ceux qu'il a créés, ou qu'il a déjà
+ * rencontrés. Sans commercial désigné, aucune restriction.
+ */
+function visibleToWhere(
+  visibleTo: string | undefined,
+): Prisma.PersonWhereInput {
+  return visibleTo === undefined
+    ? {}
+    : {
+        OR: [
+          { createdByUserId: visibleTo },
+          { meetings: { some: { sellerUserId: visibleTo } } },
+        ],
+      };
+}
+
 export class PrismaContactRepository implements ContactRepositoryPort {
   constructor(private readonly db: PrismaClient) {}
 
@@ -39,6 +56,7 @@ export class PrismaContactRepository implements ContactRepositoryPort {
     organizationId: string;
     prefix: string;
     limit: number;
+    visibleTo?: string;
   }): Promise<ContactSearchHit[]> {
     const q = input.prefix.trim();
     if (!q) return [];
@@ -47,6 +65,7 @@ export class PrismaContactRepository implements ContactRepositoryPort {
     const rows = await this.db.person.findMany({
       where: {
         organizationId: input.organizationId,
+        AND: [visibleToWhere(input.visibleTo)],
         OR: [
           {
             displayName: {
@@ -81,6 +100,7 @@ export class PrismaContactRepository implements ContactRepositoryPort {
   async findUniqueByCompanyName(input: {
     organizationId: string;
     companyName: string;
+    visibleTo?: string;
   }): Promise<ContactSearchHit | null> {
     const company = input.companyName.trim();
     if (!company) return null;
@@ -88,6 +108,7 @@ export class PrismaContactRepository implements ContactRepositoryPort {
     const rows = await this.db.person.findMany({
       where: {
         organizationId: input.organizationId,
+        AND: [visibleToWhere(input.visibleTo)],
         company: { equals: company, mode: "insensitive" },
       },
       select: { id: true, displayName: true, company: true },
@@ -99,10 +120,13 @@ export class PrismaContactRepository implements ContactRepositoryPort {
 
   async findProspectCompanyAliasByPersonId(input: {
     organizationId: string;
+    visibleTo?: string;
   }): Promise<Map<string, { displayName: string; company: string | null }>> {
+    const visible = visibleToWhere(input.visibleTo);
     const withCompany = await this.db.person.findMany({
       where: {
         organizationId: input.organizationId,
+        AND: [visible],
         company: { not: null },
       },
       select: { id: true, displayName: true, company: true },
@@ -130,7 +154,7 @@ export class PrismaContactRepository implements ContactRepositoryPort {
     }
 
     const allPersons = await this.db.person.findMany({
-      where: { organizationId: input.organizationId },
+      where: { organizationId: input.organizationId, AND: [visible] },
       select: { id: true, displayName: true },
     });
 
@@ -156,9 +180,14 @@ export class PrismaContactRepository implements ContactRepositoryPort {
   async findById(input: {
     id: string;
     organizationId: string;
+    visibleTo?: string;
   }): Promise<ContactSummaryRow | null> {
     const row = await this.db.person.findFirst({
-      where: { id: input.id, organizationId: input.organizationId },
+      where: {
+        id: input.id,
+        organizationId: input.organizationId,
+        ...visibleToWhere(input.visibleTo),
+      },
     });
     return row ? mapSummary(row) : null;
   }
@@ -169,6 +198,7 @@ export class PrismaContactRepository implements ContactRepositoryPort {
     const row = await this.db.person.create({
       data: {
         organizationId: input.organizationId,
+        createdByUserId: input.createdByUserId ?? null,
         displayName,
         normalizedKey,
         company: input.company?.trim() || null,
@@ -261,11 +291,13 @@ export class PrismaContactRepository implements ContactRepositoryPort {
     search?: string;
     limit: number;
     offset: number;
+    visibleTo?: string;
   }): Promise<ContactSummaryRow[]> {
     const s = input.search?.trim();
     const rows = await this.db.person.findMany({
       where: {
         organizationId: input.organizationId,
+        AND: [visibleToWhere(input.visibleTo)],
         ...(s
           ? {
               OR: [

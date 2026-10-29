@@ -18,6 +18,8 @@ export type ContactSearchHit = {
 
 export type ContactCreateInput = {
   organizationId: string;
+  /** Qui crée le contact : un commercial retrouve ainsi ceux qu'il n'a pas encore rencontrés. */
+  createdByUserId?: string | null;
   displayName: string;
   company?: string | null;
   email?: string | null;
@@ -40,17 +42,24 @@ export type ProspectCompanyAliasRow = {
   company: string | null;
 };
 
+/**
+ * `visibleTo` restreint aux contacts créés ou déjà rencontrés par ce
+ * commercial ; absent, tous les contacts de l'organisation sont lus (voir
+ * `contactsVisibleTo`).
+ */
 export interface ContactRepositoryPort {
   searchByPrefix(input: {
     organizationId: string;
     prefix: string;
     limit: number;
+    visibleTo?: string;
   }): Promise<ContactSearchHit[]>;
 
   /** Returns the contact when exactly one has this company name (case-insensitive). */
   findUniqueByCompanyName(input: {
     organizationId: string;
     companyName: string;
+    visibleTo?: string;
   }): Promise<ContactSearchHit | null>;
 
   /**
@@ -59,11 +68,13 @@ export interface ContactRepositoryPort {
    */
   findProspectCompanyAliasByPersonId(input: {
     organizationId: string;
+    visibleTo?: string;
   }): Promise<Map<string, ProspectCompanyAliasRow>>;
 
   findById(input: {
     id: string;
     organizationId: string;
+    visibleTo?: string;
   }): Promise<ContactSummaryRow | null>;
 
   create(input: ContactCreateInput): Promise<ContactSummaryRow>;
@@ -84,5 +95,6 @@ export interface ContactRepositoryPort {
     search?: string;
     limit: number;
     offset: number;
+    visibleTo?: string;
   }): Promise<ContactSummaryRow[]>;
 }

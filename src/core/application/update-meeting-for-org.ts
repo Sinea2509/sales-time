@@ -35,6 +35,8 @@ export async function updateMeetingForOrg(
     feeling?: number | null;
     sourceType?: MeetingSourceType;
     sourceBlobUrl?: string | null;
+    /** Restreint le contact rattaché à ceux que voit l'auteur (voir `contactsVisibleTo`). */
+    visibleTo?: string;
   },
 ): Promise<UpdateMeetingResult> {
   if (!input.organizationId) {
@@ -58,6 +60,7 @@ export async function updateMeetingForOrg(
     const person = await deps.contacts.findById({
       id: explicitPersonId,
       organizationId: input.organizationId,
+      visibleTo: input.visibleTo,
     });
     if (!person) {
       return { ok: false, error: "INVALID_PERSON" };
@@ -68,12 +71,14 @@ export async function updateMeetingForOrg(
     organizationId: input.organizationId,
     personId: explicitPersonId,
     prospectName: input.prospectName,
+    visibleTo: input.visibleTo,
   });
 
   if (resolvedPerson.personId && resolvedPerson.personId !== explicitPersonId) {
     const person = await deps.contacts.findById({
       id: resolvedPerson.personId,
       organizationId: input.organizationId,
+      visibleTo: input.visibleTo,
     });
     if (!person) {
       return { ok: false, error: "INVALID_PERSON" };

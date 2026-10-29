@@ -9,6 +9,7 @@ import {
   previousMeetingAtWindowStart,
   resolveEligibleStatsWindowDays,
   STATS_WINDOW_DAYS_OPTIONS,
+  widerStatsWindowWithMeetings,
   parseStatsWindowCookie,
   parseStatsWindowRange,
   statsWindowBounds,
@@ -216,5 +217,29 @@ describe("période choisie au calendrier", () => {
       days: 30,
       range: null,
     });
+  });
+});
+
+describe("widerStatsWindowWithMeetings", () => {
+  it("propose 90 jours quand le seul rendez-vous a plus d'un mois", () => {
+    expect(widerStatsWindowWithMeetings({ 30: 0, 90: 1, 365: 1 }, 30)).toBe(90);
+  });
+
+  it("ne propose rien quand la période affichée compte un rendez-vous", () => {
+    expect(
+      widerStatsWindowWithMeetings({ 30: 1, 90: 2, 365: 4 }, 30),
+    ).toBeNull();
+  });
+
+  it("ne propose rien quand aucune période ne compte de rendez-vous", () => {
+    expect(
+      widerStatsWindowWithMeetings({ 30: 0, 90: 0, 365: 0 }, 30),
+    ).toBeNull();
+  });
+
+  it("ne propose rien pour une période choisie au calendrier", () => {
+    expect(
+      widerStatsWindowWithMeetings({ 30: 0, 90: 1, 365: 1 }, 45),
+    ).toBeNull();
   });
 });

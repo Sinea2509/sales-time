@@ -25,6 +25,7 @@ import {
   statsWindowFromRange,
   type StatsWindow,
   type StatsWindowDays,
+  type StatsWindowPreset,
   type StatsWindowRange,
 } from "@/src/core/domain/dashboard-stats-window";
 
@@ -109,6 +110,11 @@ export function DashboardStatsPeriodSelect(props: {
   range?: StatsWindowRange | null;
   /** Périodes qui comptent moins de rendez-vous que le seuil. */
   disabledDays?: StatsWindowDays[];
+  /**
+   * La période plus longue où apparaissent des rendez-vous, quand celle
+   * affichée n'en compte aucun (voir `widerStatsWindowWithMeetings`).
+   */
+  widerWindow?: StatsWindowPreset | null;
 }) {
   const range = props.range ?? null;
   const lowData = new Set(props.disabledDays ?? []);
@@ -149,7 +155,19 @@ export function DashboardStatsPeriodSelect(props: {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {!range && lowData.has(props.value) ? (
+      {!range && props.widerWindow ? (
+        <p className="text-muted-foreground text-[12.5px]">
+          Aucun rendez-vous analysé sur cette période.{" "}
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => props.widerWindow && choose(props.widerWindow)}
+            className="text-brand font-semibold hover:underline"
+          >
+            Voir sur {statsWindowShortLabel(props.widerWindow)}
+          </button>
+        </p>
+      ) : !range && lowData.has(props.value) ? (
         <ToneChip
           tone="warn"
           title={`Moins de ${MIN_RDV_FOR_STATS} rendez-vous analysés sur la période : les chiffres sont indicatifs.`}

@@ -21,11 +21,14 @@ export async function prepareMeetingBriefing(
     organizationId: string;
     personId: string;
     targetStage: string;
+    /** Restreint aux contacts de ce commercial (voir `contactsVisibleTo`). */
+    visibleTo?: string;
   },
 ) {
   const person = await deps.contacts.findById({
     id: input.personId,
     organizationId: input.organizationId,
+    visibleTo: input.visibleTo,
   });
   if (!person) return null;
 

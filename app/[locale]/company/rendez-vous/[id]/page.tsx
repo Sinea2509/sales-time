@@ -5,6 +5,7 @@ import { getApplicationDeps } from "@/lib/application-deps";
 import { isAudioFilename } from "@/lib/audio-transcript";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { meetingIdSchema } from "@/lib/schemas/meeting";
+import { resolveSellerTeamUserIds } from "@/lib/team-seller-scope";
 import { meetingVisitReportForPage } from "@/src/core/application/summarize-meeting-detail";
 import {
   discResultSchema,
@@ -28,6 +29,7 @@ import { scorecardCriteria } from "@/src/core/domain/scorecard-grid";
 import { scorecardGridForMeeting } from "@/src/core/domain/scorecard-grid-for-meeting";
 import { scorecardResultSchema } from "@/src/core/domain/scorecard-result-zod";
 import { talkShareFromTranscript } from "@/src/core/domain/talk-share-from-transcript";
+import { teamScoresForComparison } from "@/src/core/domain/team-score-comparison";
 import { visitReportWithoutSellerCoaching } from "@/src/core/domain/visit-report";
 import { memberDisplayName } from "@/src/core/domain/weekly-manager-digest";
 
@@ -83,6 +85,7 @@ export default async function RendezVousDetailPage({
     sellerMeetings30d,
     teamMeetings30d,
     enabledFeatures,
+    sellerTeamUserIds,
   ] = await Promise.all([
     deps.contacts.findById({ id: meeting.personId, organizationId }),
     actor.canManageOrganization && !isSeller
@@ -103,6 +106,7 @@ export default async function RendezVousDetailPage({
       limit: 1000,
     }),
     deps.organizationFeatures.listEnabledFeatures(organizationId),
+    resolveSellerTeamUserIds(deps, { internalUserId: meeting.sellerUserId }),
   ]);
 
   const soncas = meeting.analyses.find((a) => a.kind === "SONCAS");
@@ -134,6 +138,10 @@ export default async function RendezVousDetailPage({
       .filter((m) => m.id !== meeting.id)
       .map((m) => m.salesScore)
       .filter((s): s is number => typeof s === "number");
+  const teamScores = teamScoresForComparison(
+    teamMeetings30d.filter((m) => m.id !== meeting.id),
+    { sellerUserId: meeting.sellerUserId, teamUserIds: sellerTeamUserIds },
+  );
 
   const grid = scorecardGridForMeeting({
     meetingType: meeting.meetingType,
@@ -230,7 +238,7 @@ export default async function RendezVousDetailPage({
         scorePending: meeting.status === "PROCESSING" && salesScore == null,
         gridName: grid?.name ?? null,
         sellerAverage30d: salesScoreAverage(scoresOf(sellerMeetings30d)),
-        teamAverage30d: salesScoreAverage(scoresOf(teamMeetings30d)),
+        teamAverage30d: teamScores ? salesScoreAverage(teamScores) : null,
         talkShare: talkShareFromTranscript(meeting.transcript, {
           sellerName,
           prospectNames: [meeting.prospectName, contact?.displayName],

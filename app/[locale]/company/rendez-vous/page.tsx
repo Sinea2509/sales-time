@@ -3,6 +3,7 @@ import { PageHeaderSimple } from "@/components/molecules/page-header";
 import { requireDashboardActor } from "@/lib/dashboard-server-context";
 import { redirect } from "next/navigation";
 import { getApplicationDeps } from "@/lib/application-deps";
+import { contactsVisibleTo } from "@/src/core/domain/contact-visibility";
 import { tamMinutesSavedPerMeetingFromSettings } from "@/src/core/domain/dashboard-estimates";
 import { resolveProspectListDisplay } from "@/src/core/domain/prospect-list-identity";
 
@@ -34,6 +35,7 @@ export default async function RendezVousPage() {
     deps.organizationSettings.findByOrganizationId(actor.activeOrganizationId),
     deps.contacts.findProspectCompanyAliasByPersonId({
       organizationId: actor.activeOrganizationId,
+      visibleTo: contactsVisibleTo(actor),
     }),
   ]);
 

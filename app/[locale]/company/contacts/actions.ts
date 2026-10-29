@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireOrgActor } from "@/lib/analysis-server-context";
 import { searchContactsByPrefix } from "@/src/core/application/search-contacts";
+import { contactsVisibleTo } from "@/src/core/domain/contact-visibility";
 import { Prisma } from "@/lib/generated/prisma/client";
 
 const contactFields = z.object({
@@ -33,9 +34,23 @@ export async function searchContactsPickerAction(prefix: string) {
       organizationId: actor.organizationId,
       prefix,
       limit: 10,
+      visibleTo: contactsVisibleTo(actor),
     },
   );
   return { ok: true as const, items };
+}
+
+/** Un commercial ne modifie ni ne supprime le contact d'un collègue. */
+async function isContactVisible(
+  actor: Extract<Awaited<ReturnType<typeof requireOrgActor>>, { ok: true }>,
+  id: string,
+): Promise<boolean> {
+  const visible = await actor.deps.contacts.findById({
+    id,
+    organizationId: actor.organizationId,
+    visibleTo: contactsVisibleTo(actor),
+  });
+  return visible !== null;
 }
 
 export async function createContactInlineAction(raw: {
@@ -58,6 +73,7 @@ export async function createContactInlineAction(raw: {
   try {
     const row = await actor.deps.contacts.create({
       organizationId: actor.organizationId,
+      createdByUserId: actor.internalUserId,
       displayName: parsed.data.displayName,
       company: emptyToNull(parsed.data.company ?? null),
     });
@@ -94,6 +110,7 @@ export async function createContactAction(raw: z.input<typeof contactFields>) {
   try {
     const row = await actor.deps.contacts.create({
       organizationId: actor.organizationId,
+      createdByUserId: actor.internalUserId,
       displayName: parsed.data.displayName,
       company: emptyToNull(parsed.data.company ?? null),
       email,
@@ -135,6 +152,10 @@ export async function updateContactAction(
   const email =
     emailRaw == null || emailRaw === "" ? null : emailRaw.trim().toLowerCase();
 
+  if (!(await isContactVisible(actor, idParsed.data))) {
+    return { ok: false as const, error: "NOT_FOUND" as const };
+  }
+
   const row = await actor.deps.contacts.update({
     id: idParsed.data,
     organizationId: actor.organizationId,
@@ -161,6 +182,10 @@ export async function deleteContactAction(id: string) {
   const idParsed = z.string().cuid().safeParse(id);
   if (!idParsed.success) {
     return { ok: false as const, error: "VALIDATION" as const };
+  }
+
+  if (!(await isContactVisible(actor, idParsed.data))) {
+    return { ok: false as const, error: "NOT_FOUND" as const };
   }
 
   const result = await actor.deps.contacts.deleteByIdForOrg({

@@ -7,6 +7,8 @@ export async function searchContactsByPrefix(
     organizationId: string;
     prefix: string;
     limit?: number;
+    /** Restreint aux contacts de ce commercial (voir `contactsVisibleTo`). */
+    visibleTo?: string;
   },
 ) {
   const [rows, companyAliases] = await Promise.all([
@@ -14,9 +16,11 @@ export async function searchContactsByPrefix(
       organizationId: input.organizationId,
       prefix: input.prefix,
       limit: input.limit ?? 10,
+      visibleTo: input.visibleTo,
     }),
     deps.contacts.findProspectCompanyAliasByPersonId({
       organizationId: input.organizationId,
+      visibleTo: input.visibleTo,
     }),
   ]);
   return excludeProspectCompanyAliasContacts(rows, companyAliases);

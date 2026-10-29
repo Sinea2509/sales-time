@@ -41,6 +41,24 @@ describe("resolveMeetingPersonLink", () => {
     });
   });
 
+  it("matches the company only among the seller's own contacts", async () => {
+    const contacts = {
+      findUniqueByCompanyName: jest.fn().mockResolvedValue(null),
+    };
+    const result = await resolveMeetingPersonLink(contacts as never, {
+      organizationId: "org_1",
+      personId: null,
+      prospectName: "Doha",
+      visibleTo: "user_1",
+    });
+    expect(result).toEqual({ personId: null, prospectName: "Doha" });
+    expect(contacts.findUniqueByCompanyName).toHaveBeenCalledWith({
+      organizationId: "org_1",
+      companyName: "Doha",
+      visibleTo: "user_1",
+    });
+  });
+
   it("creates new contact path when no company match", async () => {
     const contacts = {
       findUniqueByCompanyName: jest.fn().mockResolvedValue(null),

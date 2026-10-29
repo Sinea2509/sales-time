@@ -164,9 +164,6 @@ const DISC_NAMES: Record<DiscAnalysisResult["dominant"], string> = {
   C: "Conformité",
 };
 
-export const VISIT_REPORT_METHOD_NOTE =
-  "Ce compte rendu ne reprend que ce qui a été dit pendant le rendez-vous. Quand une rubrique n'a pas d'information dans le transcript, elle est signalée comme non abordée, jamais complétée pour faire bonne figure.";
-
 const NOT_COVERED = "Non abordé pendant le rendez-vous.";
 
 /*
@@ -257,12 +254,24 @@ function quoteLine(quote: VisitReportQuote): string | null {
   return signature ? `  « ${text} »  ${signature}` : `  « ${text} »`;
 }
 
-/** Vrai quand un compte rendu enregistré a la forme d'aujourd'hui, et non celle d'avant le lot 80a. */
+/**
+ * La rubrique qui fermait les comptes rendus jusqu'au 29 octobre 2026. Elle
+ * expliquait au lecteur une consigne du modèle (« jamais complétée pour faire
+ * bonne figure ») et l'intriguait plus qu'elle ne l'aidait (retour de Thomas).
+ */
+const RETIRED_METHOD_NOTE_TITLE = "Note de méthode";
+
+/**
+ * Vrai quand un compte rendu enregistré a la forme d'aujourd'hui : il s'ouvre
+ * sur l'essentiel et ne porte plus la note de méthode. Un compte rendu d'une
+ * forme antérieure se réécrit à la prochaine ouverture de la fiche.
+ */
 export function isCurrentVisitReport(text: string | null | undefined): boolean {
   const t = (text ?? "").trimStart();
   return (
     t.startsWith(VISIT_REPORT_TITLE) &&
-    t.includes(`\n${sectionTitle(ESSENTIALS_TITLE)}\n`)
+    t.includes(`\n${sectionTitle(ESSENTIALS_TITLE)}\n`) &&
+    !t.includes(`\n${sectionTitle(RETIRED_METHOD_NOTE_TITLE)}\n`)
   );
 }
 
@@ -873,11 +882,6 @@ export function visitReportEssentials(report: string): string | null {
   return lines.slice(0, detail).join("\n").trim();
 }
 
-function methodNote(out: Lines): void {
-  out.title("Note de méthode");
-  out.push(VISIT_REPORT_METHOD_NOTE);
-}
-
 /** Le compte rendu complet, prêt à coller dans un CRM. */
 export function composeVisitReport(input: VisitReportInput): string {
   const out = new Lines();
@@ -895,7 +899,6 @@ export function composeVisitReport(input: VisitReportInput): string {
   nextSteps(out, input);
   notCovered(out, input);
   quality(out, input);
-  methodNote(out);
   return out.toString();
 }
 

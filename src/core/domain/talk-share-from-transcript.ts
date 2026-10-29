@@ -432,16 +432,29 @@ export function listeningMeasure(share: TalkShare): {
   };
 }
 
-/* Les lettres accentuées ne sont pas des « \b » : la frontière se pose à la main (« enchanté »). */
+/*
+  Les mots d'une ouverture de rendez-vous, en salle comme en visio, où l'on
+  commence souvent par vérifier le son (« Allô ? », « Je vous entends »).
+  Les lettres accentuées ne sont pas des « \b » : la frontière se pose à la
+  main (« enchanté »).
+*/
 const GREETING =
-  /(?<![\p{L}])(bonjour|bonsoir|salut|hello|enchanté|enchantée|ravi de|ravie de|merci de prendre|merci d'avoir|vous m'entendez|on peut commencer|je vous propose qu'on)(?![\p{L}])/iu;
+  /(?<![\p{L}])(bonjour|bonsoir|salut|hello|coucou|allô|allo|enchanté|enchantée|ravi de|ravie de|bienvenue|merci de prendre|merci d'avoir|vous m'entendez|tu m'entends|je vous entends|je t'entends|vous me voyez|je vous vois|ça va|comment allez|bien et vous|on peut commencer|on commence|je vous propose qu'on)(?![\p{L}])/iu;
+
+/** Les répliques lues pour décider si l'ouverture a été enregistrée. */
+const OPENING_TURNS = 4;
 
 /**
  * Vrai quand l'enregistrement a manifestement commencé après l'ouverture du
- * rendez-vous : c'est le prospect qui parle en premier, et les deux premières
- * répliques ne portent ni salutation ni mise en route. Le cadrage ne peut
- * alors pas être jugé (rendez-vous Noz : « Je suis dans. », puis Lisa qui se
- * présente).
+ * rendez-vous : c'est le prospect qui parle en premier, et les quatre
+ * premières répliques ne portent ni salutation ni mise en route. Le cadrage ne
+ * peut alors pas être jugé (rendez-vous Noz : « Je suis dans. », puis Lisa
+ * qui se présente).
+ *
+ * La règle lisait deux répliques et quelques salutations de salle : une visio
+ * ouverte par « Allô ? » ou « Je vous entends » perdait sa note de cadrage,
+ * affichée « hors note » alors que tout le début était là (retour de Thomas
+ * du 29 octobre 2026).
  */
 export function openingNotRecorded(
   transcript: string,
@@ -451,7 +464,7 @@ export function openingNotRecorded(
   if (!reading || reading.turns.length < 2) return false;
   if (reading.turns[0].speaker === reading.commercialKey) return false;
   const opening = reading.turns
-    .slice(0, 2)
+    .slice(0, OPENING_TURNS)
     .map((t) => t.text.join(" "))
     .join(" ");
   return !GREETING.test(opening);

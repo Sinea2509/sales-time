@@ -35,6 +35,8 @@ import type { OrganizationPromptRepositoryPort } from "@/src/core/ports/organiza
 import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-template-repository-port";
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 import { toAppTimeZoneDatetimeLocal } from "@/src/core/domain/app-time-zone";
+import { composeAnalysisSystemMarkdown } from "@/src/core/domain/analysis-system-markdown";
+import { referenceNamesInstruction } from "@/src/core/domain/reference-names";
 import { resolveAnalysisPrompt } from "./resolve-analysis-prompt";
 
 export type MeetingDetailSynthesisContent = {
@@ -314,8 +316,15 @@ export async function summarizeMeetingDetail(
         organizationId: input.organizationId,
       }),
     ]);
+    /* Les noms saisis par le commercial font foi sur l'orthographe du transcript. */
+    const systemMarkdown = composeAnalysisSystemMarkdown(prompt.markdown, [
+      referenceNamesInstruction({
+        prospectName: input.meeting.prospectName,
+        prospectCompany: input.meeting.prospectCompany,
+      }),
+    ]);
     const extractionInput = {
-      systemMarkdown: prompt.markdown,
+      systemMarkdown,
       model,
       prospectName: input.meeting.prospectName,
       prospectCompany: input.meeting.prospectCompany,
@@ -336,7 +345,7 @@ export async function summarizeMeetingDetail(
       organizationId: input.organizationId,
       kind: "MEETING_DETAIL_SYNTHESIS",
       model,
-      systemPrompt: prompt.markdown,
+      systemPrompt: systemMarkdown,
       userPrompt: JSON.stringify({ ...extractionInput, systemMarkdown: null }),
       compute: () => deps.analysis.extractVisitReport(extractionInput),
     });

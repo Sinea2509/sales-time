@@ -151,6 +151,7 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
         },
         create: {
           organizationId: input.organizationId,
+          createdByUserId: input.sellerUserId,
           displayName,
           normalizedKey,
         },
@@ -193,13 +194,15 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
       where: { id: input.id, organizationId: input.organizationId },
       include: {
         seller: { select: { firstName: true, lastName: true, email: true } },
+        person: { select: { company: true } },
       },
     });
     if (!row) return null;
-    const { seller, ...meeting } = row;
+    const { seller, person, ...meeting } = row;
     return {
       ...mapMeeting(meeting),
       sellerName: seller ? memberDisplayName(seller) : null,
+      prospectCompany: person.company,
     };
   }
 
@@ -218,11 +221,15 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
   async listMeetingsForPersonInOrg(input: {
     organizationId: string;
     personId: string;
+    sellerUserId?: string;
   }): Promise<MeetingRow[]> {
     const rows = await this.db.meeting.findMany({
       where: {
         organizationId: input.organizationId,
         personId: input.personId,
+        ...(input.sellerUserId !== undefined
+          ? { sellerUserId: input.sellerUserId }
+          : {}),
       },
       orderBy: { meetingAt: "desc" },
     });
