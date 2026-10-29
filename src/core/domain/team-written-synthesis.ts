@@ -114,7 +114,7 @@ export function teamWrittenSynthesis(
       : "";
     paragraphs.push({
       title: "Le point commun.",
-      text: `Sur les ${input.scorecards} rendez-vous notés, ${c1.label.toLowerCase()} manque dans ${c1.lowSharePct} % des cas (critère ${c1.key})${second}. Ce manque revient chez tout le monde : c'est là que la moyenne se perd, pas sur un commercial en particulier.`,
+      text: `Sur les ${input.scorecards} rendez-vous évalués, ${c1.label.toLowerCase()} manque dans ${c1.lowSharePct} % des cas (critère ${c1.key})${second}. Ce manque revient chez tout le monde : c'est là que la moyenne se perd, pas sur un commercial en particulier.`,
     });
     figures.push({
       label: `Rendez-vous sans ${c1.label.toLowerCase()} (${c1.key})`,

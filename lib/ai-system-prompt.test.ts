@@ -427,6 +427,13 @@ describe("la voix du coach", () => {
     expect(COACH_VOICE_INSTRUCTION).toContain("ni son prénom ou son nom");
   });
 
+  it("parle de score, jamais de note, comme le reste de l'application", () => {
+    expect(COACH_VOICE_INSTRUCTION).toContain(
+      "Une évaluation chiffrée s'appelle un score",
+    );
+    expect(COACH_VOICE_INSTRUCTION).not.toMatch(/de la note|une note/);
+  });
+
   it("est jointe au SalesScore, au coaching, aux objections et au profil du prospect", () => {
     expect(
       withScorecardSystemPrompt("CONSIGNE", DEFAULT_SCORECARD_GRID),

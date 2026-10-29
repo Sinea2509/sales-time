@@ -61,7 +61,7 @@ function ScoreCard() {
         </div>
       </div>
       <div className="space-y-1">
-        <CardLabel>Votre note</CardLabel>
+        <CardLabel>Votre score</CardLabel>
         <p className="text-sm font-semibold">86 / 100</p>
         <p className="text-[11px] text-[#9EF0C9]">+12 depuis le dernier</p>
       </div>

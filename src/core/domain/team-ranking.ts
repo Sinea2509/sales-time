@@ -373,11 +373,11 @@ export function unrankedExplanation(
   minScoredMeetings: number,
 ): string {
   if (reason === "sans-note") {
-    return "Aucun rendez-vous noté sur la période : pas de score, donc ni rang ni médaille.";
+    return "Aucun rendez-vous évalué sur la période : pas de score, donc ni rang ni médaille.";
   }
   const compte =
     scoredMeetings <= 1
-      ? `${scoredMeetings} rendez-vous noté`
-      : `${scoredMeetings} rendez-vous notés`;
+      ? `${scoredMeetings} rendez-vous évalué`
+      : `${scoredMeetings} rendez-vous évalués`;
   return `${compte} sur la période, en dessous du seuil de ${minScoredMeetings} : le score reste affiché, le rang et la médaille attendent le volume.`;
 }

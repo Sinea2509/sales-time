@@ -261,16 +261,16 @@ describe("libellés", () => {
 
   it("accorde le nombre de rendez-vous dans l'explication", () => {
     expect(unrankedExplanation("volume-insuffisant", 1, 3)).toContain(
-      "1 rendez-vous noté sur",
+      "1 rendez-vous évalué sur",
     );
     expect(unrankedExplanation("volume-insuffisant", 2, 3)).toContain(
-      "2 rendez-vous notés sur",
+      "2 rendez-vous évalués sur",
     );
   });
 
   it("distingue l'absence de note du volume insuffisant", () => {
     expect(unrankedExplanation("sans-note", 0, 3)).toContain(
-      "Aucun rendez-vous noté",
+      "Aucun rendez-vous évalué",
     );
   });
 

@@ -89,7 +89,7 @@ export function AnalyseRecommandationsSection({
   */
   const progressEmptyMessage =
     rdvCount < MIN_ANALYZED_RDV_FOR_PROGRESS
-      ? `Un progrès se mesure d'un rendez-vous à l'autre : il en faut au moins deux notés par l'analyse KISS. ${rdvCount === 0 ? "Aucun ne l'est encore" : "Un seul l'est pour l'instant"}.`
+      ? `Un progrès se mesure d'un rendez-vous à l'autre : il en faut au moins deux évalués par l'analyse KISS. ${rdvCount === 0 ? "Aucun ne l'est encore" : "Un seul l'est pour l'instant"}.`
       : "Aucun progrès n'a été relevé sur cette période.";
   const improvementEmptyMessage =
     rdvCount === 0
@@ -109,7 +109,7 @@ export function AnalyseRecommandationsSection({
     : isOrgAdmin
       ? "les rendez-vous de l'équipe"
       : "vos rendez-vous";
-  const profileEmptyMessage = `Le profil se lit sur l'analyse KISS, qui note six compétences de vente à chaque rendez-vous. Lancez-la sur ${cible} pour le construire. Les rendez-vous analysés avant la mise à jour ne portent pas encore ces six notes : relancer leur analyse KISS les y fait entrer.`;
+  const profileEmptyMessage = `Le profil se lit sur l'analyse KISS, qui évalue six compétences de vente à chaque rendez-vous. Lancez-la sur ${cible} pour le construire. Les rendez-vous analysés avant la mise à jour ne portent pas encore ces six scores : relancer leur analyse KISS les y fait entrer.`;
 
   return (
     <div

@@ -127,7 +127,7 @@ function preuvesParCle(
 /** « Thème creusé, avec relance, information partielle » : le relevé en mots. */
 function couverture(entry: ScorecardCriterionResult | undefined): string {
   if (entry?.unobservable) {
-    return "Non observable dans ce transcript : ce critère ne compte pas dans la note";
+    return "Non observable dans ce transcript : ce critère ne compte pas dans le score";
   }
   if (!entry?.explored || !entry.obtained) return "";
   if (entry.capped) {

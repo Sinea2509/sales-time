@@ -32,8 +32,8 @@ export const ORGANIZATION_PROMPT_DESCRIPTIONS: Record<
   string
 > = {
   SCORECARD: `${scorecardCriteria(DEFAULT_SCORECARD_GRID).length} critères en ${DEFAULT_SCORECARD_GRID.blocks.length} blocs, niveaux 0 à ${SCORECARD_LEVEL_MAX}. La grille, l'échelle des niveaux et la règle de preuve sont ajoutées par le produit et ne s'éditent pas ici.`,
-  SONCAS: `Six leviers notés sur 100, citations obligatoires au-dessus de ${PROFILE_SCORE_UNPROVEN_MAX}. L'échelle de preuves est ajoutée automatiquement.`,
-  DISC: `Quatre styles notés sur 100, indépendants. Au-dessus de ${PROFILE_SCORE_UNPROVEN_MAX}, un style s'appuie sur un comportement ou une phrase du prospect. L'échelle est ajoutée automatiquement.`,
+  SONCAS: `Six leviers évalués sur 100, citations obligatoires au-dessus de ${PROFILE_SCORE_UNPROVEN_MAX}. L'échelle de preuves est ajoutée automatiquement.`,
+  DISC: `Quatre styles évalués sur 100, indépendants. Au-dessus de ${PROFILE_SCORE_UNPROVEN_MAX}, un style s'appuie sur un comportement ou une phrase du prospect. L'échelle est ajoutée automatiquement.`,
   KISS: "Ce qu'il faut garder, améliorer, arrêter et démarrer. Chaque puce s'appuie sur un moment du transcript et propose un geste pour le prochain rendez-vous.",
   MEETING_DETAIL_SYNTHESIS:
     "Le texte prêt à coller dans le CRM. Les sections sont imposées, et une rubrique sans information dans le transcript est signalée comme non abordée plutôt que complétée.",

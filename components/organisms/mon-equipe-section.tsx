@@ -236,7 +236,7 @@ export function MonEquipeSection({
               <tr className="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
                 <DataTableHead
                   className="w-16 px-4 py-3.5 @min-[580px]:w-24 dark:text-zinc-400"
-                  title={`Rang sur l'équipe entière, et écart à la moyenne des membres classés. Au-dessous de ${monEquipe.ranking.minScoredMeetings} rendez-vous notés, le score est affiché mais pas le rang.`}
+                  title={`Rang sur l'équipe entière, et écart à la moyenne des membres classés. Au-dessous de ${monEquipe.ranking.minScoredMeetings} rendez-vous évalués, le score est affiché mais pas le rang.`}
                 >
                   Rang
                 </DataTableHead>
@@ -245,7 +245,7 @@ export function MonEquipeSection({
                 </DataTableHead>
                 <DataTableHead
                   className="hidden px-4 py-3.5 tabular-nums @min-[670px]:table-cell dark:text-zinc-400"
-                  title="Nombre de rendez-vous portant au moins une analyse KISS sur la période. Tous ne sont pas notés : la note vient de l'analyse SONCAS."
+                  title="Nombre de rendez-vous portant au moins une analyse KISS sur la période. Tous n'ont pas de score : le score vient de l'analyse SONCAS."
                 >
                   RDV coachés
                 </DataTableHead>
@@ -263,13 +263,13 @@ export function MonEquipeSection({
                 </DataTableHead>
                 <DataTableHead
                   className="hidden px-4 py-3.5 @min-[580px]:table-cell dark:text-zinc-400"
-                  title={`Médaille obtenue : bronze sous 40, argent de 40 à 59, or de 60 à 79, diamant à partir de 80. Plusieurs membres peuvent avoir la même médaille sans partager une place. Au-dessous de ${monEquipe.ranking.minScoredMeetings} rendez-vous notés, la note est affichée mais la médaille n'est pas décernée.`}
+                  title={`Médaille obtenue : bronze sous 40, argent de 40 à 59, or de 60 à 79, diamant à partir de 80. Plusieurs membres peuvent avoir la même médaille sans partager une place. Au-dessous de ${monEquipe.ranking.minScoredMeetings} rendez-vous évalués, le score est affiché mais la médaille n'est pas décernée.`}
                 >
                   Médaille
                 </DataTableHead>
                 <DataTableHead
                   className="hidden px-4 py-3.5 @min-[940px]:table-cell dark:text-zinc-400"
-                  title="Ce qui distingue cette personne du reste de l'équipe : sa compétence la plus au-dessus de la moyenne, et la plus au-dessous. Les six compétences sont notées sur le commercial lui-même, à chaque rendez-vous coaché."
+                  title="Ce qui distingue cette personne du reste de l'équipe : sa compétence la plus au-dessus de la moyenne, et la plus au-dessous. Les six compétences sont évaluées sur le commercial lui-même, à chaque rendez-vous coaché."
                 >
                   Profil
                 </DataTableHead>
@@ -405,8 +405,8 @@ export function MonEquipeSection({
                         className="px-4 py-3.5 tabular-nums"
                         title={
                           row.scoredMeetings > 0
-                            ? `Moyenne des SalesScores de ${row.scoredMeetings} rendez-vous. Un rendez-vous coaché n'est pas toujours noté : le coaching porte sur l'analyse KISS, la note vient de l'analyse SONCAS.`
-                            : "Non calculable : aucun rendez-vous noté sur la période."
+                            ? `Moyenne des SalesScores de ${row.scoredMeetings} rendez-vous. Un rendez-vous coaché n'a pas toujours de score : le coaching porte sur l'analyse KISS, le score vient de l'analyse SONCAS.`
+                            : "Non calculable : aucun rendez-vous évalué sur la période."
                         }
                       >
                         <span className="block font-medium text-zinc-950 dark:text-zinc-50">
@@ -436,7 +436,7 @@ export function MonEquipeSection({
                         >
                           {row.scoredMeetings > 0
                             ? `moyenne de ${rdvNotes(row.scoredMeetings)}`
-                            : "aucun RDV noté"}
+                            : "aucun RDV évalué"}
                         </span>
                       </td>
                       <td className="hidden px-4 py-3.5 @min-[580px]:table-cell">

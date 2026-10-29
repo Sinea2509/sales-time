@@ -10,7 +10,10 @@ type Props = {
   searchParams?: Promise<{ etape?: string }>;
 };
 
-/** Le guide de démarrage, affiché à l'invité juste après son inscription. */
+/**
+ * Le guide de démarrage, affiché juste après la création du compte : à
+ * l'invité comme à celui qui vient de créer son espace.
+ */
 export default async function WelcomeGuidePage({ searchParams }: Props) {
   const actor = await requireDashboardActor();
   if (actor.kind !== "authenticated") redirect("/sign-in");
@@ -36,6 +39,7 @@ export default async function WelcomeGuidePage({ searchParams }: Props) {
       }))}
       newMeetingHref="/company/rendez-vous/nouveau"
       dashboardHref="/company"
+      forManager={actor.canManageOrganization}
     />
   );
 }

@@ -287,7 +287,7 @@ describe("composeVisitReport", () => {
     expect(text).toContain(
       "- 10 septembre 2026 · Découverte · Julien Arnaud · grille 48 sur 100",
     );
-    expect(text).toContain("- 2 août 2026 · non noté sur une grille");
+    expect(text).toContain("- 2 août 2026 · sans score de grille");
   });
 
   it("met les thèmes en capitales et ne garde que les mots du prospect", () => {
@@ -362,13 +362,13 @@ describe("composeVisitReport", () => {
   it("dit que la maturité, les manques et la qualité ne sont pas évalués sans grille", () => {
     const text = composeVisitReport(input({ scorecard: null }));
     expect(text).toContain(
-      "MATURITÉ DE L'AFFAIRE\nNon évaluée : ce rendez-vous n'a pas été noté sur une grille.",
+      "MATURITÉ DE L'AFFAIRE\nNon évaluée : ce rendez-vous n'a pas de score de grille.",
     );
     expect(text).toContain(
-      "CE QUI N'A PAS ÉTÉ COUVERT, ET LA QUESTION À POSER\nNon évalué : ce rendez-vous n'a pas été noté sur une grille.",
+      "CE QUI N'A PAS ÉTÉ COUVERT, ET LA QUESTION À POSER\nNon évalué : ce rendez-vous n'a pas de score de grille.",
     );
     expect(text).toContain(
-      "QUALITÉ DU RENDEZ-VOUS\nNon évaluée : ce rendez-vous n'a pas été noté sur une grille.",
+      "QUALITÉ DU RENDEZ-VOUS\nNon évaluée : ce rendez-vous n'a pas de score de grille.",
     );
   });
 
@@ -709,6 +709,19 @@ describe("les retours de la relecture du 24 septembre", () => {
     );
     expect(text).not.toMatch(/grille|Défi du commercial|niveau \d sur 4/);
     expect(text).not.toMatch(/\n\n\n/);
+  });
+
+  it("retire aussi la mention de grille d'un compte rendu écrit avant le 29 octobre 2026", () => {
+    const ancien = [
+      "HISTORIQUE DU COMPTE",
+      "- 2 août 2026 · Démo · Julien Arnaud · non noté sur une grille",
+      "- 10 septembre 2026 · Démo · Julien Arnaud · sans score de grille",
+    ].join("\n");
+    expect(visitReportWithoutSellerCoaching(ancien).split("\n")).toEqual([
+      "HISTORIQUE DU COMPTE",
+      "- 2 août 2026 · Démo · Julien Arnaud",
+      "- 10 septembre 2026 · Démo · Julien Arnaud",
+    ]);
   });
 
   it("reconnaît un titre après une ligne vide, même court ou commençant par un chiffre", () => {

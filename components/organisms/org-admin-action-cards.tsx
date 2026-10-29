@@ -190,7 +190,7 @@ export function OrgAdminActionCards({
               ))}
             </ul>
             <p className="mt-2.5 border-t border-border pt-2.5 text-xs text-muted-foreground dark:border-zinc-800 dark:text-zinc-400">
-              Les analyses de rendez-vous nourrissent la note, le classement et
+              Les analyses de rendez-vous nourrissent le score, le classement et
               le coaching.
             </p>
           </div>

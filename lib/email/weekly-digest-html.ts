@@ -48,7 +48,7 @@ export function weeklyDigestHtml(input: {
         (digest.salesScoreDelta != null
           ? ` (${signed(digest.salesScoreDelta)} ${Math.abs(digest.salesScoreDelta) > 1 ? "points" : "point"} sur la semaine précédente)`
           : "")
-      : "Aucun rendez-vous noté cette semaine";
+      : "Aucun rendez-vous évalué cette semaine";
 
   const headline = `${digest.meetingsCount} rendez-vous cette semaine, ${digest.analyzedCount} analysé${digest.analyzedCount > 1 ? "s" : ""}`;
 

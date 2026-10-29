@@ -57,8 +57,8 @@ export function MeetingSoncasTab({
             </h2>
             <p className="text-muted-foreground mt-1 max-w-[64ch] text-xs leading-relaxed">
               Le levier principal entendu est{" "}
-              <b>{SONCAS_NAMES[soncas.dominant]}</b>. Chaque levier est noté sur
-              100 d&apos;après ce qui s&apos;entend dans l&apos;échange, et
+              <b>{SONCAS_NAMES[soncas.dominant]}</b>. Chaque levier est évalué
+              sur 100 d&apos;après ce qui s&apos;entend dans l&apos;échange, et
               au-dessus de {PROFILE_SCORE_UNPROVEN_MAX} il cite les mots du
               prospect.
             </p>

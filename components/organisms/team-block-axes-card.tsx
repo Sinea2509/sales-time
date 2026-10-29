@@ -7,7 +7,7 @@ import type { ScorecardBlockAverage } from "@/src/core/domain/scorecard-team-axe
 
 /**
  * Les axes d'amélioration de l'équipe : la moyenne de chaque bloc de la
- * grille sur les rendez-vous notés de la période, du plus en retrait au plus
+ * grille sur les rendez-vous évalués de la période, du plus en retrait au plus
  * solide. Un bloc bas chez tout le monde est un sujet d'atelier, pas de
  * coaching individuel, et la carte le dit.
  *
@@ -30,13 +30,13 @@ export function TeamBlockAxesCard({
             Les axes d&apos;amélioration de l&apos;équipe
           </h2>
           <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-            Moyenne de chaque bloc de la grille sur les rendez-vous notés de la
-            période, du plus en retrait au plus solide.
+            Moyenne de chaque bloc de la grille sur les rendez-vous évalués de
+            la période, du plus en retrait au plus solide.
           </p>
         </div>
         {axes.length === 0 ? (
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Aucun rendez-vous de découverte noté sur la période : les blocs de
+            Aucun rendez-vous de découverte évalué sur la période : les blocs de
             la grille apparaîtront ici avec la première scorecard.
           </p>
         ) : (
@@ -61,7 +61,11 @@ export function TeamBlockAxesCard({
               <p className="text-muted-foreground text-sm leading-relaxed">
                 Le bloc <b>{weakest.name.toLowerCase()}</b> est en retrait sur{" "}
                 {scorecards}{" "}
-                {plurielFr(scorecards, "rendez-vous noté", "rendez-vous notés")}
+                {plurielFr(
+                  scorecards,
+                  "rendez-vous évalué",
+                  "rendez-vous évalués",
+                )}
                 , pas seulement chez un commercial. C&apos;est un sujet
                 d&apos;atelier collectif, pas de coaching individuel.
               </p>

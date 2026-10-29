@@ -455,7 +455,7 @@ function history(out: Lines, input: VisitReportInput): void {
       h.gridScore === undefined
         ? ""
         : h.gridScore === null
-          ? "non noté sur une grille"
+          ? "sans score de grille"
           : `grille ${h.gridScore} sur 100`,
     ].filter(Boolean);
     out.push(`- ${parts.join(" · ")}`);
@@ -606,7 +606,7 @@ function maturity(out: Lines, input: VisitReportInput): void {
   out.title("Maturité de l'affaire");
   const scorecard = input.scorecard;
   if (!scorecard) {
-    out.push("Non évaluée : ce rendez-vous n'a pas été noté sur une grille.");
+    out.push("Non évaluée : ce rendez-vous n'a pas de score de grille.");
     return;
   }
   const grid = scorecardGridById(scorecard.gridId);
@@ -700,7 +700,7 @@ function nextSteps(out: Lines, input: VisitReportInput): void {
 function notCovered(out: Lines, input: VisitReportInput): void {
   out.title("Ce qui n'a pas été couvert, et la question à poser");
   if (!input.scorecard) {
-    out.push("Non évalué : ce rendez-vous n'a pas été noté sur une grille.");
+    out.push("Non évalué : ce rendez-vous n'a pas de score de grille.");
     return;
   }
   const view = scorecardResultView(input.scorecard);
@@ -724,7 +724,7 @@ function quality(out: Lines, input: VisitReportInput): void {
   out.title("Qualité du rendez-vous");
   const scorecard = input.scorecard;
   if (!scorecard) {
-    out.push("Non évaluée : ce rendez-vous n'a pas été noté sur une grille.");
+    out.push("Non évaluée : ce rendez-vous n'a pas de score de grille.");
     return;
   }
   const view = scorecardResultView(scorecard);
@@ -954,7 +954,7 @@ export function visitReportWithoutSellerCoaching(report: string): string {
     // L'état des jalons de l'essentiel vient de la grille : il part avec elle.
     if (line.startsWith(QUALIFICATION_LINE_PREFIX)) return;
     const withoutScore = line.replace(
-      / · (grille \d+ sur 100|non noté sur une grille)$/,
+      / · (grille \d+ sur 100|sans score de grille|non noté sur une grille)$/,
       "",
     );
     if (withoutScore.trim() === "" && kept[kept.length - 1]?.trim() === "") {

@@ -45,7 +45,7 @@ export function MeetingDiscTab({
             <p className="text-muted-foreground mt-1 max-w-[64ch] text-xs leading-relaxed">
               Le DISC décrit une manière de communiquer observée pendant
               l&apos;échange. Il ne décrit pas une personnalité, et il ne dit
-              rien de la valeur de la personne. Les quatre styles sont notés
+              rien de la valeur de la personne. Les quatre styles sont évalués
               indépendamment, sur 100.
             </p>
           </div>

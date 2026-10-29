@@ -124,7 +124,7 @@ export const landingFeatureCards = [
   {
     title: "Dashboard manager",
     description:
-      "Vue équipe : volumes, TAM agrégé, répartition des types de RDV et thématiques KISS, sans exposer les notes individuelles.",
+      "Vue équipe : volumes, TAM agrégé, répartition des types de RDV et thématiques KISS, sans exposer les scores individuels.",
     icon: LayoutDashboard,
   },
 ] as const;

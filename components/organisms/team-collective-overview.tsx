@@ -344,12 +344,12 @@ function phraseDeRepartition(
 ): string {
   const bornes = amplitudeDesNotes(dots);
   if (bornes == null) {
-    return `Personne n'est encore au classement : la piste se remplit dès qu'un membre atteint ${minScoredMeetings} rendez-vous notés.`;
+    return `Personne n'est encore au classement : la piste se remplit dès qu'un membre atteint ${minScoredMeetings} rendez-vous évalués.`;
   }
   if (dots.length === 1) {
     return `Un seul membre est classé, à ${formatNoteFr(
       bornes.haute,
-    )}/5 : une répartition demande au moins deux notes à comparer.`;
+    )}/5 : une répartition demande au moins deux scores à comparer.`;
   }
   if (bornes.amplitude === 0) {
     return `L'équipe est parfaitement groupée : les ${dots.length} membres classés affichent tous ${formatNoteFr(
@@ -619,7 +619,7 @@ export function TeamCollectiveOverview({
           <p className="text-sm leading-relaxed text-foreground dark:text-zinc-300">
             {phraseDeRepartition(dots, ranking.minScoredMeetings)}{" "}
             <InfoHint label="Comment lire la répartition">
-              Une pastille par membre classé, à sa note. Deux pastilles
+              Une pastille par membre classé, à son score. Deux pastilles
               l&apos;une sur l&apos;autre sont trop proches pour tenir côte à
               côte.
               {ranking.averageNoteOn5 != null

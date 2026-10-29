@@ -78,7 +78,7 @@ export function InvitationPageShell({
           <OnboardingBrandPoint
             icon={<Gauge className="size-4.5" />}
             tone="coral"
-            title="Une note claire sur 100"
+            title="Un score clair sur 100"
             text="Critère par critère, avec ce qui vous a fait gagner ou perdre des points."
           />
           <OnboardingBrandPoint

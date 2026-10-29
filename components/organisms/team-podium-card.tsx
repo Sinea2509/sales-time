@@ -46,7 +46,7 @@ export function TeamPodiumCard({
             Podium {podiumLabel(statsWindowDays, statsWindowRange)}
           </h2>
           <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-            Sur la note moyenne des analyses, ramenée sur 5.
+            Sur le score moyen des analyses, ramené sur 5.
           </p>
         </div>
         {podium.length === 0 ? (

@@ -26,12 +26,12 @@ describe("matriceRendezVousLegende", () => {
     expect(
       matriceRendezVousLegende({ pointsPlaces: 1, rdvSurLaPeriode: 3 }),
     ).toBe(
-      "1 RDV placé sur les 3 de la période. 2 écartés, faute de note de qualification ou de montant potentiel.",
+      "1 RDV placé sur les 3 de la période. 2 écartés, faute de score de qualification ou de montant potentiel.",
     );
     expect(
       matriceRendezVousLegende({ pointsPlaces: 2, rdvSurLaPeriode: 3 }),
     ).toBe(
-      "2 RDV placés sur les 3 de la période. 1 écarté, faute de note de qualification ou de montant potentiel.",
+      "2 RDV placés sur les 3 de la période. 1 écarté, faute de score de qualification ou de montant potentiel.",
     );
   });
 
@@ -48,12 +48,12 @@ describe("matriceRendezVousLegende", () => {
     expect(
       matriceRendezVousLegende({ pointsPlaces: 0, rdvSurLaPeriode: 8 }),
     ).toBe(
-      "Aucun des 8 RDV de la période n'a à la fois une note de qualification et un montant potentiel.",
+      "Aucun des 8 RDV de la période n'a à la fois un score de qualification et un montant potentiel.",
     );
     expect(
       matriceRendezVousLegende({ pointsPlaces: 0, rdvSurLaPeriode: 1 }),
     ).toBe(
-      "Le rendez-vous de la période n'a pas de note de qualification ou pas de montant potentiel.",
+      "Le rendez-vous de la période n'a pas de score de qualification ou pas de montant potentiel.",
     );
   });
 

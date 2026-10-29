@@ -12,10 +12,10 @@ export function AnalysisScoringOverviewCard({
 }) {
   return (
     <section
-      aria-label="Rôle et système de notation"
+      aria-label="Rôle et calcul des scores"
       className="rounded-xl border border-border bg-card p-4 shadow-sm"
     >
-      <h3 className="text-[14px] font-semibold">Rôle et système de notation</h3>
+      <h3 className="text-[14px] font-semibold">Rôle et calcul des scores</h3>
       <p className="mt-1 text-[13px] leading-relaxed">{overview.role}</p>
 
       <div className="mt-3 grid gap-4 lg:grid-cols-2">
@@ -44,7 +44,7 @@ export function AnalysisScoringOverviewCard({
       {overview.scoring.length > 0 ? (
         <div className="mt-4">
           <p className="text-muted-foreground text-[11.5px] font-bold tracking-[.06em] uppercase">
-            Comment elle note
+            Comment elle calcule
           </p>
           <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[12.8px] leading-relaxed">
             {overview.scoring.map((line) => (
