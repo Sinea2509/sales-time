@@ -43,7 +43,7 @@ export function UnlockProgress({ current, target, unlocks, className }: Props) {
         className="bg-muted h-2 overflow-hidden rounded-full"
       >
         <div
-          className="st-bar h-full rounded-full bg-gradient-to-r from-[#7B5CFF] to-[#FF7A8A]"
+          className="st-bar h-full rounded-full bg-brand"
           style={{ width: `${(done / target) * 100}%` }}
         />
       </div>

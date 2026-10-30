@@ -60,7 +60,10 @@ export interface AiRequestLogRepositoryPort {
   getAggregateSince(since: Date): Promise<{
     totalCalls: number;
     errorCalls: number;
-    inputTokens: number;
-    outputTokens: number;
+    tokensByModel: {
+      model: string;
+      inputTokens: number;
+      outputTokens: number;
+    }[];
   }>;
 }

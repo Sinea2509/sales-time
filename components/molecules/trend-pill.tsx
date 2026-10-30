@@ -1,12 +1,16 @@
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
+import {
+  CHIP_BAD_INK,
+  CHIP_NEUTRAL_BG,
+  CHIP_OK_INK,
+} from "@/components/atoms/tone-chip";
 import { isStatsWindowEligibleForTrends } from "@/src/core/domain/dashboard-stats-window";
 import type { StatsWindowDays } from "@/src/core/domain/dashboard-stats-window";
 import { plurielFr } from "@/lib/pluriel-fr";
 import { cn } from "@/lib/utils";
 
-const basePill =
-  "inline-flex items-center gap-0.5 rounded-full border px-2 py-0.5 text-xs font-semibold tabular-nums";
+const basePill = `inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${CHIP_NEUTRAL_BG}`;
 
 export type TrendDirectionMode = "up-good" | "down-good" | "neutral";
 
@@ -17,13 +21,13 @@ function deltaDisplayMagnitude(delta: number): number {
     : Math.round(absVal * 10) / 10;
 }
 
+/* Comme les pastilles de la charte : un fond neutre, la couleur sur le chiffre. */
 const kpiVsPreviousVariants = cva(basePill, {
   variants: {
     intent: {
-      good: "border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:border-emerald-500/35 dark:bg-emerald-500/15 dark:text-emerald-100",
-      bad: "border-rose-500/40 bg-rose-500/10 text-rose-800 dark:border-rose-500/35 dark:bg-rose-500/15 dark:text-rose-100",
-      neutral:
-        "border-border bg-muted text-muted-foreground dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
+      good: CHIP_OK_INK,
+      bad: CHIP_BAD_INK,
+      neutral: "text-muted-foreground dark:text-zinc-300",
     },
   },
   defaultVariants: { intent: "neutral" },

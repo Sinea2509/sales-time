@@ -1,9 +1,6 @@
+import { estimatedModelCostUsd } from "@/lib/analysis-gateway-models";
 import type { AiRequestLogRepositoryPort } from "@/src/core/ports/ai-request-log-repository-port";
 import type { MeetingRepositoryPort } from "@/src/core/ports/meeting-repository-port";
-
-/** Rough USD estimate (AI Gateway blended rate). */
-const INPUT_USD_PER_TOKEN = 0.000002;
-const OUTPUT_USD_PER_TOKEN = 0.000008;
 
 export type PlatformAiKpis = {
   aiCalls30d: number;
@@ -32,11 +29,17 @@ export async function getPlatformAiKpis(
       ? Math.round((meetingStats.failed / totalAnalysed) * 1000) / 10
       : null;
 
+  /*
+    Chaque modèle à son tarif. Un seul tarif moyen comptait Claude Haiku 5.5
+    vingt fois trop cher : 15,36 $ affichés le 30 octobre 2026 pour environ
+    8,40 $ réels.
+  */
   const estimatedCostUsd30d =
     Math.round(
-      (logStats.inputTokens * INPUT_USD_PER_TOKEN +
-        logStats.outputTokens * OUTPUT_USD_PER_TOKEN) *
-        100,
+      logStats.tokensByModel.reduce(
+        (total, usage) => total + estimatedModelCostUsd(usage),
+        0,
+      ) * 100,
     ) / 100;
 
   return {

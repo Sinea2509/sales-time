@@ -67,30 +67,41 @@ export class PrismaAiRequestLogRepository implements AiRequestLogRepositoryPort 
   async getAggregateSince(since: Date): Promise<{
     totalCalls: number;
     errorCalls: number;
-    inputTokens: number;
-    outputTokens: number;
+    tokensByModel: {
+      model: string;
+      inputTokens: number;
+      outputTokens: number;
+    }[];
   }> {
     const rows = await this.db.aiRequestLog.findMany({
       where: { createdAt: { gte: since } },
       select: {
         status: true,
+        modelName: true,
         inputTokens: true,
         outputTokens: true,
       },
     });
-    let inputTokens = 0;
-    let outputTokens = 0;
+    const tokens = new Map<
+      string,
+      { model: string; inputTokens: number; outputTokens: number }
+    >();
     let errorCalls = 0;
     for (const row of rows) {
-      inputTokens += row.inputTokens ?? 0;
-      outputTokens += row.outputTokens ?? 0;
+      const model = tokens.get(row.modelName) ?? {
+        model: row.modelName,
+        inputTokens: 0,
+        outputTokens: 0,
+      };
+      model.inputTokens += row.inputTokens ?? 0;
+      model.outputTokens += row.outputTokens ?? 0;
+      tokens.set(row.modelName, model);
       if (row.status === "ERROR") errorCalls += 1;
     }
     return {
       totalCalls: rows.length,
       errorCalls,
-      inputTokens,
-      outputTokens,
+      tokensByModel: [...tokens.values()],
     };
   }
 }

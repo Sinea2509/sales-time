@@ -344,7 +344,7 @@ function StepContent({
               </div>
               <div className="bg-muted h-2 overflow-hidden rounded-full">
                 <div
-                  className="st-bar h-full rounded-full bg-gradient-to-r from-[#7B5CFF] via-[#B26BFF] to-[#FF7A8A] shadow-[0_0_10px_rgba(178,107,255,0.45)]"
+                  className="st-bar h-full rounded-full bg-brand"
                   style={{ width: `${(b.weight / max) * 100}%` }}
                 />
               </div>
