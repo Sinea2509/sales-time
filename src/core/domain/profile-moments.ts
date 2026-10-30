@@ -46,6 +46,12 @@ export {
 export const soncasMomentsOutputSchema = z.object({
   moments: z.array(soncasMomentSchema).max(10),
   summary: z.string().min(1).max(1500),
+  /**
+   * Le levier que le résumé nomme principal. Il départage deux leviers à
+   * égalité : le bandeau de la fiche disait « Argent » et le résumé « la
+   * sécurité », tous deux à 62 (retour de Thomas du 29 octobre 2026).
+   */
+  mainLever: z.enum(SONCAS_LEVERS),
   actionableAdvice: profileActionableAdviceSchema,
 });
 
@@ -121,6 +127,27 @@ function keepFound<
 /** « 12:05 », « 1:02:30 », « 12'30 » : un horodatage recopié du transcript. */
 const TIMESTAMP = /^\d{1,2}[:'’]\d{2}(?:[:'’]\d{2})?$/;
 
+/**
+ * Un passage n'est « net » que pour un levier, le premier qui le soit : ceux
+ * d'après comptent comme faibles.
+ *
+ * Une même phrase marquée nette pour deux leviers rapportait deux fois, et
+ * deux ou trois phrases suffisaient à porter un levier à 90 sur 100 (revue des
+ * fiches du 30 octobre 2026). Une phrase dit une raison de choisir, pas deux.
+ */
+function withOneNetLever(moment: SoncasMoment): SoncasMoment {
+  let netSeen = false;
+  return {
+    ...moment,
+    levers: moment.levers.map((entry) => {
+      if (entry.strength !== "nette") return entry;
+      if (netSeen) return { ...entry, strength: "faible" as const };
+      netSeen = true;
+      return entry;
+    }),
+  };
+}
+
 /** Le résultat SONCAS enregistré, avec ses passages. */
 export type SoncasFromMoments = SoncasAnalysisResult & {
   moments: SoncasMoment[];
@@ -129,13 +156,19 @@ export type SoncasFromMoments = SoncasAnalysisResult & {
 /**
  * Les notes SONCAS calculées sur les passages retrouvés. Un passage que les
  * paroles du prospect ne contiennent pas est écarté avant tout calcul.
+ *
+ * À score égal, le levier principal est celui que le résumé nomme : la fiche
+ * ne se contredit pas. À défaut (une analyse d'avant ce champ), celui qui a le
+ * plus de passages nets.
  */
 export function soncasFromMoments(
   output: SoncasMomentsOutput,
   prospectText: string,
   sellerText: string | null = null,
 ): SoncasFromMoments {
-  const moments = keepFound(output.moments ?? [], prospectText, sellerText);
+  const moments = keepFound(output.moments ?? [], prospectText, sellerText).map(
+    withOneNetLever,
+  );
   const points = new Map<SoncasLever, number>();
   const nettes = new Map<SoncasLever, number>();
   const evidence = new Map<SoncasLever, string[]>();
@@ -160,12 +193,15 @@ export function soncasFromMoments(
       },
     ]),
   ) as SoncasAnalysisResult["drivers"];
-  const dominant = [...SONCAS_LEVERS].sort(
+  const [first] = [...SONCAS_LEVERS].sort(
     (a, b) =>
       drivers[b].score - drivers[a].score ||
       (nettes.get(b) ?? 0) - (nettes.get(a) ?? 0) ||
       SONCAS_LEVERS.indexOf(a) - SONCAS_LEVERS.indexOf(b),
-  )[0];
+  );
+  const named = output.mainLever;
+  const dominant =
+    named && drivers[named].score === drivers[first].score ? named : first;
   return {
     drivers,
     dominant,

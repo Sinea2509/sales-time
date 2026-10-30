@@ -112,7 +112,16 @@ export const SONCAS_READING_INSTRUCTION = `## Où lire les leviers SONCAS
 - Seules les paroles du prospect comptent. Une phrase dite par le commercial, même reprise ou approuvée par le prospect, n'est jamais une preuve : le produit la retire, et le levier retombe.
 - Cherche d'abord les moments qui révèlent ce qui fait choisir ce prospect : ce qu'il attend d'un prestataire ou d'une solution, ce qui l'a déçu avant, sa réaction au prix, ses conditions pour dire oui, ce que sa direction veut voir, et ce qu'il dit de la relation qu'il souhaite.
 - Un levier se juge à l'insistance du prospect, pas au sujet abordé. Parler de qualité n'est pas « sécurité » si le prospect cherche surtout à essayer autre chose (« nouveauté ») ; parler de son équipe interne n'est pas « orgueil » s'il n'y met aucune fierté.
-- Le levier principal est celui qui revient le plus et qui pèse sur la décision. Quand deux leviers se valent, le résumé le dit.`;
+- Le levier principal est celui qui revient le plus et qui pèse sur la décision. Quand deux leviers se valent, le résumé le dit.
+
+## Les raccourcis à éviter (règle du produit)
+Un levier est une raison de choisir, pas un mot ni un sujet. Avant d'en marquer un, demande-toi ce que le prospect cherche à obtenir ou à éviter en disant cela, et si cela pèse sur son choix.
+- Un fait n'est pas un levier. La réponse à une question factuelle du commercial (le budget, qui décide, le calendrier, le nombre de personnes) n'en montre aucun, sauf s'il dit pourquoi cela compte pour lui. Écarte ces passages.
+- Une contrainte n'est pas une motivation. « On n'a pas beaucoup de budget » dit une limite : \`argent\` au plus \`faible\`. \`argent\` n'est \`nette\` que s'il raisonne en retour sur investissement, compare des prix, négocie, ou dit que le prix décidera.
+- La courtoisie n'est pas de la sympathie. Une formule polie, le souci de ne pas faire perdre son temps au commercial, les mots « respect » ou « humain » ne montrent rien. \`sympathie\` n'est \`nette\` que s'il dit choisir pour la relation : une personne, un lien de confiance, des valeurs partagées, un partenaire qu'il veut.
+- « À l'écoute », « souple », « sur mesure », « à la carte » ne disent pas le levier à eux seuls : cherche pourquoi il le veut. Pour ne pas revivre un programme inadapté ou une déception : \`securite\`. Pour s'épargner du travail : \`confort\`. Pour un programme à son image, qui le distingue : \`orgueil\`. Pour le lien avec le prestataire : \`sympathie\`. Sans raison dite, le levier reste \`faible\`.
+- Vouloir que le prestataire tienne ce qu'il promet (« le respect du programme », « pas de mauvaise surprise ») relève de \`securite\`.
+- Décider seul ou piloter un projet n'est pas de l'orgueil. \`orgueil\` demande de la fierté, le souci de son image ou de sa réussite, l'envie de se distinguer.`;
 
 /**
  * La méthode SONCAS par passages, fixée hors de la consigne modifiable : elle
@@ -132,11 +141,15 @@ Ignore le reste : un mot isolé dans un passage technique ou descriptif ne dit r
 Pour chaque passage :
 - \`prospectWords\` : les mots du prospect, recopiés mot pour mot (une ou deux phrases). Le produit les cherche dans ses paroles ; un passage introuvable est écarté.
 - \`sellerQuestion\` : la question ou la relance du commercial qui l'a amené, recopiée ; vide si le prospect l'a dit de lui-même.
-- \`levers\` : 1 à 3 leviers que ce passage montre, chacun \`nette\` (le passage le dit clairement) ou \`faible\` (il le laisse entendre).
-- \`reading\` : ce que le passage révèle, en une phrase.
+- \`levers\` : 1 à 3 leviers que ce passage montre, le plus fort en premier, chacun \`nette\` (le passage le dit clairement) ou \`faible\` (il le laisse entendre). Un passage n'a qu'un levier \`nette\` : une phrase dit une raison de choisir, pas deux. Le produit compte les suivants comme \`faible\`.
+- \`reading\` : ce que le prospect cherche à obtenir ou à éviter, en une phrase.
 - \`moment\` : l'horodatage recopié du transcript s'il en porte un, sinon vide.
 
-Le produit compte deux points par passage net et un par passage faible, et en tire le score de chaque levier : 0 point vaut 10, 1 vaut 25, 2 vaut 45, 4 vaut 62, 6 vaut 78, 8 vaut 90. Le levier principal est celui qui a le score le plus haut.`;
+Le produit compte deux points par passage net et un par passage faible, et en tire le score de chaque levier : 0 point vaut 10, 1 vaut 25, 2 vaut 45, 4 vaut 62, 6 vaut 78, 8 vaut 90. Le levier principal est celui qui a le score le plus haut.
+
+\`mainLever\` : le levier que ton résumé nomme principal, celui qui a le plus de points. Quand deux leviers sont à égalité, c'est ce choix qui fait foi.
+
+Les identifiants (\`securite\`, \`nouveaute\`, \`argent\`…) ne servent qu'aux champs \`levers\` et \`mainLever\`. Dans \`summary\` et \`reading\`, le commercial lit du français : écris « la sécurité », « la nouveauté », « l'argent », avec leurs accents et leur article.`;
 
 /**
  * La méthode DISC par passages, fixée hors de la consigne modifiable.

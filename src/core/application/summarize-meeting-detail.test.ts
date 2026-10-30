@@ -3,6 +3,7 @@ import type { VisitReportExtraction } from "@/src/core/domain/visit-report-zod";
 import {
   generateAndPersistMeetingVisitReport,
   meetingVisitReportForPage,
+  prepareMeetingVisitReportExtraction,
   summarizeMeetingDetail,
   VISIT_REPORT_TRANSCRIPT_MAX_CHARS,
 } from "./summarize-meeting-detail";
@@ -548,5 +549,118 @@ describe("generateAndPersistMeetingVisitReport", () => {
     expect(saved.visitReportDraft.startsWith("COMPTE RENDU DE VISITE")).toBe(
       true,
     );
+  });
+});
+
+describe("prepareMeetingVisitReportExtraction", () => {
+  afterEach(() => {
+    const { getEnv } = jest.requireMock<{ getEnv: jest.Mock }>("@/lib/env");
+    getEnv.mockReturnValue({ AI_GATEWAY_API_KEY: undefined });
+  });
+
+  const ENTREE = {
+    organizationId: "org_1",
+    meeting: {
+      ...meeting,
+      status: "PROCESSING",
+      transcript: "Commercial : bonjour.\nProspect : bonjour.",
+      visitReportDraft: null,
+    },
+    discResult: null,
+    soncasResult: null,
+  };
+
+  function cacheLocal() {
+    const lignes = new Map<string, unknown>();
+    return {
+      get: jest.fn(
+        async (i: { meetingsFingerprint: string }) =>
+          lignes.get(i.meetingsFingerprint) ?? null,
+      ),
+      set: jest.fn(
+        async (i: { meetingsFingerprint: string; payload: unknown }) => {
+          lignes.set(i.meetingsFingerprint, i.payload);
+        },
+      ),
+    };
+  }
+
+  it("garde l'extraction : le compte rendu se compose ensuite sans rappeler le modèle", async () => {
+    withAiKey();
+    const extractVisitReport = jest.fn().mockResolvedValue(extraction);
+    const deps = {
+      analysis: { extractVisitReport } as never,
+      prompts: prompts as never,
+      organizationPrompts: noOrganizationPrompts(),
+      aiSummaryCache: cacheLocal() as never,
+      meetings: meetingsRepository() as never,
+    };
+
+    const faite = await prepareMeetingVisitReportExtraction(
+      deps,
+      ENTREE as never,
+    );
+    const compte = await summarizeMeetingDetail(deps, {
+      ...ENTREE,
+      kissResult: null,
+      forceAiGeneration: true,
+    } as never);
+
+    expect(faite).toBe(true);
+    expect(extractVisitReport).toHaveBeenCalledTimes(1);
+    expect(compte.fromAi).toBe(true);
+  });
+
+  it("rend false sans lever quand le modèle échoue deux fois", async () => {
+    withAiKey();
+    const extractVisitReport = jest.fn().mockRejectedValue(new Error("panne"));
+    const faite = await prepareMeetingVisitReportExtraction(
+      {
+        analysis: { extractVisitReport } as never,
+        prompts: prompts as never,
+        organizationPrompts: noOrganizationPrompts(),
+      },
+      ENTREE as never,
+    );
+    expect(faite).toBe(false);
+    expect(extractVisitReport).toHaveBeenCalledTimes(2);
+  });
+
+  it("retente une fois quand le modèle rend une réponse mal rangée", async () => {
+    withAiKey();
+    const extractVisitReport = jest
+      .fn()
+      .mockRejectedValueOnce(new Error("réponse non conforme"))
+      .mockResolvedValueOnce(extraction);
+    const faite = await prepareMeetingVisitReportExtraction(
+      {
+        analysis: { extractVisitReport } as never,
+        prompts: prompts as never,
+        organizationPrompts: noOrganizationPrompts(),
+      },
+      ENTREE as never,
+    );
+    expect(faite).toBe(true);
+    expect(extractVisitReport).toHaveBeenCalledTimes(2);
+  });
+
+  it("ne fait rien sans clé ni transcript", async () => {
+    const extractVisitReport = jest.fn();
+    const deps = {
+      analysis: { extractVisitReport } as never,
+      prompts: prompts as never,
+      organizationPrompts: noOrganizationPrompts(),
+    };
+    expect(
+      await prepareMeetingVisitReportExtraction(deps, ENTREE as never),
+    ).toBe(false);
+    withAiKey();
+    expect(
+      await prepareMeetingVisitReportExtraction(deps, {
+        ...ENTREE,
+        meeting: { ...ENTREE.meeting, transcript: "  " },
+      } as never),
+    ).toBe(false);
+    expect(extractVisitReport).not.toHaveBeenCalled();
   });
 });

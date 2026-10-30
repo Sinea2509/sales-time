@@ -3,11 +3,16 @@ import { reuseAnalysisOutput } from "./reuse-analysis-output";
 import type { AiSummaryCacheRepositoryPort } from "@/src/core/ports/ai-summary-cache-repository-port";
 import { getEnv } from "@/lib/env";
 import { resolvePromptGatewayModel } from "@/lib/load-analysis-model";
-import type {
-  DiscAnalysisResult,
-  SoncasAnalysisResult,
+import {
+  discResultSchema,
+  soncasResultSchema,
+  type DiscAnalysisResult,
+  type SoncasAnalysisResult,
 } from "@/src/core/domain/analysis-result-zod";
-import type { KissAnalysisResult } from "@/src/core/domain/kiss-result-zod";
+import {
+  kissResultSchema,
+  type KissAnalysisResult,
+} from "@/src/core/domain/kiss-result-zod";
 import type { MeetingStatus } from "@/src/core/domain/meeting-status";
 import {
   scorecardResultSchema,
@@ -85,6 +90,13 @@ const PENDING_REPORT_MESSAGE =
  * modèles proposés.
  */
 export const VISIT_REPORT_TRANSCRIPT_MAX_CHARS = 150_000;
+
+/**
+ * Deux essais pour l'extraction faite pendant l'analyse : une réponse du modèle
+ * peut rester illisible malgré les réparations, et le tirage change d'un appel
+ * à l'autre (essai du 30 octobre 2026 avec Claude Haiku 5.5).
+ */
+const VISIT_REPORT_EXTRACTION_ATTEMPTS = 2;
 
 /** Les rendez-vous précédents repris dans l'historique du compte. */
 const VISIT_REPORT_HISTORY_MAX = 5;
@@ -260,6 +272,122 @@ async function loadVisitReportContext(
   return { ...base, history, historyTotal: earlier.length };
 }
 
+/**
+ * Ce que le modèle tire du transcript pour le compte rendu.
+ *
+ * Le même transcript avec la même consigne rend la même extraction : elle se
+ * garde, et une écriture qui l'a déjà faite se contente de la relire.
+ */
+async function extractVisitReportFromTranscript(
+  deps: VisitReportDeps,
+  input: {
+    organizationId: string;
+    meeting: MeetingDetailWithAnalyses;
+    discResult: DiscAnalysisResult | null;
+    soncasResult: SoncasAnalysisResult | null;
+  },
+) {
+  const [prompt, model] = await Promise.all([
+    resolveAnalysisPrompt(deps, {
+      kind: "MEETING_DETAIL_SYNTHESIS",
+      organizationId: input.organizationId,
+    }),
+    resolvePromptGatewayModel(deps.prompts, "MEETING_DETAIL_SYNTHESIS"),
+  ]);
+  /* Les noms saisis par le commercial font foi sur l'orthographe du transcript. */
+  const systemMarkdown = composeAnalysisSystemMarkdown(prompt.markdown, [
+    referenceNamesInstruction({
+      prospectName: input.meeting.prospectName,
+      prospectCompany: input.meeting.prospectCompany,
+    }),
+  ]);
+  const extractionInput = {
+    systemMarkdown,
+    model,
+    prospectName: input.meeting.prospectName,
+    prospectCompany: input.meeting.prospectCompany,
+    // L'heure de Paris, celle que le commercial a saisie, et non l'heure universelle.
+    meetingAt: toAppTimeZoneDatetimeLocal(input.meeting.meetingAt),
+    outcome: input.meeting.outcome,
+    meetingType: input.meeting.meetingType,
+    transcript: input.meeting.transcript.slice(
+      0,
+      VISIT_REPORT_TRANSCRIPT_MAX_CHARS,
+    ),
+    notes: input.meeting.notes,
+    soncasSummary: input.soncasResult?.summary?.trim() || null,
+    discSummary: input.discResult?.summary?.trim() || null,
+  };
+  /* Le même transcript avec la même consigne rend le même compte rendu. */
+  const { value } = await reuseAnalysisOutput(deps, {
+    organizationId: input.organizationId,
+    kind: "MEETING_DETAIL_SYNTHESIS",
+    model,
+    systemPrompt: systemMarkdown,
+    userPrompt: JSON.stringify({ ...extractionInput, systemMarkdown: null }),
+    compute: () => deps.analysis.extractVisitReport(extractionInput),
+  });
+  return value;
+}
+
+/** Les analyses d'un rendez-vous que le compte rendu relit, une fois vérifiées. */
+export function visitReportAnalyses(
+  meeting: Pick<MeetingDetailWithAnalyses, "analyses">,
+): {
+  discResult: DiscAnalysisResult | null;
+  soncasResult: SoncasAnalysisResult | null;
+  kissResult: KissAnalysisResult | null;
+  scorecardResult: ScorecardAnalysisResult | null;
+} {
+  const pick = (kind: string) =>
+    meeting.analyses.find((a) => a.kind === kind)?.result ?? null;
+  const disc = discResultSchema.safeParse(pick("DISC"));
+  const soncas = soncasResultSchema.safeParse(pick("SONCAS"));
+  const kiss = kissResultSchema.safeParse(pick("KISS"));
+  const scorecard = scorecardResultSchema.safeParse(pick("SCORECARD"));
+  return {
+    discResult: disc.success ? disc.data : null,
+    soncasResult: soncas.success ? soncas.data : null,
+    kissResult: kiss.success ? kiss.data : null,
+    scorecardResult: scorecard.success ? scorecard.data : null,
+  };
+}
+
+/**
+ * Fait l'extraction du compte rendu d'avance, pendant l'analyse.
+ *
+ * Elle ne demande que le transcript et les résumés du profil, disponibles dès
+ * la première minute : elle se fait donc en même temps que la grille, qui dure
+ * plus longtemps. Le compte rendu se compose ensuite sans appel au modèle, et
+ * la fiche s'ouvre complète, sans la minute d'attente qui s'ajoutait aux trois
+ * minutes d'analyse (retour de Thomas du 29 octobre 2026).
+ *
+ * Rend `false` sans lever après deux échecs : le compte rendu s'écrira alors à
+ * l'ouverture de la fiche, comme avant.
+ */
+export async function prepareMeetingVisitReportExtraction(
+  deps: VisitReportDeps,
+  input: {
+    organizationId: string;
+    meeting: MeetingDetailWithAnalyses;
+    discResult: DiscAnalysisResult | null;
+    soncasResult: SoncasAnalysisResult | null;
+  },
+): Promise<boolean> {
+  if (!getEnv().AI_GATEWAY_API_KEY || !input.meeting.transcript.trim()) {
+    return false;
+  }
+  for (let i = 0; i < VISIT_REPORT_EXTRACTION_ATTEMPTS; i += 1) {
+    try {
+      await extractVisitReportFromTranscript(deps, input);
+      return true;
+    } catch {
+      // L'essai suivant tire une autre réponse.
+    }
+  }
+  return false;
+}
+
 export async function summarizeMeetingDetail(
   deps: VisitReportDeps,
   input: {
@@ -305,50 +433,18 @@ export async function summarizeMeetingDetail(
   }
 
   try {
-    const [prompt, model, context] = await Promise.all([
-      resolveAnalysisPrompt(deps, {
-        kind: "MEETING_DETAIL_SYNTHESIS",
+    const [extracted, context] = await Promise.all([
+      extractVisitReportFromTranscript(deps, {
         organizationId: input.organizationId,
+        meeting: input.meeting,
+        discResult: input.discResult,
+        soncasResult: input.soncasResult,
       }),
-      resolvePromptGatewayModel(deps.prompts, "MEETING_DETAIL_SYNTHESIS"),
       loadVisitReportContext(deps, {
         meeting: input.meeting,
         organizationId: input.organizationId,
       }),
     ]);
-    /* Les noms saisis par le commercial font foi sur l'orthographe du transcript. */
-    const systemMarkdown = composeAnalysisSystemMarkdown(prompt.markdown, [
-      referenceNamesInstruction({
-        prospectName: input.meeting.prospectName,
-        prospectCompany: input.meeting.prospectCompany,
-      }),
-    ]);
-    const extractionInput = {
-      systemMarkdown,
-      model,
-      prospectName: input.meeting.prospectName,
-      prospectCompany: input.meeting.prospectCompany,
-      // L'heure de Paris, celle que le commercial a saisie, et non l'heure universelle.
-      meetingAt: toAppTimeZoneDatetimeLocal(input.meeting.meetingAt),
-      outcome: input.meeting.outcome,
-      meetingType: input.meeting.meetingType,
-      transcript: input.meeting.transcript.slice(
-        0,
-        VISIT_REPORT_TRANSCRIPT_MAX_CHARS,
-      ),
-      notes: input.meeting.notes,
-      soncasSummary: input.soncasResult?.summary?.trim() || null,
-      discSummary: input.discResult?.summary?.trim() || null,
-    };
-    /* Le même transcript avec la même consigne rend le même compte rendu. */
-    const { value: extracted } = await reuseAnalysisOutput(deps, {
-      organizationId: input.organizationId,
-      kind: "MEETING_DETAIL_SYNTHESIS",
-      model,
-      systemPrompt: systemMarkdown,
-      userPrompt: JSON.stringify({ ...extractionInput, systemMarkdown: null }),
-      compute: () => deps.analysis.extractVisitReport(extractionInput),
-    });
     // Un moment que le transcript ne porte pas a été estimé : il ne s'écrit pas.
     const extraction = withDatesFromTranscript(
       withQuotesFromTranscript(
@@ -447,11 +543,9 @@ export function meetingVisitReportForPage(input: {
 }
 
 /**
- * Écrit et enregistre le compte rendu de visite à la fin des analyses.
- *
- * Il s'écrit ici, en arrière-plan, plutôt qu'à la première ouverture de la
- * fiche : la page n'attend pas le modèle, et le texte est prêt quand le
- * commercial arrive.
+ * Compose et enregistre le compte rendu de visite à la fin des analyses, à
+ * partir de l'extraction faite pendant l'analyse : la page n'attend pas le
+ * modèle, et le texte est prêt quand le commercial arrive.
  */
 export async function generateAndPersistMeetingVisitReport(
   deps: VisitReportDeps & { meetings: MeetingRepositoryPort },

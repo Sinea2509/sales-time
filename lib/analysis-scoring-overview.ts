@@ -254,7 +254,8 @@ const OVERVIEWS: Partial<
     scoring: [
       "L'IA n'évalue pas les leviers. Elle relève les passages-clés : les réponses du prospect sur ce qui est important pour lui, ce qu'il attend d'un prestataire, ce qui l'a déçu, sa réaction au prix, ses conditions, ses objections. Le reste du rendez-vous est ignoré.",
       "Chaque passage est recherché mot pour mot dans les paroles du prospect ; un passage introuvable, ou dit par le commercial, est écarté.",
-      "Le produit compte deux points par passage net et un par passage faible, puis lit le score du levier dans le tableau ci-dessous.",
+      "Un levier est une raison de choisir, pas un mot ni un sujet : un fait, une contrainte de budget ou une formule de politesse ne le montrent pas. Un passage n'a qu'un levier net, le premier ; les suivants comptent comme faibles.",
+      "Le produit compte deux points par passage net et un par passage faible, puis lit le score du levier dans le tableau ci-dessous. À égalité, le levier principal est celui que le résumé nomme.",
     ],
     tables: [
       momentPointsTable("Le score d'un levier, selon ses passages"),

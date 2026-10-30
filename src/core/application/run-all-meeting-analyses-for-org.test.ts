@@ -1,8 +1,18 @@
 import { runAllMeetingAnalysesForOrg } from "./run-all-meeting-analyses-for-org";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
+import {
+  generateAndPersistMeetingVisitReport,
+  prepareMeetingVisitReportExtraction,
+} from "./summarize-meeting-detail";
 
 jest.mock("./run-meeting-analysis", () => ({
   runMeetingAnalysis: jest.fn(),
+}));
+
+jest.mock("./summarize-meeting-detail", () => ({
+  ...jest.requireActual("./summarize-meeting-detail"),
+  prepareMeetingVisitReportExtraction: jest.fn(),
+  generateAndPersistMeetingVisitReport: jest.fn(),
 }));
 
 /*
@@ -367,5 +377,130 @@ describe("runAllMeetingAnalysesForOrg", () => {
     for (const call of runMeetingAnalysisMock.mock.calls) {
       expect(call[0].organizationPrompts).toBe(organizationPrompts);
     }
+  });
+});
+
+/*
+  Le compte rendu se prépare pendant l'analyse : la fiche s'ouvre complète, sans
+  la minute d'attente qui s'ajoutait aux trois minutes d'analyse.
+*/
+describe("le compte rendu pendant l'analyse", () => {
+  const prepareMock = prepareMeetingVisitReportExtraction as jest.Mock;
+  const composeMock = generateAndPersistMeetingVisitReport as jest.Mock;
+  const DETAIL = { id: "m1", analyses: [] };
+
+  function depsAvecFiche() {
+    const deps = makeDeps();
+    deps.meetings.findMeetingDetailWithAnalyses.mockResolvedValue(DETAIL);
+    return deps;
+  }
+
+  const lancer = (deps: ReturnType<typeof makeDeps>) =>
+    runAllMeetingAnalysesForOrg(deps as never, {
+      organizationId: "org1",
+      meetingId: "m1",
+      notifyOnComplete: false,
+    });
+
+  const statuts = (deps: ReturnType<typeof makeDeps>) =>
+    deps.meetings.updateMeetingStatus.mock.calls.map((c) => c[0].status);
+
+  beforeEach(() => {
+    runMeetingAnalysisMock.mockReset();
+    runMeetingAnalysisMock.mockResolvedValue({ ok: true } as never);
+    prepareMock.mockReset();
+    composeMock.mockReset();
+    composeMock.mockResolvedValue(undefined);
+  });
+
+  it("démarre l'extraction pendant la grille, sans attendre sa fin", async () => {
+    let extractionPartie: () => void = () => undefined;
+    const partie = new Promise<void>((resolve) => {
+      extractionPartie = resolve;
+    });
+    prepareMock.mockImplementation(async () => {
+      extractionPartie();
+      return true;
+    });
+    runMeetingAnalysisMock.mockImplementation(async (_deps, input) => {
+      // La grille ne finit qu'une fois l'extraction partie.
+      if (input.kind === "SCORECARD") await partie;
+      return { ok: true } as never;
+    });
+
+    const deps = depsAvecFiche();
+    await lancer(deps);
+
+    expect(prepareMock).toHaveBeenCalledTimes(1);
+    expect(statuts(deps).at(-1)).toBe("READY");
+  });
+
+  it("compose le compte rendu avant de marquer le rendez-vous prêt", async () => {
+    prepareMock.mockResolvedValue(true);
+    const deps = depsAvecFiche();
+    composeMock.mockImplementation(async () => {
+      expect(statuts(deps)).not.toContain("READY");
+    });
+
+    await lancer(deps);
+
+    expect(composeMock).toHaveBeenCalledTimes(1);
+    expect(composeMock.mock.calls[0][1]).toMatchObject({
+      organizationId: "org1",
+      meeting: DETAIL,
+    });
+    expect(statuts(deps).at(-1)).toBe("READY");
+  });
+
+  it("passe prêt sans compte rendu quand l'extraction échoue", async () => {
+    prepareMock.mockResolvedValue(false);
+    const deps = depsAvecFiche();
+
+    await lancer(deps);
+
+    expect(composeMock).not.toHaveBeenCalled();
+    expect(statuts(deps).at(-1)).toBe("READY");
+  });
+
+  it("passe prêt quand la composition échoue", async () => {
+    prepareMock.mockResolvedValue(true);
+    composeMock.mockRejectedValue(new Error("base indisponible"));
+    const deps = depsAvecFiche();
+
+    await lancer(deps);
+
+    expect(statuts(deps).at(-1)).toBe("READY");
+  });
+
+  it("n'attend pas indéfiniment une extraction qui traîne", async () => {
+    jest.useFakeTimers({ doNotFake: ["nextTick", "setImmediate"] });
+    try {
+      prepareMock.mockReturnValue(new Promise(() => undefined));
+      const deps = depsAvecFiche();
+
+      const fini = lancer(deps);
+      await jest.advanceTimersByTimeAsync(30_000);
+      await fini;
+
+      expect(composeMock).not.toHaveBeenCalled();
+      expect(statuts(deps).at(-1)).toBe("READY");
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("ne compose rien quand une analyse échoue", async () => {
+    prepareMock.mockResolvedValue(true);
+    runMeetingAnalysisMock.mockImplementation(async (_deps, input) =>
+      input.kind === "KISS"
+        ? ({ ok: false, error: "AI_FAILED" } as never)
+        : ({ ok: true } as never),
+    );
+    const deps = depsAvecFiche();
+
+    await lancer(deps);
+
+    expect(composeMock).not.toHaveBeenCalled();
+    expect(statuts(deps).at(-1)).toBe("FAILED");
   });
 });

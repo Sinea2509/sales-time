@@ -166,6 +166,22 @@ describe("withSoncasSystemPrompt", () => {
     expect(prompt).not.toContain("sellerSkills");
     expect(prompt).not.toContain("coachingScore");
   });
+
+  /*
+    Un levier est une raison de choisir. Sans cette règle, le modèle coche un
+    budget serré en Argent ou un merci en Sympathie, et une consigne publiée par
+    un super-admin ne doit pas pouvoir l'emporter.
+  */
+  it("carries the shortcuts to avoid, whatever the org writes", () => {
+    const prompt = withSoncasSystemPrompt("Note comme tu le sens.");
+    expect(prompt).toContain("Les raccourcis à éviter");
+    expect(prompt).toContain("Un passage n'a qu'un levier `nette`");
+  });
+
+  it("asks for the main lever the summary names, in plain French", () => {
+    expect(SONCAS_MOMENTS_INSTRUCTION).toContain("`mainLever`");
+    expect(SONCAS_MOMENTS_INSTRUCTION).toContain("« la sécurité »");
+  });
 });
 
 describe("withDiscSystemPrompt", () => {
