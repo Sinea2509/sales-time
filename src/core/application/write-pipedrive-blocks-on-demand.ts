@@ -95,7 +95,9 @@ export async function writePipedriveBlocksOnDemand(
   const features = await deps.organizationFeatures.listEnabledFeatures(
     input.organizationId,
   );
-  if (!hasOrganizationFeature(features, "pipedrive_blocks")) {
+  if (
+    !hasOrganizationFeature(input.organizationId, features, "pipedrive_blocks")
+  ) {
     return { kind: "not_enabled" };
   }
 

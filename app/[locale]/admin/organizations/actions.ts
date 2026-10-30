@@ -1,5 +1,8 @@
 "use server";
-import { isOrganizationFeatureId } from "@/src/core/domain/organization-features";
+import {
+  isOrganizationFeatureId,
+  organizationMayHaveFeature,
+} from "@/src/core/domain/organization-features";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -210,6 +213,9 @@ export async function setOrganizationFeatureAction(
   const { organizationId, feature, enabled } = parsed.data;
   if (!isOrganizationFeatureId(feature)) {
     return { ok: false, message: "Fonctionnalité inconnue." };
+  }
+  if (enabled && !organizationMayHaveFeature(organizationId, feature)) {
+    return { ok: false, message: "Fonctionnalité réservée à Sinéa." };
   }
 
   const org = await deps.backoffice.findOrganizationById(organizationId);

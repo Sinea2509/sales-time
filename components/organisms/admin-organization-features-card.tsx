@@ -6,11 +6,16 @@ import { setOrganizationFeatureAction } from "@/app/[locale]/admin/organizations
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cardTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
-import { ORGANIZATION_FEATURES } from "@/src/core/domain/organization-features";
+import {
+  ORGANIZATION_FEATURES,
+  hasOrganizationFeature,
+  organizationMayHaveFeature,
+} from "@/src/core/domain/organization-features";
 
 /**
  * Les fonctionnalités réservées d'une organisation, une case par
- * fonctionnalité. Chaque changement est journalisé.
+ * fonctionnalité. Chaque changement est journalisé. Une organisation qui n'y a
+ * pas droit voit la case grisée, et le serveur refuserait de toute façon.
  */
 export function AdminOrganizationFeaturesCard({
   organizationId,
@@ -54,17 +59,21 @@ export function AdminOrganizationFeaturesCard({
       </CardHeader>
       <CardContent className="space-y-3">
         {ORGANIZATION_FEATURES.map((f) => {
-          const on = enabled.has(f.id);
+          const allowed = organizationMayHaveFeature(organizationId, f.id);
+          const on = hasOrganizationFeature(organizationId, [...enabled], f.id);
           return (
             <label
               key={f.id}
-              className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3 dark:border-neutral-800"
+              className={cn(
+                "flex items-start gap-3 rounded-xl border border-border p-3 dark:border-neutral-800",
+                allowed ? "cursor-pointer" : "cursor-not-allowed opacity-60",
+              )}
             >
               <input
                 type="checkbox"
                 className="mt-1 size-4 accent-[#6C4DFF]"
                 checked={on}
-                disabled={pending}
+                disabled={pending || !allowed}
                 onChange={(e) => toggle(f.id, e.target.checked)}
               />
               <span>
@@ -72,6 +81,11 @@ export function AdminOrganizationFeaturesCard({
                 <span className="text-muted-foreground block text-xs">
                   {f.description}
                 </span>
+                {allowed ? null : (
+                  <span className="text-muted-foreground mt-1 block text-xs font-semibold">
+                    {f.reservedNotice}
+                  </span>
+                )}
               </span>
             </label>
           );
