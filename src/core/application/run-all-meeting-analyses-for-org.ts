@@ -20,6 +20,32 @@ import type { PromptTemplateRepositoryPort } from "@/src/core/ports/prompt-templ
 import type { UserRepositoryPort } from "@/src/core/ports/user-repository-port";
 import { runMeetingAnalysis } from "./run-meeting-analysis";
 import { runProspectProfileAnalysis } from "./run-prospect-profile-analysis";
+import {
+  generateAndPersistMeetingVisitReport,
+  prepareMeetingVisitReportExtraction,
+  visitReportAnalyses,
+} from "./summarize-meeting-detail";
+
+/**
+ * Le temps laissé à l'extraction du compte rendu quand les analyses sont
+ * finies. Elle est presque toujours déjà là ; sinon le rendez-vous passe prêt
+ * sans elle, et le compte rendu s'écrit à l'ouverture de la fiche.
+ */
+const VISIT_REPORT_EXTRACTION_GRACE_MS = 30_000;
+
+/** Le résultat de `promise`, ou `false` s'il tarde plus de `ms`. */
+async function settledWithin(
+  promise: Promise<boolean>,
+  ms: number,
+): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<boolean>((resolve) => {
+    timer = setTimeout(() => resolve(false), ms);
+  });
+  const settled = await Promise.race([promise, timeout]);
+  clearTimeout(timer);
+  return settled;
+}
 
 export type RunAllMeetingAnalysesResult =
   | { ok: true }
@@ -134,6 +160,32 @@ export async function runAllMeetingAnalysesForOrg(
     le 15 octobre 2026 (voir `run-prospect-profile-analysis.ts`) ; ils
     s'enregistrent toujours à part et se dépouillent ici comme avant.
   */
+  const loadDetail = () =>
+    deps.meetings
+      .findMeetingDetailWithAnalyses({
+        id: meeting.id,
+        organizationId: input.organizationId,
+      })
+      .catch(() => null);
+
+  /*
+    L'extraction du compte rendu ne demande que le transcript et le résumé du
+    profil : elle part dès que le profil est là, à côté de la grille, qui dure
+    plus longtemps. Le rendez-vous n'est pas prêt plus tard pour autant.
+  */
+  let visitReportExtraction: Promise<boolean> = Promise.resolve(false);
+  const startVisitReportExtraction = async () => {
+    const detail = await loadDetail();
+    if (!detail) return false;
+    const { discResult, soncasResult } = visitReportAnalyses(detail);
+    return prepareMeetingVisitReportExtraction(deps, {
+      organizationId: input.organizationId,
+      meeting: detail,
+      discResult,
+      soncasResult,
+    });
+  };
+
   const FIRST_WAVE = ["SONCAS", "DISC", "SCORECARD", "OBJECTIONS"] as const;
   const [profile, scorecard] = await Promise.all([
     runProspectProfileAnalysis(
@@ -151,7 +203,10 @@ export async function runAllMeetingAnalysesForOrg(
         jobId: input.jobId ?? null,
         organizationPlaybookMarkdown: playbookMarkdown,
       },
-    ),
+    ).then((result) => {
+      visitReportExtraction = startVisitReportExtraction();
+      return result;
+    }),
     runKind("SCORECARD"),
   ]);
   const firstWave = FIRST_WAVE.map((kind) =>
@@ -226,11 +281,24 @@ export async function runAllMeetingAnalysesForOrg(
   }
 
   /*
-    Le compte rendu de visite n'est plus écrit ici. Il l'est à la demande, au
-    fil de l'eau, la première fois qu'on ouvre la fiche : le rendez-vous est
-    prêt un appel au modèle plus tôt, et le commercial voit le texte se
-    composer au lieu d'attendre un paragraphe fini.
+    Le compte rendu se compose ici, sans appel au modèle : son extraction est
+    faite, et il reprend les analyses qui viennent de finir. La fiche s'ouvre
+    ainsi complète. Si l'extraction a échoué ou tarde, le rendez-vous passe
+    prêt quand même, et le compte rendu s'écrit à l'ouverture de la fiche.
   */
+  if (
+    await settledWithin(visitReportExtraction, VISIT_REPORT_EXTRACTION_GRACE_MS)
+  ) {
+    const detail = await loadDetail();
+    if (detail) {
+      await generateAndPersistMeetingVisitReport(deps, {
+        organizationId: input.organizationId,
+        meeting: detail,
+        ...visitReportAnalyses(detail),
+      }).catch(() => undefined);
+    }
+  }
+
   await deps.meetings.updateMeetingStatus({
     id: meeting.id,
     organizationId: input.organizationId,

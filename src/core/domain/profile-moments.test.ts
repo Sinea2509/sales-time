@@ -60,6 +60,7 @@ describe("soncasFromMoments", () => {
           ]),
         ],
         summary: "S.",
+        mainLever: "nouveaute",
         actionableAdvice: CONSEILS,
       },
       PROSPECT,
@@ -69,8 +70,73 @@ describe("soncasFromMoments", () => {
     expect(out.drivers.argent.score).toBe(45);
     expect(out.drivers.securite.score).toBe(25);
     expect(out.drivers.orgueil).toEqual({ score: 10, evidence: [] });
-    // Égalité à 45 : l'ordre SONCAS départage, nouveauté avant argent.
+    // Égalité à 45 : le levier que le résumé nomme l'emporte.
     expect(out.dominant).toBe("nouveaute");
+  });
+
+  describe("le levier principal à égalité", () => {
+    const egalite = {
+      moments: [
+        moment(
+          "On veut essayer autre chose que ce qu'on fait depuis des années.",
+          [{ lever: "nouveaute" as const, strength: "nette" as const }],
+        ),
+        moment("On n'a jamais fait ces prix-là.", [
+          { lever: "argent" as const, strength: "nette" as const },
+        ]),
+      ],
+      summary: "S.",
+      actionableAdvice: CONSEILS,
+    };
+
+    it("suit le résumé, pour que la fiche ne se contredise pas", () => {
+      const out = soncasFromMoments(
+        { ...egalite, mainLever: "argent" },
+        PROSPECT,
+      );
+      expect(out.drivers.nouveaute.score).toBe(out.drivers.argent.score);
+      expect(out.dominant).toBe("argent");
+    });
+
+    it("ne suit pas un levier nommé qui n'est pas en tête", () => {
+      const out = soncasFromMoments(
+        { ...egalite, mainLever: "sympathie" },
+        PROSPECT,
+      );
+      expect(out.dominant).toBe("nouveaute");
+    });
+
+    it("garde l'ancien départage sur une réponse d'avant ce champ", () => {
+      const out = soncasFromMoments(egalite as never, PROSPECT);
+      expect(out.dominant).toBe("nouveaute");
+    });
+  });
+
+  it("ne compte un passage net qu'une fois, pour son premier levier net", () => {
+    const out = soncasFromMoments(
+      {
+        moments: [
+          moment("Il faut que les collaborateurs se sentent écoutés.", [
+            { lever: "sympathie", strength: "nette" },
+            { lever: "securite", strength: "nette" },
+            { lever: "argent", strength: "faible" },
+          ]),
+        ],
+        summary: "S.",
+        mainLever: "sympathie",
+        actionableAdvice: CONSEILS,
+      },
+      PROSPECT,
+    );
+    expect(out.drivers.sympathie.score).toBe(45);
+    expect(out.drivers.securite.score).toBe(25);
+    expect(out.drivers.argent.score).toBe(25);
+    // La fiche affiche ce qui a compté.
+    expect(out.moments[0]?.levers).toEqual([
+      { lever: "sympathie", strength: "nette" },
+      { lever: "securite", strength: "faible" },
+      { lever: "argent", strength: "faible" },
+    ]);
   });
 
   it("ne compte qu'une fois un levier répété dans un même passage, et un passage en double", () => {
@@ -85,6 +151,7 @@ describe("soncasFromMoments", () => {
           moment(words, [{ lever: "argent", strength: "nette" }]),
         ],
         summary: "S.",
+        mainLever: "argent",
         actionableAdvice: CONSEILS,
       },
       PROSPECT,
@@ -141,6 +208,7 @@ describe("le nettoyage des passages", () => {
           },
         ],
         summary: "S.",
+        mainLever: "argent",
         actionableAdvice: CONSEILS,
       },
       PROSPECT,

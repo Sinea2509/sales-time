@@ -6,6 +6,7 @@ jest.mock("@/lib/env", () => ({
 }));
 
 jest.mock("./summarize-meeting-detail", () => ({
+  ...jest.requireActual("./summarize-meeting-detail"),
   summarizeMeetingDetail: jest.fn(),
 }));
 

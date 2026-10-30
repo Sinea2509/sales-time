@@ -63,6 +63,7 @@ function makeDeps() {
             },
           ],
           summary: "Sécurité.",
+          mainLever: "securite",
           actionableAdvice: {
             whatItMeans: "a",
             howToTalk: "b",

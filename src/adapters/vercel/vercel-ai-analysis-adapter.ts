@@ -44,7 +44,7 @@ import {
   withScorecardSystemPrompt,
   withSoncasSystemPrompt,
 } from "@/lib/ai-system-prompt";
-import { repairOverlongFields } from "./repair-overlong-fields";
+import { repairStructuredOutput } from "./repair-structured-output";
 import { stableCallSettings } from "./stable-call-settings";
 import {
   buildDelimitedMeetingUserContent,
@@ -78,7 +78,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       schema: soncasMomentsOutputSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -110,7 +110,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       schema: discMomentsOutputSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -152,7 +152,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       schema: kissGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -193,7 +193,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       schema: scorecardGeneratedSchemaForGrid(keys),
       system: systemPrompt,
       prompt: userPrompt,
@@ -229,7 +229,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       schema: objectionsGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -260,7 +260,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       schema: prospectProfileGeneratedSchema,
       system: input.systemPrompt,
       prompt: userPrompt,
@@ -288,7 +288,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       schema: followUpEmailResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -312,7 +312,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       schema: followUpEmailRevisionSchema,
       system: withDataScopeSystemPrompt(input.systemPrompt),
       prompt: input.userContent,
@@ -363,7 +363,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       system,
       schema: sellerCommercialPerformanceSummarySchema,
       prompt: userContent,
@@ -398,7 +398,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       system,
       schema: sellerRelationalAffinitySummarySchema,
       prompt: userContent,
@@ -440,7 +440,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       system,
       schema: teamCoachingRecommendationsSchema,
       prompt: userContent,
@@ -562,11 +562,16 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       system,
       schema: visitReportExtractionSchema,
       prompt,
-      maxOutputTokens: 6000,
+      /*
+        Une réponse coupée perd tout le compte rendu. À 6 000, un rendez-vous
+        d'une heure butait sur le plafond une fois sur trois avec Claude Haiku
+        5.5 (essai du 30 octobre 2026) : le plafond n'arrête ici qu'un emballement.
+      */
+      maxOutputTokens: 16_000,
     });
     return object;
   }
@@ -591,7 +596,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       system: withDataScopeSystemPrompt(input.systemPrompt),
       schema: prospectResearchSchema,
       prompt: input.userPrompt,
@@ -623,7 +628,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       system: withDataScopeSystemPrompt(input.systemPrompt),
       schema: pipedriveExtractionSchema,
       prompt,
@@ -655,7 +660,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairOverlongFields,
+      experimental_repairText: repairStructuredOutput,
       schema: meetingBriefingSchema,
       system,
       prompt: userContent,
