@@ -48,7 +48,7 @@ export function MembersToAttachCard({
   const plusieurs = members.length > 1;
 
   return (
-    <section className="rounded-2xl border border-[#33D1B5]/40 bg-[linear-gradient(135deg,rgba(51,209,181,0.10),rgba(108,77,255,0.05)_60%,transparent)] bg-card p-5 sm:p-6">
+    <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-4">
           <Icon3d tone="teal" size="md">

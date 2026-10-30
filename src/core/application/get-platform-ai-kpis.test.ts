@@ -9,8 +9,18 @@ describe("getPlatformAiKpis", () => {
         getAggregateSince: jest.fn().mockResolvedValue({
           totalCalls: 100,
           errorCalls: 5,
-          inputTokens: 1_000_000,
-          outputTokens: 200_000,
+          tokensByModel: [
+            {
+              model: "anthropic/claude-sonnet-5.5",
+              inputTokens: 1_000_000,
+              outputTokens: 200_000,
+            },
+            {
+              model: "anthropic/claude-haiku-5.5",
+              inputTokens: 1_000_000,
+              outputTokens: 200_000,
+            },
+          ],
         }),
       },
       meetings: {
@@ -28,7 +38,33 @@ describe("getPlatformAiKpis", () => {
     expect(kpis.readyMeetings).toBe(80);
     expect(kpis.failedMeetings).toBe(20);
     expect(kpis.analysisFailureRatePct).toBe(20);
-    // 1M * 0.000002 + 200k * 0.000008 = 2 + 1.6 = 3.6
+    // Sonnet : 2 $ + 2 $. Haiku : 0,10 $ + 0,10 $.
+    expect(kpis.estimatedCostUsd30d).toBe(4.2);
+  });
+
+  it("keeps an order of magnitude for a model outside the list", async () => {
+    const deps = {
+      aiLogs: {
+        getAggregateSince: jest.fn().mockResolvedValue({
+          totalCalls: 1,
+          errorCalls: 0,
+          tokensByModel: [
+            {
+              model: "fournisseur/hors-liste",
+              inputTokens: 1_000_000,
+              outputTokens: 200_000,
+            },
+          ],
+        }),
+      },
+      meetings: {
+        countByAnalysisStatus: jest
+          .fn()
+          .mockResolvedValue({ ready: 0, failed: 0 }),
+      },
+    };
+
+    const kpis = await getPlatformAiKpis(deps as never, new Date());
     expect(kpis.estimatedCostUsd30d).toBe(3.6);
   });
 
@@ -38,8 +74,7 @@ describe("getPlatformAiKpis", () => {
         getAggregateSince: jest.fn().mockResolvedValue({
           totalCalls: 0,
           errorCalls: 0,
-          inputTokens: 0,
-          outputTokens: 0,
+          tokensByModel: [],
         }),
       },
       meetings: {

@@ -264,6 +264,7 @@ export default async function RendezVousDetailPage({
       }
       showSellerCoaching={canViewSellerCoaching}
       pipedriveBlocks={hasOrganizationFeature(
+        organizationId,
         enabledFeatures,
         "pipedrive_blocks",
       )}

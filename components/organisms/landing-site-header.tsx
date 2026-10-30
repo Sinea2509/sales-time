@@ -23,7 +23,7 @@ export function LandingSiteHeader() {
         scrolled ? "bg-[#06060A]/88" : "bg-[#06060A]/70",
       )}
     >
-      <div className="mx-auto flex w-full max-w-[1160px] items-center gap-0 px-6 sm:px-10">
+      <div className="mx-auto flex w-full max-w-[1160px] items-center gap-0 px-4 sm:px-10">
         <Link href="/" className="flex shrink-0 items-center gap-2.25">
           <SalesTimeLogoMark />
           <span className="text-[15px] font-bold tracking-tight text-white">
@@ -32,7 +32,7 @@ export function LandingSiteHeader() {
         </Link>
 
         <nav
-          className="ml-8 hidden flex-1 items-center gap-0.5 md:flex"
+          className="ml-8 hidden flex-1 items-center gap-0.5 lg:flex"
           aria-label="Sur cette page"
         >
           {landingNavLinks.map((link) => (
@@ -47,20 +47,22 @@ export function LandingSiteHeader() {
         </nav>
 
         <nav
-          className="ml-auto flex shrink-0 items-center gap-2"
+          className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2"
           aria-label="Navigation principale"
         >
           <Link
             href="/sign-in"
-            className="rounded-lg px-3.5 py-1.5 text-[13.5px] font-medium whitespace-nowrap text-white/55 transition-colors hover:text-white"
+            className="rounded-lg px-2.5 py-1.5 text-[13.5px] font-medium whitespace-nowrap text-white/55 transition-colors hover:text-white sm:px-3.5"
           >
             Connexion
           </Link>
           <Link
             href="/sign-up"
-            className="rounded-lg bg-brand px-4 py-1.75 text-[13.5px] font-semibold whitespace-nowrap text-brand-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(79,85,240,0.35)] transition-[filter] hover:brightness-110"
+            className="rounded-lg bg-brand px-3 py-1.75 text-[13.5px] font-semibold whitespace-nowrap text-brand-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_1px_3px_rgba(79,85,240,0.35)] transition-[filter] hover:brightness-110 sm:px-4"
           >
-            Essayer Gratuitement
+            {/* Le libellé entier débordait sur un téléphone. */}
+            <span className="sm:hidden">Essayer</span>
+            <span className="hidden sm:inline">Essayer Gratuitement</span>
           </Link>
         </nav>
       </div>

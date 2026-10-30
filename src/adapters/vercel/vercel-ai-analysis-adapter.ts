@@ -78,7 +78,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        soncasMomentsOutputSchema,
+      ),
       schema: soncasMomentsOutputSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -110,7 +112,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(discMomentsOutputSchema),
       schema: discMomentsOutputSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -152,7 +154,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        kissGeneratedResultSchema,
+      ),
       schema: kissGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -190,11 +194,12 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     // produit calcule après cet appel ; les réclamer ici reviendrait à demander
     // au modèle l'addition qu'on lui retire justement des mains.
     const keys = scorecardCriteria(input.grid).map((c) => c.key);
+    const schema = scorecardGeneratedSchemaForGrid(keys);
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
-      schema: scorecardGeneratedSchemaForGrid(keys),
+      experimental_repairText: repairStructuredOutput(schema),
+      schema,
       system: systemPrompt,
       prompt: userPrompt,
     });
@@ -229,7 +234,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        objectionsGeneratedResultSchema,
+      ),
       schema: objectionsGeneratedResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -260,7 +267,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        prospectProfileGeneratedSchema,
+      ),
       schema: prospectProfileGeneratedSchema,
       system: input.systemPrompt,
       prompt: userPrompt,
@@ -288,7 +297,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object, usage } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        followUpEmailResultSchema,
+      ),
       schema: followUpEmailResultSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -312,7 +323,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        followUpEmailRevisionSchema,
+      ),
       schema: followUpEmailRevisionSchema,
       system: withDataScopeSystemPrompt(input.systemPrompt),
       prompt: input.userContent,
@@ -363,7 +376,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        sellerCommercialPerformanceSummarySchema,
+      ),
       system,
       schema: sellerCommercialPerformanceSummarySchema,
       prompt: userContent,
@@ -398,7 +413,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        sellerRelationalAffinitySummarySchema,
+      ),
       system,
       schema: sellerRelationalAffinitySummarySchema,
       prompt: userContent,
@@ -440,7 +457,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        teamCoachingRecommendationsSchema,
+      ),
       system,
       schema: teamCoachingRecommendationsSchema,
       prompt: userContent,
@@ -562,7 +581,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        visitReportExtractionSchema,
+      ),
       system,
       schema: visitReportExtractionSchema,
       prompt,
@@ -596,7 +617,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(prospectResearchSchema),
       system: withDataScopeSystemPrompt(input.systemPrompt),
       schema: prospectResearchSchema,
       prompt: input.userPrompt,
@@ -628,7 +649,9 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(
+        pipedriveExtractionSchema,
+      ),
       system: withDataScopeSystemPrompt(input.systemPrompt),
       schema: pipedriveExtractionSchema,
       prompt,
@@ -660,7 +683,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     const { object } = await generateObject({
       model: input.model,
       ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput,
+      experimental_repairText: repairStructuredOutput(meetingBriefingSchema),
       schema: meetingBriefingSchema,
       system,
       prompt: userContent,

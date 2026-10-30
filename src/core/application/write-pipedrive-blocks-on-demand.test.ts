@@ -1,3 +1,4 @@
+import { SINEA_ORGANIZATION_ID } from "@/src/core/domain/organization-features";
 import type { PipedriveExtraction } from "@/src/core/domain/pipedrive-blocks";
 import { writePipedriveBlocksOnDemand } from "./write-pipedrive-blocks-on-demand";
 
@@ -115,7 +116,7 @@ function makeDeps(options: {
   };
 }
 
-const INPUT = { organizationId: "org", meetingId: "m2" };
+const INPUT = { organizationId: SINEA_ORGANIZATION_ID, meetingId: "m2" };
 
 describe("writePipedriveBlocksOnDemand", () => {
   it("ne rend rien aux organisations qui n'ont pas la fonctionnalité", async () => {
@@ -123,6 +124,17 @@ describe("writePipedriveBlocksOnDemand", () => {
     expect(await writePipedriveBlocksOnDemand(deps, INPUT)).toEqual({
       kind: "not_enabled",
     });
+    expect(extract).not.toHaveBeenCalled();
+  });
+
+  it("ne rend rien à une autre organisation que Sinéa, même option cochée en base", async () => {
+    const { deps, extract } = makeDeps({ features: ["pipedrive_blocks"] });
+    expect(
+      await writePipedriveBlocksOnDemand(deps, {
+        ...INPUT,
+        organizationId: "autre-organisation",
+      }),
+    ).toEqual({ kind: "not_enabled" });
     expect(extract).not.toHaveBeenCalled();
   });
 
