@@ -48,7 +48,7 @@ export function LandingHeroSection() {
           </p>
           <p className="mx-auto mt-4 max-w-[500px] text-center text-lg leading-[1.65] font-normal text-white/45">
             Chaque RDV devient un compte rendu structuré, un coaching
-            personnalisé et un mail de suivi, en 5 secondes.
+            personnalisé et un mail de suivi, en quelques minutes.
           </p>
         </LandingReveal>
 

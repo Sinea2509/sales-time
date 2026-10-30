@@ -90,7 +90,7 @@ export const landingHowSteps = [
     step: "02",
     title: "Notre IA génère la fiche RDV",
     description:
-      "Synthèse, coaching KISS, profil DISC/SONCAS avec verbatims et mail de suivi, en quelques secondes.",
+      "Synthèse, coaching KISS, profil DISC/SONCAS avec verbatims et mail de suivi, en quelques minutes.",
     icon: Sparkles,
   },
   {
