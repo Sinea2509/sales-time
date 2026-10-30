@@ -96,7 +96,9 @@ function CoachingReserved({ what }: { what: string }) {
  * La fiche d'un rendez-vous, comme la maquette du 11 septembre la dessine :
  * le compte rendu prêt à coller ouvre la page, tout le reste est le détail
  * qui l'explique, en sept onglets. La colonne de droite porte ce qui se
- * décide : le score, la parole, le plan d'action, la provenance.
+ * décide : le score, la parole, la provenance. Le plan d'action en est sorti
+ * le 29 octobre 2026 (retour de Thomas) : il redisait l'onglet Défis, et
+ * chargeait la page.
  */
 export function MeetingDetailShell({
   meeting,
@@ -205,7 +207,7 @@ export function MeetingDetailShell({
       ? [
           {
             id: "pipedrive" as const,
-            label: "Pipedrive",
+            label: "Blocs Pipedrive",
             panel: <MeetingPipedriveTab meetingId={meeting.id} />,
           },
         ]

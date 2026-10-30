@@ -54,10 +54,14 @@ function Block({
 }
 
 /**
- * L'onglet Pipedrive : les trois blocs de la méthode SEED, prêts à coller dans
- * l'affaire et l'organisation. Réservé aux organisations qui ont la
+ * L'onglet Blocs Pipedrive : les trois blocs de la méthode SEED, prêts à coller
+ * dans l'affaire et l'organisation. Réservé aux organisations qui ont la
  * fonctionnalité (Sinéa). Les blocs s'écrivent à la première ouverture, puis
  * se relisent sans nouvel appel au modèle.
+ *
+ * L'onglet s'appelait « Pipedrive », et rien ne disait à quoi il servait : son
+ * nom et sa phrase d'ouverture répondent au retour de Thomas du 29 octobre
+ * 2026 (« je ne le comprends pas »).
  */
 export function MeetingPipedriveTab({ meetingId }: { meetingId: string }) {
   const [state, setState] = useState<State>({ kind: "loading" });
@@ -102,10 +106,12 @@ export function MeetingPipedriveTab({ meetingId }: { meetingId: string }) {
     <div ref={root} className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h2 className={cardTitleClass}>Pour Pipedrive</h2>
+          <h2 className={cardTitleClass}>Blocs Pipedrive</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Trois blocs à coller dans l&apos;affaire et l&apos;organisation. Ce
-            que le rendez-vous n&apos;a pas abordé est marqué « Non abordé ».
+            Trois blocs déjà rédigés à partir de ce rendez-vous, selon la
+            méthode SEED. Copiez chacun dans le champ indiqué : Sales Time
+            n&apos;écrit rien lui-même dans Pipedrive. Ce que le rendez-vous
+            n&apos;a pas abordé est marqué « Non abordé ».
           </p>
         </div>
         {state.kind === "ready" && state.blocks.potentialTotal != null ? (

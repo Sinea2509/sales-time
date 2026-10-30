@@ -10,7 +10,7 @@ export const ORGANIZATION_FEATURES = [
     id: "pipedrive_blocks",
     label: "Blocs Pipedrive (méthode SEED)",
     description:
-      "Un onglet Pipedrive sur chaque rendez-vous : Bloc SEED, Carte d'identité et Projet de formation, prêts à copier dans le CRM.",
+      "Un onglet Blocs Pipedrive sur chaque rendez-vous : Bloc SEED, Carte d'identité et Projet de formation, prêts à copier dans le CRM.",
   },
 ] as const;
 

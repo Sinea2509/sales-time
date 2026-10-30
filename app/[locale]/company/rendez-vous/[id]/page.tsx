@@ -17,7 +17,6 @@ import {
 } from "@/src/core/domain/analysis-reliability";
 import { salesScoreForMeeting } from "@/src/core/domain/dashboard-sales-score";
 import { kissResultSchema } from "@/src/core/domain/kiss-result-zod";
-import { meetingActionPlan } from "@/src/core/domain/meeting-action-plan";
 import { meetingAnalysisProgress } from "@/src/core/domain/meeting-analysis-progress";
 import {
   isMeetingAnalysisSlow,
@@ -197,16 +196,6 @@ export default async function RendezVousDetailPage({
       ? [actor.firstName, actor.lastName].filter(Boolean).join(" ").trim() ||
         null
       : null;
-  /*
-    Le plan d'action se déduit de la scorecard d'abord, du coaching ensuite :
-    le premier nomme le critère à couvrir et la phrase à dire, le second le
-    geste à prendre. Le responsable est le commercial du rendez-vous.
-  */
-  const planActions = meetingActionPlan({
-    scorecard: scorecardParsed?.success ? scorecardParsed.data : null,
-    kiss: kissData,
-    sellerName,
-  });
 
   return (
     <MeetingDetailShell
@@ -243,7 +232,6 @@ export default async function RendezVousDetailPage({
           sellerName,
           prospectNames: [meeting.prospectName, contact?.displayName],
         }),
-        planActions,
         provenance: {
           gridName: grid?.name ?? null,
           criteriaCount: grid ? scorecardCriteria(grid).length : null,
