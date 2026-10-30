@@ -7,7 +7,6 @@ import { plurielFr } from "@/lib/pluriel-fr";
 import { cn } from "@/lib/utils";
 import { VALEUR_NON_CALCULABLE } from "@/lib/valeur-non-calculable";
 import type { AnalysisReliability } from "@/src/core/domain/analysis-reliability";
-import type { MeetingActionItem } from "@/src/core/domain/meeting-action-plan";
 import {
   TALK_SHARE_CEILING_PCT,
   type TalkShare,
@@ -30,8 +29,6 @@ export type MeetingDetailRailProps = {
   /** Moyenne de l'organisation sur la même fenêtre. */
   teamAverage30d: number | null;
   talkShare: TalkShare | null;
-  /** Les actions engagées par ce rendez-vous, chacune avec une échéance et un responsable. */
-  planActions: MeetingActionItem[];
   provenance: {
     gridName: string | null;
     criteriaCount: number | null;
@@ -213,50 +210,6 @@ function TalkShareCard({ share }: { share: TalkShare | null }) {
   );
 }
 
-function PlanCard({ actions }: { actions: MeetingActionItem[] }) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <h2 className={cardTitleClass}>Plan d&apos;action</h2>
-        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-          Ce rendez-vous engage ces actions. Chacune porte une échéance et un
-          responsable.
-        </p>
-        {actions.length > 0 ? (
-          <ul className="mt-3 grid gap-2">
-            {actions.map((a, index) => (
-              <li
-                key={`${index}-${a.title}`}
-                className="rounded-lg border border-border bg-muted/40 px-3.5 py-3 text-[12.5px] leading-relaxed"
-              >
-                {a.criterionKey && a.criterionLabel ? (
-                  <ToneChip tone="brand" className="mb-1.5">
-                    {a.criterionKey}, {a.criterionLabel}
-                  </ToneChip>
-                ) : null}
-                <p className="font-semibold">{a.title}</p>
-                {a.hint ? (
-                  <p className="text-muted-foreground mt-1 text-[12px] italic">
-                    {a.hint}
-                  </p>
-                ) : null}
-                <p className="text-muted-foreground mt-1 text-[11.5px]">
-                  {a.when} · {a.who}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-muted-foreground mt-3 text-[12.5px]">
-            Aucune action engagée pour l&apos;instant : elles se déduisent de la
-            scorecard et du coaching de ce rendez-vous.
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 function ProvenanceCard({ p }: { p: MeetingDetailRailProps["provenance"] }) {
   const rows: Array<[string, React.ReactNode]> = [
     ["Grille appliquée", p.gridName ?? "aucune grille pour ce type"],
@@ -311,7 +264,6 @@ export function MeetingDetailRail(props: MeetingDetailRailProps) {
     <aside className="grid content-start gap-5 lg:sticky lg:top-[74px]">
       <ScoreCard {...props} />
       <TalkShareCard share={props.talkShare} />
-      <PlanCard actions={props.planActions} />
       <ProvenanceCard p={props.provenance} />
     </aside>
   );
