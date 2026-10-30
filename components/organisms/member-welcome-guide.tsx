@@ -142,7 +142,7 @@ const PANEL: Record<number, { title: string; points: PanelPoint[] }> = {
       {
         icon: <FileText className={ICON} />,
         title: "Votre compte rendu",
-        text: "Détaillé, prêt pour votre CRM en 15 secondes.",
+        text: "Détaillé, à copier en un clic dans votre CRM.",
       },
       {
         icon: <Mail className={ICON} />,
@@ -367,9 +367,9 @@ function StepContent({
       <div className="grid gap-3">
         <Tile
           icon={<FileText className="size-4.5" />}
-          title="Un compte rendu détaillé en 15 secondes"
+          title="Un compte rendu détaillé, prêt pour votre CRM"
         >
-          Votre rendez-vous, prêt à intégrer simplement dans votre CRM.
+          Vous le copiez en un clic et vous l&apos;intégrez simplement.
         </Tile>
         <Tile
           icon={<Mail className="size-4.5" />}
