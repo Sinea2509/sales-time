@@ -222,6 +222,40 @@ export function withFollowUpEmailSystemPrompt(systemMarkdown: string): string {
 }
 
 /**
+ * Ce que le briefing du prochain rendez-vous contient, joint à toute consigne
+ * de briefing.
+ *
+ * Retour de Thomas du 29 octobre 2026 : « un peu trop léger », et « la question
+ * en or, on n'a plus ça ? ». Le format réclame ces champs quoi que dise la
+ * consigne enregistrée : la règle qui dit comment les remplir vit donc ici, et
+ * l'emporte sur les versions déjà enregistrées.
+ */
+export const MEETING_BRIEFING_INSTRUCTION = `## Le briefing (règle du produit, elle l'emporte sur toute consigne plus haut)
+Le commercial relit ce briefing juste avant d'entrer en rendez-vous. Tu lui parles au vouvoiement. Chaque champ se lit en quelques secondes et s'appuie sur l'historique fourni : l'essentiel du compte rendu, les objections, les défis, la question en or précédente, les manques de la grille, le profil du prospect. Le playbook, quand il est donné, dit ce que l'organisation vend.
+- lastMeetingSummary : où en est l'affaire, en deux phrases au plus. Vide s'il n'y a pas d'historique.
+- meetingGoal : ce que ce rendez-vous doit obtenir, en une phrase concrète : une décision, une information ou un engagement, adapté à l'étape visée.
+- goldenQuestion : LA question en or de ce rendez-vous, une seule, celle dont la réponse fait le plus avancer l'affaire. Elle vise le manque le plus décisif, reprend un fait ou un mot du prospect quand l'historique en donne, et s'écrit telle que le commercial la dirait à voix haute, sans guillemets. Une question ouverte, jamais une question à laquelle on répond par oui ou par non, jamais une question à laquelle le prospect a déjà répondu.
+- goldenQuestionWhy : pourquoi cette question, en une phrase.
+- howToTalk : comment parler à cet interlocuteur, en une ou deux phrases, d'après son profil DISC et SONCAS : ce qu'il faut mettre en avant, ce qu'il faut éviter. Vide si l'historique ne donne aucun profil.
+- customQuestions : trois à cinq autres questions à poser sur ce qui reste à obtenir, écrites comme le commercial les dirait.
+- likelyObjections : deux à quatre objections à anticiper. Reprends d'abord celles que l'historique laisse ouvertes (outcome \`open\` ou \`partial\`). \`objection\` dit ce que le prospect risque de dire, \`answer\` la réponse à préparer, écrite comme le commercial la dirait et appuyée sur un fait de l'historique (un chiffre, un enjeu, un mot du prospect) et sur ce que l'organisation vend, jamais une formule passe-partout.
+- startActions : ce que le commercial prépare avant le rendez-vous, deux à quatre actions qui commencent par un verbe.
+- openPoints : ce qui reste en suspens depuis le dernier rendez-vous : engagements à tenir, informations promises, décisions attendues. Liste vide s'il n'y a pas d'historique.
+- stageAdvice : deux phrases de conseil propres à l'étape visée.
+- discDominant et soncasDominant : le profil dominant du dernier rendez-vous qui en donne un, sinon null.
+- genericAdvice : \`true\` seulement si l'historique ne donne rien d'exploitable.
+N'invente aucun fait, chiffre, nom ou engagement absent de l'historique. N'écris jamais « nos références », « nos clients », « d'autres clients » ni un résultat constaté, sauf en nommant une référence que le playbook donne : le commercial le répéterait à son prospect. Sans historique, tu conseilles sur l'étape visée et tu ne prétends rien savoir de ce prospect.`;
+
+/** Consigne du briefing, plus ce que le produit attend de chaque champ. */
+export function withMeetingBriefingSystemPrompt(
+  systemMarkdown: string,
+): string {
+  return withDataScopeSystemPrompt(
+    [systemMarkdown, MEETING_BRIEFING_INSTRUCTION].join("\n\n"),
+  );
+}
+
+/**
  * La consigne qui retouche un mail à la demande du commercial (« plus court »,
  * « plus formel », « ajoute que… »), sans repasser par ChatGPT.
  */

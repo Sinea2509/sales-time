@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { likelyObjectionSchema } from "./meeting-briefing-zod";
 
 /**
  * La fiche de préparation d'un premier rendez-vous, nourrie par une recherche
@@ -48,6 +49,7 @@ export const prospectResearchSchema = z.object({
     priorityOffer: fact,
     offerWhy: fact,
     goldenQuestions: z.array(z.string().max(320)).max(3),
+    likelyObjections: z.array(likelyObjectionSchema).max(3),
   }),
   clientReferences: z
     .array(
@@ -138,7 +140,12 @@ export function prospectResearchAsText(
     "",
     "4. LE PLAN D'ATTAQUE",
     `- Offre à prioriser : ${v(r.attackPlan.priorityOffer)}${r.attackPlan.offerWhy ? ` (${r.attackPlan.offerWhy})` : ""}`,
-    ...r.attackPlan.goldenQuestions.map((q, i) => `- Question ${i + 1} : ${q}`),
+    ...r.attackPlan.goldenQuestions.map(
+      (q, i) => `- Question en or ${i + 1} : ${q}`,
+    ),
+    ...r.attackPlan.likelyObjections.map(
+      (o) => `- Objection à anticiper : ${o.objection} : ${o.answer}`,
+    ),
   ];
   if (r.clientReferences.length) {
     lines.push(

@@ -1,18 +1,39 @@
 "use client";
 
-import { useState, useTransition, type ReactNode } from "react";
+import { useState, useTransition } from "react";
+import {
+  CircleHelp,
+  ClipboardCheck,
+  Flag,
+  Hourglass,
+  Lightbulb,
+  MessageCircle,
+  ShieldAlert,
+  Sparkles,
+  Target,
+} from "lucide-react";
 import { prepareBriefingAction } from "@/app/[locale]/company/preparer/actions";
+import { ToneChip } from "@/components/atoms/tone-chip";
 import { ContactPicker } from "@/components/organisms/contact-picker";
+import { CopyTextButton } from "@/components/molecules/copy-text-button";
+import { GoldenQuestionCard } from "@/components/molecules/golden-question-card";
+import {
+  LikelyObjectionsList,
+  PrepareCard,
+  PrepareList,
+} from "@/components/molecules/prepare-card";
 import { PrdEmptyState } from "@/components/molecules/prd-empty-state";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
 import {
   libelleDiscDominant,
   libelleSoncasDominant,
 } from "@/lib/profil-dominant-libelle";
-import { Sparkles } from "lucide-react";
+import { meetingBriefingAsText } from "@/src/core/domain/meeting-briefing-text";
 import type { MeetingBriefingResult } from "@/src/core/domain/meeting-briefing-zod";
+import type { MeetingChallenge } from "@/src/core/domain/meeting-challenges";
 
 /*
   Un seul message, « Impossible de générer le briefing. », couvrait quatre
@@ -40,6 +61,8 @@ type BriefingAffiche = {
   briefing: MeetingBriefingResult;
   personName: string | null;
   hasHistory: boolean;
+  /** Les défis du dernier rendez-vous, recopiés tels qu'ils ont été écrits. */
+  challenges: MeetingChallenge[];
   /*
     L'étape voyage avec le briefing. Le sélecteur reste modifiable après la
     génération : un briefing préparé pour « Qualifié » s'affichait sinon sous
@@ -48,33 +71,8 @@ type BriefingAffiche = {
   targetStage: string;
 };
 
-function BriefingSection({
-  titre,
-  children,
-}: {
-  titre: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="space-y-1.5">
-      <h3 className="text-sm font-medium">{titre}</h3>
-      {children}
-    </section>
-  );
-}
-
-function BriefingListe({ items }: { items: string[] }) {
-  return (
-    <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed">
-      {items.map((item, index) => (
-        <li key={`${index}-${item}`}>{item}</li>
-      ))}
-    </ul>
-  );
-}
-
 function CarteBriefing({ affiche }: { affiche: BriefingAffiche }) {
-  const { briefing, personName, hasHistory, targetStage } = affiche;
+  const { briefing, personName, hasHistory, challenges, targetStage } = affiche;
 
   /*
     `discDominant` et `soncasDominant` sont des chaînes libres, et le modèle
@@ -113,70 +111,138 @@ function CarteBriefing({ affiche }: { affiche: BriefingAffiche }) {
       : "Conseils tirés des rendez-vous déjà analysés avec ce prospect.";
 
   const synthese = briefing.lastMeetingSummary.trim();
+  const question = briefing.goldenQuestion.trim();
+  const objectif = briefing.meetingGoal.trim();
+  const parler = briefing.howToTalk.trim();
   const conseils = briefing.stageAdvice.trim();
+  const texte = meetingBriefingAsText(briefing, {
+    personName,
+    targetStage,
+    challenges,
+  });
 
   return (
-    <article className="bg-card space-y-5 rounded-xl border p-5">
-      <header className="space-y-2">
-        <h2 className="text-lg font-semibold">
-          Briefing : {personName ?? "Prospect"}
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          Préparé pour l&apos;étape « {targetStage} ».
-        </p>
-        {profils.length > 0 ? (
-          <dl className="flex flex-wrap gap-2 pt-1">
-            {profils.map((profil) => (
-              <div
-                key={profil.cle}
-                className="flex items-baseline gap-1.5 rounded-lg bg-muted px-2.5 py-1 dark:bg-neutral-800/60"
-              >
-                <dt className="text-muted-foreground text-xs">
-                  {profil.terme}
-                </dt>
-                <dd className="text-xs font-medium">{profil.valeur}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
+    <article className="space-y-4">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1.5">
+          <h2 className="text-lg font-semibold">
+            Briefing : {personName ?? "Prospect"}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Préparé pour l&apos;étape « {targetStage} ».
+          </p>
+          {profils.length > 0 ? (
+            <p className="flex flex-wrap gap-1.5 pt-0.5">
+              {profils.map((profil) => (
+                <ToneChip key={profil.cle} tone="brand">
+                  {profil.terme} : {profil.valeur}
+                </ToneChip>
+              ))}
+            </p>
+          ) : null}
+        </div>
+        <CopyTextButton
+          text={texte}
+          label="Copier la fiche"
+          variant="default"
+        />
       </header>
 
       {synthese !== "" ? (
         <p className="text-sm leading-relaxed">{synthese}</p>
       ) : null}
 
-      {briefing.customQuestions.length > 0 ? (
-        <BriefingSection titre="Questions à poser">
-          <BriefingListe items={briefing.customQuestions} />
-        </BriefingSection>
+      {question !== "" ? (
+        <GoldenQuestionCard
+          title="Votre question en or"
+          questions={[question]}
+          why={briefing.goldenQuestionWhy}
+        />
       ) : null}
 
-      {/*
-        « Actions Start » écrivait la clé anglaise du modèle KISS sur un écran
-        français. Le produit dit « À démarrer » partout ailleurs.
-      */}
-      {briefing.startActions.length > 0 ? (
-        <BriefingSection titre="Actions à démarrer">
-          <BriefingListe items={briefing.startActions} />
-        </BriefingSection>
-      ) : null}
+      <div className="grid gap-3 lg:grid-cols-2">
+        {objectif !== "" ? (
+          <PrepareCard icon={Target} title="Objectif du rendez-vous">
+            <p>{objectif}</p>
+          </PrepareCard>
+        ) : null}
 
-      {briefing.openPoints.length > 0 ? (
-        <BriefingSection titre="Points ouverts">
-          <BriefingListe items={briefing.openPoints} />
-        </BriefingSection>
-      ) : null}
+        {parler !== "" ? (
+          <PrepareCard
+            icon={MessageCircle}
+            tone="teal"
+            title="Comment lui parler"
+          >
+            <p>{parler}</p>
+          </PrepareCard>
+        ) : null}
 
-      {conseils !== "" ? (
-        <BriefingSection titre="Conseils pour l'étape">
-          <p className="text-sm leading-relaxed">{conseils}</p>
-          {origineDesConseils ? (
-            <p className="text-muted-foreground text-xs">
-              {origineDesConseils}
-            </p>
-          ) : null}
-        </BriefingSection>
-      ) : null}
+        {briefing.customQuestions.length > 0 ? (
+          <PrepareCard icon={CircleHelp} tone="coral" title="Questions à poser">
+            <PrepareList items={briefing.customQuestions} />
+          </PrepareCard>
+        ) : null}
+
+        {briefing.likelyObjections.length > 0 ? (
+          <PrepareCard
+            icon={ShieldAlert}
+            tone="amber"
+            title="Objections à anticiper"
+          >
+            <LikelyObjectionsList items={briefing.likelyObjections} />
+          </PrepareCard>
+        ) : null}
+
+        {challenges.length > 0 ? (
+          <PrepareCard icon={Flag} title="Vos défis du dernier rendez-vous">
+            <ul className="space-y-3">
+              {challenges.map((challenge) => (
+                <li key={challenge.title}>
+                  <p className="font-semibold">{challenge.title}</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    {challenge.detail}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </PrepareCard>
+        ) : null}
+
+        {/*
+          « Actions Start » écrivait la clé anglaise du modèle KISS sur un écran
+          français : ce sont les gestes à préparer avant d'y aller.
+        */}
+        {briefing.startActions.length > 0 ? (
+          <PrepareCard
+            icon={ClipboardCheck}
+            tone="teal"
+            title="À préparer avant le rendez-vous"
+          >
+            <PrepareList items={briefing.startActions} />
+          </PrepareCard>
+        ) : null}
+
+        {briefing.openPoints.length > 0 ? (
+          <PrepareCard icon={Hourglass} tone="coral" title="Points ouverts">
+            <PrepareList items={briefing.openPoints} />
+          </PrepareCard>
+        ) : null}
+
+        {conseils !== "" ? (
+          <PrepareCard
+            icon={Lightbulb}
+            tone="amber"
+            title="Conseils pour l'étape"
+          >
+            <p>{conseils}</p>
+            {origineDesConseils ? (
+              <p className="text-muted-foreground text-xs">
+                {origineDesConseils}
+              </p>
+            ) : null}
+          </PrepareCard>
+        ) : null}
+      </div>
     </article>
   );
 }
@@ -193,79 +259,88 @@ export function PrepareMeetingBriefingForm({
 
   return (
     <div className="space-y-6">
-      <form
-        className="space-y-4 rounded-xl border p-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setError(null);
-          const fd = new FormData(e.currentTarget);
-          const personId = String(fd.get("personId") ?? "");
-          if (!personId) {
-            setError("Choisissez un contact.");
-            return;
-          }
-          const etapeDemandee = String(fd.get("targetStage") ?? targetStage);
-          startTransition(async () => {
-            /*
+      <Card>
+        <CardContent className="py-2">
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setError(null);
+              const fd = new FormData(e.currentTarget);
+              const personId = String(fd.get("personId") ?? "");
+              if (!personId) {
+                setError("Choisissez un contact.");
+                return;
+              }
+              const etapeDemandee = String(
+                fd.get("targetStage") ?? targetStage,
+              );
+              startTransition(async () => {
+                /*
               L'action appelle la passerelle IA. Sans ce filet, une panne de
               passerelle remontait en promesse rejetée : le bouton reprenait
               son état normal et rien ne s'affichait, l'écran semblait n'avoir
               rien fait.
             */
-            try {
-              const res = await prepareBriefingAction({
-                personId,
-                targetStage: etapeDemandee,
+                try {
+                  const res = await prepareBriefingAction({
+                    personId,
+                    targetStage: etapeDemandee,
+                  });
+                  if (!res.ok) {
+                    setError(messageErreur(res.error));
+                    return;
+                  }
+                  setAffiche({
+                    briefing: res.briefing,
+                    personName: res.personName,
+                    hasHistory: res.hasHistory,
+                    challenges: res.challenges,
+                    targetStage: etapeDemandee,
+                  });
+                } catch {
+                  setError(
+                    "Le briefing n'a pas pu être généré. Réessayez dans un instant.",
+                  );
+                }
               });
-              if (!res.ok) {
-                setError(messageErreur(res.error));
-                return;
-              }
-              setAffiche({
-                briefing: res.briefing,
-                personName: res.personName,
-                hasHistory: res.hasHistory,
-                targetStage: etapeDemandee,
-              });
-            } catch {
-              setError(
-                "Le briefing n'a pas pu être généré. Réessayez dans un instant.",
-              );
-            }
-          });
-        }}
-      >
-        <ContactPicker />
-        <div className="space-y-2">
-          <Label htmlFor="targetStage">Étape cible du prochain RDV</Label>
-          <select
-            id="targetStage"
-            name="targetStage"
-            className={nativeSelectClassName}
-            value={targetStage}
-            onChange={(e) => setTargetStage(e.target.value)}
-            required
+            }}
           >
-            {pipelineStageOptions.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-        {error ? (
-          <p className="text-destructive text-sm" role="alert">
-            {error}
-          </p>
-        ) : null}
-        <Button
-          type="submit"
-          disabled={pending}
-          className="bg-brand text-brand-foreground hover:bg-brand-hover"
-        >
-          {pending ? "Génération…" : "Préparer le briefing"}
-        </Button>
-      </form>
+            <ContactPicker />
+            <div className="space-y-2">
+              <Label htmlFor="targetStage">Étape cible du prochain RDV</Label>
+              <select
+                id="targetStage"
+                name="targetStage"
+                className={nativeSelectClassName}
+                value={targetStage}
+                onChange={(e) => setTargetStage(e.target.value)}
+                required
+              >
+                {pipelineStageOptions.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {error ? (
+              <p className="text-destructive text-sm" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <Button
+              type="submit"
+              disabled={pending}
+              className="bg-brand text-brand-foreground hover:bg-brand-hover"
+            >
+              {pending
+                ? "Préparation du briefing… (quelques secondes)"
+                : "Préparer le briefing"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {affiche && !affiche.hasHistory ? (
         <PrdEmptyState

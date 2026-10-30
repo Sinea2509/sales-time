@@ -27,6 +27,12 @@ const RESEARCH: ProspectResearch = {
     goldenQuestions: [
       "J'ai vu que vous ouvrez trois entrepôts, comment formez-vous vos chefs d'équipe ?",
     ],
+    likelyObjections: [
+      {
+        objection: "Nous formons déjà en interne",
+        answer: "Vos six recrutements dépassent ce que l'interne absorbe.",
+      },
+    ],
   },
   clientReferences: [],
   unknowns: ["DISC non estimable"],
@@ -66,7 +72,10 @@ describe("prospectResearchAsText", () => {
     );
     expect(text).toContain("- Outils : Salesforce, Microsoft 365");
     expect(text).toContain(
-      "- Question 1 : J'ai vu que vous ouvrez trois entrepôts",
+      "- Question en or 1 : J'ai vu que vous ouvrez trois entrepôts",
+    );
+    expect(text).toContain(
+      "- Objection à anticiper : Nous formons déjà en interne : Vos six recrutements",
     );
   });
 

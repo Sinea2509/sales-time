@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { History, Search } from "lucide-react";
+import { Icon3d } from "@/components/atoms/icon-3d";
 import { PrepareMeetingBriefingForm } from "@/components/organisms/prepare-meeting-briefing-form";
 import { ProspectResearchForm } from "@/components/organisms/prospect-research-form";
 import { cn } from "@/lib/utils";
@@ -10,14 +11,16 @@ const MODES = [
   {
     id: "web",
     label: "Nouveau prospect",
-    hint: "Recherche web : entreprise, décideur, douleurs, questions",
+    hint: "Recherche web : entreprise, décideur, douleurs, questions en or",
     icon: Search,
+    tone: "violet",
   },
   {
     id: "historique",
     label: "Prospect déjà rencontré",
-    hint: "À partir des rendez-vous déjà analysés avec ce contact",
+    hint: "Question en or, objections à anticiper, défis, à partir de vos rendez-vous",
     icon: History,
+    tone: "coral",
   },
 ] as const;
 
@@ -49,19 +52,15 @@ export function PrepareMeetingModes({
               aria-checked={active}
               onClick={() => setMode(m.id)}
               className={cn(
-                "flex items-start gap-3 rounded-xl border p-3.5 text-left transition-colors",
+                "flex items-center gap-3.5 rounded-2xl border p-4 text-left transition-[translate,border-color,box-shadow] duration-200 hover:-translate-y-0.5",
                 active
-                  ? "border-brand bg-brand/8 ring-1 ring-brand/30"
+                  ? "border-brand bg-brand-soft/60 ring-1 ring-brand/30"
                   : "border-border bg-card hover:border-brand/40 dark:border-zinc-800",
               )}
             >
-              <m.icon
-                className={cn(
-                  "mt-0.5 size-4 shrink-0",
-                  active ? "text-brand" : "text-muted-foreground",
-                )}
-                aria-hidden
-              />
+              <Icon3d tone={m.tone} size="md">
+                <m.icon aria-hidden />
+              </Icon3d>
               <span>
                 <span className="block text-sm font-semibold">{m.label}</span>
                 <span className="text-muted-foreground block text-xs">

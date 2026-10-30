@@ -1,15 +1,32 @@
 "use client";
 
 import { useState, useTransition, type ReactNode } from "react";
-import { ExternalLink, Search } from "lucide-react";
+import {
+  Building2,
+  Compass,
+  ExternalLink,
+  Flame,
+  Handshake,
+  Search,
+  ShieldAlert,
+  Target,
+  UserRound,
+} from "lucide-react";
 import { researchProspectAction } from "@/app/[locale]/company/preparer/actions";
 import { CopyTextButton } from "@/components/molecules/copy-text-button";
+import { GoldenQuestionCard } from "@/components/molecules/golden-question-card";
+import {
+  LikelyObjectionsList,
+  PrepareCard,
+  PrepareChips,
+  PrepareList,
+} from "@/components/molecules/prepare-card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { nativeSelectClassName } from "@/components/ui/native-select-class";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import {
   discStyleLabel,
   prospectDynamicLabel,
@@ -47,35 +64,6 @@ function Missing() {
   return <span className="text-muted-foreground italic">Non trouvé</span>;
 }
 
-function Section({
-  num,
-  title,
-  accent,
-  children,
-}: {
-  num: number;
-  title: string;
-  accent: string;
-  children: ReactNode;
-}) {
-  return (
-    <section
-      className={cn(
-        "space-y-2.5 rounded-xl border border-l-4 border-border bg-card p-4 dark:border-zinc-800",
-        accent,
-      )}
-    >
-      <h3 className="text-[15px] font-semibold">
-        <span className="text-muted-foreground mr-1.5 tabular-nums">
-          {num}.
-        </span>
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
 function ResearchCard({ result }: { result: Result }) {
   const { research: r, sources } = result;
   const text = prospectResearchAsText(r, {
@@ -98,8 +86,19 @@ function ResearchCard({ result }: { result: Result }) {
         <CopyTextButton text={text} label="Copier la fiche" variant="default" />
       </div>
 
+      {r.attackPlan.goldenQuestions.length ? (
+        <GoldenQuestionCard
+          title={
+            r.attackPlan.goldenQuestions.length > 1
+              ? "Vos questions en or"
+              : "Votre question en or"
+          }
+          questions={r.attackPlan.goldenQuestions}
+        />
+      ) : null}
+
       <div className="grid gap-3 lg:grid-cols-2">
-        <Section num={1} title="Santé et contexte" accent="border-l-[#6C4DFF]">
+        <PrepareCard icon={Building2} title="Santé et contexte">
           <Field label="Le vrai métier" value={r.company.realJob} />
           <Field label="Siège" value={r.company.headquarters} />
           <Field label="Effectif" value={r.company.headcount} />
@@ -119,9 +118,9 @@ function ResearchCard({ result }: { result: Result }) {
             label="Outils"
             value={r.company.tools.length ? r.company.tools.join(", ") : null}
           />
-        </Section>
+        </PrepareCard>
 
-        <Section num={2} title="Le décideur" accent="border-l-[#FF7A6B]">
+        <PrepareCard icon={UserRound} tone="coral" title="Le décideur">
           <Field
             label="DISC estimé"
             value={
@@ -136,18 +135,14 @@ function ResearchCard({ result }: { result: Result }) {
             }
           />
           <Field label="Ice breaker" value={r.decisionMaker.iceBreaker} />
-        </Section>
+        </PrepareCard>
 
-        <Section num={3} title="La douleur" accent="border-l-[#FFB547]">
+        <PrepareCard icon={Flame} tone="amber" title="La douleur">
           <Field
             label="Ils recrutent"
             value={
               r.pain.hiring.length ? (
-                <ul className="list-disc space-y-1 pl-4">
-                  {r.pain.hiring.map((h) => (
-                    <li key={h}>{h}</li>
-                  ))}
-                </ul>
+                <PrepareList items={r.pain.hiring} />
               ) : null
             }
           />
@@ -155,22 +150,13 @@ function ResearchCard({ result }: { result: Result }) {
             label="Leur culture"
             value={
               r.pain.cultureKeywords.length ? (
-                <span className="flex flex-wrap gap-1.5">
-                  {r.pain.cultureKeywords.map((k) => (
-                    <span
-                      key={k}
-                      className="rounded-full bg-[#FFB547]/15 px-2 py-0.5 text-xs font-semibold"
-                    >
-                      {k}
-                    </span>
-                  ))}
-                </span>
+                <PrepareChips items={r.pain.cultureKeywords} />
               ) : null
             }
           />
-        </Section>
+        </PrepareCard>
 
-        <Section num={4} title="Le plan d'attaque" accent="border-l-[#33D1B5]">
+        <PrepareCard icon={Target} tone="teal" title="Le plan d'attaque">
           <Field
             label="Offre à prioriser"
             value={
@@ -182,46 +168,44 @@ function ResearchCard({ result }: { result: Result }) {
               ) : null
             }
           />
-          {r.attackPlan.goldenQuestions.length ? (
-            <ol className="space-y-2 pt-1">
-              {r.attackPlan.goldenQuestions.map((q, i) => (
-                <li
-                  key={q}
-                  className="rounded-lg bg-[#33D1B5]/10 px-3 py-2 text-sm leading-relaxed"
-                >
-                  <span className="mr-1.5 font-semibold">Question {i + 1}</span>
-                  {q}
+        </PrepareCard>
+
+        {r.attackPlan.likelyObjections.length ? (
+          <PrepareCard
+            icon={ShieldAlert}
+            tone="coral"
+            title="Objections à anticiper"
+          >
+            <LikelyObjectionsList items={r.attackPlan.likelyObjections} />
+          </PrepareCard>
+        ) : null}
+
+        {r.clientReferences.length ? (
+          <PrepareCard
+            icon={Handshake}
+            tone="teal"
+            title="Clients similaires à citer"
+          >
+            <ul className="space-y-1.5">
+              {r.clientReferences.map((c) => (
+                <li key={c.client}>
+                  <b>{c.client}</b> · {c.theme}
+                  <span className="text-muted-foreground"> · {c.link}</span>
                 </li>
               ))}
-            </ol>
-          ) : null}
-        </Section>
+            </ul>
+          </PrepareCard>
+        ) : null}
+
+        {r.unknowns.length ? (
+          <PrepareCard
+            icon={Compass}
+            title="À découvrir pendant le rendez-vous"
+          >
+            <PrepareList items={r.unknowns} />
+          </PrepareCard>
+        ) : null}
       </div>
-
-      {r.clientReferences.length ? (
-        <section className="space-y-2 rounded-xl border border-border bg-card p-4 dark:border-zinc-800">
-          <h3 className="text-[15px] font-semibold">
-            Clients similaires à citer
-          </h3>
-          <ul className="space-y-1.5 text-sm leading-relaxed">
-            {r.clientReferences.map((c) => (
-              <li key={c.client}>
-                <b>{c.client}</b> · {c.theme}
-                <span className="text-muted-foreground"> · {c.link}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {r.unknowns.length ? (
-        <p className="text-muted-foreground text-sm">
-          <b className="text-foreground">
-            À découvrir pendant le rendez-vous :
-          </b>{" "}
-          {r.unknowns.join(" ; ")}
-        </p>
-      ) : null}
 
       {sources.length ? (
         <details className="text-sm">
@@ -265,125 +249,133 @@ export function ProspectResearchForm({
 
   return (
     <div className="space-y-6">
-      <form
-        className="space-y-4 rounded-xl border p-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setError(null);
-          const fd = new FormData(e.currentTarget);
-          const get = (k: string) => String(fd.get(k) ?? "");
-          const input = {
-            companyName: get("companyName"),
-            website: get("website"),
-            personName: get("personName"),
-            personRole: get("personRole"),
-            linkedinUrl: get("linkedinUrl"),
-            profileText: get("profileText"),
-            targetStage: get("targetStage"),
-          };
-          startTransition(async () => {
-            try {
-              const res = await researchProspectAction(input);
-              if (!res.ok) {
-                setError(messageErreur(res.error));
-                return;
-              }
-              setResult({
-                research: res.research,
-                sources: res.sources,
-                companyName: input.companyName.trim(),
-                personName: input.personName.trim() || null,
+      <Card>
+        <CardContent className="py-2">
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setError(null);
+              const fd = new FormData(e.currentTarget);
+              const get = (k: string) => String(fd.get(k) ?? "");
+              const input = {
+                companyName: get("companyName"),
+                website: get("website"),
+                personName: get("personName"),
+                personRole: get("personRole"),
+                linkedinUrl: get("linkedinUrl"),
+                profileText: get("profileText"),
+                targetStage: get("targetStage"),
+              };
+              startTransition(async () => {
+                try {
+                  const res = await researchProspectAction(input);
+                  if (!res.ok) {
+                    setError(messageErreur(res.error));
+                    return;
+                  }
+                  setResult({
+                    research: res.research,
+                    sources: res.sources,
+                    companyName: input.companyName.trim(),
+                    personName: input.personName.trim() || null,
+                  });
+                } catch {
+                  setError(messageErreur("FAILED"));
+                }
               });
-            } catch {
-              setError(messageErreur("FAILED"));
-            }
-          });
-        }}
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="companyName">Entreprise</Label>
-            <Input
-              id="companyName"
-              name="companyName"
-              required
-              placeholder="Nom de l'entreprise"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="website">Site web</Label>
-            <Input
-              id="website"
-              name="website"
-              type="url"
-              placeholder="https://www.entreprise.fr"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="personName">Interlocuteur</Label>
-            <Input id="personName" name="personName" placeholder="Prénom Nom" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="personRole">Fonction</Label>
-            <Input
-              id="personRole"
-              name="personRole"
-              placeholder="Ex. DRH, directeur commercial"
-            />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="linkedinUrl">Profil LinkedIn</Label>
-            <Input
-              id="linkedinUrl"
-              name="linkedinUrl"
-              type="url"
-              placeholder="https://www.linkedin.com/in/…"
-            />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="profileText">
-              Texte du profil LinkedIn (facultatif)
-            </Label>
-            <Textarea
-              id="profileText"
-              name="profileText"
-              rows={4}
-              placeholder="LinkedIn ne se laisse pas lire automatiquement : collez ici le résumé, l'expérience et une ou deux publications récentes pour un DISC et un ice breaker précis."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="targetStageWeb">Type de rendez-vous</Label>
-            <select
-              id="targetStageWeb"
-              name="targetStage"
-              className={nativeSelectClassName}
-              defaultValue={pipelineStageOptions[0] ?? ""}
-              required
+            }}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Entreprise</Label>
+                <Input
+                  id="companyName"
+                  name="companyName"
+                  required
+                  placeholder="Nom de l'entreprise"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="website">Site web</Label>
+                <Input
+                  id="website"
+                  name="website"
+                  type="url"
+                  placeholder="https://www.entreprise.fr"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="personName">Interlocuteur</Label>
+                <Input
+                  id="personName"
+                  name="personName"
+                  placeholder="Prénom Nom"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="personRole">Fonction</Label>
+                <Input
+                  id="personRole"
+                  name="personRole"
+                  placeholder="Ex. DRH, directeur commercial"
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="linkedinUrl">Profil LinkedIn</Label>
+                <Input
+                  id="linkedinUrl"
+                  name="linkedinUrl"
+                  type="url"
+                  placeholder="https://www.linkedin.com/in/…"
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="profileText">
+                  Texte du profil LinkedIn (facultatif)
+                </Label>
+                <Textarea
+                  id="profileText"
+                  name="profileText"
+                  rows={4}
+                  placeholder="LinkedIn ne se laisse pas lire automatiquement : collez ici le résumé, l'expérience et une ou deux publications récentes pour un DISC et un ice breaker précis."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="targetStageWeb">Type de rendez-vous</Label>
+                <select
+                  id="targetStageWeb"
+                  name="targetStage"
+                  className={nativeSelectClassName}
+                  defaultValue={pipelineStageOptions[0] ?? ""}
+                  required
+                >
+                  {pipelineStageOptions.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {error ? (
+              <p className="text-destructive text-sm" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <Button
+              type="submit"
+              disabled={pending}
+              className="bg-brand text-brand-foreground hover:bg-brand-hover"
             >
-              {pipelineStageOptions.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {error ? (
-          <p className="text-destructive text-sm" role="alert">
-            {error}
-          </p>
-        ) : null}
-        <Button
-          type="submit"
-          disabled={pending}
-          className="bg-brand text-brand-foreground hover:bg-brand-hover"
-        >
-          <Search className="size-4" aria-hidden />
-          {pending
-            ? "Recherche sur le web… (15 à 30 secondes)"
-            : "Préparer le rendez-vous"}
-        </Button>
-      </form>
+              <Search className="size-4" aria-hidden />
+              {pending
+                ? "Recherche sur le web… (15 à 30 secondes)"
+                : "Préparer le rendez-vous"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {result ? <ResearchCard result={result} /> : null}
     </div>

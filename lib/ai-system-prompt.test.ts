@@ -7,9 +7,11 @@ import {
   FRENCH_TYPOGRAPHY_INSTRUCTION,
   KISS_CHALLENGES_INSTRUCTION,
   KISS_SELLER_SKILLS_INSTRUCTION,
+  MEETING_BRIEFING_INSTRUCTION,
   withDataScopeSystemPrompt,
   withDiscSystemPrompt,
   withKissSystemPrompt,
+  withMeetingBriefingSystemPrompt,
   withObjectionsSystemPrompt,
   withProspectProfileSystemPrompt,
   withScorecardSystemPrompt,
@@ -21,6 +23,7 @@ import {
   coachingScoreScaleInstruction,
 } from "@/src/core/domain/coaching-score-scale";
 import { sellerSkillScoresSchema } from "@/src/core/domain/kiss-result-zod";
+import { meetingBriefingSchema } from "@/src/core/domain/meeting-briefing-zod";
 import {
   DEFAULT_SCORECARD_GRID,
   scorecardCriteria,
@@ -467,5 +470,32 @@ describe("les défis du prochain rendez-vous", () => {
     expect(KISS_CHALLENGES_INSTRUCTION).toContain("`phrase`");
     expect(KISS_CHALLENGES_INSTRUCTION).toContain("`geste`");
     expect(KISS_CHALLENGES_INSTRUCTION).toContain("mots exacts");
+  });
+});
+
+describe("le briefing du prochain rendez-vous", () => {
+  it("dit comment écrire la question en or, même sur une consigne déjà enregistrée", () => {
+    const prompt = withMeetingBriefingSystemPrompt("CONSIGNE");
+    expect(prompt).toContain("CONSIGNE");
+    expect(prompt).toContain(MEETING_BRIEFING_INSTRUCTION);
+    expect(MEETING_BRIEFING_INSTRUCTION).toContain("LA question en or");
+    expect(MEETING_BRIEFING_INSTRUCTION).toContain(
+      "jamais une question à laquelle on répond par oui ou par non",
+    );
+  });
+
+  it("décrit chaque champ que le format réclame au modèle", () => {
+    for (const champ of Object.keys(meetingBriefingSchema.shape)) {
+      expect([champ, MEETING_BRIEFING_INSTRUCTION.includes(champ)]).toEqual([
+        champ,
+        true,
+      ]);
+    }
+  });
+
+  it("interdit d'inventer, avec ou sans historique", () => {
+    expect(MEETING_BRIEFING_INSTRUCTION).toContain(
+      "N'invente aucun fait, chiffre, nom ou engagement",
+    );
   });
 });

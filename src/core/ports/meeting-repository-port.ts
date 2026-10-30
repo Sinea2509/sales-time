@@ -303,10 +303,12 @@ export interface MeetingRepositoryPort {
     limit?: number;
   }): Promise<MeetingRow[]>;
 
+  /** `sellerUserId` restreint aux rendez-vous de ce commercial ; absent, tous. */
   listMeetingsForPersonOrdered(input: {
     organizationId: string;
     personId: string;
     limit?: number;
+    sellerUserId?: string;
   }): Promise<MeetingRow[]>;
 
   countByAnalysisStatus(): Promise<{ ready: number; failed: number }>;

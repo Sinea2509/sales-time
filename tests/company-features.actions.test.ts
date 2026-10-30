@@ -569,7 +569,7 @@ describe("prepare briefing action", () => {
       company: "Acme",
     });
     analysisMock.prepareMeetingBriefing.mockResolvedValue({
-      result: "Briefing markdown",
+      result: { stageAdvice: "Briefing", likelyObjections: [] },
     });
     const result = await prepareBriefingAction({
       personId: PERSON_ID,
@@ -579,7 +579,8 @@ describe("prepare briefing action", () => {
       ok: true,
       personName: "Alice Prospect",
       hasHistory: false,
-      briefing: "Briefing markdown",
+      briefing: { stageAdvice: "Briefing", likelyObjections: [] },
+      challenges: [],
     });
   });
 });
