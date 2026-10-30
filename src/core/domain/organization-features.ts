@@ -11,6 +11,7 @@
  */
 
 /** Le même identifiant en production et sur la branche de développement. */
+// cspell:disable-next-line
 export const SINEA_ORGANIZATION_ID = "cmufka01w000404l5up3wgpex";
 
 export const ORGANIZATION_FEATURES = [

@@ -6,7 +6,7 @@ import {
   organizationMayHaveFeature,
 } from "./organization-features";
 
-const AUTRE_ORGANISATION = "cmvautreorganisation000000";
+const AUTRE_ORGANISATION = "autre-organisation";
 
 describe("les fonctionnalités réservées", () => {
   it("ouvre les blocs Pipedrive à Sinéa quand l'option est cochée", () => {
