@@ -5,8 +5,13 @@ const briefingResult = {
   lastMeetingSummary: "Synthèse du dernier échange.",
   discDominant: "I",
   soncasDominant: "argent",
+  meetingGoal: "Obtenir le budget.",
+  goldenQuestion: "Qu'est-ce qui ferait de ce projet une réussite ?",
+  goldenQuestionWhy: "Les critères de succès manquent.",
+  howToTalk: "Allez droit au chiffre.",
   startActions: ["Préparer démo"],
   customQuestions: ["Budget ?"],
+  likelyObjections: [],
   openPoints: ["Délai"],
   stageAdvice: "Focus ROI.",
   genericAdvice: false,
@@ -22,6 +27,7 @@ describe("prepareMeetingBriefing", () => {
         getCurrentVersion: jest.fn(),
         getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
       },
+      organizationSettings: { findByOrganizationId: jest.fn() },
     };
 
     const result = await prepareMeetingBriefing(deps as never, {
@@ -103,6 +109,9 @@ describe("prepareMeetingBriefing", () => {
         }),
         getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
       },
+      organizationSettings: {
+        findByOrganizationId: jest.fn().mockResolvedValue(null),
+      },
     };
 
     const result = await prepareMeetingBriefing(deps as never, {
@@ -116,11 +125,117 @@ describe("prepareMeetingBriefing", () => {
     expect(result?.briefing).toEqual(briefingResult);
     expect(deps.analysis.prepareMeetingBriefing).toHaveBeenCalledWith(
       expect.objectContaining({
-        systemMarkdown: "Briefing system prompt",
+        systemMarkdown: expect.stringContaining("Briefing system prompt"),
         targetStage: "Proposition",
         prospectCompany: "Acme",
+        prospectName: "Alice",
         hasHistory: true,
       }),
     );
+    const appel = deps.analysis.prepareMeetingBriefing.mock.calls[0]![0] as {
+      priorMeetingsJson: string;
+      systemMarkdown: string;
+    };
+    const historique = JSON.parse(appel.priorMeetingsJson) as {
+      goldenQuestion: string | null;
+    }[];
+    expect(historique[0]?.goldenQuestion).toBe("gq");
+    expect(appel.systemMarkdown).toContain("## Noms de référence");
+    expect(appel.systemMarkdown).toContain("« Alice »");
+    // Les défis écrits pour ce rendez-vous sont rendus tels quels à l'écran.
+    expect(result?.challenges.length).toBeGreaterThan(0);
+  });
+
+  it("limite un commercial à ses propres rendez-vous avec ce contact", async () => {
+    const listMeetingsForPersonOrdered = jest.fn().mockResolvedValue([]);
+    const deps = {
+      contacts: {
+        findById: jest.fn().mockResolvedValue({
+          id: "person_1",
+          displayName: "Alice",
+          company: null,
+          jobTitle: null,
+        }),
+      },
+      meetings: { listMeetingsForPersonOrdered },
+      analysis: {
+        prepareMeetingBriefing: jest
+          .fn()
+          .mockResolvedValue({ result: briefingResult }),
+      },
+      prompts: {
+        getCurrentVersion: jest.fn().mockResolvedValue({ markdown: "P" }),
+        getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+      },
+      organizationSettings: {
+        findByOrganizationId: jest.fn().mockResolvedValue(null),
+      },
+    };
+
+    const result = await prepareMeetingBriefing(deps as never, {
+      organizationId: "org_1",
+      personId: "person_1",
+      targetStage: "Proposition",
+      visibleTo: "user_1",
+    });
+
+    expect(listMeetingsForPersonOrdered).toHaveBeenCalledWith({
+      organizationId: "org_1",
+      personId: "person_1",
+      limit: 5,
+      sellerUserId: "user_1",
+    });
+    expect(result?.hasHistory).toBe(false);
+    expect(result?.challenges).toEqual([]);
+  });
+
+  it("retire des objections les preuves anonymes, que le commercial répéterait", async () => {
+    const deps = {
+      contacts: {
+        findById: jest.fn().mockResolvedValue({
+          id: "person_1",
+          displayName: "Alice",
+          company: null,
+          jobTitle: null,
+        }),
+      },
+      meetings: {
+        listMeetingsForPersonOrdered: jest.fn().mockResolvedValue([]),
+      },
+      analysis: {
+        prepareMeetingBriefing: jest.fn().mockResolvedValue({
+          result: {
+            ...briefingResult,
+            likelyObjections: [
+              {
+                objection: "C'est trop cher",
+                answer:
+                  "Revenons à votre enjeu et à ce que ce retard vous coûte. Nos clients sont ravis.",
+              },
+            ],
+          },
+        }),
+      },
+      prompts: {
+        getCurrentVersion: jest.fn().mockResolvedValue({ markdown: "P" }),
+        getModelForKind: jest.fn().mockResolvedValue("openai/gpt-4o-mini"),
+      },
+      organizationSettings: {
+        findByOrganizationId: jest.fn().mockResolvedValue(null),
+      },
+    };
+
+    const result = await prepareMeetingBriefing(deps as never, {
+      organizationId: "org_1",
+      personId: "person_1",
+      targetStage: "Proposition",
+    });
+
+    expect(result?.briefing.likelyObjections).toEqual([
+      {
+        objection: "C'est trop cher",
+        answer: "Revenons à votre enjeu et à ce que ce retard vous coûte.",
+      },
+    ]);
   });
 });

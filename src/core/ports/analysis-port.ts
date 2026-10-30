@@ -188,6 +188,8 @@ export interface AnalysisPort {
     model: string;
     targetStage: string;
     prospectCompany: string;
+    prospectName: string;
+    prospectJobTitle: string | null;
     priorMeetingsJson: string;
     hasHistory: boolean;
   }): Promise<{ result: MeetingBriefingResult; rawText?: string }>;

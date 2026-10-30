@@ -20,7 +20,12 @@ const RESEARCH = {
   },
   decisionMaker: { discStyle: null, discWhy: null, iceBreaker: null },
   pain: { hiring: [], cultureKeywords: [] },
-  attackPlan: { priorityOffer: null, offerWhy: null, goldenQuestions: [] },
+  attackPlan: {
+    priorityOffer: null,
+    offerWhy: null,
+    goldenQuestions: [],
+    likelyObjections: [],
+  },
   clientReferences: [],
   unknowns: [],
 };
@@ -83,6 +88,31 @@ describe("researchProspect", () => {
     expect(prompt).toContain("<recherche_web>\nSiège à Lyon.");
     expect(prompt).toContain("Passionné de voile.");
     expect(prompt).toContain("- Transdev · Management de proximité");
+  });
+
+  it("retire des objections les preuves anonymes, que le commercial répéterait", async () => {
+    const { deps, structure } = makeDeps();
+    structure.mockResolvedValueOnce({
+      ...RESEARCH,
+      attackPlan: {
+        ...RESEARCH.attackPlan,
+        likelyObjections: [
+          {
+            objection: "C'est trop cher",
+            answer:
+              "Parlons de ce que le statu quo coûte à vos équipes chaque mois. Nos clients sont ravis.",
+          },
+        ],
+      },
+    } as never);
+    const out = await researchProspect(deps, INPUT);
+    expect(out.ok && out.research.attackPlan.likelyObjections).toEqual([
+      {
+        objection: "C'est trop cher",
+        answer:
+          "Parlons de ce que le statu quo coûte à vos équipes chaque mois.",
+      },
+    ]);
   });
 
   it("rend un échec sans lever quand la recherche web échoue", async () => {

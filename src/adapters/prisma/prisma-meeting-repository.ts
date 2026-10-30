@@ -691,11 +691,15 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     organizationId: string;
     personId: string;
     limit?: number;
+    sellerUserId?: string;
   }): Promise<MeetingRow[]> {
     const rows = await this.db.meeting.findMany({
       where: {
         organizationId: input.organizationId,
         personId: input.personId,
+        ...(input.sellerUserId !== undefined
+          ? { sellerUserId: input.sellerUserId }
+          : {}),
       },
       orderBy: { meetingAt: "desc" },
       take: input.limit ?? 10,

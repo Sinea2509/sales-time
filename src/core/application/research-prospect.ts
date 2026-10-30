@@ -6,6 +6,7 @@ import {
   PROSPECT_WEB_RESEARCH_MODEL,
   prospectWebResearchPrompt,
 } from "@/lib/prospect-research-prompt";
+import { withProvableAnswers } from "@/src/core/domain/likely-objection-proof";
 import { organizationPlaybookFromJson } from "@/src/core/domain/organization-playbook";
 import {
   cleanSources,
@@ -126,7 +127,15 @@ export async function researchProspect(
     if (!parsed.success) return { ok: false, error: "FAILED" };
     return {
       ok: true,
-      research: parsed.data,
+      research: {
+        ...parsed.data,
+        attackPlan: {
+          ...parsed.data.attackPlan,
+          likelyObjections: withProvableAnswers(
+            parsed.data.attackPlan.likelyObjections,
+          ),
+        },
+      },
       sources: cleanSources(web.sources),
     };
   } catch {

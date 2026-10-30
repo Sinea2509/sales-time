@@ -32,6 +32,7 @@ export async function prepareBriefingAction(input: z.infer<typeof schema>) {
     personName: result.person.displayName,
     hasHistory: result.hasHistory,
     briefing: result.briefing,
+    challenges: result.challenges,
   };
 }
 

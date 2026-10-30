@@ -39,6 +39,7 @@ import {
   withFollowUpEmailSystemPrompt,
   withDiscSystemPrompt,
   withKissSystemPrompt,
+  withMeetingBriefingSystemPrompt,
   withObjectionsSystemPrompt,
   withScorecardSystemPrompt,
   withSoncasSystemPrompt,
@@ -636,12 +637,15 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     model: string;
     targetStage: string;
     prospectCompany: string;
+    prospectName: string;
+    prospectJobTitle: string | null;
     priorMeetingsJson: string;
     hasHistory: boolean;
   }) {
-    const system = withDataScopeSystemPrompt(input.systemMarkdown);
+    const system = withMeetingBriefingSystemPrompt(input.systemMarkdown);
     const userContent = [
       `Société prospect : ${input.prospectCompany}`,
+      `Interlocuteur : ${input.prospectName}${input.prospectJobTitle ? `, ${input.prospectJobTitle}` : ""}`,
       `Étape visée : ${input.targetStage}`,
       `Historique disponible : ${input.hasHistory ? "oui" : "non"}`,
       "",
@@ -655,7 +659,7 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
       schema: meetingBriefingSchema,
       system,
       prompt: userContent,
-      maxOutputTokens: 900,
+      maxOutputTokens: 2000,
     });
     return { result: object };
   }
