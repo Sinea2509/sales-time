@@ -76,6 +76,17 @@ export type ScorecardCriterion = {
    * `scorecard-full-mark-proof.ts`).
    */
   readonly fullMarkProof?: ScorecardFullMarkProof;
+  /**
+   * Vrai pour un critère qualitatif, que prouve la parole du prospect et non
+   * un chiffre : les freins et risques. Une parole du prospect retrouvée sur
+   * le thème rend l'information exploitable sans nombre, date ni nom, et fait
+   * du thème un thème abordé même quand c'est le prospect qui l'a ouvert.
+   *
+   * Retour de Thomas du 29 octobre 2026 : un prospect qui donne de lui-même
+   * son frein principal (le coût, d'autres priorités) valait 1 sur 4, « alors
+   * que le gros a été trouvé ».
+   */
+  readonly qualitative?: boolean;
 };
 
 /** Un bloc de la grille : une famille de critères et son poids. */
@@ -566,6 +577,7 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
           examples: [
             "Qu'est-ce qui pourrait faire que ce projet ne se fasse pas ?",
           ],
+          qualitative: true,
         },
       ],
     },
@@ -637,6 +649,9 @@ export const DECOUVERTE_V2_GRID: ScorecardGrid = {
             "Un discours branché sur ce que le prospect vient de dire, illustré d'exemples qui lui parlent, jamais un argumentaire déroulé tel quel.",
           lookFor:
             "Les moments où le commercial relie son offre à ce que le prospect vient de dire, avec un exemple ou un cas proche. Un argumentaire déroulé avant que le besoin soit exploré est le contraire : le produit plafonne le critère quand un long passage du commercial arrive dans le premier tiers du rendez-vous.",
+          examples: [
+            "Vous me disiez que [son enjeu] : voici ce que cela change pour vous.",
+          ],
         },
         {
           key: "E4",
@@ -864,6 +879,9 @@ export const SUIVI_GRID: ScorecardGrid = {
             "Les réponses reprennent les mots, les enjeux et les chiffres du prospect, pas un argument générique.",
           lookFor:
             "Les réponses du commercial aux réserves, et leur lien avec ce que le prospect a dit.",
+          examples: [
+            "Vous m'aviez parlé de [son enjeu] : c'est précisément ce point que nous traitons.",
+          ],
         },
         {
           key: "D3",
@@ -909,6 +927,9 @@ export const SUIVI_GRID: ScorecardGrid = {
             "Un discours branché sur ce que le prospect a dit, illustré d'exemples qui lui parlent, jamais un argumentaire déroulé tel quel.",
           lookFor:
             "Les moments où le commercial relie son offre à la situation du prospect. Un long passage du commercial dans le premier tiers du rendez-vous plafonne le critère.",
+          examples: [
+            "Vous me disiez que [son enjeu] : voici ce que cela change pour vous.",
+          ],
         },
         {
           key: "E4",

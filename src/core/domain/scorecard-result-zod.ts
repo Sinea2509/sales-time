@@ -73,7 +73,11 @@ export const scorecardCriterionSchema = z.object({
 /** Un point perdu prioritaire : le manque, et la phrase qui le comblait. */
 export const scorecardPointLostSchema = z.object({
   key: z.string().min(1).max(4),
-  /** Ce que le transcript montre à cet endroit, cité ou constaté. */
+  /**
+   * Ce qui a manqué à cet endroit, au vu du transcript. La fiche l'affiche
+   * comme le manque du critère depuis le 29 octobre 2026 ; les analyses
+   * d'avant y décrivent parfois ce qui a été obtenu.
+   */
   evidence: z.string().min(1).max(600),
   /** La formulation exacte que le commercial aurait dû employer, en français. */
   whatToSayInstead: z.string().min(1).max(600),

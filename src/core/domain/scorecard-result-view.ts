@@ -1,8 +1,9 @@
 import { scorecardCriteria, scorecardGridById } from "./scorecard-grid";
-import type { ScorecardGrid } from "./scorecard-grid";
+import type { ScorecardCriterion, ScorecardGrid } from "./scorecard-grid";
 import type {
   ScorecardAnalysisResult,
   ScorecardCriterionResult,
+  ScorecardPointLost,
 } from "./scorecard-result-zod";
 import {
   scorecardLevelsByKey,
@@ -41,8 +42,18 @@ export type ScorecardCriterionView = {
   readonly coverage: string;
   /** Ce que le commercial sait maintenant sur ce thème. */
   readonly learned: string;
-  /** Ce qui manque pour atteindre le niveau 4. */
+  /**
+   * Ce qui manque pour atteindre le niveau 4, une seule fois : le constat des
+   * points perdus quand le critère y figure, sinon celui du relevé, sans
+   * « Il manque » devant (voir `withoutMissingLead`).
+   */
   readonly missing: string;
+  /**
+   * « Mon conseil », pour un critère à 2 sur 4 ou moins : la phrase des points
+   * perdus, sinon une question de la grille. Vide au-dessus, ou sans rien à
+   * proposer (voir `ADVICE_MAX_LEVEL`).
+   */
+  readonly advice: string;
   /** Vrai quand le critère n'a pas pu être observé et ne compte pas. */
   readonly unobservable: boolean;
 };
@@ -82,6 +93,54 @@ export type ScorecardResultView = {
 /** La clé telle qu'on la compare partout : sans espaces et en majuscules. */
 function cleComparable(key: string): string {
   return key.trim().toUpperCase();
+}
+
+/**
+ * Le niveau jusqu'où un critère reçoit « Mon conseil » sur la fiche.
+ *
+ * Le conseil n'apparaissait que pour les trois à cinq points perdus que le
+ * modèle choisit, et le commercial ne comprenait pas pourquoi tel critère en
+ * avait un et tel autre non. Thomas a fixé la règle le 29 octobre 2026 : un
+ * conseil pour tout critère à 2 sur 4 ou moins.
+ */
+export const ADVICE_MAX_LEVEL = 2;
+
+const MISSING_LEAD =
+  /^(?:il\s+(?:vous\s+|lui\s+|nous\s+)?(?:manquerait|manquait|manque)|ce\s+qui\s+manque(?:\s+encore)?|manque)(?![\p{L}])\s*[:,]?\s*/iu;
+
+/**
+ * Le manque sans « Il manque » devant : la fiche l'écrit déjà en titre
+ * (« Manque : »), et le répéter alourdissait chaque ligne (retour de Thomas du
+ * 29 octobre 2026). Un texte réduit à la formule seule est rendu tel quel.
+ */
+export function withoutMissingLead(text: string): string {
+  const trimmed = text.trim();
+  const rest = trimmed.replace(MISSING_LEAD, "");
+  return /\p{L}/u.test(rest) ? rest : trimmed;
+}
+
+/** Deux textes qui ne diffèrent que par la casse, les espaces ou la ponctuation. */
+function memeTexte(a: string, b: string): boolean {
+  const norme = (s: string) =>
+    s
+      .toLocaleLowerCase("fr-FR")
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
+  return norme(a) !== "" && norme(a) === norme(b);
+}
+
+/**
+ * Le conseil que la grille sait donner seule, quand le modèle n'en a pas
+ * écrit pour ce critère : une de ses formulations d'exemple, ou, pour
+ * l'écoute mesurée par le produit, la façon de laisser parler.
+ */
+function conseilDeLaGrille(criterion: ScorecardCriterion): string {
+  const exemple = criterion.examples?.[0]?.trim();
+  if (exemple) return `La prochaine fois, essayez par exemple : « ${exemple} »`;
+  if (criterion.measuredByProduct) {
+    return "Posez une question courte, puis laissez votre interlocuteur parler.";
+  }
+  return "";
 }
 
 /**
@@ -166,6 +225,7 @@ function detailDuBloc(
   blockKey: string,
   niveaux: ReadonlyMap<string, number>,
   preuves: ReadonlyMap<string, ScorecardCriterionResult>,
+  pointsPerdus: ReadonlyMap<string, ScorecardPointLost>,
 ): readonly ScorecardCriterionView[] {
   const bloc = grid?.blocks.find(
     (candidat) => cleComparable(candidat.key) === cleComparable(blockKey),
@@ -174,15 +234,36 @@ function detailDuBloc(
   return bloc.criteria.map((criterion) => {
     const cle = cleComparable(criterion.key);
     const entry = preuves.get(cle);
+    const perdu = pointsPerdus.get(cle);
+    const level = niveaux.get(cle) ?? 0;
+    const unobservable = entry?.unobservable === true;
+    /*
+      Un seul manque par critère. Le constat des points perdus double celui du
+      relevé, et il est le plus juste des deux quand ils coexistent (retour
+      de Thomas du 29 octobre 2026) : c'est lui qui reste. Sauf quand il ne
+      fait que redire ce qui a été obtenu, comme sur des analyses d'avant ce
+      jour-là : le manque du relevé reprend alors sa place.
+    */
+    const learned = entry?.learned?.trim() ?? "";
+    const constat = withoutMissingLead(perdu?.evidence ?? "");
+    const missing =
+      constat && !memeTexte(constat, learned)
+        ? constat
+        : withoutMissingLead(entry?.missing ?? "");
+    const advice =
+      unobservable || level > ADVICE_MAX_LEVEL
+        ? ""
+        : perdu?.whatToSayInstead.trim() || conseilDeLaGrille(criterion);
     return {
       key: criterion.key,
       label: criterion.label,
-      level: niveaux.get(cle) ?? 0,
+      level,
       evidence: entry?.evidence ?? [],
       coverage: couverture(entry),
-      learned: entry?.learned?.trim() ?? "",
-      missing: entry?.missing?.trim() ?? "",
-      unobservable: entry?.unobservable === true,
+      learned,
+      missing,
+      advice,
+      unobservable,
     };
   });
 }
@@ -195,6 +276,11 @@ export function scorecardResultView(
   const niveaux = scorecardLevelsByKey(result.criteria);
   const preuves = preuvesParCle(result.criteria, niveaux);
   const libelles = libellesParCle(grid);
+  const pointsPerdus = new Map<string, ScorecardPointLost>();
+  for (const point of result.pointsLost) {
+    const cle = cleComparable(point.key);
+    if (!pointsPerdus.has(cle)) pointsPerdus.set(cle, point);
+  }
 
   return {
     gridName: result.gridName,
@@ -206,7 +292,7 @@ export function scorecardResultView(
       score: block.score,
       max: block.max,
       percent: partDuMaximum(block.score, block.max),
-      criteria: detailDuBloc(grid, block.key, niveaux, preuves),
+      criteria: detailDuBloc(grid, block.key, niveaux, preuves, pointsPerdus),
     })),
     pointsLost: result.pointsLost.map((point) => {
       const cle = cleComparable(point.key);

@@ -194,3 +194,107 @@ describe("levelScorecardObservations", () => {
     expect(scorecardCriteria(DECOUVERTE_V2_GRID)).toHaveLength(25);
   });
 });
+
+/*
+  Les freins et risques se prouvent par la parole du prospect, pas par un
+  chiffre (retour de Thomas du 29 octobre 2026 : le frein principal, donné de
+  lui-même par le prospect, valait 1 sur 4).
+*/
+describe("levelScorecardObservations, critère qualitatif", () => {
+  const VENDEUR =
+    "Et de votre côté, comment voyez-vous la suite ?\nQu'est-ce qui pourrait bloquer en interne ?";
+  const CLIENT =
+    "Honnêtement, le frein principal c'est le coût de ces formations.\nD'autres priorités sont passées devant le projet.";
+  const SOURCES_FREINS = {
+    all: `${VENDEUR}\n${CLIENT}`,
+    seller: VENDEUR,
+    prospect: CLIENT,
+  };
+
+  it("compte comme abordé un frein que le prospect donne de lui-même", () => {
+    const out = levelScorecardObservations(
+      releve([
+        {
+          key: "C6",
+          explored: "non",
+          obtained: "partiel",
+          learned: "Le coût freine.",
+          missing: "",
+          observable: true,
+          evidence: [
+            {
+              who: "prospect",
+              quote: "le frein principal c'est le coût de ces formations",
+            },
+          ],
+        },
+      ]),
+      DECOUVERTE_V2_GRID,
+      SOURCES_FREINS,
+    );
+    expect(out.criteria[0]).toMatchObject({
+      explored: "aborde",
+      obtained: "partiel",
+      level: 2,
+    });
+  });
+
+  it("tient pour exploitable un frein dit clairement, sans chiffre ni nom", () => {
+    const out = levelScorecardObservations(
+      releve([
+        {
+          key: "C6",
+          explored: "creuse",
+          obtained: "exploitable",
+          learned: "Le coût et d'autres priorités freinent.",
+          missing: "",
+          observable: true,
+          evidence: [
+            {
+              who: "commercial",
+              quote: "Qu'est-ce qui pourrait bloquer en interne ?",
+            },
+            {
+              who: "prospect",
+              quote: "D'autres priorités sont passées devant le projet.",
+            },
+          ],
+        },
+      ]),
+      DECOUVERTE_V2_GRID,
+      SOURCES_FREINS,
+    );
+    expect(out.criteria[0]).toMatchObject({
+      obtained: "exploitable",
+      level: 4,
+    });
+  });
+
+  it("garde l'exigence d'un fait précis, et le thème non abordé, sur un autre critère", () => {
+    const out = levelScorecardObservations(
+      releve([
+        {
+          key: "C5",
+          explored: "non",
+          obtained: "exploitable",
+          learned: "",
+          missing: "",
+          observable: true,
+          evidence: [
+            {
+              who: "prospect",
+              quote: "D'autres priorités sont passées devant le projet.",
+            },
+          ],
+        },
+      ]),
+      DECOUVERTE_V2_GRID,
+      SOURCES_FREINS,
+    );
+    expect(out.criteria[0]).toMatchObject({
+      explored: "non",
+      obtained: "partiel",
+      level: 1,
+    });
+  });
+});

@@ -252,3 +252,20 @@ describe("scorecardGridProblems", () => {
     );
   });
 });
+
+/*
+  « Mon conseil » s'affiche sur tout critère à 2 sur 4 ou moins (retour de
+  Thomas du 29 octobre 2026). Quand le modèle n'en a pas écrit, la fiche prend
+  une formulation de la grille : chaque critère des grilles en service doit
+  donc en porter une, sauf ceux que le produit mesure lui-même.
+*/
+describe("les formulations d'exemple des grilles en service", () => {
+  it("en donnent une à chaque critère que le produit ne mesure pas", () => {
+    const sansExemple = Object.values(SCORECARD_GRIDS).flatMap((grid) =>
+      scorecardCriteria(grid)
+        .filter((c) => !c.measuredByProduct && !c.examples?.length)
+        .map((c) => `${grid.id} ${c.key}`),
+    );
+    expect(sansExemple).toEqual([]);
+  });
+});

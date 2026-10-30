@@ -1,7 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
-import { DECOUVERTE_GRID } from "./scorecard-grid";
+import { DECOUVERTE_GRID, DECOUVERTE_V2_GRID } from "./scorecard-grid";
 import type { ScorecardAnalysisResult } from "./scorecard-result-zod";
-import { scorecardResultView } from "./scorecard-result-view";
+import {
+  scorecardResultView,
+  withoutMissingLead,
+} from "./scorecard-result-view";
 
 /**
  * Une ligne d'analyse telle qu'elle a été enregistrée, dont chaque test ne
@@ -329,5 +332,133 @@ describe("scorecardResultView", () => {
       "Poser la date en séance.",
       "Un RDV mené proprement, sans décideur identifié.",
     ]);
+  });
+});
+
+/*
+  Retours de Thomas du 29 octobre 2026 sur le détail du SalesScore : un seul
+  manque par critère, sans « Il manque », et « Mon conseil » sur tout critère
+  à 2 sur 4 ou moins.
+*/
+describe("le manque et le conseil d'un critère", () => {
+  const blocC = DECOUVERTE_V2_GRID.blocks.find((b) => b.key === "C")!;
+
+  function vueDuC6(partiel: Partial<ScorecardAnalysisResult>) {
+    const vue = scorecardResultView(
+      resultatEnBase({
+        gridId: DECOUVERTE_V2_GRID.id,
+        gridName: DECOUVERTE_V2_GRID.name,
+        blocks: [{ key: "C", name: blocC.name, score: 0, max: blocC.weight }],
+        ...partiel,
+      }),
+    );
+    return vue.blocks[0]!.criteria.find((c) => c.key === "C6")!;
+  }
+
+  it("retire « Il manque » du manque relevé", () => {
+    const c6 = vueDuC6({
+      criteria: [
+        {
+          key: "C6",
+          level: 1,
+          evidence: [],
+          missing: "Il manque les autres résistances en interne.",
+        },
+      ],
+    });
+    expect(c6.missing).toBe("les autres résistances en interne.");
+  });
+
+  it("ne garde qu'un manque, celui des points perdus, avec son conseil", () => {
+    const c6 = vueDuC6({
+      criteria: [
+        {
+          key: "C6",
+          level: 2,
+          evidence: [],
+          missing: "Il manque ce qui pourrait bloquer.",
+        },
+      ],
+      pointsLost: [
+        {
+          key: "c6",
+          evidence:
+            "Elle parle du budget, mais vous n'avez pas demandé ce qui bloquerait.",
+          whatToSayInstead: "Qu'est-ce qui pourrait freiner le projet ?",
+        },
+      ],
+    });
+    expect(c6.missing).toBe(
+      "Elle parle du budget, mais vous n'avez pas demandé ce qui bloquerait.",
+    );
+    expect(c6.advice).toBe("Qu'est-ce qui pourrait freiner le projet ?");
+  });
+
+  it("reprend le manque du relevé quand le constat des points perdus redit ce qui a été obtenu", () => {
+    const c6 = vueDuC6({
+      criteria: [
+        {
+          key: "C6",
+          level: 1,
+          evidence: [],
+          learned: "Le prospect a exprimé une réserve sur le budget.",
+          missing: "Il manque ce qui pourrait bloquer le projet en interne.",
+        },
+      ],
+      pointsLost: [
+        {
+          key: "C6",
+          evidence: "le prospect a exprimé une réserve sur le budget",
+          whatToSayInstead: "Qu'est-ce qui pourrait freiner le projet ?",
+        },
+      ],
+    });
+    expect(c6.missing).toBe("ce qui pourrait bloquer le projet en interne.");
+    expect(c6.advice).toBe("Qu'est-ce qui pourrait freiner le projet ?");
+  });
+
+  it("donne la question de la grille à un critère faible que le modèle n'a pas retenu", () => {
+    const c6 = vueDuC6({
+      criteria: [{ key: "C6", level: 1, evidence: [] }],
+    });
+    expect(c6.advice).toBe(
+      "La prochaine fois, essayez par exemple : « Qu'est-ce qui pourrait faire que ce projet ne se fasse pas ? »",
+    );
+  });
+
+  it("ne donne aucun conseil au-dessus de 2 sur 4, même pour un point perdu", () => {
+    const c6 = vueDuC6({
+      criteria: [{ key: "C6", level: 3, evidence: [] }],
+      pointsLost: [
+        { key: "C6", evidence: "Constat.", whatToSayInstead: "Phrase." },
+      ],
+    });
+    expect(c6.advice).toBe("");
+    expect(c6.missing).toBe("Constat.");
+  });
+
+  it("ne donne aucun conseil à un critère hors score", () => {
+    const c6 = vueDuC6({
+      criteria: [{ key: "C6", level: 0, evidence: [], unobservable: true }],
+    });
+    expect(c6.advice).toBe("");
+  });
+});
+
+describe("withoutMissingLead", () => {
+  it.each([
+    ["Il manque le budget.", "le budget."],
+    ["Il vous manque le nom du décideur.", "le nom du décideur."],
+    ["Il manquait la date.", "la date."],
+    ["Manque : la date.", "la date."],
+    ["Ce qui manque encore : un chiffre.", "un chiffre."],
+    ["Manquent le budget et la date.", "Manquent le budget et la date."],
+    [
+      "Vous n'avez pas demandé le budget.",
+      "Vous n'avez pas demandé le budget.",
+    ],
+    ["Il manque.", "Il manque."],
+  ])("« %s » devient « %s »", (avant, apres) => {
+    expect(withoutMissingLead(avant)).toBe(apres);
   });
 });

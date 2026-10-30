@@ -120,6 +120,25 @@ export function MeetingSynthesisSection({
               ? "Copier l'essentiel"
               : "Copier le compte rendu"}
         </Button>
+        {/*
+          « Copier tout » à côté de « Copier l'essentiel », et non plus en pied
+          de carte où on ne le voyait pas (retour de Thomas du 29 octobre 2026).
+        */}
+        {essentials ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!canCopy}
+            onClick={() => void copyReport("tout")}
+          >
+            {copied === "tout" ? (
+              <Check className="size-4" aria-hidden />
+            ) : (
+              <Copy className="size-4" aria-hidden />
+            )}
+            {copied === "tout" ? "Copié" : "Copier tout"}
+          </Button>
+        ) : null}
       </div>
 
       <div
@@ -189,17 +208,6 @@ export function MeetingSynthesisSection({
               : `${text.length.toLocaleString("fr-FR")} caractères, généré à partir du transcript, de la scorecard et des profils.`}
           </span>
           <span className="flex-1" />
-          {essentials ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={!canCopy}
-              onClick={() => void copyReport("tout")}
-            >
-              {copied === "tout" ? "Copié" : "Copier tout"}
-            </Button>
-          ) : null}
           {foldable ? (
             <Button
               type="button"

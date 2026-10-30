@@ -73,6 +73,18 @@ describe("scorecardGridInstruction", () => {
     expect(CONSIGNE).toContain("Mesuré par le produit");
   });
 
+  it("dit que les freins et risques se prouvent par la parole du prospect", () => {
+    const c6 = CONSIGNE.slice(CONSIGNE.indexOf("**C6**"));
+    expect(c6.slice(0, c6.indexOf("\n- **", 1))).toContain(
+      "Critère qualitatif",
+    );
+    expect(CONSIGNE).toContain("Exception, un critère qualitatif");
+  });
+
+  it("demande un manque qui commence par ce qui manque", () => {
+    expect(CONSIGNE).toContain("jamais « Il manque… »");
+  });
+
   it("suit la grille qu'on lui donne, sans rien écrire en dur", () => {
     const grille: ScorecardGrid = {
       id: "DECOUVERTE_V2",

@@ -17,6 +17,7 @@ import {
   SCORECARD_LEVEL_MAX,
   SCORECARD_TOTAL,
   scorecardCriteria,
+  type ScorecardCriterion,
 } from "@/src/core/domain/scorecard-grid";
 import {
   SCORECARD_EXPLORED,
@@ -90,6 +91,20 @@ function momentPointsTable(caption: string): ScoringTable {
   };
 }
 
+/** La règle des critères qualitatifs de la grille, s'il y en a. */
+function qualitativeCriteriaRule(
+  criteria: readonly ScorecardCriterion[],
+): string[] {
+  const qualitative = criteria.filter((c) => c.qualitative);
+  if (qualitative.length === 0) return [];
+  const noms = qualitative
+    .map((c) => `${c.key} ${c.label.toLocaleLowerCase("fr-FR")}`)
+    .join(", ");
+  return [
+    `Les critères qualitatifs (${noms}) se prouvent par la parole du prospect : ce qu'il en dit clairement est exploitable sans chiffre, date ni nom, et un thème qu'il ouvre de lui-même compte comme abordé.`,
+  ];
+}
+
 function tiersTable(): ScoringTable {
   return {
     caption: "La médaille affichée au commercial",
@@ -118,6 +133,7 @@ function scorecardOverview(): AnalysisScoringOverview {
       "Le thème compte, pas la formulation : une question posée avec d'autres mots que les exemples compte pleinement.",
       `Chaque citation est retrouvée dans le transcript, avec la personne qui l'a dite : trois mots au moins, les nombres exacts, et une même citation ne sert qu'à un critère. Une citation introuvable est retirée ; un critère sans aucune citation ne dépasse pas 1 point.`,
       "Les citations ne peuvent que faire baisser le relevé, jamais le monter : un thème « creusé » sans relance visible (la question du commercial et la réponse du prospect, ou deux paroles du commercial) redescend à « abordé » ; une information « exploitable » sans rien de précis dans les mots du prospect (un nombre, une date ou une échéance, un nom) redescend à « partielle » ; une information sans parole du prospect retrouvée baisse d'un cran. Une citation tirée des notes du commercial ne vaut pas une parole du prospect. Deux modèles qui citent les mêmes passages reçoivent donc le même score.",
+      ...qualitativeCriteriaRule(criteria),
       "Le produit reconnaît le commercial dans le transcript à son rôle écrit (« Commercial : »), à son nom, ou parce qu'il a lancé la transcription. Quand il n'est que deviné, à l'ordre de parole ou aux questions, le côté des citations, l'écoute, les questions et les plafonds ne s'appliquent pas, et la fiche le dit : une inversion des rôles retournerait tout le score.",
       "Le cadrage (E4) sort du calcul quand le produit constate que le transcript commence sans l'ouverture : le prospect parle en premier, sans salutation. L'IA ne décide pas de cela.",
       `Certains critères exigent une preuve de plus pour atteindre 4 points, lue dans les paroles du prospect (jamais dans les notes), sinon ils s'arrêtent à 3 : ${criteria
