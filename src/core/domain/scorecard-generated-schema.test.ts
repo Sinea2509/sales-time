@@ -70,10 +70,10 @@ describe("scorecardGeneratedListSchemaForGrid", () => {
   });
 
   it("remet la liste dans l'ordre de la grille, sans doublon", () => {
-    const melangee = [...liste].reverse();
-    const doublee = [...melangee, { ...liste[0], learned: "doublon" }];
+    const inversee = [...liste].reverse();
+    const avecDoublon = [...inversee, { ...liste[0], learned: "doublon" }];
     const obs = scorecardObservationsFromList(
-      doublee as Parameters<typeof scorecardObservationsFromList>[0],
+      avecDoublon as Parameters<typeof scorecardObservationsFromList>[0],
       KEYS,
     );
     expect(obs.map((o) => o.key)).toEqual(KEYS);
