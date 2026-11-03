@@ -8,9 +8,12 @@ import {
 } from "@/src/core/domain/profile-moments";
 import { kissGeneratedResultSchema } from "@/src/core/domain/kiss-result-zod";
 import {
+  scorecardGeneratedListSchemaForGrid,
   scorecardGeneratedResultSchema,
   scorecardGeneratedSchemaForGrid,
+  scorecardListFormatInstruction,
   scorecardObservationsFromFields,
+  scorecardObservationsFromList,
 } from "@/src/core/domain/scorecard-result-zod";
 import {
   scorecardCriteria,
@@ -61,6 +64,59 @@ const sellerRelationalAffinitySummarySchema = z.object({
   discAffinity: z.string(),
   soncasAffinity: z.string(),
 });
+
+/** Le refus de la passerelle quand un format décrit trop de champs. */
+const GRAMMAR_TOO_LARGE = /compiled grammar is too large/i;
+
+/**
+ * Le relevé de la grille : un champ par critère, et la liste en secours quand
+ * le modèle refuse ce format (voir `scorecardGeneratedListSchemaForGrid`).
+ * Un modèle qui accepte le format par champ, comme Claude Haiku 5.5, ne passe
+ * jamais par la liste.
+ */
+async function generateScorecardObservations(input: {
+  model: string;
+  keys: readonly string[];
+  system: string;
+  prompt: string;
+}) {
+  const schema = scorecardGeneratedSchemaForGrid(input.keys);
+  try {
+    const { object, usage } = await generateObject({
+      model: input.model,
+      ...stableCallSettings(input.model),
+      experimental_repairText: repairStructuredOutput(schema),
+      schema,
+      system: input.system,
+      prompt: input.prompt,
+    });
+    return {
+      result: scorecardGeneratedResultSchema.parse({
+        ...object,
+        criteria: scorecardObservationsFromFields(object.criteria, input.keys),
+      }),
+      usage,
+    };
+  } catch (error) {
+    if (!GRAMMAR_TOO_LARGE.test(String((error as Error)?.message))) throw error;
+  }
+  const listSchema = scorecardGeneratedListSchemaForGrid(input.keys);
+  const { object, usage } = await generateObject({
+    model: input.model,
+    ...stableCallSettings(input.model),
+    experimental_repairText: repairStructuredOutput(listSchema),
+    schema: listSchema,
+    system: `${input.system}\n\n${scorecardListFormatInstruction(input.keys)}`,
+    prompt: input.prompt,
+  });
+  return {
+    result: scorecardGeneratedResultSchema.parse({
+      ...object,
+      criteria: scorecardObservationsFromList(object.criteria, input.keys),
+    }),
+    usage,
+  };
+}
 
 export class VercelAIAnalysisAdapter implements AnalysisPort {
   async analyzeSoncas(input: {
@@ -194,18 +250,11 @@ export class VercelAIAnalysisAdapter implements AnalysisPort {
     // produit calcule après cet appel ; les réclamer ici reviendrait à demander
     // au modèle l'addition qu'on lui retire justement des mains.
     const keys = scorecardCriteria(input.grid).map((c) => c.key);
-    const schema = scorecardGeneratedSchemaForGrid(keys);
-    const { object, usage } = await generateObject({
+    const { result, usage } = await generateScorecardObservations({
       model: input.model,
-      ...stableCallSettings(input.model),
-      experimental_repairText: repairStructuredOutput(schema),
-      schema,
+      keys,
       system: systemPrompt,
       prompt: userPrompt,
-    });
-    const result = scorecardGeneratedResultSchema.parse({
-      ...object,
-      criteria: scorecardObservationsFromFields(object.criteria, keys),
     });
 
     return {

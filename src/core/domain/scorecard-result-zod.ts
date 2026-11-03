@@ -201,6 +201,55 @@ export function scorecardGeneratedSchemaForGrid(keys: readonly string[]) {
   });
 }
 
+/**
+ * Le même relevé en liste, pour un modèle qui refuse le format par champ.
+ *
+ * Depuis le 2 novembre 2026, la passerelle refuse le format par champ sur
+ * Claude Sonnet 5.5 (« The compiled grammar is too large ») : vingt-cinq
+ * champs décrits chacun en entier font une grammaire trop longue. La liste ne
+ * décrit qu'un critère, douze fois plus court. Pour ne pas retomber dans
+ * l'oubli de critères du 5 octobre, sa longueur est fixée au nombre de
+ * critères et ses clés sont imposées. Essai du 3 novembre 2026 sur un
+ * rendez-vous d'une heure : 25 critères sur 25, score 61 pour 63 au format
+ * par champ.
+ */
+export function scorecardGeneratedListSchemaForGrid(keys: readonly string[]) {
+  return scorecardGeneratedSchemaForGrid(keys).extend({
+    criteria: z
+      .array(
+        scorecardObservationSchema.extend({
+          key: z.enum(keys as [string, ...string[]]),
+        }),
+      )
+      .length(keys.length),
+  });
+}
+
+/** Ce qui accompagne le relevé en liste : combien d'éléments, dans quel ordre. */
+export function scorecardListFormatInstruction(
+  keys: readonly string[],
+): string {
+  return [
+    "## Format du relevé",
+    `\`criteria\` est une liste d'exactement ${keys.length} éléments, un par critère, dans cet ordre : ${keys.join(", ")}.`,
+  ].join("\n");
+}
+
+/** Le relevé en liste, dans l'ordre de la grille, un élément par critère. */
+export function scorecardObservationsFromList(
+  list: readonly ScorecardObservation[],
+  keys: readonly string[],
+): ScorecardObservation[] {
+  const byKey = new Map<string, ScorecardObservation>();
+  for (const item of list) {
+    if (!byKey.has(item.key)) byKey.set(item.key, item);
+  }
+  return keys.flatMap((key) => {
+    const item = byKey.get(key);
+    return item ? [item] : [];
+  });
+}
+
 /** Le relevé par champ, remis en liste. */
 export function scorecardObservationsFromFields(
   fields: Record<string, z.infer<typeof scorecardObservationBodySchema>>,
