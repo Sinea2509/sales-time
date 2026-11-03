@@ -1,10 +1,6 @@
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import type { Metadata } from "next";
-import {
-  Geist_Mono,
-  Plus_Jakarta_Sans,
-  Schibsted_Grotesk,
-} from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,16 +10,16 @@ import "./globals.css";
 export const dynamic = "force-dynamic";
 
 /*
-  Les polices de la charte 4 bis : Plus Jakarta Sans pour le texte, Schibsted
-  Grotesk pour les titres et les grands chiffres. Posées sur <html>, elles
-  valent aussi pour les menus et les boîtes de dialogue rendus hors de la page.
+  Direction artistique v13 : Geist partout, serré dans les titres, et Geist
+  Mono pour les petits titres en capitales. Posées sur <html>, elles valent
+  aussi pour les menus et les boîtes de dialogue rendus hors de la page.
 */
-const textFont = Plus_Jakarta_Sans({
+const textFont = Geist({
   variable: "--font-texte",
   subsets: ["latin"],
 });
 
-const headingFont = Schibsted_Grotesk({
+const headingFont = Geist({
   variable: "--font-titres",
   subsets: ["latin"],
 });

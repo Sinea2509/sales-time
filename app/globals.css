@@ -80,22 +80,29 @@
     muted 5,6:1 sur la page et 6,1:1 sur blanc, marque 5,4:1 sur blanc, blanc
     5,4:1 sur la marque.
   */
-  --background: #f4f5fa;
-  --foreground: #0e0f2e;
+  --background: #f3f4fa;
+  --foreground: #0b0d24;
   --card: #ffffff;
-  --card-foreground: #0e0f2e;
+  --card-foreground: #0b0d24;
   --popover: #ffffff;
-  --popover-foreground: #0e0f2e;
-  --primary: #0e0f2e;
+  --popover-foreground: #0b0d24;
+  --primary: #0b0d24;
   --primary-foreground: oklch(0.985 0 0);
-  --night: #0e0f2e;
-  --night-raised: #1b1e5c;
-  --brand: #4f55f0;
+  /*
+    Direction artistique v13 (landing de Thomas du 3 novembre 2026) : un bleu
+    nuit plus profond, un bleu de marque plus clair qui file vers le violet.
+    Le bleu exact de la landing (#5b74ff) ne tient que 3,9:1 sous du texte
+    blanc ; #4a5ef0 garde sa teinte et tient 5,1:1. Le violet ne vient qu'en
+    bout de dégradé (#6a4fd9, 5,6:1 sous du blanc).
+  */
+  --night: #0b0d24;
+  --night-raised: #1f2343;
+  --brand: #4a5ef0;
   /*
     L'autre bout du dégradé des actions, un bleu plus profond et non un violet :
     une seule teinte d'action dans tout l'outil. Le blanc y tient 7,3:1.
   */
-  --brand-deep: #3a40d4;
+  --brand-deep: #6a4fd9;
   /*
     Encre posée sur un aplat de marque, exactement comme --primary-foreground
     se pose sur --primary. Elle manquait, et les trente-deux endroits qui
@@ -105,7 +112,7 @@
     sur le bouton « Choisir ce plan »), là où 4,5:1 est le minimum.
   */
   --brand-foreground: oklch(0.985 0 0);
-  --brand-hover: #3f45d6;
+  --brand-hover: #3d52d9;
   --brand-muted: #c9ccff;
   --brand-soft: color-mix(in srgb, var(--brand) 12%, transparent);
   --brand-ring: color-mix(in srgb, var(--brand) 30%, transparent);
@@ -117,14 +124,14 @@
     lecture clair vers foncé.
   */
   --gold: #c08a1e;
-  --secondary: #eef0f7;
-  --secondary-foreground: #0e0f2e;
-  --muted: #eef0f7;
-  --muted-foreground: #5b5f86;
-  --accent: #eef0ff;
-  --accent-foreground: #0e0f2e;
+  --secondary: #edeff7;
+  --secondary-foreground: #0b0d24;
+  --muted: #edeff7;
+  --muted-foreground: #565b7a;
+  --accent: #e6eaff;
+  --accent-foreground: #0b0d24;
   --destructive: #b3261e;
-  --border: #e3e6f2;
+  --border: #e3e5f0;
   --input: #dadded;
   --ring: #8e93ff;
   --chart-1: oklch(0.87 0 0);
@@ -149,24 +156,24 @@
     avec une encre claire (13:1). L'entrée active est une pastille de marque
     en dégradé : c'est la seule couleur vive de la colonne.
   */
-  --sidebar: #0e0f2e;
-  --sidebar-foreground: #d9dbf2;
-  --sidebar-primary: #4f55f0;
+  --sidebar: #07081a;
+  --sidebar-foreground: #f2f3fa;
+  --sidebar-primary: #4a5ef0;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: color-mix(in srgb, #ffffff 9%, transparent);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: color-mix(in srgb, #ffffff 12%, transparent);
-  --sidebar-ring: #8e93ff;
-  --app-shell-surface: #f4f5fa;
-  --app-shell-sidebar-bg: #0e0f2e;
-  --app-shell-sidebar-text: #d9dbf2;
-  --app-shell-sidebar-muted: #a9add6;
+  --sidebar-ring: #9daeff;
+  --app-shell-surface: #f3f4fa;
+  --app-shell-sidebar-bg: #07081a;
+  --app-shell-sidebar-text: #f2f3fa;
+  --app-shell-sidebar-muted: #9a9fc0;
   --app-shell-sidebar-border: color-mix(in srgb, #ffffff 12%, transparent);
   --app-shell-sidebar-hover-bg: color-mix(in srgb, #ffffff 8%, transparent);
-  --app-shell-sidebar-active-bg: #4f55f0;
+  --app-shell-sidebar-active-bg: #4a5ef0;
   --app-shell-sidebar-active-text: #ffffff;
-  --app-shell-sidebar-accent: #4f55f0;
-  --app-shell-sidebar-card-bg: #1b1e5c;
+  --app-shell-sidebar-accent: #4a5ef0;
+  --app-shell-sidebar-card-bg: #161a36;
 }
 
 .dark {
@@ -178,8 +185,8 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --brand: #8e93ff;
-  --brand-deep: #a5a9ff;
+  --brand: #9daeff;
+  --brand-deep: #b59bff;
   /* L'aplat s'éclaircit ici, donc l'encre s'assombrit : même bascule que
      --primary-foreground juste au-dessus. Sur #8e93ff, elle tient 5,2:1. */
   --brand-foreground: oklch(0.205 0 0);
@@ -401,10 +408,10 @@
   background-image:
     radial-gradient(
       18rem 14rem at 0% 0%,
-      color-mix(in srgb, var(--brand) 30%, transparent),
+      color-mix(in srgb, var(--brand) 18%, transparent),
       transparent 70%
     ),
-    linear-gradient(180deg, #16184f 0%, var(--night) 55%, #0a0b24 100%);
+    linear-gradient(180deg, #0b0d24 0%, #07081a 60%);
 }
 
 [data-sidebar="menu-button"][data-active] {
@@ -415,10 +422,10 @@
 /*
   La fin d'un titre en deux tons, « Maison Leroux, rendez-vous de
   découverte » : un gris bleuté, comme les titres en deux tons de la piste 3.
-  Il tient 3,4:1 sur la page, assez pour un titre de cette taille.
+  Il tient 3,6:1 sur la page, assez pour un titre de cette taille.
 */
 .st-title-quiet {
-  color: #7e83a9;
+  color: #7a7f9e;
 }
 .dark .st-title-quiet {
   color: #a9add6;
@@ -440,7 +447,7 @@
     ),
     linear-gradient(150deg, var(--night-raised) 0%, var(--night) 65%);
   color: #ffffff;
-  box-shadow: 0 18px 40px -18px rgb(14 15 46 / 0.6);
+  box-shadow: 0 18px 40px -18px rgb(7 8 26 / 0.6);
 }
 
 /*

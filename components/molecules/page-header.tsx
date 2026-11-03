@@ -40,7 +40,7 @@ export function PageHeader({
         {Icon ? <PageIconTile icon={Icon} /> : null}
         <div className="min-w-0 space-y-1">
           {eyebrow ? (
-            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            <p className="text-brand font-mono text-[11px] font-medium tracking-[0.14em] uppercase">
               {eyebrow}
             </p>
           ) : null}
