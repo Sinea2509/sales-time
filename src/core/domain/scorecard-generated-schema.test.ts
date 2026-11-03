@@ -70,8 +70,8 @@ describe("scorecardGeneratedListSchemaForGrid", () => {
   });
 
   it("remet la liste dans l'ordre de la grille, sans doublon", () => {
-    const inversee = [...liste].reverse();
-    const avecDoublon = [...inversee, { ...liste[0], learned: "doublon" }];
+    const aLEnvers = [...liste].reverse();
+    const avecDoublon = [...aLEnvers, { ...liste[0], learned: "doublon" }];
     const obs = scorecardObservationsFromList(
       avecDoublon as Parameters<typeof scorecardObservationsFromList>[0],
       KEYS,
