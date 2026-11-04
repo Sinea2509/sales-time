@@ -5,7 +5,7 @@
 
 /** Primary page title (h1 or equivalent). */
 export const pageTitleClass =
-  "font-heading text-foreground text-2xl font-extrabold tracking-[-0.03em] sm:text-3xl";
+  "font-heading text-foreground text-2xl font-bold tracking-[-0.04em] sm:text-3xl";
 
 /** Section heading outside cards (h2), same visual rank as a main card title. */
 export const sectionHeadingClass =
