@@ -597,3 +597,61 @@
     animation: none !important;
   }
 }
+
+/*
+  La landing v13 de Thomas (3 novembre 2026) : ce que la maquette posait sur
+  <body>, et ses quatre animations. Limité à .st-v13 pour ne pas toucher
+  l'outil.
+*/
+html:has(.st-v13) {
+  scroll-behavior: smooth;
+}
+.st-v13 {
+  background: #07081a;
+  color: #f2f3fa;
+  font-family:
+    Geist,
+    -apple-system,
+    "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+}
+.st-v13 a {
+  color: #9daeff;
+  text-decoration: none;
+}
+.st-v13 a:hover {
+  color: #c9d2ff;
+}
+@keyframes stWord {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes stBar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes stAurora {
+  0% {
+    transform: translate(-50%, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate(-50%, 30px) rotate(180deg) scale(1.12);
+  }
+  100% {
+    transform: translate(-50%, 0) rotate(360deg) scale(1);
+  }
+}
