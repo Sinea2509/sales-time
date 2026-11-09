@@ -24,7 +24,7 @@ l'utilisateur en est membre.
 | `GET /me`            | L'utilisateur, ses organisations et l'organisation active                    |
 | `POST /audio-upload` | L'autorisation de déposer un fichier audio dans le dossier de l'organisation |
 | `POST /meetings`     | Transcrit l'enregistrement déposé et crée la fiche                           |
-| `GET /meetings`      | Les 30 derniers rendez-vous du commercial et leur état                       |
+| `GET /meetings`      | Les 30 derniers rendez-vous du commercial, leur état et leur SalesScore      |
 | `GET /meetings/:id`  | L'état d'un rendez-vous                                                      |
 
 ## Les règles

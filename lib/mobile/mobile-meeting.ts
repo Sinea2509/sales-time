@@ -10,6 +10,8 @@ export type MobileMeeting = {
   durationMin: number | null;
   outcome: MeetingOutcome;
   status: MeetingStatus;
+  /** Le SalesScore sur 100 de la grille, quand l'analyse l'a produit. */
+  salesScore: number | null;
   /** Le chemin de la fiche sur le site, à ouvrir dans le navigateur. */
   webPath: string;
 };
@@ -22,6 +24,7 @@ export function toMobileMeeting(row: {
   durationMin: number | null;
   outcome: MeetingOutcome;
   status: MeetingStatus;
+  salesScore?: number | null;
 }): MobileMeeting {
   return {
     id: row.id,
@@ -31,6 +34,7 @@ export function toMobileMeeting(row: {
     durationMin: row.durationMin,
     outcome: row.outcome,
     status: row.status,
+    salesScore: row.salesScore ?? null,
     webPath: `/company/rendez-vous/${row.id}`,
   };
 }
