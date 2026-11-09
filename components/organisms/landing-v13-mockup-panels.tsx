@@ -956,7 +956,7 @@ export const LANDING_V13_MOCKUP_PANELS = [
         </span>
         <span>
           <span style={{ color: "rgb(122, 127, 158)" }}>Objet :</span> Suite à
-          notre échange — prochaines étapes
+          notre échange, prochaines étapes
         </span>
       </div>
       <div

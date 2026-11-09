@@ -38,6 +38,11 @@ function isPublicPath(pathname: string): boolean {
     "/sign-out",
     "/api/health",
     "/api/cron",
+    /*
+      L'application mobile n'a pas de cookie : chaque route sous /api/mobile
+      exige elle-même son jeton (`requireMobileOrgActor`), sauf la connexion.
+    */
+    "/api/mobile",
   ];
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
