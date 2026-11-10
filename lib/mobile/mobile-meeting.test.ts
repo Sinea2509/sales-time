@@ -4,7 +4,7 @@ import { toMobileMeeting } from "./mobile-meeting";
 const row = {
   id: "meet_1",
   prospectName: "Claire Morel",
-  prospectCompany: "Vicat",
+  prospectCompany: "Lumen",
   meetingAt: new Date("2026-11-09T13:30:00.000Z"),
   durationMin: 47,
   outcome: "FOLLOW_UP" as const,
@@ -19,7 +19,7 @@ describe("toMobileMeeting", () => {
     expect(out).toEqual({
       id: "meet_1",
       prospectName: "Claire Morel",
-      prospectCompany: "Vicat",
+      prospectCompany: "Lumen",
       meetingAt: "2026-11-09T13:30:00.000Z",
       durationMin: 47,
       outcome: "FOLLOW_UP",

@@ -153,6 +153,7 @@ model User {
   updatedAt                    DateTime  @updatedAt
 
   sessions                   Session[]
+  mobileDevices              MobileDevice[]
   passwordResetTokens        PasswordResetToken[]
   systemRoles                SystemRole[]
   auditLogsAsActor           SuperAdminAuditLog[]      @relation("AuditActor")
@@ -631,6 +632,21 @@ model Feedback {
   @@index([status, createdAt])
   @@index([priority, createdAt])
   @@index([organizationId])
+}
+
+/// Un téléphone où l'application mobile est connectée, pour lui envoyer les
+/// notifications (analyse prête). Le jeton vient d'Expo ; il est supprimé à la
+/// déconnexion ou quand Expo le dit périmé.
+model MobileDevice {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expoPushToken String   @unique
+  platform      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Notification {
