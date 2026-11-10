@@ -167,6 +167,17 @@ export interface MeetingRepositoryPort {
     organizationId: string;
   }): Promise<MeetingRowWithSeller | null>;
 
+  /**
+   * Le rendez-vous déjà créé à partir de cet enregistrement, s'il existe.
+   * L'application mobile renvoie le même fichier quand la réponse s'est
+   * perdue en route : on rend alors le rendez-vous existant au lieu d'en
+   * créer un second.
+   */
+  findMeetingIdBySourceBlobUrlForOrg(input: {
+    organizationId: string;
+    sourceBlobUrl: string;
+  }): Promise<string | null>;
+
   listMeetingsForOrg(input: {
     organizationId: string;
     limit?: number;

@@ -206,6 +206,21 @@ export class PrismaMeetingRepository implements MeetingRepositoryPort {
     };
   }
 
+  async findMeetingIdBySourceBlobUrlForOrg(input: {
+    organizationId: string;
+    sourceBlobUrl: string;
+  }): Promise<string | null> {
+    const row = await this.db.meeting.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        sourceBlobUrl: input.sourceBlobUrl,
+      },
+      select: { id: true },
+      orderBy: { createdAt: "asc" },
+    });
+    return row?.id ?? null;
+  }
+
   async listMeetingsForOrg(input: {
     organizationId: string;
     limit?: number;
