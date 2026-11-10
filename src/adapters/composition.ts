@@ -1,6 +1,10 @@
 import { PrismaOrganizationFeaturesRepository } from "@/src/adapters/prisma/prisma-organization-features-repository";
 import type { OrganizationFeaturesRepositoryPort } from "@/src/core/ports/organization-features-repository-port";
 import { prisma } from "@/lib/prisma";
+import { PrismaMobileDeviceRepository } from "@/src/adapters/prisma/prisma-mobile-device-repository";
+import { ExpoPushSender } from "@/src/adapters/push/expo-push-sender";
+import { PushingNotificationRepository } from "@/src/adapters/push/pushing-notification-repository";
+import type { MobileDeviceRepositoryPort } from "@/src/core/ports/mobile-device-repository-port";
 import { PrismaAdminSearchRepository } from "@/src/adapters/prisma/prisma-admin-search-repository";
 import { PrismaPlatformHealthRepository } from "@/src/adapters/prisma/prisma-platform-health-repository";
 import { PrismaOrganizationTeamRepository } from "@/src/adapters/prisma/prisma-organization-team-repository";
@@ -97,6 +101,7 @@ export type ApplicationDeps = {
   planRequests: PlanRequestRepositoryPort;
   feedbacks: FeedbackRepositoryPort;
   notifications: NotificationRepositoryPort;
+  mobileDevices: MobileDeviceRepositoryPort;
   organizationQuota: OrganizationQuotaRepositoryPort;
   organizationFeatures: OrganizationFeaturesRepositoryPort;
   aiSummaryCache: AiSummaryCacheRepositoryPort;
@@ -105,6 +110,7 @@ export type ApplicationDeps = {
 
 export function makeApplicationDeps(): ApplicationDeps {
   const session = new PrismaSessionRepository(prisma);
+  const mobileDevices = new PrismaMobileDeviceRepository(prisma);
   return {
     auth: makeSessionAuthAdapter(session),
     session,
@@ -136,7 +142,12 @@ export function makeApplicationDeps(): ApplicationDeps {
     aiLogs: new PrismaAiRequestLogRepository(prisma),
     planRequests: new PrismaPlanRequestRepository(prisma),
     feedbacks: new PrismaFeedbackRepository(prisma),
-    notifications: new PrismaNotificationRepository(prisma),
+    notifications: new PushingNotificationRepository(
+      new PrismaNotificationRepository(prisma),
+      mobileDevices,
+      new ExpoPushSender(),
+    ),
+    mobileDevices,
     organizationQuota: new PrismaOrganizationQuotaRepository(prisma),
     organizationFeatures: new PrismaOrganizationFeaturesRepository(prisma),
     aiSummaryCache: new PrismaAiSummaryCacheRepository(prisma),

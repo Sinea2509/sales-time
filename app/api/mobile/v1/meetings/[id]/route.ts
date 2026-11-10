@@ -1,36 +1,36 @@
 import { toMobileMeeting } from "@/lib/mobile/mobile-meeting";
-import {
-  mobileError,
-  mobileJson,
-  requireMobileOrgActor,
-} from "@/lib/mobile/mobile-request";
-import { assertCanMutateMeetingForOrg } from "@/lib/meeting-mutation-access";
-import { meetingIdSchema } from "@/lib/schemas/meeting";
+import { requireMobileMeeting } from "@/lib/mobile/mobile-meeting-access";
+import { mobileJson } from "@/lib/mobile/mobile-request";
+import { mobileDebrief } from "@/src/core/domain/mobile-debrief";
+import { hasOrganizationFeature } from "@/src/core/domain/organization-features";
 
 export const dynamic = "force-dynamic";
 
 /**
- * L'état d'un rendez-vous déposé depuis le téléphone. Le commercial ne voit
- * que les siens, le manager ceux de son organisation : la même règle que
- * pour modifier la fiche.
+ * Un rendez-vous et ce qu'il appelle juste après : la note, les défis, le
+ * mail de suivi et le compte rendu, tels qu'ils sont sur la fiche.
  */
 export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  if (!meetingIdSchema.safeParse(id).success) return mobileError("VALIDATION");
+  const access = await requireMobileMeeting(request, id);
+  if (!access.ok) return access.response;
+  const { actor, meeting } = access;
 
-  const actor = await requireMobileOrgActor(request);
-  if (!actor.ok) return mobileError(actor.error);
+  const debrief = mobileDebrief(meeting);
+  const features = await actor.deps.organizationFeatures.listEnabledFeatures(
+    actor.organizationId,
+  );
 
-  const access = await assertCanMutateMeetingForOrg(actor.deps.meetings, {
-    organizationId: actor.organizationId,
-    meetingId: id,
-    actorUserId: actor.actorUserId,
-    canManageOrganization: actor.canManageOrganization,
+  return mobileJson({
+    meeting: toMobileMeeting({ ...meeting, salesScore: debrief.salesScore }),
+    debrief,
+    pipedriveEnabled: hasOrganizationFeature(
+      actor.organizationId,
+      features,
+      "pipedrive_blocks",
+    ),
   });
-  if (!access.ok) return mobileError(access.error);
-
-  return mobileJson({ meeting: toMobileMeeting(access.meeting) });
 }

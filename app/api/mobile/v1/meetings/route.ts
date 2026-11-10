@@ -24,6 +24,8 @@ const createSchema = z.object({
   audioBlobUrl: z.string().trim().url().max(2000),
   audioMediaType: z.string().trim().min(1).max(80),
   prospectName: z.string().trim().min(1).max(200),
+  /* Le contact choisi dans la liste ; sans lui, Sales Time crée ou retrouve le contact par son nom. */
+  personId: z.string().cuid().nullable().optional(),
   meetingAt: z.coerce.date(),
   /* Mesurée par le téléphone, pauses déduites. */
   durationSec: z
@@ -96,6 +98,7 @@ export async function POST(request: Request) {
       visibleTo: contactsVisibleTo(actor),
       audioBlobUrl: data.audioBlobUrl,
       audioMediaType: data.audioMediaType,
+      personId: data.personId ?? null,
       prospectName: data.prospectName,
       meetingAt: data.meetingAt,
       durationMin: Math.max(1, Math.round(data.durationSec / 60)),

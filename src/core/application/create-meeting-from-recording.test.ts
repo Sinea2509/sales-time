@@ -18,6 +18,7 @@ const input = {
   sellerInternalUserId: "user_1",
   audioBlobUrl: AUDIO_URL,
   audioMediaType: "audio/mp4",
+  personId: null,
   prospectName: "Claire Morel",
   meetingAt: new Date("2026-11-09T09:00:00.000Z"),
   durationMin: 52,
@@ -201,6 +202,35 @@ describe("createMeetingFromRecording", () => {
       ok: false,
       error: "TRANSCRIPT_TOO_SHORT_FOR_ANALYSIS",
     });
+    expect(deps.meetings.createMeeting).not.toHaveBeenCalled();
+  });
+
+  it("rattache le rendez-vous au contact choisi sur le téléphone", async () => {
+    const deps = makeDeps();
+
+    await createMeetingFromRecording(deps as never, {
+      ...input,
+      personId: "person_1",
+    });
+
+    expect(deps.contacts.findById).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "person_1", organizationId: "org_1" }),
+    );
+    expect(deps.meetings.createMeeting.mock.calls[0]?.[0]).toMatchObject({
+      personId: "person_1",
+    });
+  });
+
+  it("refuse un contact que le commercial ne voit pas", async () => {
+    const deps = makeDeps();
+    deps.contacts.findById.mockResolvedValue(null);
+
+    const result = await createMeetingFromRecording(deps as never, {
+      ...input,
+      personId: "person_autre",
+    });
+
+    expect(result).toEqual({ ok: false, error: "INVALID_PERSON" });
     expect(deps.meetings.createMeeting).not.toHaveBeenCalled();
   });
 

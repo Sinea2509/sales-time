@@ -26,6 +26,8 @@ export type CreateMeetingFromRecordingInput = {
   visibleTo?: string;
   audioBlobUrl: string;
   audioMediaType: string;
+  /** Le contact choisi sur le téléphone, ou `null` pour le retrouver par son nom. */
+  personId: string | null;
   prospectName: string;
   meetingAt: Date;
   durationMin: number | null;
@@ -112,7 +114,7 @@ export async function createMeetingFromRecording(
     organizationId: input.organizationId,
     sellerInternalUserId: input.sellerInternalUserId,
     visibleTo: input.visibleTo,
-    personId: null,
+    personId: input.personId,
     prospectName: input.prospectName,
     meetingAt: input.meetingAt,
     durationMin: input.durationMin,

@@ -1,3 +1,5 @@
+import { DEFAULT_PIPELINE_STAGES } from "@/lib/onboarding-defaults";
+import { stringArrayFromOrgJson } from "@/lib/org-settings-json";
 import {
   mobileError,
   mobileJson,
@@ -19,6 +21,14 @@ export async function GET(request: Request) {
   );
   if (!principal) return mobileError("UNAUTHENTICATED");
 
+  const settings = await actor.deps.organizationSettings.findByOrganizationId(
+    actor.organizationId,
+  );
+  /* Le même repli que la page « Préparer un RDV » du site. */
+  const pipelineStages = stringArrayFromOrgJson(settings?.pipelineStages, [
+    ...DEFAULT_PIPELINE_STAGES,
+  ]);
+
   const organizations = (
     await Promise.all(
       principal.memberships.map((m) =>
@@ -38,5 +48,6 @@ export async function GET(request: Request) {
     },
     activeOrganizationId: actor.organizationId,
     organizations,
+    pipelineStages,
   });
 }
