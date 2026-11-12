@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminOrganizationFeaturesCard } from "@/components/organisms/admin-organization-features-card";
+import { AdminOrganizationPlanCard } from "@/components/organisms/admin-organization-plan-card";
 import {
   Users,
   CalendarDays,
@@ -97,6 +98,11 @@ export function AdminOrganizationDetailShell({
           accent="amber"
         />
       </div>
+
+      <AdminOrganizationPlanCard
+        organizationId={org.id}
+        unlimited={org.planUnlockedAt != null}
+      />
 
       <AdminOrganizationFeaturesCard
         organizationId={org.id}
