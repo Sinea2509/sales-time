@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ToneChip } from "@/components/atoms/tone-chip";
 import { pageTitleClass } from "@/lib/page-typography";
 import { cn } from "@/lib/utils";
 
@@ -105,6 +106,18 @@ export function OrgSettingsShell({
             </Link>
           );
         })}
+        {/*
+          La connexion au CRM arrive : l'onglet se voit, grisé, sans mener
+          nulle part (demande de Thomas du 12 novembre 2026).
+        */}
+        <span
+          aria-disabled="true"
+          title="Bientôt disponible"
+          className="text-muted-foreground/60 -mb-px inline-flex cursor-not-allowed items-center gap-1.5 border-b-2 border-transparent px-3 py-2.5 text-sm font-semibold whitespace-nowrap"
+        >
+          Connexion au CRM
+          <ToneChip>Bientôt</ToneChip>
+        </span>
       </nav>
       <div className="min-w-0">{children}</div>
     </div>

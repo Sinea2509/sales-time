@@ -14,8 +14,12 @@ import {
 
 /**
  * Les fonctionnalités réservées d'une organisation, une case par
- * fonctionnalité. Chaque changement est journalisé. Une organisation qui n'y a
- * pas droit voit la case grisée, et le serveur refuserait de toute façon.
+ * fonctionnalité. Chaque changement est journalisé.
+ *
+ * Une fonctionnalité réservée à d'autres n'apparaît pas du tout, et la carte
+ * disparaît quand il n'en reste aucune : demande de Thomas du 12 novembre
+ * 2026, les blocs Pipedrive ne doivent même pas se voir hors de Sinéa. Le
+ * serveur refuserait de toute façon de les activer.
  */
 export function AdminOrganizationFeaturesCard({
   organizationId,
@@ -24,6 +28,9 @@ export function AdminOrganizationFeaturesCard({
   organizationId: string;
   enabledFeatures: string[];
 }) {
+  const available = ORGANIZATION_FEATURES.filter((f) =>
+    organizationMayHaveFeature(organizationId, f.id),
+  );
   const [enabled, setEnabled] = useState(() => new Set(enabledFeatures));
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -49,6 +56,8 @@ export function AdminOrganizationFeaturesCard({
     });
   }
 
+  if (available.length === 0) return null;
+
   return (
     <Card>
       <CardHeader>
@@ -58,22 +67,18 @@ export function AdminOrganizationFeaturesCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {ORGANIZATION_FEATURES.map((f) => {
-          const allowed = organizationMayHaveFeature(organizationId, f.id);
+        {available.map((f) => {
           const on = hasOrganizationFeature(organizationId, [...enabled], f.id);
           return (
             <label
               key={f.id}
-              className={cn(
-                "flex items-start gap-3 rounded-xl border border-border p-3 dark:border-neutral-800",
-                allowed ? "cursor-pointer" : "cursor-not-allowed opacity-60",
-              )}
+              className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3 dark:border-neutral-800"
             >
               <input
                 type="checkbox"
                 className="mt-1 size-4 accent-[#6C4DFF]"
                 checked={on}
-                disabled={pending || !allowed}
+                disabled={pending}
                 onChange={(e) => toggle(f.id, e.target.checked)}
               />
               <span>
@@ -81,11 +86,6 @@ export function AdminOrganizationFeaturesCard({
                 <span className="text-muted-foreground block text-xs">
                   {f.description}
                 </span>
-                {allowed ? null : (
-                  <span className="text-muted-foreground mt-1 block text-xs font-semibold">
-                    {f.reservedNotice}
-                  </span>
-                )}
               </span>
             </label>
           );

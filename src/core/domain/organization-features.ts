@@ -21,7 +21,6 @@ export const ORGANIZATION_FEATURES = [
     description:
       "Un onglet Blocs Pipedrive sur chaque rendez-vous : Bloc SEED, Carte d'identité et Projet de formation, prêts à copier dans le CRM.",
     reservedTo: [SINEA_ORGANIZATION_ID],
-    reservedNotice: "Réservée à Sinéa.",
   },
 ] as const;
 

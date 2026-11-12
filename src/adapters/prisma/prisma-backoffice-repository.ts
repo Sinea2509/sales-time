@@ -337,6 +337,7 @@ export class PrismaBackofficeRepository implements BackofficeRepositoryPort {
       memberships,
       meetings,
       enabledFeatures: org.enabledFeatures,
+      planUnlockedAt: org.planUnlockedAt,
       counts: {
         memberships: org._count.memberships,
         meetings: org._count.meetings,

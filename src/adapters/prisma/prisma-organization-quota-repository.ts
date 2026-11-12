@@ -30,6 +30,13 @@ export class PrismaOrganizationQuotaRepository implements OrganizationQuotaRepos
     });
   }
 
+  async lockPlan(organizationId: string): Promise<void> {
+    await this.db.organization.update({
+      where: { id: organizationId },
+      data: { planUnlockedAt: null },
+    });
+  }
+
   async decrementTrialAnalysesLeft(organizationId: string): Promise<number | null> {
     const org = await this.db.organization.findUnique({
       where: { id: organizationId },

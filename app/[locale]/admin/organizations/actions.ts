@@ -236,3 +236,41 @@ export async function setOrganizationFeatureAction(
   revalidatePath(`/admin/organizations/${organizationId}`);
   return { ok: true };
 }
+
+const setUnlimitedSchema = z.object({
+  organizationId: z.string().min(1),
+  unlimited: z.boolean(),
+});
+
+/**
+ * Passe une organisation en analyses illimitées, ou la remet sur ses analyses
+ * d'essai. Jusqu'ici l'illimité ne s'obtenait qu'en validant une demande de
+ * plan ; Thomas veut pouvoir l'accorder pour un test (12 novembre 2026).
+ */
+export async function setOrganizationUnlimitedAction(
+  raw: z.input<typeof setUnlimitedSchema>,
+): Promise<ActionResult> {
+  const deps = getApplicationDeps();
+  const gate = await requireSuperAdminActor(deps);
+  if (!gate.ok) return gate;
+
+  const parsed = setUnlimitedSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0].message };
+  }
+  const { organizationId, unlimited } = parsed.data;
+  const org = await deps.backoffice.findOrganizationById(organizationId);
+  if (!org) return { ok: false, message: "Organisation introuvable." };
+
+  if (unlimited) await deps.organizationQuota.unlockPlan(organizationId);
+  else await deps.organizationQuota.lockPlan(organizationId);
+  await deps.backoffice.createSuperAdminAuditLog({
+    actorUserId: gate.actorUserId,
+    organizationId,
+    action: "SET_UNLIMITED_ANALYSES",
+    reason: unlimited ? "Analyses illimitées" : "Retour aux analyses d'essai",
+  });
+
+  revalidatePath(`/admin/organizations/${organizationId}`);
+  return { ok: true };
+}

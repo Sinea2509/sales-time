@@ -13,6 +13,7 @@ function createMocks() {
     getTrialAnalysesLeft: jest.fn(),
     isPlanUnlocked: jest.fn(),
     unlockPlan: jest.fn().mockResolvedValue(undefined),
+    lockPlan: jest.fn().mockResolvedValue(undefined),
     decrementTrialAnalysesLeft: jest.fn(),
   };
   return { planRequests, organizationQuota };

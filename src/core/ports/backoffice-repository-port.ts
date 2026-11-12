@@ -91,6 +91,8 @@ export type AdminOrganizationDetail = {
   meetings: AdminOrgDetailMeeting[];
   /** Fonctionnalités réservées activées (voir `ORGANIZATION_FEATURES`). */
   enabledFeatures: string[];
+  /** Analyses illimitées depuis cette date ; nul tant que l'organisation est à l'essai. */
+  planUnlockedAt: Date | null;
   counts: {
     memberships: number;
     meetings: number;
